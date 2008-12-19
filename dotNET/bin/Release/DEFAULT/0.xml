@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- generator="wordpress/2.3.2" -->
+<rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	>
+
+<channel>
+	<title>Dan Garner - Xstreamedia</title>
+	<link>http://www.dangarner.co.uk</link>
+	<description>Xstreamedia - Digital Signage, Web Services and Freelance IT Development and Support</description>
+	<pubDate>Thu, 24 Jan 2008 22:15:41 +0000</pubDate>
+	<generator>http://wordpress.org/?v=2.3.2</generator>
+	<language>en</language>
+			<item>
+		<title>Introducing Xstreamedia</title>
+		<link>http://www.dangarner.co.uk/2008/01/24/hello-world/</link>
+		<comments>http://www.dangarner.co.uk/2008/01/24/hello-world/#comments</comments>
+		<pubDate>Thu, 24 Jan 2008 20:08:58 +0000</pubDate>
+		<dc:creator>Dan</dc:creator>
+		
+		<category><![CDATA[General]]></category>
+
+		<guid isPermaLink="false">http://www.dangarner.co.uk/?p=1</guid>
+		<description><![CDATA[Xstreamedia - digital signage company
+]]></description>
+			<content:encoded><![CDATA[<p>Xstreamedia - digital signage company</p>
+]]></content:encoded>
+			<wfw:commentRss>http://www.dangarner.co.uk/2008/01/24/hello-world/feed/</wfw:commentRss>
+		</item>
+	</channel>
+</rss>
