@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns="urn:xmds" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:xmds" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="urn:xmds">
+      <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+      <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="RegisterDisplayRequest">
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="displayName" type="xsd:string" />
+    <wsdl:part name="version" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="RegisterDisplayResponse">
+    <wsdl:part name="ActivationMessage" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="RequiredFilesRequest">
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="version" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="RequiredFilesResponse">
+    <wsdl:part name="RequiredFilesXml" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetFileRequest">
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="filePath" type="xsd:string" />
+    <wsdl:part name="fileType" type="xsd:string" />
+    <wsdl:part name="chunkOffset" type="xsd:int" />
+    <wsdl:part name="chuckSize" type="xsd:int" />
+    <wsdl:part name="version" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetFileResponse">
+    <wsdl:part name="file" type="xsd:base64Binary" />
+  </wsdl:message>
+  <wsdl:message name="ScheduleRequest">
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="version" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="ScheduleResponse">
+    <wsdl:part name="ScheduleXml" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="RecieveXmlLogRequest">
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="xml" type="xsd:string" />
+    <wsdl:part name="version" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="RecieveXmlLogResponse">
+    <wsdl:part name="success" type="xsd:boolean" />
+  </wsdl:message>
+  <wsdl:message name="BlackListRequest">
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="mediaId" type="xsd:int" />
+    <wsdl:part name="type" type="xsd:string" />
+    <wsdl:part name="reason" type="xsd:string" />
+    <wsdl:part name="version" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="BlackListResponse">
+    <wsdl:part name="success" type="xsd:boolean" />
+  </wsdl:message>
+  <wsdl:portType name="xmdsPortType">
+    <wsdl:operation name="RegisterDisplay">
+      <documentation>Registered the Display on the Xibo Network</documentation>
+      <wsdl:input message="tns:RegisterDisplayRequest" />
+      <wsdl:output message="tns:RegisterDisplayResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="RequiredFiles">
+      <documentation>The files required by the requesting display</documentation>
+      <wsdl:input message="tns:RequiredFilesRequest" />
+      <wsdl:output message="tns:RequiredFilesResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetFile">
+      <documentation>Gets the file requested</documentation>
+      <wsdl:input message="tns:GetFileRequest" />
+      <wsdl:output message="tns:GetFileResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="Schedule">
+      <documentation>Gets the schedule</documentation>
+      <wsdl:input message="tns:ScheduleRequest" />
+      <wsdl:output message="tns:ScheduleResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="RecieveXmlLog">
+      <documentation>Recieves the Log Xml</documentation>
+      <wsdl:input message="tns:RecieveXmlLogRequest" />
+      <wsdl:output message="tns:RecieveXmlLogResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="BlackList">
+      <documentation>Set media to be blacklisted</documentation>
+      <wsdl:input message="tns:BlackListRequest" />
+      <wsdl:output message="tns:BlackListResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="xmdsBinding" type="tns:xmdsPortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="rpc" />
+    <wsdl:operation name="RegisterDisplay">
+      <soap:operation soapAction="urn:xmds#RegisterDisplay" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RequiredFiles">
+      <soap:operation soapAction="urn:xmds#RequiredFiles" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetFile">
+      <soap:operation soapAction="urn:xmds#GetFile" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="Schedule">
+      <soap:operation soapAction="urn:xmds#Schedule" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RecieveXmlLog">
+      <soap:operation soapAction="urn:xmds#RecieveXmlLog" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="BlackList">
+      <soap:operation soapAction="urn:xmds#BlackList" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="xmds">
+    <wsdl:port name="xmdsPort" binding="tns:xmdsBinding">
+      <soap:address location="http://xmdev01.local/xsm/xmds.php" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
