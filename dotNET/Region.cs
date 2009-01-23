@@ -88,7 +88,7 @@ namespace XiboClient
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine(String.Format("Creating new media: {0}", options.uri), "Region - EvalOptions");
+            System.Diagnostics.Debug.WriteLine(String.Format("Creating new media: {0}, {1}", options.type, options.mediaid), "Region - EvalOptions");
             
             switch (options.type)
             {
@@ -197,6 +197,7 @@ namespace XiboClient
             options.text = "";
             options.documentTemplate = "";
             options.copyrightNotice = "";
+            options.uri = "";
 
             // Get a media node
             bool validNode = false;
@@ -230,27 +231,50 @@ namespace XiboClient
                 {
                     validNode = true;
 
-                    // Media options that wont be on this node.. we would have to go to the child nodes
-                    options.uri = nodeAttributes["uri"].Value;
-                    options.direction = nodeAttributes["direction"].Value;
-                    options.type = nodeAttributes["type"].Value;
-                    options.duration = int.Parse(nodeAttributes["duration"].Value);
+                    // New version has a different schema - the right way to do it would be to pass the <options> and <raw> nodes to 
+                    // the relevant media class - however I dont feel like engineering such a change so the alternative is to
+                    // parse all the possible media type nodes here.
 
-                    foreach (XmlNode childNode in mediaNode.ChildNodes)
+                    // Type and Duration will always be on the media node
+                    options.type        = nodeAttributes["type"].Value;
+                    options.duration    = int.Parse(nodeAttributes["duration"].Value);
+
+                    // There will be some stuff on option nodes
+                    XmlNode optionNode = mediaNode.FirstChild;                    
+
+                    
+                    foreach (XmlNode option in optionNode.ChildNodes)
                     {
-                        if (childNode.Name == "text")
+                        if (option.Name == "direction")
                         {
-                            options.text = childNode.InnerText;
+                            options.direction = option.InnerText;
                         }
-                        else if (childNode.Name == "template")
+                        else if (option.Name == "uri")
                         {
-                            options.documentTemplate = childNode.InnerText;
+                            options.uri = option.InnerText;
                         }
-                        else if (childNode.Name == "copyright")
+                        else if (option.Name == "copyright")
                         {
-                            options.copyrightNotice = childNode.InnerText;
+                            options.copyrightNotice = option.InnerText;
                         }
                     }
+
+                    // And some stuff on Raw nodes
+                    XmlNode rawNode = mediaNode.LastChild;
+
+                    foreach (XmlNode raw in rawNode.ChildNodes)
+                    {
+                        if (raw.Name == "text")
+                        {
+                            options.text = raw.InnerText;
+                        }
+                        else if (raw.Name == "template")
+                        {
+                            options.documentTemplate = raw.InnerText;
+                        }
+                    }
+
+                    // That should cover all the new options
                 }
 
                 if (numAttempts > options.mediaNodes.Count)

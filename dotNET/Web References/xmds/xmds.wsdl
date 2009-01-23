@@ -154,7 +154,7 @@
   </wsdl:binding>
   <wsdl:service name="xmds">
     <wsdl:port name="xmdsPort" binding="tns:xmdsBinding">
-      <soap:address location="http://xmdev01.local/xsm/xmds.php" />
+      <soap:address location="http://localhost/Xibo/server/xmds.php" />
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>
