@@ -237,7 +237,17 @@ namespace XiboClient
 
                     // Type and Duration will always be on the media node
                     options.type        = nodeAttributes["type"].Value;
-                    options.duration    = int.Parse(nodeAttributes["duration"].Value);
+                    
+                    if (nodeAttributes["duration"].Value != "")
+                    {
+                        options.duration = int.Parse(nodeAttributes["duration"].Value);
+                    }
+                    else
+                    {
+                        options.duration = 60;
+                        XmlLog.Append("Duration is Empty, using a default of 60.", Catagory.Error);
+                        System.Diagnostics.Debug.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
+                    }
 
                     // There will be some stuff on option nodes
                     XmlNode optionNode = mediaNode.FirstChild;                    

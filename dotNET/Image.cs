@@ -35,6 +35,7 @@ namespace XiboClient
             if (!System.IO.File.Exists(this.filePath))
             {
                 // Exit
+                this.loaded = false;
                 return;
             }
 
@@ -47,6 +48,7 @@ namespace XiboClient
             this.pictureBox.Location = new Point(0, 0);
             this.pictureBox.BorderStyle = BorderStyle.None;
             this.pictureBox.BackColor = Color.Transparent;
+            this.loaded = true;
 
             this.Controls.Add(this.pictureBox);
         }
@@ -58,7 +60,7 @@ namespace XiboClient
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && loaded)
             {
                 this.pictureBox.Dispose();
             }
@@ -67,6 +69,7 @@ namespace XiboClient
         }
 
         private string filePath;
+        private bool loaded;
         PictureBox pictureBox;
     }
 }

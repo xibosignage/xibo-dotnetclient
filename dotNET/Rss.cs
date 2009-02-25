@@ -305,19 +305,29 @@ namespace XiboClient
 
                 String textRender = "";
                 String textWrap = "";
-                if (direction == "left" || direction == "right") textWrap = "white-space: nowrap";
+                if (direction == "left" || direction == "right")
+                {
+                    // Make sure the text does not wrap when going from left to right.
+                    textWrap = "white-space: nowrap";
+                    documentText = String.Format("<nobr>{0}</nobr>", documentText);
+                }
+                else
+                {
+                    // Up and Down
+                    textWrap = String.Format("width: {0}px;", this.width - 50);
+                }
 
-                textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}; height:{1};'>", this.width, this.height);
-                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'><nobr>{1}</nobr></div></div>", textWrap, documentText);
+                textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this.width, this.height);
+                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, documentText);
                 
                 htmlDoc.Body.InnerHtml = textRender;
 
+                // Call the JavaScript on the page
                 Object[] objArray = new Object[2];
                 objArray[0] = direction;
                 objArray[1] = 30;
 
                 htmlDoc.InvokeScript("init", objArray);
-                
             }
 
             //clean up
