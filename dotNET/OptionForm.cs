@@ -33,7 +33,14 @@ namespace XiboClient
     {
         public OptionForm()
         {
+            System.Diagnostics.Debug.WriteLine("[IN]", "OptionForm");
+            System.Diagnostics.Debug.WriteLine("Initialise Option Form Components", "OptionForm");
+
+            System.Diagnostics.Debug.Flush();
+
             InitializeComponent();
+
+            System.Diagnostics.Debug.WriteLine("Register some Event Handlers", "OptionForm");
 
             this.xmds1.RegisterDisplayCompleted += new XiboClient.xmds.RegisterDisplayCompletedEventHandler(xmds1_RegisterDisplayCompleted);
             
@@ -50,21 +57,27 @@ namespace XiboClient
 
 
             // Get the hardware key
+            System.Diagnostics.Debug.WriteLine("Getting the Hardware Key", "OptionForm");
             hardwareKey = new HardwareKey();
 
+            System.Diagnostics.Debug.WriteLine("Getting the Library Path", "OptionForm");
             if (Properties.Settings.Default.LibraryPath == "DEFAULT")
             {
                 Properties.Settings.Default.LibraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\Xibo Library";
                 Properties.Settings.Default.Save();
             }
 
+            System.Diagnostics.Debug.WriteLine("Getting the display Name", "OptionForm");
             if (Properties.Settings.Default.displayName == "COMPUTERNAME")
             {
                 Properties.Settings.Default.displayName = Environment.MachineName;
                 Properties.Settings.Default.Save();
             }
 
+            System.Diagnostics.Debug.WriteLine("About to call SetGlobalProxy", "OptionForm");
             OptionForm.SetGlobalProxy();
+
+            System.Diagnostics.Debug.WriteLine("[OUT]", "OptionForm");
         }
 
         void proxySetting_TextChanged(object sender, EventArgs e)
@@ -176,7 +189,7 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                System.Diagnostics.Process.Start("http://www.xibo.co.uk/manual");
+                System.Diagnostics.Process.Start("http://www.xibo.org.uk/manual");
             }
             catch
             {
@@ -257,8 +270,13 @@ namespace XiboClient
         /// </summary>
         public static void SetGlobalProxy()
         {
+            System.Diagnostics.Debug.WriteLine("[IN]", "SetGlobalProxy");
+
+            System.Diagnostics.Debug.WriteLine("Trying to detect a proxy.", "SetGlobalProxy");
+            
             if (Properties.Settings.Default.ProxyUser != "")
             {
+                System.Diagnostics.Debug.WriteLine("Creating a network credential using the Proxy User.", "SetGlobalProxy");
                 NetworkCredential nc = new NetworkCredential(Properties.Settings.Default.ProxyUser, Properties.Settings.Default.ProxyPassword);
                 if (Properties.Settings.Default.ProxyDomain != "") nc.Domain = Properties.Settings.Default.ProxyDomain;
 
@@ -266,11 +284,14 @@ namespace XiboClient
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine("No Proxy.", "SetGlobalProxy");
                 WebRequest.DefaultWebProxy.Credentials = null;
             }
 
+            // What if the URL for XMDS has a SSL certificate?
             ServicePointManager.ServerCertificateValidationCallback += delegate(object sender, X509Certificate certificate, X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
             {
+                System.Diagnostics.Debug.WriteLine("[IN]", "ServerCertificateValidationCallback");
                 bool validationResult = false;
 
                 System.Diagnostics.Debug.WriteLine(certificate.Subject);
@@ -283,8 +304,13 @@ namespace XiboClient
 
                 validationResult = true;
 
+                System.Diagnostics.Debug.WriteLine("[OUT]", "ServerCertificateValidationCallback");
                 return validationResult;
             };
+
+            System.Diagnostics.Debug.WriteLine("[OUT]", "SetGlobalProxy");
+
+            return;
         }
     }
 }
