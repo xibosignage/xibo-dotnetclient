@@ -29,7 +29,11 @@ namespace XiboClient
     {
         public HardwareKey()
         {
+            System.Diagnostics.Debug.WriteLine("[IN]", "HardwareKey");
+
             hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+
+            System.Diagnostics.Debug.WriteLine("[OUT]", "HardwareKey");
         }
 
         /// <summary>
@@ -50,9 +54,14 @@ namespace XiboClient
         /// <returns>[string] VolumeSerialNumber</returns>
         public string GetVolumeSerial(string strDriveLetter)
         {
+            System.Diagnostics.Debug.WriteLine("[IN]", "GetVolumeSerial");
+
             if (strDriveLetter == "" || strDriveLetter == null) strDriveLetter = "C";
             ManagementObject disk = new ManagementObject("win32_logicaldisk.deviceid=\"" + strDriveLetter + ":\"");
             disk.Get();
+
+            System.Diagnostics.Debug.WriteLine("[OUT]", "GetVolumeSerial");
+
             return disk["VolumeSerialNumber"].ToString();
         }
 
@@ -83,6 +92,8 @@ namespace XiboClient
         /// <returns>[string] ProcessorId</returns>
         public string GetCPUId()
         {
+            System.Diagnostics.Debug.WriteLine("[IN]", "GetCPUId");
+
             string cpuInfo = String.Empty;
             string temp = String.Empty;
             ManagementClass mc = new ManagementClass("Win32_Processor");
@@ -94,6 +105,9 @@ namespace XiboClient
                     cpuInfo = mo.Properties["ProcessorId"].Value.ToString();
                 }
             }
+
+            System.Diagnostics.Debug.WriteLine("[OUT]", "GetCPUId");
+
             return cpuInfo;
         }
 
