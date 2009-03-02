@@ -36,8 +36,6 @@ namespace XiboClient
             System.Diagnostics.Debug.WriteLine("[IN]", "OptionForm");
             System.Diagnostics.Debug.WriteLine("Initialise Option Form Components", "OptionForm");
 
-            System.Diagnostics.Debug.Flush();
-
             InitializeComponent();
 
             System.Diagnostics.Debug.WriteLine("Register some Event Handlers", "OptionForm");
