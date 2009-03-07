@@ -205,6 +205,11 @@ namespace XiboClient
                 layoutSchedule.Clear();
 
                 this.GetSchedule();
+
+                // Send the XML log here if necessary
+                XmlLog log = new XmlLog();
+
+                log.PrepareAndSend();
             }
         }
 

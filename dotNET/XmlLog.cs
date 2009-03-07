@@ -29,126 +29,13 @@ namespace XiboClient
     class XmlLog
     {
         /// <summary>
-        /// Writes a message to the XML log
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="cat"></param>
-        public static void Append(String message, Catagory cat, int scheduleID, int layoutID, string mediaID)
-        {
-            if (!Properties.Settings.Default.auditEnabled && cat == Catagory.Audit) return;
-            if (cat == Catagory.Stat) return; //We dont want to send stats without a type
-
-            try
-            {
-                XmlTextWriter xw = new XmlTextWriter(File.Open(Application.UserAppDataPath + "//" + Properties.Settings.Default.logLocation, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
-
-                xw.WriteStartElement(cat.ToString());
-                xw.WriteElementString("date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                xw.WriteElementString("message", message);
-                xw.WriteElementString("scheduleID", scheduleID.ToString());
-                xw.WriteElementString("layoutID", layoutID.ToString());
-                if (mediaID != "0") xw.WriteElementString("mediaID", mediaID.ToString());
-                xw.WriteEndElement();
-
-                xw.Close();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex.Message, "XmlLog - Append");
-            }
-
-            // Test the size of the XML file
-            FileInfo fileInfo = new FileInfo(Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation);
-
-            // If its greater than a certain size - send it to the WebService
-            if (fileInfo.Length > 6000)
-            {
-                XmlLog log = new XmlLog(Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation);
-                log.PrepareAndSend();
-            }
-        }
-
-        public static void Append(String message, Catagory cat)
-        {
-            if (!Properties.Settings.Default.auditEnabled && cat == Catagory.Audit) return;
-            if (cat == Catagory.Stat) return; //We dont want to send stats without a type
-
-            try
-            {
-                XmlTextWriter xw = new XmlTextWriter(File.Open(Application.UserAppDataPath + "//" + Properties.Settings.Default.logLocation, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
-
-                xw.WriteStartElement(cat.ToString());
-                xw.WriteElementString("date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                xw.WriteElementString("message", message);
-                xw.WriteEndElement();
-
-                xw.Close();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex.Message, "XmlLog - Append");
-            }
-
-            // Test the size of the XML file
-            FileInfo fileInfo = new FileInfo(Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation);
-
-            // If its greater than a certain size - send it to the WebService
-            if (fileInfo.Length > 6000)
-            {
-                XmlLog log = new XmlLog(Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation);
-                log.PrepareAndSend();
-            }
-        }
-
-        public static void AppendStat(String message, Catagory cat, StatType type, int scheduleID, int layoutID, string mediaID)
-        {
-            if (cat != Catagory.Stat) return;
-            if (!Properties.Settings.Default.statsEnabled) return;
-
-            try
-            {
-                XmlTextWriter xw = new XmlTextWriter(File.Open(Application.UserAppDataPath + "//" + Properties.Settings.Default.logLocation, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
-
-                xw.WriteStartElement(cat.ToString());
-                
-                xw.WriteElementString("date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                xw.WriteElementString("message", message);
-                xw.WriteElementString("type", type.ToString());
-                xw.WriteElementString("scheduleID", scheduleID.ToString());
-                xw.WriteElementString("layoutID", layoutID.ToString());
-                if (mediaID != "0") xw.WriteElementString("mediaID", mediaID.ToString());
-                
-                xw.WriteEndElement();
-
-                xw.Close();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex.Message, "XmlLog - Append");
-            }
-
-            // Test the size of the XML file
-            FileInfo fileInfo = new FileInfo(Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation);
-
-            // If its greater than a certain size - send it to the WebService
-            if (fileInfo.Length > 6000)
-            {
-                XmlLog log = new XmlLog(Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation);
-                log.PrepareAndSend();
-
-                log.xmds1.Dispose();
-            }
-        }
-
-        /// <summary>
         /// Creates a new XmlLog Class used for sending the log
         /// </summary>
         /// <param name="logPath"></param>
-        public XmlLog(string logPath)
+        public XmlLog()
         {
-            this.logPath = logPath;
-            this.logPathTemp = String.Format("{0}[{1}]", logPath, DateTime.Now.ToFileTime().ToString());
-
+            logPath = Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation;
+            
             // Get the key for this display
             hardwareKey = new HardwareKey();
 
@@ -164,23 +51,12 @@ namespace XiboClient
         /// </summary>
         public void PrepareAndSend()
         {
-            // Rename the Log (to prevent sending the same log file again, before this one is sent)
-            try
-            {
-                File.Move(logPath, logPathTemp);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex.Message, "XmlLog - Prepare and Send");
-                System.Diagnostics.Debug.WriteLine("Unable to move log file", "XmlLog - Prepare and Send");
-            }
-
             currentFile = 0;
 
             // Get a list of all the log files avaiable to process
             DirectoryInfo di = new DirectoryInfo(Application.UserAppDataPath);
 
-            files = di.GetFiles("log.xml*");
+            files = di.GetFiles("*.ready");
 
             // There thought never be no files
             if (files.Length == 0) return;
@@ -244,10 +120,73 @@ namespace XiboClient
             return;
         }
 
+        /// <summary>
+        /// Appends a Message to the Log with a schedule and layout and media information attached.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="cat"></param>
+        public static void Append(String message, Catagory cat, int scheduleID, int layoutID, string mediaID)
+        {
+            if (!Properties.Settings.Default.auditEnabled && cat == Catagory.Audit) return;
+            if (cat == Catagory.Stat) return; //We dont want to send stats without a type
+
+            message = String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", message, scheduleID.ToString(), layoutID.ToString(), mediaID.ToString());
+
+            System.Diagnostics.Trace.WriteLine(message, cat.ToString());
+        }
+
+        /// <summary>
+        /// Appends a Trace message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="cat"></param>
+        public static void Append(String message, Catagory cat)
+        {
+            if (!Properties.Settings.Default.auditEnabled && cat == Catagory.Audit) return;
+            if (cat == Catagory.Stat) return; //We dont want to send stats without a type
+
+            System.Diagnostics.Trace.WriteLine(message, cat.ToString());
+        }
+
+        /// <summary>
+        /// Appends a Stats XML message to the current Log
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="cat"></param>
+        /// <param name="type"></param>
+        /// <param name="scheduleID"></param>
+        /// <param name="layoutID"></param>
+        /// <param name="mediaID"></param>
+        public static void AppendStat(String message, Catagory cat, StatType type, int scheduleID, int layoutID, string mediaID)
+        {
+            if (cat != Catagory.Stat) return;
+            if (!Properties.Settings.Default.statsEnabled) return;
+
+            try
+            {
+                XmlTextWriter xw = new XmlTextWriter(File.Open(Application.UserAppDataPath + "//" + Properties.Settings.Default.logLocation, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+
+                xw.WriteStartElement(cat.ToString());
+                
+                xw.WriteElementString("date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                xw.WriteElementString("message", message);
+                xw.WriteElementString("type", type.ToString());
+                xw.WriteElementString("scheduleID", scheduleID.ToString());
+                xw.WriteElementString("layoutID", layoutID.ToString());
+                if (mediaID != "0") xw.WriteElementString("mediaID", mediaID.ToString());
+                
+                xw.WriteEndElement();
+
+                xw.Close();
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
         private XiboClient.xmds.xmds xmds1;
         private HardwareKey hardwareKey;
         string logPath;
-        string logPathTemp;
 
         FileInfo[] files;
         int currentFile;

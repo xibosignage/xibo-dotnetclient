@@ -99,6 +99,10 @@ namespace XiboClient
             if (e.Error != null)
             {
                 textBoxResults.Text = e.Error.Message;
+
+                System.Diagnostics.Debug.WriteLine("Error returned from Call to XMDS Register Display.", "xmds1_RegisterDisplayCompleted");
+                System.Diagnostics.Debug.WriteLine(e.Error.Message, "xmds1_RegisterDisplayCompleted");
+                System.Diagnostics.Debug.WriteLine(e.Error.StackTrace, "xmds1_RegisterDisplayCompleted");
             }
             else
             {

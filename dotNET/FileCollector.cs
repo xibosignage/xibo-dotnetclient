@@ -271,7 +271,7 @@ namespace XiboClient
                     // Fire a layout complete event
                     LayoutFileChanged(currentFileList.path + ".xlf");
 
-                    XmlLog.Append(string.Format("File downloaded: {0}", currentFileList.path), Catagory.Stat);
+                    System.Diagnostics.Trace.WriteLine(String.Format("File downloaded: {0}", currentFileList.path), "xmdsFile_GetFileCompleted");
 
                     currentFile++;
                 }

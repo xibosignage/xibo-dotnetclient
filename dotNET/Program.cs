@@ -34,6 +34,9 @@ namespace XiboClient
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            System.Diagnostics.Trace.Listeners.Add(new XiboTraceListener());
+            System.Diagnostics.Trace.AutoFlush = true;
+
             Form formMain;
 
             if (arg.GetLength(0) > 0)
