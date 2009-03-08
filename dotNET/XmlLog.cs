@@ -126,18 +126,6 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// Appends a Trace message
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="cat"></param>
-        /*public static void Append(String message, Catagory cat)
-        {
-            if (cat == Catagory.Stat) return; //We dont want to send stats without a type
-
-            System.Diagnostics.Trace.WriteLine(message, cat.ToString());
-        }*/
-
-        /// <summary>
         /// Appends a Stats XML message to the current Log
         /// </summary>
         /// <param name="message"></param>

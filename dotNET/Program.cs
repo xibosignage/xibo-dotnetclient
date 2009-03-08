@@ -41,16 +41,19 @@ namespace XiboClient
 
             if (arg.GetLength(0) > 0)
             {
+                System.Diagnostics.Trace.WriteLine("Options Started", "Main");
                 formMain = new OptionForm(); 
             }
             else
             {
+                System.Diagnostics.Trace.WriteLine("Client Started", "Main");
                 formMain = new MainForm();
             }
             
             Application.Run(formMain);
 
             // Always flush at the end
+            System.Diagnostics.Trace.WriteLine("Application Finished", "Main");
             System.Diagnostics.Trace.Flush();
         }
     }
