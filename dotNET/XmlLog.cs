@@ -86,6 +86,11 @@ namespace XiboClient
             }
         }
 
+        /// <summary>
+        /// Completed sending the XML Log
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void xmds1_RecieveXmlLogCompleted(object sender, XiboClient.xmds.RecieveXmlLogCompletedEventArgs e)
         {
             // Delete the Log File if success
@@ -121,32 +126,16 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// Appends a Message to the Log with a schedule and layout and media information attached.
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="cat"></param>
-        public static void Append(String message, Catagory cat, int scheduleID, int layoutID, string mediaID)
-        {
-            if (!Properties.Settings.Default.auditEnabled && cat == Catagory.Audit) return;
-            if (cat == Catagory.Stat) return; //We dont want to send stats without a type
-
-            message = String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", message, scheduleID.ToString(), layoutID.ToString(), mediaID.ToString());
-
-            System.Diagnostics.Trace.WriteLine(message, cat.ToString());
-        }
-
-        /// <summary>
         /// Appends a Trace message
         /// </summary>
         /// <param name="message"></param>
         /// <param name="cat"></param>
-        public static void Append(String message, Catagory cat)
+        /*public static void Append(String message, Catagory cat)
         {
-            if (!Properties.Settings.Default.auditEnabled && cat == Catagory.Audit) return;
             if (cat == Catagory.Stat) return; //We dont want to send stats without a type
 
             System.Diagnostics.Trace.WriteLine(message, cat.ToString());
-        }
+        }*/
 
         /// <summary>
         /// Appends a Stats XML message to the current Log
@@ -157,16 +146,15 @@ namespace XiboClient
         /// <param name="scheduleID"></param>
         /// <param name="layoutID"></param>
         /// <param name="mediaID"></param>
-        public static void AppendStat(String message, Catagory cat, StatType type, int scheduleID, int layoutID, string mediaID)
+        public static void AppendStat(String message, StatType type, int scheduleID, int layoutID, string mediaID)
         {
-            if (cat != Catagory.Stat) return;
             if (!Properties.Settings.Default.statsEnabled) return;
 
             try
             {
                 XmlTextWriter xw = new XmlTextWriter(File.Open(Application.UserAppDataPath + "//" + Properties.Settings.Default.logLocation, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
 
-                xw.WriteStartElement(cat.ToString());
+                xw.WriteStartElement("stat");
                 
                 xw.WriteElementString("date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
                 xw.WriteElementString("message", message);
@@ -192,6 +180,5 @@ namespace XiboClient
         int currentFile;
     }
 
-    public enum Catagory { Audit, Error, Stat }
     public enum StatType { LayoutStart, LayoutEnd, MediaStart, MediaEnd };
 }

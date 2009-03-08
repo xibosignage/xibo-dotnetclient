@@ -102,6 +102,9 @@ namespace XiboClient
                 System.Diagnostics.Debug.WriteLine(ex.Message);
                 isExpired = true;
             }
+
+            // Flush the TraceListener
+            System.Diagnostics.Trace.Flush();
         }
 
 
@@ -110,7 +113,7 @@ namespace XiboClient
         /// </summary>
         private void PrepareLayout(string layoutPath)
         {
-            XmlLog.AppendStat("Layout Started", Catagory.Stat, StatType.LayoutStart, scheduleId, layoutId, "0");
+            XmlLog.AppendStat("Layout Started", StatType.LayoutStart, scheduleId, layoutId, "0");
 
             // Get this layouts XML
             XmlDocument layoutXml = new XmlDocument();
@@ -133,7 +136,7 @@ namespace XiboClient
                 catch
                 {
                     //Log
-                    XmlLog.Append("Showing Splash Screen", Catagory.Audit);
+                    System.Diagnostics.Debug.WriteLine("Showing Splash Screen");
                 }
                 return;
             }
@@ -167,9 +170,9 @@ namespace XiboClient
                     }
                     catch
                     {
-                        //Log
+                        // Log
                         System.Diagnostics.Debug.WriteLine(ex.Message);
-                        XmlLog.Append(String.Format("Could not find the layout file {0}", layoutPath), Catagory.Error);
+                        System.Diagnostics.Trace.WriteLine("Could not find the layout file {0}", layoutPath);
                     }
                     return;
                 }

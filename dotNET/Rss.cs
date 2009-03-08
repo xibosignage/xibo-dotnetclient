@@ -70,8 +70,7 @@ namespace XiboClient
             }
             catch (Exception e)
             {
-                System.Diagnostics.Debug.WriteLine(e.Message);
-                XmlLog.Append(e.Message, Catagory.Error, options.scheduleId, options.layoutId, options.mediaid);
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", e.Message, options.scheduleId, options.layoutId, options.mediaid));
             }
 
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
@@ -93,8 +92,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-                XmlLog.Append(ex.Message, Catagory.Error, scheduleId, layoutId, mediaid);
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, scheduleId, layoutId, mediaid));
             }
         }
 
@@ -102,9 +100,7 @@ namespace XiboClient
         {
             if (e.Error != null)
             {
-                System.Diagnostics.Debug.WriteLine(e.Error.Message);
-                
-                XmlLog.Append(e.Error.Message, Catagory.Error, scheduleId, layoutId, mediaid);
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", e.Error, scheduleId, layoutId, mediaid));
 
                 return;
             }
@@ -128,8 +124,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-                XmlLog.Append(ex.Message, Catagory.Error, scheduleId, layoutId, mediaid);
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, scheduleId, layoutId, mediaid));
             }
 
             try
@@ -235,9 +230,8 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-                XmlLog.Append(ex.Message, Catagory.Error, scheduleId, layoutId, mediaid);
-
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, scheduleId, layoutId, mediaid));
+                
                 rssReader.Dispose();
                 htmlDoc.Body.InnerHtml = "<h1>Can not display this feed.</h1>";
 

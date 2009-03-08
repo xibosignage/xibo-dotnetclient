@@ -36,8 +36,6 @@ namespace XiboClient
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.checkBoxPowerPoint = new System.Windows.Forms.CheckBox();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.checkBoxAudit = new System.Windows.Forms.CheckBox();
             this.checkBoxStats = new System.Windows.Forms.CheckBox();
             this.buttonReset = new System.Windows.Forms.Button();
             this.buttonLibrary = new System.Windows.Forms.Button();
@@ -75,7 +73,6 @@ namespace XiboClient
             this.xmds1 = new XiboClient.xmds.xmds();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
-            this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownCollect)).BeginInit();
             this.tabPage3.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -113,7 +110,7 @@ namespace XiboClient
             // buttonSaveSettings
             // 
             this.buttonSaveSettings.Enabled = false;
-            this.buttonSaveSettings.Location = new System.Drawing.Point(184, 261);
+            this.buttonSaveSettings.Location = new System.Drawing.Point(185, 233);
             this.buttonSaveSettings.Name = "buttonSaveSettings";
             this.buttonSaveSettings.Size = new System.Drawing.Size(75, 23);
             this.buttonSaveSettings.TabIndex = 6;
@@ -134,8 +131,8 @@ namespace XiboClient
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.checkBoxStats);
             this.tabPage1.Controls.Add(this.checkBoxPowerPoint);
-            this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Controls.Add(this.buttonReset);
             this.tabPage1.Controls.Add(this.buttonLibrary);
             this.tabPage1.Controls.Add(this.numericUpDownCollect);
@@ -160,7 +157,7 @@ namespace XiboClient
             this.checkBoxPowerPoint.AutoSize = true;
             this.checkBoxPowerPoint.Checked = global::XiboClient.Properties.Settings.Default.powerpointEnabled;
             this.checkBoxPowerPoint.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "powerpointEnabled", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxPowerPoint.Location = new System.Drawing.Point(184, 118);
+            this.checkBoxPowerPoint.Location = new System.Drawing.Point(184, 147);
             this.checkBoxPowerPoint.Name = "checkBoxPowerPoint";
             this.checkBoxPowerPoint.Size = new System.Drawing.Size(116, 17);
             this.checkBoxPowerPoint.TabIndex = 12;
@@ -168,37 +165,13 @@ namespace XiboClient
             this.checkBoxPowerPoint.UseVisualStyleBackColor = true;
             this.checkBoxPowerPoint.CheckedChanged += new System.EventHandler(this.checkBoxPowerPoint_CheckedChanged);
             // 
-            // groupBox1
-            // 
-            this.groupBox1.Controls.Add(this.checkBoxAudit);
-            this.groupBox1.Controls.Add(this.checkBoxStats);
-            this.groupBox1.Location = new System.Drawing.Point(184, 141);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(210, 100);
-            this.groupBox1.TabIndex = 13;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Logging";
-            // 
-            // checkBoxAudit
-            // 
-            this.checkBoxAudit.AutoSize = true;
-            this.checkBoxAudit.Checked = global::XiboClient.Properties.Settings.Default.auditEnabled;
-            this.checkBoxAudit.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "auditEnabled", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxAudit.Location = new System.Drawing.Point(7, 44);
-            this.checkBoxAudit.Name = "checkBoxAudit";
-            this.checkBoxAudit.Size = new System.Drawing.Size(100, 17);
-            this.checkBoxAudit.TabIndex = 1;
-            this.checkBoxAudit.Text = "Enable Auditing";
-            this.checkBoxAudit.UseVisualStyleBackColor = true;
-            this.checkBoxAudit.CheckedChanged += new System.EventHandler(this.checkBoxAudit_CheckedChanged);
-            // 
             // checkBoxStats
             // 
             this.checkBoxStats.AutoSize = true;
             this.checkBoxStats.Checked = global::XiboClient.Properties.Settings.Default.statsEnabled;
             this.checkBoxStats.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxStats.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "statsEnabled", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxStats.Location = new System.Drawing.Point(7, 20);
+            this.checkBoxStats.Location = new System.Drawing.Point(184, 182);
             this.checkBoxStats.Name = "checkBoxStats";
             this.checkBoxStats.Size = new System.Drawing.Size(104, 17);
             this.checkBoxStats.TabIndex = 0;
@@ -208,7 +181,7 @@ namespace XiboClient
             // 
             // buttonReset
             // 
-            this.buttonReset.Location = new System.Drawing.Point(265, 261);
+            this.buttonReset.Location = new System.Drawing.Point(266, 233);
             this.buttonReset.Name = "buttonReset";
             this.buttonReset.Size = new System.Drawing.Size(75, 23);
             this.buttonReset.TabIndex = 11;
@@ -252,7 +225,7 @@ namespace XiboClient
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(6, 92);
+            this.label5.Location = new System.Drawing.Point(6, 94);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(165, 13);
             this.label5.TabIndex = 8;
@@ -466,7 +439,7 @@ namespace XiboClient
             this.labelXmdsUrl.AutoSize = true;
             this.labelXmdsUrl.Location = new System.Drawing.Point(139, 10);
             this.labelXmdsUrl.Name = "labelXmdsUrl";
-            this.labelXmdsUrl.Size = new System.Drawing.Size(273, 13);
+            this.labelXmdsUrl.Size = new System.Drawing.Size(190, 13);
             this.labelXmdsUrl.TabIndex = 3;
             this.labelXmdsUrl.Text = global::XiboClient.Properties.Settings.Default.XiboClient_xmds_xmds;
             // 
@@ -528,6 +501,12 @@ namespace XiboClient
             this.onlineHelpToolStripMenuItem.Text = "Online Help";
             this.onlineHelpToolStripMenuItem.Click += new System.EventHandler(this.onlineHelpToolStripMenuItem_Click);
             // 
+            // xmds1
+            // 
+            this.xmds1.Credentials = null;
+            this.xmds1.Url = "http://localhost/Xibo/server/xmds.php";
+            this.xmds1.UseDefaultCredentials = false;
+            // 
             // OptionForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -542,8 +521,6 @@ namespace XiboClient
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownCollect)).EndInit();
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
@@ -590,8 +567,6 @@ namespace XiboClient
         private System.Windows.Forms.Button buttonReset;
         private System.Windows.Forms.ToolStripMenuItem onlineHelpToolStripMenuItem;
         private System.Windows.Forms.CheckBox checkBoxPowerPoint;
-        private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.CheckBox checkBoxAudit;
         private System.Windows.Forms.CheckBox checkBoxStats;
         private System.Windows.Forms.Button buttonDisplayAdmin;
         private System.Windows.Forms.TabPage tabPage3;

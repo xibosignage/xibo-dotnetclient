@@ -140,7 +140,7 @@ namespace XiboClient
             media.RenderMedia();
 
             // This media has started and is being replaced
-            XmlLog.AppendStat("Media Start", Catagory.Stat, StatType.MediaStart, options.scheduleId, options.layoutId, options.mediaid);
+            XmlLog.AppendStat("Media Start", StatType.MediaStart, options.scheduleId, options.layoutId, options.mediaid);
 
             //media.Opacity = 0F; // Completely Opaque
 
@@ -245,8 +245,7 @@ namespace XiboClient
                     else
                     {
                         options.duration = 60;
-                        XmlLog.Append("Duration is Empty, using a default of 60.", Catagory.Error);
-                        System.Diagnostics.Debug.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
+                        System.Diagnostics.Trace.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
                     }
 
                     // There will be some stuff on option nodes
@@ -290,9 +289,7 @@ namespace XiboClient
                 if (numAttempts > options.mediaNodes.Count)
                 {
                     // There are no valid nodes in this region, so just signify that the region is ending, and show nothing.
-                    System.Diagnostics.Debug.WriteLine("No Valid media nodes to display", "Region - SetNextMediaNode");
-
-                    XmlLog.Append("No valid media nodes to display - they are all Blacklisted", Catagory.Error);
+                    System.Diagnostics.Trace.WriteLine("No Valid media nodes to display", "Region - SetNextMediaNode");
                     
                     hasExpired = true;
                     return;
@@ -321,7 +318,7 @@ namespace XiboClient
                 }
 
                 // This media has expired and is being replaced
-                XmlLog.AppendStat("Media Expired", Catagory.Stat, StatType.MediaEnd, options.scheduleId, options.layoutId, options.mediaid);
+                XmlLog.AppendStat("Media Expired", StatType.MediaEnd, options.scheduleId, options.layoutId, options.mediaid);
             }
         }
 

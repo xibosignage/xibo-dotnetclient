@@ -136,7 +136,6 @@ namespace XiboClient
                 Properties.Settings.Default.collectInterval = numericUpDownCollect.Value;
                 Properties.Settings.Default.powerpointEnabled = checkBoxPowerPoint.Checked;
                 Properties.Settings.Default.statsEnabled = checkBoxStats.Checked;
-                Properties.Settings.Default.auditEnabled = checkBoxAudit.Checked;
                 Properties.Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
                 buttonSaveSettings.Enabled = false;
 

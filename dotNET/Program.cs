@@ -49,6 +49,9 @@ namespace XiboClient
             }
             
             Application.Run(formMain);
+
+            // Always flush at the end
+            System.Diagnostics.Trace.Flush();
         }
     }
 
