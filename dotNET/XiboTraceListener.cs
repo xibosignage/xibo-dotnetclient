@@ -53,7 +53,7 @@ namespace XiboClient
             TraceMessage traceMessage;
 
             traceMessage.category = category;
-            traceMessage.dateTime = DateTime.Now.ToString();
+            traceMessage.dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             traceMessage.message = message;
 
             traceMessages.Add(traceMessage);
