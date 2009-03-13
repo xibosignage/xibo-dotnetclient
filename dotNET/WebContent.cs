@@ -34,7 +34,6 @@ namespace XiboClient
         public WebContent(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
-            this.filePath   = options.uri;
             duration        = options.duration;
             scheduleId      = options.scheduleId;
             layoutId        = options.layoutId;
@@ -58,6 +57,17 @@ namespace XiboClient
             {
                 try
                 {
+                    // Try to make a URI out of the file path
+                    try
+                    {
+                        this.filePath = Uri.UnescapeDataString(options.uri);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine(ex.Message, "WebContent");
+                    }
+
+                    // Navigate
                     webBrowser.Navigate(this.filePath);
                 }
                 catch (Exception ex)

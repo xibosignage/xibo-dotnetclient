@@ -371,7 +371,7 @@ namespace XiboClient
                     currentFileList = files[currentFile];
                 }
 
-                System.Diagnostics.Debug.WriteLine(String.Format("Getting the file : {0}", currentFileList.path));
+                System.Diagnostics.Debug.WriteLine(String.Format("Getting the file : {0} chunk : {1}", currentFileList.path, currentFileList.chunkOffset.ToString()));
 
                 // Request the file
                 xmdsFile.GetFileAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, currentFileList.path, currentFileList.type, currentFileList.chunkOffset, currentFileList.chunkSize, Properties.Settings.Default.Version);

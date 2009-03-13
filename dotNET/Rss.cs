@@ -43,8 +43,19 @@ namespace XiboClient
                 throw new ArgumentNullException("Uri", "The Uri for the RSS feed can not be empty");
             }
 
+            // Try to make a URI out of the file path
+            try
+            {
+                this.filePath = Uri.UnescapeDataString(options.uri);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message, "Rss");
+
+                throw new ArgumentNullException("Uri", "The URI is invalid.");
+            }
+
             // we are going to display this in a web browser control.
-            this.filePath = options.uri;
             this.direction = options.direction;
             this.backgroundImage = options.backgroundImage;
             this.backgroundColor = options.backgroundColor;
