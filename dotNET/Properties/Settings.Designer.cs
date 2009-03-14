@@ -128,18 +128,6 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool auditEnabled {
-            get {
-                return ((bool)(this["auditEnabled"]));
-            }
-            set {
-                this["auditEnabled"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool statsEnabled {
             get {
@@ -221,7 +209,7 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2.0.18")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
         public string Version {
             get {
                 return ((string)(this["Version"]));

@@ -99,6 +99,10 @@ namespace XiboClient
             if (e.Error != null)
             {
                 textBoxResults.Text = e.Error.Message;
+
+                System.Diagnostics.Debug.WriteLine("Error returned from Call to XMDS Register Display.", "xmds1_RegisterDisplayCompleted");
+                System.Diagnostics.Debug.WriteLine(e.Error.Message, "xmds1_RegisterDisplayCompleted");
+                System.Diagnostics.Debug.WriteLine(e.Error.StackTrace, "xmds1_RegisterDisplayCompleted");
             }
             else
             {
@@ -132,7 +136,6 @@ namespace XiboClient
                 Properties.Settings.Default.collectInterval = numericUpDownCollect.Value;
                 Properties.Settings.Default.powerpointEnabled = checkBoxPowerPoint.Checked;
                 Properties.Settings.Default.statsEnabled = checkBoxStats.Checked;
-                Properties.Settings.Default.auditEnabled = checkBoxAudit.Checked;
                 Properties.Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
                 buttonSaveSettings.Enabled = false;
 

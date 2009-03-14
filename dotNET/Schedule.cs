@@ -146,7 +146,6 @@ namespace XiboClient
         void fileCollector_CollectionComplete()
         {
             System.Diagnostics.Debug.WriteLine("File Collector Complete - getting Schedule.");
-            XmlLog.Append("File Collection Complete, Getting Schedule", Catagory.Audit);
             
             // All the files have been collected, so we want to update the schedule (do we want to send off a MD5 of the schedule?)
             xmds2.ScheduleAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, Properties.Settings.Default.Version);
@@ -156,6 +155,12 @@ namespace XiboClient
         {
             System.Diagnostics.Debug.WriteLine("Schedule Retrival Complete.");
 
+            // Send the XML log here if necessary
+            XmlLog log = new XmlLog();
+
+            log.PrepareAndSend();
+
+            // Set XMDS to no longer be processing
             xmdsProcessing = false;
 
             // Expect new schedule XML
@@ -163,8 +168,6 @@ namespace XiboClient
             {
                 //There was an error - what do we do?
                 System.Diagnostics.Debug.WriteLine(e.Error.Message);
-                
-                XmlLog.Append(e.Error.Message, Catagory.Error);
             }
             else
             {
@@ -198,7 +201,7 @@ namespace XiboClient
 
                 sw.Close();
 
-                XmlLog.Append("New Schedule Recieved", Catagory.Audit);
+                System.Diagnostics.Debug.WriteLine("New Schedule Recieved", "xmds_ScheduleCompleted");
 
                 // The schedule has been updated with new information.
                 // We could improve the logic here, perhaps generating a new layoutSchedule collection and comparing the two before we destroy this one..
@@ -226,8 +229,7 @@ namespace XiboClient
             // Ticks every "collectInterval"
             if (xmdsProcessing)
             {
-                System.Diagnostics.Debug.WriteLine("Collection Timer Ticked, but previous request still active");
-                XmlLog.Append("xmdsTimer: Ticked but already processing", Catagory.Audit);
+                System.Diagnostics.Debug.WriteLine("Collection Timer Ticked, but previous request still active", "XmdsTicker");
                 return;
             }
             else
@@ -267,7 +269,7 @@ namespace XiboClient
 
             System.Diagnostics.Debug.WriteLine(String.Format("Next layout: {0}", layoutSchedule[currentLayout].layoutFile), "Schedule - Next Layout");
 
-            XmlLog.AppendStat("Layout Finished", Catagory.Stat, StatType.LayoutEnd, layoutSchedule[previousLayout].scheduleid, layoutSchedule[previousLayout].id, "0");
+            XmlLog.AppendStat("Layout Finished", StatType.LayoutEnd, layoutSchedule[previousLayout].scheduleid, layoutSchedule[previousLayout].id, "0");
 
             forceChange = false;
 

@@ -34,7 +34,6 @@ namespace XiboClient
         public WebContent(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
-            this.filePath   = options.uri;
             duration        = options.duration;
             scheduleId      = options.scheduleId;
             layoutId        = options.layoutId;
@@ -52,21 +51,32 @@ namespace XiboClient
             if (!Properties.Settings.Default.powerpointEnabled && options.type == "powerpoint")
             {
                 webBrowser.DocumentText = "<html><body><h1>Powerpoint not enabled on this display</h1></body></html>";
-                XmlLog.Append("Powerpoint is not enabled on this display", Catagory.Error, scheduleId, layoutId, mediaId);
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Powerpoint is not enabled on this display", scheduleId, layoutId, mediaId));
             }
             else
             {
                 try
                 {
+                    // Try to make a URI out of the file path
+                    try
+                    {
+                        this.filePath = Uri.UnescapeDataString(options.uri);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine(ex.Message, "WebContent");
+                    }
+
+                    // Navigate
                     webBrowser.Navigate(this.filePath);
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine(ex.Message);
-                    XmlLog.Append(ex.Message, Catagory.Error, scheduleId, layoutId, mediaId);
+                    System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, scheduleId, layoutId, mediaId));
 
                     webBrowser.DocumentText = "<html><body><h1>Unable to show this web location - invalid address.</h1></body></html>";
-                    XmlLog.Append("Unable to show the powerpoint, cannot be located", Catagory.Error, scheduleId, layoutId, mediaId);
+
+                    System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Unable to show the powerpoint, cannot be located", scheduleId, layoutId, mediaId));
                 }
             }
             

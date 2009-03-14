@@ -34,18 +34,27 @@ namespace XiboClient
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            System.Diagnostics.Trace.Listeners.Add(new XiboTraceListener());
+            System.Diagnostics.Trace.AutoFlush = true;
+
             Form formMain;
 
             if (arg.GetLength(0) > 0)
             {
+                System.Diagnostics.Trace.WriteLine("Options Started", "Main");
                 formMain = new OptionForm(); 
             }
             else
             {
+                System.Diagnostics.Trace.WriteLine("Client Started", "Main");
                 formMain = new MainForm();
             }
             
             Application.Run(formMain);
+
+            // Always flush at the end
+            System.Diagnostics.Trace.WriteLine("Application Finished", "Main");
+            System.Diagnostics.Trace.Flush();
         }
     }
 

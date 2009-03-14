@@ -210,7 +210,7 @@ namespace XiboClient
                 // Log it
                 System.Diagnostics.Debug.WriteLine(e.Error.Message, "WS Error");
 
-                XmlLog.Append(String.Format("Error From WebService Get File. File=[{1}], Error=[{0}], Try No [{2}]", e.Error.Message, currentFileList.path, currentFileList.retrys), Catagory.Error);
+                System.Diagnostics.Trace.WriteLine(String.Format("Error From WebService Get File. File=[{1}], Error=[{0}], Try No [{2}]", e.Error.Message, currentFileList.path, currentFileList.retrys));
 
                 // Retry?
                 if (currentFileList.retrys < 5)
@@ -271,7 +271,7 @@ namespace XiboClient
                     // Fire a layout complete event
                     LayoutFileChanged(currentFileList.path + ".xlf");
 
-                    XmlLog.Append(string.Format("File downloaded: {0}", currentFileList.path), Catagory.Stat);
+                    System.Diagnostics.Trace.WriteLine(String.Format("File downloaded: {0}", currentFileList.path), "xmdsFile_GetFileCompleted");
 
                     currentFile++;
                 }
@@ -322,7 +322,7 @@ namespace XiboClient
                             //Reset the chunk offset (otherwise we will try to get this file again - but from the beginning (no so good)
                             currentFileList.chunkOffset = 0;
 
-                            XmlLog.Append(String.Format("Error getting file {0}, HASH failed. Starting again", currentFileList.path), Catagory.Error);
+                            System.Diagnostics.Trace.WriteLine(String.Format("Error getting file {0}, HASH failed. Starting again", currentFileList.path));
                         }
                         else
                         {
@@ -332,7 +332,7 @@ namespace XiboClient
                             // Fire the File Complete event
                             MediaFileChanged(currentFileList.path);
 
-                            XmlLog.Append(string.Format("File downloaded: {0}", currentFileList.path), Catagory.Audit);
+                            System.Diagnostics.Debug.WriteLine(string.Format("File downloaded: {0}", currentFileList.path));
 
                             // All the file has been recieved. Move on to the next file.
                             currentFile++;
@@ -354,7 +354,7 @@ namespace XiboClient
         {
             if (currentFile > (files.Count - 1))
             {
-                XmlLog.Append(String.Format("Finished Recieving {0} files", files.Count), Catagory.Audit);
+                System.Diagnostics.Debug.WriteLine(String.Format("Finished Recieving {0} files", files.Count));
 
                 // Clean up
                 files.Clear();
@@ -371,7 +371,7 @@ namespace XiboClient
                     currentFileList = files[currentFile];
                 }
 
-                XmlLog.Append(String.Format("Getting the file : {0}", currentFileList.path), Catagory.Audit);
+                System.Diagnostics.Debug.WriteLine(String.Format("Getting the file : {0} chunk : {1}", currentFileList.path, currentFileList.chunkOffset.ToString()));
 
                 // Request the file
                 xmdsFile.GetFileAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, currentFileList.path, currentFileList.type, currentFileList.chunkOffset, currentFileList.chunkSize, Properties.Settings.Default.Version);

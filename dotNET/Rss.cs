@@ -43,8 +43,19 @@ namespace XiboClient
                 throw new ArgumentNullException("Uri", "The Uri for the RSS feed can not be empty");
             }
 
+            // Try to make a URI out of the file path
+            try
+            {
+                this.filePath = Uri.UnescapeDataString(options.uri);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message, "Rss");
+
+                throw new ArgumentNullException("Uri", "The URI is invalid.");
+            }
+
             // we are going to display this in a web browser control.
-            this.filePath = options.uri;
             this.direction = options.direction;
             this.backgroundImage = options.backgroundImage;
             this.backgroundColor = options.backgroundColor;
@@ -70,8 +81,7 @@ namespace XiboClient
             }
             catch (Exception e)
             {
-                System.Diagnostics.Debug.WriteLine(e.Message);
-                XmlLog.Append(e.Message, Catagory.Error, options.scheduleId, options.layoutId, options.mediaid);
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", e.Message, options.scheduleId, options.layoutId, options.mediaid));
             }
 
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
@@ -93,8 +103,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-                XmlLog.Append(ex.Message, Catagory.Error, scheduleId, layoutId, mediaid);
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, scheduleId, layoutId, mediaid));
             }
         }
 
@@ -102,9 +111,7 @@ namespace XiboClient
         {
             if (e.Error != null)
             {
-                System.Diagnostics.Debug.WriteLine(e.Error.Message);
-                
-                XmlLog.Append(e.Error.Message, Catagory.Error, scheduleId, layoutId, mediaid);
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", e.Error, scheduleId, layoutId, mediaid));
 
                 return;
             }
@@ -128,8 +135,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-                XmlLog.Append(ex.Message, Catagory.Error, scheduleId, layoutId, mediaid);
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, scheduleId, layoutId, mediaid));
             }
 
             try
@@ -235,9 +241,8 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-                XmlLog.Append(ex.Message, Catagory.Error, scheduleId, layoutId, mediaid);
-
+                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, scheduleId, layoutId, mediaid));
+                
                 rssReader.Dispose();
                 htmlDoc.Body.InnerHtml = "<h1>Can not display this feed.</h1>";
 

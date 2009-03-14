@@ -56,7 +56,7 @@ namespace XiboClient
             int mediaId;
             if (!int.TryParse(id, out mediaId))
             {
-                XmlLog.Append(String.Format("Currently can only append Integer media types. Id {0}", id), Catagory.Error);
+                System.Diagnostics.Trace.WriteLine(String.Format("Currently can only append Integer media types. Id {0}", id), "BlackList - Add");
             }
 
             // Send to the webservice
@@ -73,15 +73,11 @@ namespace XiboClient
         {
             if (e.Error != null)
             {
-                System.Diagnostics.Debug.WriteLine("Error sending blacklist", "BlackList - BlackListCompleted");
-
-                XmlLog.Append("Black list failed to send", Catagory.Error);
+                System.Diagnostics.Trace.WriteLine("Error sending blacklist", "BlackList - BlackListCompleted");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("Blacklist sending complete", "BlackList - BlackListCompleted");
-
-                XmlLog.Append("Black List Send Complete", Catagory.Audit);
+                System.Diagnostics.Trace.WriteLine("Blacklist sending complete", "BlackList - BlackListCompleted");
             }
 
             return;
@@ -120,7 +116,7 @@ namespace XiboClient
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.Message, "Blacklist - Add");
-                XmlLog.Append(String.Format("Cant add {0} to the blacklist", id), Catagory.Error);
+                System.Diagnostics.Trace.WriteLine(String.Format("Cant add {0} to the blacklist", id));
             }
 
             return;
@@ -137,10 +133,8 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Cannot truncate the BlackList", "Blacklist - Truncate");
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-
-                XmlLog.Append(String.Format("Cannot truncate BlackList because: {0}", ex.Message), Catagory.Error);
+                System.Diagnostics.Trace.WriteLine("Cannot truncate the BlackList", "Blacklist - Truncate");
+                System.Diagnostics.Trace.WriteLine(ex.Message);
             }
         }
 
