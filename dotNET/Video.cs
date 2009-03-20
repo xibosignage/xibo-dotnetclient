@@ -66,11 +66,21 @@ namespace XiboClient
 
         protected override void timer_Tick(object sender, EventArgs e)
         {
-            if (duration == 0 && videoPlayer.FinishedPlaying)
+            if (duration == 0)
             {
-                // Raise the expired
+                   // Has the video finished playing
+                if (videoPlayer.FinishedPlaying)
+                {
+                    // Raise the expired tick which will clear this media
+                    base.timer_Tick(sender, e);
+                }
+            }
+            else
+            {
+                // Our user defined timer duration has expired - so raise the base timer tick which will clear this media
                 base.timer_Tick(sender, e);
             }
+
             return;
         }
 
