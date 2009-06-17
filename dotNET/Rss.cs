@@ -64,6 +64,10 @@ namespace XiboClient
             scheduleId = options.scheduleId;
             layoutId = options.layoutId;
 
+            // Update interval and scrolling speed
+            _updateInterval = options.updateInterval;
+            _scrollSpeed = options.scrollSpeed;
+
             // Set up the backgrounds
             backgroundTop = options.backgroundTop + "px";
             backgroundLeft = options.backgroundLeft + "px";
@@ -180,16 +184,23 @@ namespace XiboClient
             }
             else
             {
-                // It exists - therefore we want to get the last time it was updated
-                DateTime lastWriteDate = System.IO.File.GetLastWriteTime(rssFilePath);
-
-                if (DateTime.Now.CompareTo(lastWriteDate.AddHours(6.0)) > 0)
+                if (_updateInterval == 0)
                 {
                     refreshLocalRss();
                 }
                 else
                 {
-                    rssReady = true;
+                    // It exists - therefore we want to get the last time it was updated
+                    DateTime lastWriteDate = System.IO.File.GetLastWriteTime(rssFilePath);
+
+                    if (DateTime.Now.CompareTo(lastWriteDate.AddHours(_updateInterval * 1.0 / 60.0)) > 0)
+                    {
+                        refreshLocalRss();
+                    }
+                    else
+                    {
+                        rssReady = true;
+                    }
                 }
             }
 
@@ -459,6 +470,8 @@ namespace XiboClient
         private WebBrowser webBrowser;
         private string copyrightNotice;
         private string mediaid;
+        private int _updateInterval;
+        private int _scrollSpeed;
 
         private string rssFilePath;
 
