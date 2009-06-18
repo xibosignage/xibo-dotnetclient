@@ -69,6 +69,7 @@ namespace XiboClient
             xmds2.RequiredFilesCompleted += new XiboClient.xmds.RequiredFilesCompletedEventHandler(xmds2_RequiredFilesCompleted);
             xmds2.ScheduleCompleted += new XiboClient.xmds.ScheduleCompletedEventHandler(xmds2_ScheduleCompleted);
 
+            System.Diagnostics.Trace.WriteLine(String.Format("Collection Interval: {0}", Properties.Settings.Default.collectInterval), "Schedule - InitializeComponents");
             //
             // The Timer for the Service call
             //

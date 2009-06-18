@@ -68,6 +68,8 @@ namespace XiboClient
             _updateInterval = options.updateInterval;
             _scrollSpeed = options.scrollSpeed;
 
+            System.Diagnostics.Trace.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
+
             // Set up the backgrounds
             backgroundTop = options.backgroundTop + "px";
             backgroundLeft = options.backgroundLeft + "px";
@@ -349,7 +351,7 @@ namespace XiboClient
                 // Call the JavaScript on the page
                 Object[] objArray = new Object[2];
                 objArray[0] = direction;
-                objArray[1] = 30;
+                objArray[1] = _scrollSpeed;
 
                 htmlDoc.InvokeScript("init", objArray);
             }
