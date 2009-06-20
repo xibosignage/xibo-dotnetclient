@@ -55,7 +55,7 @@ namespace XiboClient
 
             try
             {
-                webBrowser.DocumentText = String.Format("<html><head><script type='text/javascript'>{0}</script><style type='text/css'>p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{1}em; }}</style></head><body></body></html>", Properties.Resources.textRender, options.scaleFactor.ToString());
+                webBrowser.DocumentText = String.Format("<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8' /><script type='text/javascript'>{0}</script><style type='text/css'>p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{1}em; }}</style></head><body></body></html>", Properties.Resources.textRender, options.scaleFactor.ToString());
             }
             catch (Exception e)
             {
