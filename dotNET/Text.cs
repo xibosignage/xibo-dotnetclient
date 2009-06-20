@@ -59,7 +59,8 @@ namespace XiboClient
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message);
+                System.Diagnostics.Trace.WriteLine(e.Message);
+                return;
             }
 
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
