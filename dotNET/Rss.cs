@@ -138,7 +138,7 @@ namespace XiboClient
                 System.IO.StreamReader sr = new System.IO.StreamReader(data, wc.Encoding);
                 rssContents = sr.ReadToEnd();
 
-                StreamWriter sw = new StreamWriter(File.Open(rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                StreamWriter sw = new StreamWriter(File.Open(rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), wc.Encoding);
 
                 System.Diagnostics.Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
                 

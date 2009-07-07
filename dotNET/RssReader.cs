@@ -85,19 +85,14 @@ namespace XiboClient
                 throw new ArgumentException("You must provide a feed URL");
             }
 
-            //start the parsing process
-            XmlReader reader = XmlReader.Create(Url);
-
             XmlDocument xmlDoc = new XmlDocument();
-            xmlDoc.Load(reader);
+            xmlDoc.Load(Url);
 
             //parse the items of the feed
             ParseDocElements(xmlDoc.SelectSingleNode("//channel"), "title", ref feedTitle);
             ParseDocElements(xmlDoc.SelectSingleNode("//channel"), "description", ref feedDescription);
 
             ParseRssItems(xmlDoc);
-
-            reader.Close();
 
             //return the feed items
             return feedItems;
