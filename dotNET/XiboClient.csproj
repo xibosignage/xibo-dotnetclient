@@ -141,9 +141,11 @@
     <Compile Include="RssReader.cs" />
     <Compile Include="Schedule.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="StatLog.cs" />
     <Compile Include="Text.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="LogMessage.cs" />
     <Compile Include="Video.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -163,7 +165,6 @@
     </Compile>
     <Compile Include="WindowAnimator.cs" />
     <Compile Include="XiboTraceListener.cs" />
-    <Compile Include="XmlLog.cs" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="AxShockwaveFlashObjects">
@@ -226,10 +227,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://localhost/Xibo/server/xmds.php%3fwsdl">
+    <WebReferenceUrl Include="http://localhost/1.0.0/server/xmds.php%3fwsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>http://localhost/Xibo/server/xmds.php%3fwsdl</UpdateFromURL>
+      <UpdateFromURL>http://localhost/1.0.0/server/xmds.php%3fwsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>

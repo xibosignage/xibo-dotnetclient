@@ -61,57 +61,48 @@ namespace XiboClient
 
         private void FlushToFile()
         {
+            if (traceMessages.Count < 1) return;
+
             try
             {
-                XmlTextWriter xw = new XmlTextWriter(File.Open(logPath, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+                // Open the Text Writer
+                StreamWriter tw = new StreamWriter(File.Open(logPath, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+
+                String theMessage;
 
                 foreach (TraceMessage message in traceMessages)
                 {
-                    xw.WriteStartElement("trace");
-                    xw.WriteElementString("category", message.category);
-                    xw.WriteElementString("date", message.dateTime);
-                    xw.WriteElementString("message", message.message);
-                    xw.WriteEndElement();
+                    String traceMsg = message.message.ToString();
+
+                    theMessage = String.Format("<trace date=\"{0}\" category=\"{1}\">{2}</trace>", message.dateTime, message.category, traceMsg);
+                    tw.WriteLine(theMessage);
                 }
 
-                xw.Close();
+                // Close the tw.
+                tw.Close();
+                tw.Dispose();
 
                 // Remove the messages we have just added
                 traceMessages.Clear();
             }
-            catch (Exception e)
+            catch
             {
                 // What can we do?
             }
-
-            // Test the size of the XML file
-            FileInfo fileInfo = new FileInfo(logPath);
-
-            // If its greater than a certain size - send it to the WebService
-            if (fileInfo.Length > 6000)
+            finally
             {
-                // Move the current log file to a ready file
-                try
-                {
-                    String logPathTemp = Application.UserAppDataPath + @"/" + String.Format("{0}.ready", DateTime.Now.ToFileTime().ToString());
-                    
-                    File.Move(logPath, logPathTemp);
-                }
-                catch (Exception ex)
-                {
-                   
-                }
+                traceMessages.Clear();
             }
         }
 
         public override void Write(string message)
         {
-            AddToCollection(message, "");
+            AddToCollection(message, "Audit");
         }
 
         public override void Write(object o)
         {
-            AddToCollection(o.ToString(), "");
+            AddToCollection(o.ToString(), "Audit");
         }
 
         public override void Write(string message, string category)

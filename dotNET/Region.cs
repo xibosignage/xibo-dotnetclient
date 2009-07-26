@@ -31,9 +31,24 @@ namespace XiboClient
     class Region : Panel
     {
         private BlackList blackList;
+        public delegate void DurationElapsedDelegate();
+        public event DurationElapsedDelegate DurationElapsedEvent;
 
-        public Region()
+        private Media media;
+        private RegionOptions options;
+        public bool hasExpired = false;
+        public bool layoutExpired = false;
+        private int currentSequence = -1;
+
+        // Stat objects
+        private StatLog _statLog;
+        private Stat _stat;
+
+        public Region(ref StatLog statLog)
         {
+            // Store the statLog
+            _statLog = statLog;
+
             //default options
             options.width = 1024;
             options.height = 768;
@@ -144,14 +159,16 @@ namespace XiboClient
             media.RenderMedia();
 
             // This media has started and is being replaced
-            XmlLog.AppendStat("Media Start", StatType.MediaStart, options.scheduleId, options.layoutId, options.mediaid);
-
-            //media.Opacity = 0F; // Completely Opaque
+            _stat = new Stat();
+            _stat.type = StatType.Media;
+            _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            _stat.scheduleID = options.scheduleId;
+            _stat.layoutID = options.layoutId;
+            _stat.mediaID = options.mediaid;
 
             this.Controls.Add(media);
 
             System.Diagnostics.Debug.WriteLine("Showing new media", "Region - Eval Options");
-            
         }
 
         /// <summary>
@@ -180,7 +197,7 @@ namespace XiboClient
                 return;
             }
 
-
+            // Move the sequence on
             currentSequence++;
 
             if (currentSequence >= options.mediaNodes.Count)
@@ -350,8 +367,11 @@ namespace XiboClient
                     System.Diagnostics.Debug.WriteLine(ex.Message);
                 }
 
-                // This media has expired and is being replaced
-                XmlLog.AppendStat("Media Expired", StatType.MediaEnd, options.scheduleId, options.layoutId, options.mediaid);
+                // Here we say that this media is expired
+                _stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                // Record this stat event in the statLog object
+                _statLog.RecordStat(_stat);
             }
         }
 
@@ -364,6 +384,29 @@ namespace XiboClient
 
             //make some decisions about what to do next
             EvalOptions();
+        }
+
+        /// <summary>
+        /// Clears the Region of anything that it shouldnt still have... 
+        /// </summary>
+        public void Clear()
+        {
+            try
+            {
+                // What happens if we are disposing this region but we have not yet completed the stat event?
+                if (String.IsNullOrEmpty(_stat.toDate))
+                {
+                    // Say that this media has ended
+                    _stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                    // Record this stat event in the statLog object
+                    _statLog.RecordStat(_stat);
+                }
+            }
+            catch
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("Region - Clear", "Error closing off stat record"), LogType.Error.ToString());
+            }
         }
 
         /// <summary>
@@ -393,16 +436,6 @@ namespace XiboClient
 
             base.Dispose(disposing);
         }
-
-        public delegate void DurationElapsedDelegate();
-        public event DurationElapsedDelegate DurationElapsedEvent;
-
-        private Media media;
-        private RegionOptions options;
-        public bool hasExpired = false;
-        public bool layoutExpired = false;
-        private int currentSequence = -1;
-
     }
 
     /// <summary>

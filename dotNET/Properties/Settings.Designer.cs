@@ -47,7 +47,7 @@ namespace XiboClient.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/Xibo/server/xmds.php")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/1.0.0/server/xmds.php")]
         public string XiboClient_xmds_xmds {
             get {
                 return ((string)(this["XiboClient_xmds_xmds"]));
@@ -213,6 +213,50 @@ namespace XiboClient.Properties {
         public string Version {
             get {
                 return ((string)(this["Version"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string hardwareKey {
+            get {
+                return ((string)(this["hardwareKey"]));
+            }
+            set {
+                this["hardwareKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int StatsFlushCount {
+            get {
+                return ((int)(this["StatsFlushCount"]));
+            }
+            set {
+                this["StatsFlushCount"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("stats.xml")]
+        public string StatsLogFile {
+            get {
+                return ((string)(this["StatsLogFile"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.DateTime XmdsLastConnection {
+            get {
+                return ((global::System.DateTime)(this["XmdsLastConnection"]));
+            }
+            set {
+                this["XmdsLastConnection"] = value;
             }
         }
     }

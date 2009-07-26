@@ -35,25 +35,25 @@ namespace XiboClient
             Application.SetCompatibleTextRenderingDefault(false);
 
             System.Diagnostics.Trace.Listeners.Add(new XiboTraceListener());
-            System.Diagnostics.Trace.AutoFlush = true;
+            System.Diagnostics.Trace.AutoFlush = false;
 
             Form formMain;
 
             if (arg.GetLength(0) > 0)
             {
-                System.Diagnostics.Trace.WriteLine("Options Started", "Main");
+                System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Options Started"), LogType.Info.ToString());
                 formMain = new OptionForm(); 
             }
             else
             {
-                System.Diagnostics.Trace.WriteLine("Client Started", "Main");
+                System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
                 formMain = new MainForm();
             }
             
             Application.Run(formMain);
 
             // Always flush at the end
-            System.Diagnostics.Trace.WriteLine("Application Finished", "Main");
+            System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
             System.Diagnostics.Trace.Flush();
         }
     }

@@ -34,9 +34,24 @@ namespace XiboClient
 {
     public partial class MainForm : Form
     {
+        private Schedule schedule;
+        private Collection<Region> regions;
+        private bool isExpired = false;
+        private int scheduleId;
+        private int layoutId;
+
+        double layoutWidth;
+        double layoutHeight;
+        double scaleFactor;
+
+        private StatLog _statLog;
+        private Stat _stat;
+
         public MainForm()
         {
             InitializeComponent();
+
+            _statLog = new StatLog();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -71,7 +86,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
+                System.Diagnostics.Debug.WriteLine(ex.Message, LogType.Error.ToString());
                 MessageBox.Show("Fatal Error initialising the application", "Fatal Error");
                 this.Close();
                 this.Dispose();
@@ -89,6 +104,15 @@ namespace XiboClient
             this.scheduleId = scheduleId;
             this.layoutId = layoutId;
 
+            if (_stat != null)
+            {
+                // Log the end of the currently running layout.
+                _stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                // Record this stat event in the statLog object
+                _statLog.RecordStat(_stat);
+            }
+
             try
             {
                 this.DestroyLayout();
@@ -102,9 +126,6 @@ namespace XiboClient
                 System.Diagnostics.Debug.WriteLine(ex.Message);
                 isExpired = true;
             }
-
-            // Flush the TraceListener
-            System.Diagnostics.Trace.Flush();
         }
 
 
@@ -113,7 +134,12 @@ namespace XiboClient
         /// </summary>
         private void PrepareLayout(string layoutPath)
         {
-            XmlLog.AppendStat("Layout Started", StatType.LayoutStart, scheduleId, layoutId, "0");
+            // Create a start record for this layout
+            _stat = new Stat();
+            _stat.type = StatType.Layout;
+            _stat.scheduleID = scheduleId;
+            _stat.layoutID = layoutId;
+            _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
             // Get this layouts XML
             XmlDocument layoutXml = new XmlDocument();
@@ -213,20 +239,6 @@ namespace XiboClient
                 leftOverY = 0;
             }
 
-            // Are we licensed?
-            if (Properties.Settings.Default.licensed == 0)
-            {
-                // Show a label indicating this fact
-                notLic = new Label();
-                notLic.Location = new Point(0, 0);
-                notLic.Size = new System.Drawing.Size(500, 200);
-                notLic.Text = "This Display is not Licensed.";
-                notLic.BackColor = Color.WhiteSmoke;
-                this.Controls.Add(notLic);
-                notLic.BringToFront();
-                notLic.Show();
-            }
-
             // New region and region options objects
             regions = new Collection<Region>();
             RegionOptions options = new RegionOptions();
@@ -305,7 +317,7 @@ namespace XiboClient
                 // All the media nodes for this region / layout combination
                 options.mediaNodes = region.ChildNodes;
 
-                Region temp = new Region();
+                Region temp = new Region(ref _statLog);
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(temp_DurationElapsedEvent);
 
                 System.Diagnostics.Debug.WriteLine("Created new region", "MainForm - Prepare Layout");
@@ -368,6 +380,8 @@ namespace XiboClient
 
             foreach (Region region in regions)
             {
+                region.Clear();
+
                 this.Controls.Remove(region);
 
                 try
@@ -384,27 +398,21 @@ namespace XiboClient
 
             regions.Clear();
             regions = null;
-
-            this.Controls.Remove(notLic);
-            
-            // Want a check for powerpoint instances left open by this user
-            /*foreach (System.Diagnostics.Process proc in System.Diagnostics.Process.GetProcessesByName("POWERPNT"))
-            {
-                System.Diagnostics.Debug.WriteLine("Killing leftover Powerpoint process.", "MainForm - DestoryLayout");
-                // Close them (End Process)
-                proc.Kill();
-            }*/
         }
 
-        private Schedule schedule;
-        private Collection<Region> regions;
-        private bool isExpired = false;
-        private Label notLic;
-        private int scheduleId;
-        private int layoutId;
-
-        double layoutWidth;
-        double layoutHeight;
-        double scaleFactor;
+        /// <summary>
+        /// Force a flush of the stats log
+        /// </summary>
+        public void FlushStats()
+        {
+            try
+            {
+                _statLog.Flush();
+            }
+            catch
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm - FlushStats", "Unable to Flush Stats"), LogType.Error.ToString());
+            }
+        }
     }
 }

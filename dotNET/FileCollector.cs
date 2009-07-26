@@ -236,6 +236,9 @@ namespace XiboClient
             }
             else
             {
+                // Set the flag to indicate we have a connection to XMDS
+                Properties.Settings.Default.XmdsLastConnection = DateTime.Now;
+
                 // What file type were we getting
                 if (currentFileList.type == "layout")
                 {  

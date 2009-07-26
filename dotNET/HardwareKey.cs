@@ -31,7 +31,18 @@ namespace XiboClient
         {
             System.Diagnostics.Debug.WriteLine("[IN]", "HardwareKey");
 
-            hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+            // Get the key from the Settings
+            hardwareKey = Properties.Settings.Default.hardwareKey;
+
+            // Is the key empty?
+            if (hardwareKey == "")
+            {
+                // Calculate the Hardware key from the CPUID and Volume Serial
+                hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+
+                // Store the key
+                Properties.Settings.Default.hardwareKey = hardwareKey;
+            }
 
             System.Diagnostics.Debug.WriteLine("[OUT]", "HardwareKey");
         }
@@ -45,6 +56,19 @@ namespace XiboClient
             { 
                 return this.hardwareKey; 
             }
+        }
+
+        /// <summary>
+        /// Regenerates the hardware key
+        /// </summary>
+        public void Regenerate()
+        {
+            // Calculate the Hardware key from the CPUID and Volume Serial
+            hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+
+            // Store the key
+            Properties.Settings.Default.hardwareKey = hardwareKey;
+            Properties.Settings.Default.Save();
         }
 
         /// <summary>
