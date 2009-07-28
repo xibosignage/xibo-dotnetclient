@@ -20,9 +20,6 @@
     <Setting Name="licensed" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
     </Setting>
-    <Setting Name="collectInterval" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">900</Value>
-    </Setting>
     <Setting Name="logLocation" Type="System.String" Scope="Application">
       <Value Profile="(Default)">log.xml</Value>
     </Setting>
@@ -64,6 +61,9 @@
     </Setting>
     <Setting Name="XmdsLastConnection" Type="System.DateTime" Scope="User">
       <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="collectInterval" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">900</Value>
     </Setting>
   </Settings>
 </SettingsFile>

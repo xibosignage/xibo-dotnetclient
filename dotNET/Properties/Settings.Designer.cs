@@ -93,18 +93,6 @@ namespace XiboClient.Properties {
             }
         }
         
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("900")]
-        public decimal collectInterval {
-            get {
-                return ((decimal)(this["collectInterval"]));
-            }
-            set {
-                this["collectInterval"] = value;
-            }
-        }
-        
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("log.xml")]
@@ -257,6 +245,18 @@ namespace XiboClient.Properties {
             }
             set {
                 this["XmdsLastConnection"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("900")]
+        public decimal collectInterval {
+            get {
+                return ((decimal)(this["collectInterval"]));
+            }
+            set {
+                this["collectInterval"] = value;
             }
         }
     }

@@ -30,10 +30,23 @@ namespace XiboClient
     class StatLog
     {
         private Collection<Stat> _stats;
+        private xmds.xmds _xmds;
+        private String _lastSubmit;
+        private HardwareKey _hardwareKey;
+        private Boolean _xmdsProcessing;
 
         public StatLog()
         {
             _stats = new Collection<Stat>();
+            _xmds = new xmds.xmds();
+
+            // Register a listener for the XMDS stats
+            _xmds.SubmitStatsCompleted += new XiboClient.xmds.SubmitStatsCompletedEventHandler(_xmds_SubmitStatsCompleted);
+
+            // Get the key for this display
+            _hardwareKey = new HardwareKey();
+
+            _xmdsProcessing = false;
         }
 
         /// <summary>
@@ -130,12 +143,24 @@ namespace XiboClient
         /// </summary>
         public void Flush()
         {
+            System.Diagnostics.Debug.WriteLine(new LogMessage("Flush", String.Format("IN")), LogType.Audit.ToString());
+
             // Determine if there is anything to flush
-            if (_stats.Count < 1) return;
+            if (_stats.Count < 1 || _xmdsProcessing) return;
+
+            int threshold = ((int)Properties.Settings.Default.collectInterval * 5);
 
             // Determine where we want to log.
+            if (Properties.Settings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now)
+            {
+                FlushToFile();
+            }
+            else
+            {
+                FlushToXmds();
+            }
 
-            FlushToFile();
+            System.Diagnostics.Debug.WriteLine(new LogMessage("Flush", String.Format("OUT")), LogType.Audit.ToString());
         }
 
         /// <summary>
@@ -143,6 +168,8 @@ namespace XiboClient
         /// </summary>
         private void FlushToFile()
         {
+            System.Diagnostics.Debug.WriteLine(new LogMessage("FlushToFile", String.Format("IN")), LogType.Audit.ToString());
+
             // There is something to flush - we want to parse the collection adding to the TextWriter each time.
             try
             {
@@ -177,6 +204,8 @@ namespace XiboClient
                 // Always clear the stats. If the file open failed for some reason then we dont want to try again
                 _stats.Clear();
             }
+
+            System.Diagnostics.Debug.WriteLine(new LogMessage("FlushToFile", String.Format("OUT")), LogType.Audit.ToString());
         }
 
         /// <summary>
@@ -184,7 +213,92 @@ namespace XiboClient
         /// </summary>
         private void FlushToXmds()
         {
+            System.Diagnostics.Debug.WriteLine(new LogMessage("FlushToXmds", String.Format("IN")), LogType.Audit.ToString());
 
+            String stats;
+
+            stats = "";
+
+            // Load the Stats collection into a string
+            try
+            {
+                foreach (Stat stat in _stats)
+                {
+                    stats += stat.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("FlushToXmds", String.Format("Error converting stat to a string {0}", ex.Message)), LogType.Error.ToString());
+            }
+
+            // Store the stats as the last sent (so we have a record if it fails)
+            _lastSubmit = stats;
+
+            // Clear the stats collection
+            _stats.Clear();
+            
+            // Submit the string to XMDS
+            _xmdsProcessing = true;
+
+            _xmds.SubmitStatsAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey, _hardwareKey.Key, stats);
+
+            // Log out
+            System.Diagnostics.Debug.WriteLine(new LogMessage("FlushToXmds", String.Format("OUT")), LogType.Audit.ToString());
+        }
+
+        /// <summary>
+        /// Capture the XMDS call and see if it went well
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void _xmds_SubmitStatsCompleted(object sender, XiboClient.xmds.SubmitStatsCompletedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine(new LogMessage("_xmds_SubmitStatsCompleted", String.Format("IN")), LogType.Audit.ToString());
+
+            _xmdsProcessing = false;
+
+            // Test if we succeeded or not
+            if (e.Error != null)
+            {
+                // We had an error, log it.
+                System.Diagnostics.Trace.WriteLine(new LogMessage("_xmds_SubmitStatsCompleted", String.Format("Error during Submit to XMDS {0}", e.Error.Message)), LogType.Error.ToString());
+
+                // Dump the stats to a file instead
+                if (_lastSubmit != "")
+                {
+                    try
+                    {
+                        // Open the Text Writer
+                        StreamWriter tw = new StreamWriter(File.Open(Application.UserAppDataPath + "//" + Properties.Settings.Default.StatsLogFile, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+
+                        try
+                        {
+                            tw.Write(_lastSubmit);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log this exception
+                            System.Diagnostics.Trace.WriteLine(new LogMessage("_xmds_SubmitStatsCompleted", String.Format("Error writing stats to file with exception {0}", ex.Message)), LogType.Error.ToString());
+                        }
+                        finally
+                        {
+                            tw.Close();
+                            tw.Dispose();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log this exception
+                        System.Diagnostics.Trace.WriteLine(new LogMessage("_xmds_SubmitStatsCompleted", String.Format("Could not open the file with exception {0}", ex.Message)), LogType.Error.ToString());
+                    }
+                }
+            }
+
+            // Clear the last sumbit
+            _lastSubmit = "";
+
+            System.Diagnostics.Debug.WriteLine(new LogMessage("_xmds_SubmitStatsCompleted", String.Format("OUT")), LogType.Audit.ToString());
         }
     }
 
