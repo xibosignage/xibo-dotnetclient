@@ -65,7 +65,7 @@ namespace XiboClient
                     Directory.CreateDirectory(Properties.Settings.Default.LibraryPath + @"\backgrounds");
                 }
                 catch (Exception ex)
-                { System.Diagnostics.Debug.WriteLine(ex.Message); }
+                { System.Diagnostics.Trace.WriteLine(ex.Message); }
             }
 
             // Hide the cursor

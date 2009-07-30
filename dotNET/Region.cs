@@ -367,11 +367,18 @@ namespace XiboClient
                     System.Diagnostics.Debug.WriteLine(ex.Message);
                 }
 
-                // Here we say that this media is expired
-                _stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                try
+                {
+                    // Here we say that this media is expired
+                    _stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-                // Record this stat event in the statLog object
-                _statLog.RecordStat(_stat);
+                    // Record this stat event in the statLog object
+                    _statLog.RecordStat(_stat);
+                }
+                catch
+                {
+                    System.Diagnostics.Trace.WriteLine("No Stat record when one was expected", LogType.Error.ToString());
+                }
             }
         }
 

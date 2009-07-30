@@ -30,6 +30,9 @@ namespace XiboClient
 {
     class XiboTraceListener : TraceListener
     {
+        private Collection<TraceMessage> traceMessages;
+        private String logPath;
+
         public XiboTraceListener()
         {
             InitializeListener();
@@ -158,11 +161,9 @@ namespace XiboClient
 
         public override void Flush()
         {
+            //TODO: Flush to XMDS
             FlushToFile();
         }
-
-        private Collection<TraceMessage> traceMessages;
-        private String logPath;
     }
 
     [Serializable]
