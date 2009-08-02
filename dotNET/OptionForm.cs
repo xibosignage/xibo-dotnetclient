@@ -58,6 +58,9 @@ namespace XiboClient
             System.Diagnostics.Debug.WriteLine("Getting the Hardware Key", "OptionForm");
             hardwareKey = new HardwareKey();
 
+            // Regenerate the key
+            hardwareKey.Regenerate();
+
             System.Diagnostics.Debug.WriteLine("Getting the Library Path", "OptionForm");
             if (Properties.Settings.Default.LibraryPath == "DEFAULT")
             {
@@ -113,6 +116,8 @@ namespace XiboClient
         private void buttonRegister_Click(object sender, EventArgs e)
         {
             textBoxResults.Text = "Sending Request";
+
+            this.xmds1.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
 
             Properties.Settings.Default.displayName = textBoxDisplayName.Text;
             Properties.Settings.Default.Save();

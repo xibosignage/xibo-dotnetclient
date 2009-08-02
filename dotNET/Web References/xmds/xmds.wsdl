@@ -63,6 +63,24 @@
   <wsdl:message name="BlackListResponse">
     <wsdl:part name="success" type="xsd:boolean" />
   </wsdl:message>
+  <wsdl:message name="SubmitLogRequest">
+    <wsdl:part name="version" type="xsd:string" />
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="logXml" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="SubmitLogResponse">
+    <wsdl:part name="success" type="xsd:boolean" />
+  </wsdl:message>
+  <wsdl:message name="SubmitStatsRequest">
+    <wsdl:part name="version" type="xsd:string" />
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="statXml" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="SubmitStatsResponse">
+    <wsdl:part name="success" type="xsd:boolean" />
+  </wsdl:message>
   <wsdl:portType name="xmdsPortType">
     <wsdl:operation name="RegisterDisplay">
       <documentation>Registered the Display on the Xibo Network</documentation>
@@ -93,6 +111,16 @@
       <documentation>Set media to be blacklisted</documentation>
       <wsdl:input message="tns:BlackListRequest" />
       <wsdl:output message="tns:BlackListResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SubmitLog">
+      <documentation>Submit Logging from the Client</documentation>
+      <wsdl:input message="tns:SubmitLogRequest" />
+      <wsdl:output message="tns:SubmitLogResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SubmitStats">
+      <documentation>Submit Display statistics from the Client</documentation>
+      <wsdl:input message="tns:SubmitStatsRequest" />
+      <wsdl:output message="tns:SubmitStatsResponse" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="xmdsBinding" type="tns:xmdsPortType">
@@ -151,10 +179,28 @@
         <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
       </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="SubmitLog">
+      <soap:operation soapAction="urn:xmds#SubmitLog" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitStats">
+      <soap:operation soapAction="urn:xmds#SubmitLog" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
   </wsdl:binding>
   <wsdl:service name="xmds">
     <wsdl:port name="xmdsPort" binding="tns:xmdsBinding">
-      <soap:address location="http://localhost/Xibo/server/xmds.php" />
+      <soap:address location="http://localhost/1.0.0/server/xmds.php" />
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

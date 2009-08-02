@@ -27,30 +27,37 @@ namespace XiboClient
 {
     class ImagePosition : Media
     {
+        private string _filePath;
+        PictureBox _pictureBox;
+        
         public ImagePosition(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
-            this.filePath = options.uri;
+            _filePath = options.uri;
             
-            if (!System.IO.File.Exists(this.filePath))
+            if (!System.IO.File.Exists(_filePath))
             {
                 // Exit
-                this.loaded = false;
+                System.Diagnostics.Trace.WriteLine(new LogMessage("Image - Dispose", "Cannot Create image object. Invalid Filepath."), LogType.Error.ToString());
                 return;
             }
 
-            Bitmap img = new Bitmap(this.filePath);
- 
-            this.pictureBox = new PictureBox();
-            this.pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
-            this.pictureBox.Image = img;
-            this.pictureBox.Size = new Size(width, height);
-            this.pictureBox.Location = new Point(0, 0);
-            this.pictureBox.BorderStyle = BorderStyle.None;
-            this.pictureBox.BackColor = Color.Transparent;
-            this.loaded = true;
-
-            this.Controls.Add(this.pictureBox);
+            try
+            {
+                _pictureBox = new PictureBox();
+                _pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
+                _pictureBox.Image = new Bitmap(_filePath);
+                _pictureBox.Size = new Size(width, height);
+                _pictureBox.Location = new Point(0, 0);
+                _pictureBox.BorderStyle = BorderStyle.None;
+                _pictureBox.BackColor = Color.Transparent;
+                
+                this.Controls.Add(this._pictureBox);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("ImagePosition", String.Format("Cannot create Image Object with exception: {0}", ex.Message)), LogType.Error.ToString());
+            }
         }
 
         public override void RenderMedia()
@@ -60,16 +67,21 @@ namespace XiboClient
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && loaded)
+            if (disposing)
             {
-                this.pictureBox.Dispose();
+                try
+                {
+                    Controls.Remove(_pictureBox);
+
+                    this._pictureBox.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.WriteLine(new LogMessage("Image - Dispose", String.Format("Cannot dispose Image Object with exception: {0}", ex.Message)), LogType.Error.ToString());
+                }
             }
 
             base.Dispose(disposing);
         }
-
-        private string filePath;
-        private bool loaded;
-        PictureBox pictureBox;
     }
 }

@@ -9,7 +9,7 @@
       <Value Profile="(Default)">schedule.xml</Value>
     </Setting>
     <Setting Name="XiboClient_xmds_xmds" Type="(Web Service URL)" Scope="User">
-      <Value Profile="(Default)">http://localhost/Xibo/server/xmds.php</Value>
+      <Value Profile="(Default)">http://localhost/1.0.0/server/xmds.php</Value>
     </Setting>
     <Setting Name="ServerKey" Type="System.String" Scope="User">
       <Value Profile="(Default)">changetocustomerkey</Value>
@@ -19,9 +19,6 @@
     </Setting>
     <Setting Name="licensed" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
-    </Setting>
-    <Setting Name="collectInterval" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">900</Value>
     </Setting>
     <Setting Name="logLocation" Type="System.String" Scope="Application">
       <Value Profile="(Default)">log.xml</Value>
@@ -52,6 +49,21 @@
     </Setting>
     <Setting Name="Version" Type="System.String" Scope="Application">
       <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="hardwareKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="StatsFlushCount" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">50</Value>
+    </Setting>
+    <Setting Name="StatsLogFile" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">stats.xml</Value>
+    </Setting>
+    <Setting Name="XmdsLastConnection" Type="System.DateTime" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="collectInterval" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">900</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -95,24 +95,25 @@ namespace XiboClient
             if (e.Error != null)
             {
                 //There was an error - what do we do?
-                System.Diagnostics.Debug.WriteLine(e.Error.Message);
+                System.Diagnostics.Trace.WriteLine(e.Error.Message);
 
                 // Is it a "not licensed" error
                 if (e.Error.Message == "This display client is not licensed")
                 {
                     Properties.Settings.Default.licensed = 0;
-                    Properties.Settings.Default.Save();
                 }
 
                 xmdsProcessing = false;
             }
             else
             {
+                // Set the flag to indicate we have a connection to XMDS
+                Properties.Settings.Default.XmdsLastConnection = DateTime.Now;
+
                 // Firstly we know we are licensed if we get this far
                 if (Properties.Settings.Default.licensed == 0)
                 {
                     Properties.Settings.Default.licensed = 1;
-                    Properties.Settings.Default.Save();
                 }
 
                 try
@@ -156,11 +157,6 @@ namespace XiboClient
         {
             System.Diagnostics.Debug.WriteLine("Schedule Retrival Complete.");
 
-            // Send the XML log here if necessary
-            XmlLog log = new XmlLog();
-
-            log.PrepareAndSend();
-
             // Set XMDS to no longer be processing
             xmdsProcessing = false;
 
@@ -168,12 +164,15 @@ namespace XiboClient
             if (e.Error != null)
             {
                 //There was an error - what do we do?
-                System.Diagnostics.Debug.WriteLine(e.Error.Message);
+                System.Diagnostics.Trace.WriteLine(e.Error.Message);
             }
             else
             {
                 // Only update the schedule if its changed.
                 String md5CurrentSchedule = "";
+
+                // Set the flag to indicate we have a connection to XMDS
+                Properties.Settings.Default.XmdsLastConnection = DateTime.Now;
 
                 try
                 {
@@ -235,7 +234,7 @@ namespace XiboClient
             }
             else
             {
-                Application.DoEvents(); // Make sure everything that is cued to render does
+                Application.DoEvents(); // Make sure everything that is queued to render does
 
                 xmdsProcessing = true;
 
@@ -244,6 +243,9 @@ namespace XiboClient
                 // Fire off a get required files event - async
                 xmds2.RequiredFilesAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, Properties.Settings.Default.Version);
             }
+
+            // Flush the log
+            System.Diagnostics.Trace.Flush();
         }
 
         /// <summary>
@@ -269,8 +271,6 @@ namespace XiboClient
             }
 
             System.Diagnostics.Debug.WriteLine(String.Format("Next layout: {0}", layoutSchedule[currentLayout].layoutFile), "Schedule - Next Layout");
-
-            XmlLog.AppendStat("Layout Finished", StatType.LayoutEnd, layoutSchedule[previousLayout].scheduleid, layoutSchedule[previousLayout].id, "0");
 
             forceChange = false;
 
