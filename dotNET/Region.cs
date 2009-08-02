@@ -124,6 +124,10 @@ namespace XiboClient
                     media = new Rss(options);
                     break;
 
+                case "embedded":
+                    media = new Text(options);
+                    break;
+
                 default:
                     //do nothing
                     SetNextMediaNode();
@@ -200,6 +204,7 @@ namespace XiboClient
             options.scrollSpeed = 1;
             options.updateInterval = 6;
             options.uri = "";
+            options.direction = "none";
 
             // Get a media node
             bool validNode = false;
@@ -304,6 +309,10 @@ namespace XiboClient
                         else if (raw.Name == "template")
                         {
                             options.documentTemplate = raw.InnerText;
+                        }
+                        else if (raw.Name == "embedHtml")
+                        {
+                            options.text = raw.InnerText;
                         }
                     }
 
