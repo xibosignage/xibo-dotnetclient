@@ -217,7 +217,7 @@ namespace XiboClient
 
             String stats;
 
-            stats = "";
+            stats = "<log>";
 
             // Load the Stats collection into a string
             try
@@ -231,6 +231,8 @@ namespace XiboClient
             {
                 System.Diagnostics.Trace.WriteLine(new LogMessage("FlushToXmds", String.Format("Error converting stat to a string {0}", ex.Message)), LogType.Error.ToString());
             }
+
+            stats += "</log>";
 
             // Store the stats as the last sent (so we have a record if it fails)
             _lastSubmit = stats;

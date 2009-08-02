@@ -30,8 +30,12 @@ namespace XiboClient
 {
     class XiboTraceListener : TraceListener
     {
-        private Collection<TraceMessage> traceMessages;
-        private String logPath;
+        private Collection<TraceMessage> _traceMessages;
+        private String _logPath;
+        private Boolean _xmdsProcessing;
+        private xmds.xmds _xmds;
+        private String _lastSubmit;
+        private HardwareKey _hardwareKey;
 
         public XiboTraceListener()
         {
@@ -47,8 +51,17 @@ namespace XiboClient
         private void InitializeListener()
         {
             // Make a new collection of TraceMessages
-            traceMessages = new Collection<TraceMessage>();
-            logPath = Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation;
+            _traceMessages = new Collection<TraceMessage>();
+            _logPath = Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation;
+
+            _xmdsProcessing = false;
+            _xmds = new xmds.xmds();
+
+            // Register a listener for the XMDS stats
+            _xmds.SubmitLogCompleted += new XiboClient.xmds.SubmitLogCompletedEventHandler(_xmds_SubmitLogCompleted);
+
+            // Get the key for this display
+            _hardwareKey = new HardwareKey();
         }
 
         private void AddToCollection(string message, string category)
@@ -59,21 +72,21 @@ namespace XiboClient
             traceMessage.dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             traceMessage.message = message;
 
-            traceMessages.Add(traceMessage);
+            _traceMessages.Add(traceMessage);
         }
 
         private void FlushToFile()
         {
-            if (traceMessages.Count < 1) return;
+            if (_traceMessages.Count < 1) return;
 
             try
             {
                 // Open the Text Writer
-                StreamWriter tw = new StreamWriter(File.Open(logPath, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+                StreamWriter tw = new StreamWriter(File.Open(_logPath, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
 
                 String theMessage;
 
-                foreach (TraceMessage message in traceMessages)
+                foreach (TraceMessage message in _traceMessages)
                 {
                     String traceMsg = message.message.ToString();
 
@@ -86,7 +99,7 @@ namespace XiboClient
                 tw.Dispose();
 
                 // Remove the messages we have just added
-                traceMessages.Clear();
+                _traceMessages.Clear();
             }
             catch
             {
@@ -94,8 +107,88 @@ namespace XiboClient
             }
             finally
             {
-                traceMessages.Clear();
+                _traceMessages.Clear();
             }
+        }
+
+        /// <summary>
+        /// Flush the log to XMDS
+        /// </summary>
+        private void FlushToXmds()
+        {
+            String log;
+
+            log = "<log>";
+
+            // Load the Stats collection into a string
+            try
+            {
+                foreach (TraceMessage traceMessage in _traceMessages)
+                {
+                    String traceMsg = traceMessage.message.ToString();
+
+                    log += String.Format("<trace date=\"{0}\" category=\"{1}\">{2}</trace>", traceMessage.dateTime, traceMessage.category, traceMsg);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("FlushToXmds", String.Format("Error converting stat to a string {0}", ex.Message)), LogType.Error.ToString());
+            }
+
+            log += "</log>";
+
+            // Store the stats as the last sent (so we have a record if it fails)
+            _lastSubmit = log;
+
+            // Clear the stats collection
+            _traceMessages.Clear();
+
+            // Submit the string to XMDS
+            _xmdsProcessing = true;
+
+            _xmds.SubmitLogAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey, _hardwareKey.Key, log);
+        }
+
+        /// <summary>
+        /// Capture the XMDS call and see if it went well
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void _xmds_SubmitLogCompleted(object sender, XiboClient.xmds.SubmitLogCompletedEventArgs e)
+        {
+            _xmdsProcessing = false;
+
+            // Test if we succeeded or not
+            if (e.Error != null)
+            {
+                // We had an error, log it.
+                System.Diagnostics.Trace.WriteLine(new LogMessage("_xmds_SubmitLogCompleted", String.Format("Error during Submit to XMDS {0}", e.Error.Message)), LogType.Error.ToString());
+
+                // Dump the stats to a file instead
+                if (_lastSubmit != "")
+                {
+                    try
+                    {
+                        // Open the Text Writer
+                        StreamWriter tw = new StreamWriter(File.Open(_logPath, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+
+                        try
+                        {
+                            tw.Write(_lastSubmit);
+                        }
+                        catch {}
+                        finally
+                        {
+                            tw.Close();
+                            tw.Dispose();
+                        }
+                    }
+                    catch {}
+                }
+            }
+
+            // Clear the last sumbit
+            _lastSubmit = "";
         }
 
         public override void Write(string message)
@@ -156,13 +249,46 @@ namespace XiboClient
 
         public override void Close()
         {
-            FlushToFile();
+            // Determine if there is anything to flush
+            if (_traceMessages.Count < 1) return;
+
+            // As we are closing if XMDS is already busy just log to file.
+            if (_xmdsProcessing)
+            {
+                FlushToFile();
+            }
+            else
+            {
+                int threshold = ((int)Properties.Settings.Default.collectInterval * 5);
+
+                // Determine where we want to log.
+                if (Properties.Settings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now)
+                {
+                    FlushToFile();
+                }
+                else
+                {
+                    FlushToXmds();
+                }
+            }
         }
 
         public override void Flush()
         {
-            //TODO: Flush to XMDS
-            FlushToFile();
+            // Determine if there is anything to flush
+            if (_traceMessages.Count < 1 || _xmdsProcessing) return;
+
+            int threshold = ((int)Properties.Settings.Default.collectInterval * 5);
+
+            // Determine where we want to log.
+            if (Properties.Settings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now)
+            {
+                FlushToFile();
+            }
+            else
+            {
+                FlushToXmds();
+            }
         }
     }
 

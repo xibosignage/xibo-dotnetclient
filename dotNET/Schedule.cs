@@ -203,9 +203,6 @@ namespace XiboClient
 
                 System.Diagnostics.Debug.WriteLine("New Schedule Recieved", "xmds_ScheduleCompleted");
 
-                // Flush the log
-                System.Diagnostics.Trace.Flush();
-
                 // The schedule has been updated with new information.
                 // We could improve the logic here, perhaps generating a new layoutSchedule collection and comparing the two before we destroy this one..
                 layoutSchedule.Clear();
@@ -246,6 +243,9 @@ namespace XiboClient
                 // Fire off a get required files event - async
                 xmds2.RequiredFilesAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, Properties.Settings.Default.Version);
             }
+
+            // Flush the log
+            System.Diagnostics.Trace.Flush();
         }
 
         /// <summary>
