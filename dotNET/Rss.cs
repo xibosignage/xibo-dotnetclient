@@ -102,9 +102,10 @@ namespace XiboClient
             try
             {
                 wc = new System.Net.WebClient();
-                wc.Encoding = System.Text.Encoding.UTF8;
+                
+                //wc.Encoding = System.Text.Encoding.UTF8;
 
-                System.Diagnostics.Debug.WriteLine("Created at WebClient and set the Encoding to UTF8", "RSS - Refresh local RSS");
+                System.Diagnostics.Debug.WriteLine("Created at WebClient", "RSS - Refresh local RSS");
 
                 wc.OpenReadCompleted += new System.Net.OpenReadCompletedEventHandler(wc_OpenReadCompleted);
                 
@@ -119,6 +120,7 @@ namespace XiboClient
         void wc_OpenReadCompleted(object sender, System.Net.OpenReadCompletedEventArgs e)
         {
             String rssContents;
+            System.Net.WebClient wc = (System.Net.WebClient) sender;
 
             if (e.Error != null)
             {
@@ -133,10 +135,10 @@ namespace XiboClient
 
             try
             {
-                System.IO.StreamReader sr = new System.IO.StreamReader(data, Encoding.UTF8);
+                System.IO.StreamReader sr = new System.IO.StreamReader(data, wc.Encoding);
                 rssContents = sr.ReadToEnd();
 
-                StreamWriter sw = new StreamWriter(File.Open(rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                StreamWriter sw = new StreamWriter(File.Open(rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), wc.Encoding);
 
                 System.Diagnostics.Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
                 
