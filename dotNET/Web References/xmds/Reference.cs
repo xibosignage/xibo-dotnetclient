@@ -41,6 +41,10 @@ namespace XiboClient.xmds {
         
         private System.Threading.SendOrPostCallback BlackListOperationCompleted;
         
+        private System.Threading.SendOrPostCallback SubmitLogOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback SubmitStatsOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
@@ -96,6 +100,12 @@ namespace XiboClient.xmds {
         
         /// <remarks/>
         public event BlackListCompletedEventHandler BlackListCompleted;
+        
+        /// <remarks/>
+        public event SubmitLogCompletedEventHandler SubmitLogCompleted;
+        
+        /// <remarks/>
+        public event SubmitStatsCompletedEventHandler SubmitStatsCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#RegisterDisplay", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
@@ -320,6 +330,78 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#SubmitLog", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [return: System.Xml.Serialization.SoapElementAttribute("success")]
+        public bool SubmitLog(string version, string serverKey, string hardwareKey, string logXml) {
+            object[] results = this.Invoke("SubmitLog", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        logXml});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SubmitLogAsync(string version, string serverKey, string hardwareKey, string logXml) {
+            this.SubmitLogAsync(version, serverKey, hardwareKey, logXml, null);
+        }
+        
+        /// <remarks/>
+        public void SubmitLogAsync(string version, string serverKey, string hardwareKey, string logXml, object userState) {
+            if ((this.SubmitLogOperationCompleted == null)) {
+                this.SubmitLogOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSubmitLogOperationCompleted);
+            }
+            this.InvokeAsync("SubmitLog", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        logXml}, this.SubmitLogOperationCompleted, userState);
+        }
+        
+        private void OnSubmitLogOperationCompleted(object arg) {
+            if ((this.SubmitLogCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SubmitLogCompleted(this, new SubmitLogCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#SubmitLog", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [return: System.Xml.Serialization.SoapElementAttribute("success")]
+        public bool SubmitStats(string version, string serverKey, string hardwareKey, string statXml) {
+            object[] results = this.Invoke("SubmitStats", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        statXml});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SubmitStatsAsync(string version, string serverKey, string hardwareKey, string statXml) {
+            this.SubmitStatsAsync(version, serverKey, hardwareKey, statXml, null);
+        }
+        
+        /// <remarks/>
+        public void SubmitStatsAsync(string version, string serverKey, string hardwareKey, string statXml, object userState) {
+            if ((this.SubmitStatsOperationCompleted == null)) {
+                this.SubmitStatsOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSubmitStatsOperationCompleted);
+            }
+            this.InvokeAsync("SubmitStats", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        statXml}, this.SubmitStatsOperationCompleted, userState);
+        }
+        
+        private void OnSubmitStatsOperationCompleted(object arg) {
+            if ((this.SubmitStatsCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SubmitStatsCompleted(this, new SubmitStatsCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -481,6 +563,58 @@ namespace XiboClient.xmds {
         private object[] results;
         
         internal BlackListCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    public delegate void SubmitLogCompletedEventHandler(object sender, SubmitLogCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SubmitLogCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SubmitLogCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    public delegate void SubmitStatsCompletedEventHandler(object sender, SubmitStatsCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.1433")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SubmitStatsCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SubmitStatsCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
                 base(exception, cancelled, userState) {
             this.results = results;
         }
