@@ -93,7 +93,7 @@ namespace XiboClient
                 String textWrap = "";
                 if (direction == "left" || direction == "right") textWrap = "white-space: nowrap";
 
-                textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}; height:{1};'>", this.width, this.height);
+                textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}; height:{1};'>", this.width - 10, this.height);
                 textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, documentText);
 
                 htmlDoc.Body.InnerHtml = textRender;
