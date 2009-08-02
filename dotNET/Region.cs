@@ -284,7 +284,7 @@ namespace XiboClient
                                 System.Diagnostics.Trace.WriteLine("Non integer scrollSpeed in XLF", "Region - SetNextMediaNode");
                             }
                         }
-                        else if (option.Name == "updateInverval")
+                        else if (option.Name == "updateInterval")
                         {
                             try
                             {
