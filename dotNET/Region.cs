@@ -197,6 +197,8 @@ namespace XiboClient
             options.text = "";
             options.documentTemplate = "";
             options.copyrightNotice = "";
+            options.scrollSpeed = 1;
+            options.updateInterval = 6;
             options.uri = "";
 
             // Get a media node
@@ -265,6 +267,28 @@ namespace XiboClient
                         else if (option.Name == "copyright")
                         {
                             options.copyrightNotice = option.InnerText;
+                        }
+                        else if (option.Name == "scrollSpeed")
+                        {
+                            try
+                            {
+                                options.scrollSpeed = int.Parse(option.InnerText);
+                            }
+                            catch
+                            {
+                                System.Diagnostics.Trace.WriteLine("Non integer scrollSpeed in XLF", "Region - SetNextMediaNode");
+                            }
+                        }
+                        else if (option.Name == "updateInverval")
+                        {
+                            try
+                            {
+                                options.updateInterval = int.Parse(option.InnerText);
+                            }
+                            catch
+                            {
+                                System.Diagnostics.Trace.WriteLine("Non integer updateInterval in XLF", "Region - SetNextMediaNode");
+                            }
                         }
                     }
 
@@ -398,6 +422,8 @@ namespace XiboClient
         public string text;
         public string documentTemplate;
         public string copyrightNotice;
+        public int updateInterval;
+        public int scrollSpeed;
         
         //The identification for this region
         public string mediaid;
