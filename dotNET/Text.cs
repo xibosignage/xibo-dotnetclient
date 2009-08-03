@@ -132,11 +132,13 @@ namespace XiboClient
 
             // Add the control
             this.Controls.Add(webBrowser);
+
+            Show();
         }
 
         public override void RenderMedia()
         {
-            base.RenderMedia();
+            base.StartTimer();
         }
 
         protected override void Dispose(bool disposing)
