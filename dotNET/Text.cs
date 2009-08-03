@@ -27,7 +27,17 @@ namespace XiboClient
 {
     class Text : Media
     {
-        private double scaleFactor;
+        private string filePath;
+        private string direction;
+        private string backgroundImage;
+        private string backgroundColor;
+        private WebBrowser webBrowser;
+        private string _documentText;
+
+        private string backgroundTop;
+        private string backgroundLeft;
+        private double _scaleFactor;
+        private int _scrollSpeed;
 
         //<summary>
         //Creates a Text display control
@@ -41,7 +51,7 @@ namespace XiboClient
             this.backgroundImage = options.backgroundImage;
             this.backgroundColor = options.backgroundColor;
             
-            scaleFactor = options.scaleFactor;
+            _scaleFactor = options.scaleFactor;
 
             backgroundTop = options.backgroundTop + "px";
             backgroundLeft = options.backgroundLeft + "px";
@@ -50,12 +60,24 @@ namespace XiboClient
             webBrowser.Size = this.Size;
             webBrowser.ScrollBarsEnabled = false;
 
-            //set the text
-            documentText = options.text;
+            // set the text
+            _documentText = options.text;
+           
+            // What do we want the background to look like
+            String bodyStyle;
+
+            if (backgroundImage == null || backgroundImage == "")
+            {
+                bodyStyle = "background-color:" + backgroundColor + " ;";
+            }
+            else
+            {
+                bodyStyle = "background-image: url('" + backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + " background-repeat: no-repeat; background-position: " + backgroundLeft + " " + backgroundTop + ";";
+            }
 
             try
             {
-                webBrowser.DocumentText = String.Format("<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8' /><script type='text/javascript'>{0}</script><style type='text/css'>p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{1}em; }}</style></head><body></body></html>", Properties.Resources.textRender, options.scaleFactor.ToString());
+                webBrowser.DocumentText = String.Format("<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8' /><script type='text/javascript'>{0} {2}</script><style type='text/css'>body {{{3}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{1}em; }}</style></head><body></body></html>", Properties.Resources.textRender, options.scaleFactor.ToString(), options.javaScript, bodyStyle);
             }
             catch (Exception e)
             {
@@ -68,24 +90,14 @@ namespace XiboClient
 
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
-
             HtmlDocument htmlDoc = webBrowser.Document;
-            
-            if (backgroundImage == null || backgroundImage == "")
-            {
-                htmlDoc.Body.Style = "background-color:" + backgroundColor + " ;";
-            }
-            else
-            {
-                htmlDoc.Body.Style = "background-image: url('" + backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + " background-repeat: no-repeat; background-position: " + backgroundLeft + " " + backgroundTop + ";";
-            }
 
             //decide whether we need a marquee or not
             if (direction == "none")
             {
                 //we dont
-                //set the body of the webBrowser to the document text (altered by the RSS feed)
-                htmlDoc.Body.InnerHtml = documentText;
+                //set the body of the webBrowser to the document text
+                htmlDoc.Body.InnerHtml = _documentText;
             }
             else
             {
@@ -94,17 +106,27 @@ namespace XiboClient
                 if (direction == "left" || direction == "right") textWrap = "white-space: nowrap";
 
                 textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}; height:{1};'>", this.width - 10, this.height);
-                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, documentText);
+                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText);
 
                 htmlDoc.Body.InnerHtml = textRender;
 
                 Object[] objArray = new Object[2];
                 objArray[0] = direction;
-                objArray[1] = 30;
+                objArray[1] = _scrollSpeed;
 
                 htmlDoc.InvokeScript("init", objArray);
             }
 
+            System.Diagnostics.Debug.WriteLine(htmlDoc.Body.InnerHtml, LogType.Audit.ToString());
+
+            // Try to call the EmbedInit Function
+            try
+            {
+                htmlDoc.InvokeScript("EmbedInit");
+            }
+            catch { }
+
+            // Add the control
             this.Controls.Add(webBrowser);
         }
 
@@ -123,15 +145,5 @@ namespace XiboClient
 
             base.Dispose(disposing);
         }
-
-        private string filePath;
-        private string direction;
-        private string backgroundImage;
-        private string backgroundColor;
-        private WebBrowser webBrowser;
-        private string documentText;
-
-        private string backgroundTop;
-        private string backgroundLeft;
     }
 }
