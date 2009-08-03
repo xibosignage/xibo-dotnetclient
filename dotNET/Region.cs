@@ -218,7 +218,7 @@ namespace XiboClient
             options.text = "";
             options.documentTemplate = "";
             options.copyrightNotice = "";
-            options.scrollSpeed = 1;
+            options.scrollSpeed = 30;
             options.updateInterval = 6;
             options.uri = "";
             options.direction = "none";
