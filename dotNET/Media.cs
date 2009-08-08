@@ -28,6 +28,8 @@ namespace XiboClient
     {
         public Media(int width, int height, int top, int left)
         {
+            Hide();
+
             this.width = width;
             this.height = height;
             this.top = top;
@@ -45,9 +47,12 @@ namespace XiboClient
             this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
             this.BackColor = System.Drawing.Color.Transparent;
             this.TransparencyKey = System.Drawing.Color.White;
+
+            SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
         }
 
-        public virtual void RenderMedia() 
+        protected void StartTimer()
         {
             //start the timer
             if (!timerStarted && duration != 0)
@@ -60,9 +65,15 @@ namespace XiboClient
 
                 timerStarted = true;
             }
+        }
+
+        public virtual void RenderMedia() 
+        {
+            // Start the timer for this media
+            StartTimer();
 
             // Show the form
-            this.Show();
+            Show();
         }
 
         protected virtual void timer_Tick(object sender, EventArgs e)

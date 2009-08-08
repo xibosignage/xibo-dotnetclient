@@ -236,6 +236,8 @@ namespace XiboClient
 
             //Add the control
             this.Controls.Add(webBrowser);
+
+            Show();
         }
 
         private void loadLoading()
@@ -423,7 +425,7 @@ namespace XiboClient
         /// </summary>
         public override void RenderMedia()
         {
-            base.RenderMedia();
+            base.StartTimer();
         }
 
         protected override void Dispose(bool disposing)

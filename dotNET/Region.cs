@@ -60,6 +60,9 @@ namespace XiboClient
             this.Size = new System.Drawing.Size(options.width, options.height);
             this.BackColor = System.Drawing.Color.Transparent;
 
+            SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+
             // Create a new BlackList for us to use
             blackList = new BlackList();
         }
@@ -154,9 +157,11 @@ namespace XiboClient
 
             //add event handler
             media.DurationElapsedEvent += new Media.DurationElapsedDelegate(media_DurationElapsedEvent);
-          
+
             //any additional media specific render options (and starts the timer)
             media.RenderMedia();
+
+            Controls.Add(media);
 
             // This media has started and is being replaced
             _stat = new Stat();
@@ -165,8 +170,6 @@ namespace XiboClient
             _stat.scheduleID = options.scheduleId;
             _stat.layoutID = options.layoutId;
             _stat.mediaID = options.mediaid;
-
-            this.Controls.Add(media);
 
             System.Diagnostics.Debug.WriteLine("Showing new media", "Region - Eval Options");
         }

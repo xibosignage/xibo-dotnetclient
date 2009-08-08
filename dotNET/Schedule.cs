@@ -216,10 +216,17 @@ namespace XiboClient
             System.Diagnostics.Debug.WriteLine("Layout file changed");
 
             // If the layout that got changed is the current layout, move on
-            if (layoutSchedule[currentLayout].layoutFile == Properties.Settings.Default.LibraryPath + @"\" + layoutPath)
+            try
             {
-                forceChange = true;
-                NextLayout();
+                if (layoutSchedule[currentLayout].layoutFile == Properties.Settings.Default.LibraryPath + @"\" + layoutPath)
+                {
+                    forceChange = true;
+                    NextLayout();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("fileCollector_LayoutFileChanged", String.Format("Unable to determine current layout with exception {0}", ex.Message)), LogType.Error.ToString());
             }
         }
 
