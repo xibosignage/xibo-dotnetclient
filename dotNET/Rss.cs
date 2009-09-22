@@ -81,9 +81,25 @@ namespace XiboClient
             this.documentText = options.text;
             this.documentTemplate = options.documentTemplate;
 
+            // What do we want the background to look like
+            String bodyStyle;
+            String document;
+
+            if (backgroundImage == null || backgroundImage == "")
+            {
+                bodyStyle = "background-color:" + backgroundColor + " ;";
+            }
+            else
+            {
+                bodyStyle = "background-image: url('" + backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + " background-repeat: no-repeat; background-position: " + backgroundLeft + " " + backgroundTop + ";";
+            }
+
+            // Build the document string
+            document = String.Format("<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8' /><script type='text/javascript'>{0}</script><style type='text/css'>body {{{2}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{1}em; }}</style></head><body></body></html>", Properties.Resources.textRender, options.scaleFactor.ToString(), bodyStyle);
+
             try
             {
-                webBrowser.DocumentText = String.Format("<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8' /><script type='text/javascript'>{0}</script><style type='text/css'>p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{1}em; }}</style></head><body></body></html>", Properties.Resources.textRender, options.scaleFactor.ToString());            
+                webBrowser.DocumentText = document;            
             }
             catch (Exception e)
             {
@@ -226,15 +242,6 @@ namespace XiboClient
         {
             HtmlDocument htmlDoc = webBrowser.Document;
 
-            if (backgroundImage == null || backgroundImage == "")
-            {
-                htmlDoc.Body.Style = "background-color:" + backgroundColor + " ;";
-            }
-            else
-            {
-                htmlDoc.Body.Style = "background-image: url('" + backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + " background-repeat: no-repeat; background-position: " + backgroundLeft + " " + backgroundTop + ";";
-            }
-
             htmlDoc.Body.InnerHtml = "<h1>Loading...</h1>";
         }
 
@@ -244,15 +251,6 @@ namespace XiboClient
             HtmlDocument htmlDoc = webBrowser.Document;
             
             htmlDoc.Body.InnerHtml = "";
-
-            if (backgroundImage == null || backgroundImage == "")
-            {
-                htmlDoc.Body.Style = "background-color:" + backgroundColor + " ;";
-            }
-            else
-            {
-                htmlDoc.Body.Style = "background-image: url('" + backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + " background-repeat: no-repeat; background-position: " + backgroundLeft + " " + backgroundTop + ";";
-            }
 
             //Get the RSS
             rssReader = new RssReader();

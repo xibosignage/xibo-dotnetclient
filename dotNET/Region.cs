@@ -218,10 +218,11 @@ namespace XiboClient
             options.text = "";
             options.documentTemplate = "";
             options.copyrightNotice = "";
-            options.scrollSpeed = 1;
+            options.scrollSpeed = 30;
             options.updateInterval = 6;
             options.uri = "";
             options.direction = "none";
+            options.javaScript = "";
 
             // Get a media node
             bool validNode = false;
@@ -330,6 +331,10 @@ namespace XiboClient
                         else if (raw.Name == "embedHtml")
                         {
                             options.text = raw.InnerText;
+                        }
+                        else if (raw.Name == "embedScript")
+                        {
+                            options.javaScript = raw.InnerText;
                         }
                     }
 
@@ -471,6 +476,7 @@ namespace XiboClient
         public string text;
         public string documentTemplate;
         public string copyrightNotice;
+        public string javaScript;
         public int updateInterval;
         public int scrollSpeed;
         
