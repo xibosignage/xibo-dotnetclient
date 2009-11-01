@@ -121,6 +121,7 @@ namespace XiboClient
             
             // Create a webbrowser to take the temp file loc
             _webBrowser = new WebBrowser();
+            _webBrowser.ScriptErrorsSuppressed = true;
             _webBrowser.Size = this.Size;
             _webBrowser.ScrollBarsEnabled = false;
             _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
@@ -239,6 +240,7 @@ function init()
                 System.Diagnostics.Debug.WriteLine("Created at WebClient", "RSS - Refresh local RSS");
 
                 _wc = new System.Net.WebClient();
+                _wc.UseDefaultCredentials = true;
                 _wc.OpenReadCompleted += new System.Net.OpenReadCompletedEventHandler(wc_OpenReadCompleted);
                 
                 _wc.OpenReadAsync(new Uri(_filePath));

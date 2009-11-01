@@ -44,6 +44,7 @@ namespace XiboClient
 
             webBrowser.Size = this.Size;
             webBrowser.ScrollBarsEnabled = false;
+            webBrowser.ScriptErrorsSuppressed = true;
 
             // Attach event
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);

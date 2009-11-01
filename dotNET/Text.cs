@@ -77,6 +77,7 @@ namespace XiboClient
             _webBrowser = new WebBrowser();
             _webBrowser.Size = this.Size;
             _webBrowser.ScrollBarsEnabled = false;
+            _webBrowser.ScriptErrorsSuppressed = true;
             _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
 
             // Navigate to temp file
@@ -105,7 +106,7 @@ namespace XiboClient
                 if (_direction == "left" || _direction == "right") textWrap = "white-space: nowrap";
 
                 textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}; height:{1};'>", this.width - 10, this.height);
-                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText);
+                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; width:{2} {0}'>{1}</div></div>", textWrap, _documentText, this.width - 10);
 
                 _tempHtml.BodyContent = textRender;
             }
