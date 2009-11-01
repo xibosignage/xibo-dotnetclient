@@ -94,13 +94,19 @@
 		        return;
 	        }
         }
-
-        function init(direction, duration) 
-        { 
-	        tr = new TextRender('text', 'innerText', direction);
-
-	        var timer = 0;
-	        timer = setInterval('tr.TimerTick()', duration);
+        
+        // Check some things when this HTML page is opened.
+        window.onload = function()
+        {
+            if (typeof(init) != "undefined")
+            {
+                init();
+            }
+        
+            if (typeof(EmbedInit) != "undefined")
+            {
+                EmbedInit();
+            }
         }
 		</script>
 	</head>

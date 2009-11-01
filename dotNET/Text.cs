@@ -78,8 +78,10 @@ namespace XiboClient
             _webBrowser = new WebBrowser();
             _webBrowser.Size = this.Size;
             _webBrowser.ScrollBarsEnabled = false;
-            _webBrowser.Navigate(_tempHtml.Path);
             _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
+
+            // Navigate to temp file
+            _webBrowser.Navigate(_tempHtml.Path);
         }
 
         #region Members
@@ -127,7 +129,24 @@ namespace XiboClient
                 bodyStyle = "background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + ";";
             }
 
-            _headText = String.Format("{1}<style type='text/css'>body {{{2}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{0}em; }}</style>", _scaleFactor.ToString(), _headJavaScript, bodyStyle);
+            // Do we need to include the init function to kick off the text render?
+            String initFunction = "";
+
+            if (_direction != "none")
+            {
+                initFunction = @"
+<script type='text/javascript'>
+function init() 
+{ 
+    tr = new TextRender('text', 'innerText', '" + _direction + @"');
+
+    var timer = 0;
+    timer = setInterval('tr.TimerTick()', " + _scrollSpeed.ToString() + @");
+}
+</script>";
+            }
+
+            _headText = String.Format("{1}{3}<style type='text/css'>body {{{2}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{0}em; }}</style>", _scaleFactor.ToString(), _headJavaScript, bodyStyle, initFunction);
 
             // Store the document text in the temporary HTML space
             _tempHtml.HeadContent = _headText;
