@@ -33,11 +33,14 @@ namespace XiboClient
         private string backgroundColor;
         private WebBrowser webBrowser;
         private string _documentText;
+        private String _headText;
 
         private string backgroundTop;
         private string backgroundLeft;
         private double _scaleFactor;
         private int _scrollSpeed;
+
+        private TemporaryHtml _tempHtml;
 
         //<summary>
         //Creates a Text display control
@@ -56,18 +59,17 @@ namespace XiboClient
             backgroundTop = options.backgroundTop + "px";
             backgroundLeft = options.backgroundLeft + "px";
 
-            webBrowser = new WebBrowser();
-            webBrowser.Size = this.Size;
-            webBrowser.ScrollBarsEnabled = false;
+            // Generate a temporary file to store the rendered object in.
+            _tempHtml = new TemporaryHtml();
 
-            // set the text
+
+            // Set the text
             _documentText = options.text;
             _scrollSpeed = options.scrollSpeed;
            
             // What do we want the background to look like
             String bodyStyle;
-            String document;
-
+            
             if (backgroundImage == null || backgroundImage == "")
             {
                 bodyStyle = "background-color:" + backgroundColor + " ;";
@@ -77,18 +79,36 @@ namespace XiboClient
                 bodyStyle = "background-image: url('" + backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + " background-repeat: no-repeat; background-position: " + backgroundLeft + " " + backgroundTop + ";";
             }
 
-            document = String.Format("<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8' /><script type='text/javascript'>{0}</script>{2}<style type='text/css'>body {{{3}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{1}em; }}</style></head><body></body></html>", Properties.Resources.textRender, options.scaleFactor.ToString(), options.javaScript, bodyStyle);
+            _headText = String.Format("{1}<style type='text/css'>body {{{2}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{0}em; }}</style>", options.scaleFactor.ToString(), options.javaScript, bodyStyle);
 
-            try
+            // Store the document text in the temporary HTML space
+            _tempHtml.HeadContent = _headText;
+
+            // Generate the Body
+            if (direction == "none")
             {
-                webBrowser.DocumentText = document;
+                // Just use the RAW text that was in the XLF
+                _tempHtml.BodyContent = _documentText;
             }
-            catch (Exception e)
+            else
             {
-                System.Diagnostics.Trace.WriteLine(e.Message);
-                return;
+                // Format the text in some way
+                String textRender = "";
+                String textWrap = "";
+
+                if (direction == "left" || direction == "right") textWrap = "white-space: nowrap";
+
+                textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}; height:{1};'>", this.width - 10, this.height);
+                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText);
+
+                _tempHtml.BodyContent = textRender;
             }
 
+            // Fire up a webBrowser control
+            webBrowser = new WebBrowser();
+            webBrowser.Size = this.Size;
+            webBrowser.ScrollBarsEnabled = false;
+            webBrowser.Navigate(_tempHtml.Path);
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
         }
 
@@ -96,7 +116,7 @@ namespace XiboClient
         {
             HtmlDocument htmlDoc = webBrowser.Document;
 
-            //decide whether we need a marquee or not
+            // decide whether we need a marquee or not
             if (direction == "none")
             {
                 //we dont
@@ -145,8 +165,15 @@ namespace XiboClient
         {
             if (disposing)
             {
-                webBrowser.DocumentText = "";
-                webBrowser.Dispose();
+                try
+                {
+                    webBrowser.DocumentText = "";
+                    webBrowser.Dispose();
+                }
+                catch
+                {
+                    System.Diagnostics.Trace.WriteLine(new LogMessage("WebBrowser still in use.", String.Format("Dispose")));
+                }
             }
 
             base.Dispose(disposing);

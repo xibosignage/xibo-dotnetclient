@@ -12,7 +12,7 @@
     <ManifestCertificateThumbprint>3F1DD8562B79F6E24F700A1576DB3897470C4CB4</ManifestCertificateThumbprint>
     <ManifestKeyFile>XiboClient_TemporaryKey.pfx</ManifestKeyFile>
     <GenerateManifests>false</GenerateManifests>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <StartupObject>XiboClient.Program</StartupObject>
     <TargetZone>LocalIntranet</TargetZone>
@@ -142,6 +142,7 @@
     <Compile Include="Schedule.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="StatLog.cs" />
+    <Compile Include="TemporaryHtml.cs" />
     <Compile Include="Text.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -199,14 +200,6 @@
       <WrapperTool>primary</WrapperTool>
       <Isolated>False</Isolated>
     </COMReference>
-    <COMReference Include="VBIDE">
-      <Guid>{0002E157-0000-0000-C000-000000000046}</Guid>
-      <VersionMajor>5</VersionMajor>
-      <VersionMinor>3</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>primary</WrapperTool>
-      <Isolated>False</Isolated>
-    </COMReference>
     <COMReference Include="WMPLib">
       <Guid>{6BF52A50-394A-11D3-B153-00C04F79FAA6}</Guid>
       <VersionMajor>1</VersionMajor>
@@ -255,6 +248,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\splash.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\HtmlTemplate.htm" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
