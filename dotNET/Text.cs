@@ -63,8 +63,7 @@ namespace XiboClient
             _documentText = options.text;
             _scrollSpeed = options.scrollSpeed;
             _headJavaScript = options.javaScript;
-
-
+            
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
 

@@ -42,6 +42,7 @@ namespace XiboClient
         private int _updateInterval;
         private int _scrollSpeed;
         private double _scaleFactor;
+        private int _duration;
 
         private string _rssFilePath;
 
@@ -54,7 +55,6 @@ namespace XiboClient
         private WebClient _wc;
 
         private bool _rssReady;
-        private int _currentItem = -1;
 
         private RssReader _rssReader;
 
@@ -95,6 +95,7 @@ namespace XiboClient
             _scheduleId = options.scheduleId;
             _layoutId = options.layoutId;
             _scaleFactor = options.scaleFactor;
+            _duration = options.duration;
 
             // Update interval and scrolling speed
             _updateInterval = options.updateInterval;
@@ -188,7 +189,26 @@ namespace XiboClient
             // Do we need to include the init function to kick off the text render?
             String initFunction = "";
 
-            if (_direction != "none")
+            if (_direction == "single")
+            {
+                initFunction = @"
+<script type='text/javascript'>
+function init() 
+{
+    var totalDuration = " + _duration.ToString() + @" * 1000;
+    var itemCount = $('.XiboRssItem').size();
+
+    var itemTime = totalDuration / itemCount;
+
+    if (itemTime < 2000) itemTime = 2000;
+
+   // Try to get the itemTime from an element we expect to be in the HTML 
+ 
+   $('#text').cycle({fx: 'fade', timeout:itemTime});
+}
+</script>";
+            }
+            else if (_direction != "none")
             {
                 initFunction = @"
 <script type='text/javascript'>
@@ -268,8 +288,7 @@ function init()
                 temp = temp.Replace("[Date]", _item[i].Date.ToString());
                 temp = temp.Replace("[Link]", _item[i].Link);
 
-                // TODO: Single Item render?
-
+                // Assemble the RSS items based on the direction we are displaying
                 if (_direction == "left" || _direction == "right")
                 {
                     // Remove all <p></p> from the temp
@@ -282,7 +301,7 @@ function init()
                 }
                 else
                 {
-                    _documentText += string.Format("<div style='display:block;padding:4px;'>{0}</div>", temp);
+                    _documentText += string.Format("<div class='XiboRssItem' style='display:block;padding:4px;width:{1}'>{0}</div>", temp, this.width - 10);
                 }
             }
 
@@ -313,8 +332,17 @@ function init()
                     textWrap = String.Format("width: {0}px;", this.width - 50);
                 }
 
-                textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this.width - 10, this.height);
-                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText);
+
+                // If we are displaying a single item at a time we do not need to mask out the inner text
+                if (_direction == "single")
+                {
+                    textRender += string.Format("<div id='text'>{0}</div>", _documentText);
+                }
+                else
+                {
+                    textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this.width - 10, this.height);
+                    textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText);
+                }
 
                 _bodyText = textRender;
             }
@@ -329,35 +357,6 @@ function init()
 
             // We dont need the reader anymore
             _rssReader.Dispose();
-        }
-
-        /// <summary>
-        /// Renders a single RSS item from the stack
-        /// </summary>
-        void SingleItemRender()
-        {
-            _currentItem++;
-
-            //Reset it
-            if (_currentItem >= _item.Count)
-            {
-                _currentItem = 0;
-            }
-
-            String temp = _documentTemplate;
-
-            temp = temp.Replace("[Title]", _item[_currentItem].Title);
-            temp = temp.Replace("[Description]", _item[_currentItem].Description);
-            temp = temp.Replace("[Date]", _item[_currentItem].Date.ToString());
-            temp = temp.Replace("[Link]", _item[_currentItem].Link);
-
-            _documentText = string.Format("<div style='display:block;'>{0}</div>", temp);
-
-            HtmlDocument htmlDoc = _webBrowser.Document;
-
-            htmlDoc.Body.InnerHtml = _documentText;
-
-            return;
         }
 
         /// <summary>
@@ -477,7 +476,6 @@ function init()
 
                 try
                 {
-                    _webBrowser.DocumentText = "";
                     _webBrowser.Dispose();
 
                     System.Diagnostics.Debug.WriteLine("Disposed of the Web Browser control", "Rss - Dispose");
