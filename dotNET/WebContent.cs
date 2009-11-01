@@ -80,9 +80,6 @@ namespace XiboClient
                     System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Unable to show the powerpoint, cannot be located", scheduleId, layoutId, mediaId));
                 }
             }
-            
-            //Add the panel
-            this.Controls.Add(webBrowser);
         }
 
         public override void RenderMedia()
@@ -96,6 +93,11 @@ namespace XiboClient
             base.Duration = duration;
 
             base.RenderMedia();
+
+            //Add the panel
+            this.Controls.Add(webBrowser);
+
+            Show();
         }
 
         protected override void Dispose(bool disposing)
