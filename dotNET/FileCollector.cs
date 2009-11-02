@@ -24,6 +24,7 @@ using System.Text;
 using System.IO;
 using System.Security.Cryptography;
 using System.Xml;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -140,7 +141,29 @@ namespace XiboClient
                     string path = attributes["path"].Value;
 
                     // Does this media exist?
-                    if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                    if (File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                    {
+                        // MD5 the file to make sure it is the same.
+                        FileStream md5Fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + path, FileMode.Open, FileAccess.Read);
+                        String md5sum = Hashes.MD5(md5Fs);
+
+                        if (md5sum != attributes["md5"].Value)
+                        {
+                            // File changed
+                            fileList.chunkOffset = 0;
+                            fileList.chunkSize = 512000;
+                            fileList.complete = false;
+                            fileList.downloading = false;
+                            fileList.path = path;
+                            fileList.type = "media";
+                            fileList.size = int.Parse(attributes["size"].Value);
+                            fileList.md5 = attributes["md5"].Value;
+                            fileList.retrys = 0;
+
+                            files.Add(fileList);
+                        }
+                    }
+                    else
                     {
                         // No - Get it (async call - with chunks... through another class?)
                         fileList.chunkOffset = 0;
@@ -192,10 +215,10 @@ namespace XiboClient
             }
 
             // Start with the first file
-            currentFile = 0;
+            _currentFile = 0;
 
             // Preload the first filelist
-            currentFileList = files[currentFile];
+            _currentFileList = files[_currentFile];
 
             // Get the first file
             GetFile();
@@ -203,151 +226,163 @@ namespace XiboClient
 
         void xmdsFile_GetFileCompleted(object sender, XiboClient.xmds.GetFileCompletedEventArgs e)
         {
-            // Expect new schedule XML
-            if (e.Error != null)
+            try
             {
-                //There was an error - what do we do?
-                // Log it
-                System.Diagnostics.Debug.WriteLine(e.Error.Message, "WS Error");
-
-                System.Diagnostics.Trace.WriteLine(String.Format("Error From WebService Get File. File=[{1}], Error=[{0}], Try No [{2}]", e.Error.Message, currentFileList.path, currentFileList.retrys));
-
-                // Retry?
-                if (currentFileList.retrys < 5)
+                // Expect new schedule XML
+                if (e.Error != null)
                 {
-                    // Increment the Retrys
-                    currentFileList.retrys++;
+                    //There was an error - what do we do?
+                    // Log it
+                    System.Diagnostics.Debug.WriteLine(e.Error.Message, "WS Error");
 
-                    // Try again
-                    GetFile();
-                }
-                else
-                {
-                    // Blacklist this file
-                    string[] mediaPath = currentFileList.path.Split('.');
-                    string mediaId = mediaPath[0];
+                    System.Diagnostics.Trace.WriteLine(String.Format("Error From WebService Get File. File=[{1}], Error=[{0}], Try No [{2}]", e.Error.Message, _currentFileList.path, _currentFileList.retrys));
 
-                    BlackList blackList = new BlackList();
-                    blackList.Add(currentFileList.path, BlackListType.All, String.Format("Max number of retrys failed. BlackListing for all displays. Error {0}", e.Error.Message));
-
-                    // Move on
-                    currentFile++;
-                }
-            }
-            else
-            {
-                // Set the flag to indicate we have a connection to XMDS
-                Properties.Settings.Default.XmdsLastConnection = DateTime.Now;
-
-                // What file type were we getting
-                if (currentFileList.type == "layout")
-                {  
-                    // Decode this byte[] into a string and stick it in the file.
-                    string layoutXml = Encoding.UTF8.GetString(e.Result);
-
-                    // MD5 it to make sure it arrived ok
-                    string md5sum = Hashes.MD5(layoutXml);
-
-                    if (md5sum != currentFileList.md5)
+                    // Retry?
+                    if (_currentFileList.retrys < 5)
                     {
-                        // We need to get this file again
-                    }
+                        // Increment the Retrys
+                        _currentFileList.retrys++;
 
-                    // We know it is finished and that we need to write to a file
-                    try
-                    {
-                        string fullPath = Properties.Settings.Default.LibraryPath + @"\" + currentFileList.path + ".xlf";
-                        
-                        StreamWriter sw = new StreamWriter(File.Open(fullPath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8);
-                        sw.Write(layoutXml);
-                        sw.Close();
-
-                        // This file is complete
-                        currentFileList.complete = true;
-                    }
-                    catch (IOException ex)
-                    {
-                        //What do we do if we cant open the file stream?
-                        System.Diagnostics.Debug.WriteLine(ex.Message, "FileCollector - GetFileCompleted");
-                    }
-
-                    // Fire a layout complete event
-                    LayoutFileChanged(currentFileList.path + ".xlf");
-
-                    System.Diagnostics.Trace.WriteLine(String.Format("File downloaded: {0}", currentFileList.path), "xmdsFile_GetFileCompleted");
-
-                    currentFile++;
-                }
-                else
-                {
-                    // Need to write to the file - in append mode
-                    FileStream fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + currentFileList.path, FileMode.Append, FileAccess.Write);
-
-                    fs.Write(e.Result, 0, e.Result.Length);
-                    fs.Close();
-                    fs.Dispose();
-
-                    // Increment the chunkOffset by the amount we just asked for
-                    currentFileList.chunkOffset = currentFileList.chunkOffset + currentFileList.chunkSize;
-
-                    // Has the offset reached the total size?
-                    if (currentFileList.size > currentFileList.chunkOffset)
-                    {
-                        int remaining = currentFileList.size - currentFileList.chunkOffset;
-                        // There is still more to come
-                        if (remaining < currentFileList.chunkSize)
-                        {
-                            // Get the remaining
-                            currentFileList.chunkSize = remaining;
-                        }
+                        // Try again
+                        GetFile();
                     }
                     else
                     {
-                        // Do we need to do some sort of MD5 here? To make sure we got what we should have
-                        fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + currentFileList.path, FileMode.Open, FileAccess.Read);
+                        // Blacklist this file
+                        string[] mediaPath = _currentFileList.path.Split('.');
+                        string mediaId = mediaPath[0];
 
-                        string md5sum = Hashes.MD5(fs);
+                        BlackList blackList = new BlackList();
+                        blackList.Add(_currentFileList.path, BlackListType.All, String.Format("Max number of retrys failed. BlackListing for all displays. Error {0}", e.Error.Message));
 
-                        if (md5sum != currentFileList.md5)
+                        // Move on
+                        _currentFile++;
+                    }
+                }
+                else
+                {
+                    // Set the flag to indicate we have a connection to XMDS
+                    Properties.Settings.Default.XmdsLastConnection = DateTime.Now;
+
+                    // What file type were we getting
+                    if (_currentFileList.type == "layout")
+                    {
+                        // Decode this byte[] into a string and stick it in the file.
+                        string layoutXml = Encoding.UTF8.GetString(e.Result);
+
+                        // MD5 it to make sure it arrived ok
+                        string md5sum = Hashes.MD5(layoutXml);
+
+                        if (md5sum != _currentFileList.md5)
                         {
                             // We need to get this file again
-                            try
-                            {
-                                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + currentFileList.path);
-                            }
-                            catch (Exception ex)
-                            {
-                                // Unable to delete incorrect file
-                                // Hopefully we will overwrite it
-                                System.Diagnostics.Debug.WriteLine(ex.Message);
-                            }
+                        }
 
-                            //Reset the chunk offset (otherwise we will try to get this file again - but from the beginning (no so good)
-                            currentFileList.chunkOffset = 0;
+                        // We know it is finished and that we need to write to a file
+                        try
+                        {
+                            string fullPath = Properties.Settings.Default.LibraryPath + @"\" + _currentFileList.path + ".xlf";
 
-                            System.Diagnostics.Trace.WriteLine(String.Format("Error getting file {0}, HASH failed. Starting again", currentFileList.path));
+                            StreamWriter sw = new StreamWriter(File.Open(fullPath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+                            sw.Write(layoutXml);
+                            sw.Close();
+
+                            // This file is complete
+                            _currentFileList.complete = true;
+                        }
+                        catch (IOException ex)
+                        {
+                            //What do we do if we cant open the file stream?
+                            System.Diagnostics.Debug.WriteLine(ex.Message, "FileCollector - GetFileCompleted");
+                        }
+
+                        // Fire a layout complete event
+                        LayoutFileChanged(_currentFileList.path + ".xlf");
+
+                        System.Diagnostics.Trace.WriteLine(String.Format("File downloaded: {0}", _currentFileList.path), "xmdsFile_GetFileCompleted");
+
+                        _currentFile++;
+                    }
+                    else
+                    {
+                        // Need to write to the file - in append mode
+                        FileStream fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + _currentFileList.path, FileMode.Append, FileAccess.Write);
+
+                        fs.Write(e.Result, 0, e.Result.Length);
+                        fs.Close();
+                        fs.Dispose();
+
+                        // Increment the chunkOffset by the amount we just asked for
+                        _currentFileList.chunkOffset = _currentFileList.chunkOffset + _currentFileList.chunkSize;
+
+                        // Has the offset reached the total size?
+                        if (_currentFileList.size > _currentFileList.chunkOffset)
+                        {
+                            int remaining = _currentFileList.size - _currentFileList.chunkOffset;
+                            // There is still more to come
+                            if (remaining < _currentFileList.chunkSize)
+                            {
+                                // Get the remaining
+                                _currentFileList.chunkSize = remaining;
+                            }
                         }
                         else
                         {
-                            // This file is complete
-                            currentFileList.complete = true;
+                            // Do we need to do some sort of MD5 here? To make sure we got what we should have
+                            fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + _currentFileList.path, FileMode.Open, FileAccess.Read);
 
-                            // Fire the File Complete event
-                            MediaFileChanged(currentFileList.path);
+                            string md5sum = Hashes.MD5(fs);
 
-                            System.Diagnostics.Debug.WriteLine(string.Format("File downloaded: {0}", currentFileList.path));
+                            if (md5sum != _currentFileList.md5)
+                            {
+                                // We need to get this file again
+                                try
+                                {
+                                    File.Delete(Properties.Settings.Default.LibraryPath + @"\" + _currentFileList.path);
+                                }
+                                catch (Exception ex)
+                                {
+                                    // Unable to delete incorrect file
+                                    // Hopefully we will overwrite it
+                                    System.Diagnostics.Debug.WriteLine(ex.Message);
+                                }
 
-                            // All the file has been recieved. Move on to the next file.
-                            currentFile++;
+                                //Reset the chunk offset (otherwise we will try to get this file again - but from the beginning (no so good)
+                                _currentFileList.chunkOffset = 0;
+
+                                System.Diagnostics.Trace.WriteLine(String.Format("Error getting file {0}, HASH failed. Starting again", _currentFileList.path));
+                            }
+                            else
+                            {
+                                // This file is complete
+                                _currentFileList.complete = true;
+
+                                // Fire the File Complete event
+                                MediaFileChanged(_currentFileList.path);
+
+                                System.Diagnostics.Debug.WriteLine(string.Format("File downloaded: {0}", _currentFileList.path));
+
+                                // All the file has been recieved. Move on to the next file.
+                                _currentFile++;
+                            }
                         }
                     }
+
+                    // Before we get the next file render any waiting events
+                    System.Windows.Forms.Application.DoEvents();
                 }
-
-                // Before we get the next file render any waiting events
-                System.Windows.Forms.Application.DoEvents();
-
-                GetFile();
             }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("xmdsFile_GetFileCompleted", "Unable to get the file. Exception: " + ex.Message));
+
+                // Consider this file complete because we couldn't write it....
+                _currentFileList.complete = true;
+                _currentFile++;
+            }
+
+            // Get the next file
+            GetFile();
         }
 
         /// <summary>
@@ -355,7 +390,7 @@ namespace XiboClient
         /// </summary>
         public void GetFile()
         {
-            if (currentFile > (files.Count - 1))
+            if (_currentFile > (files.Count - 1))
             {
                 System.Diagnostics.Debug.WriteLine(String.Format("Finished Recieving {0} files", files.Count));
 
@@ -369,17 +404,17 @@ namespace XiboClient
             else
             {
                 // Get the current file into the currentfilelist if the current one is finished
-                if (currentFileList.complete)
+                if (_currentFileList.complete)
                 {
-                    currentFileList = files[currentFile];
+                    _currentFileList = files[_currentFile];
                 }
 
-                System.Diagnostics.Debug.WriteLine(String.Format("Getting the file : {0} chunk : {1}", currentFileList.path, currentFileList.chunkOffset.ToString()));
+                System.Diagnostics.Debug.WriteLine(String.Format("Getting the file : {0} chunk : {1}", _currentFileList.path, _currentFileList.chunkOffset.ToString()));
 
                 // Request the file
-                xmdsFile.GetFileAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, currentFileList.path, currentFileList.type, currentFileList.chunkOffset, currentFileList.chunkSize, Properties.Settings.Default.Version);
+                xmdsFile.GetFileAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, _currentFileList.path, _currentFileList.type, _currentFileList.chunkOffset, _currentFileList.chunkSize, Properties.Settings.Default.Version);
 
-                currentFileList.downloading = true;
+                _currentFileList.downloading = true;
             }
         }
 
@@ -400,8 +435,8 @@ namespace XiboClient
         private XmlDocument xml;
         private HardwareKey hardwareKey;
         private Collection<FileList> files;
-        private int currentFile;
-        private FileList currentFileList;
+        private int _currentFile;
+        private FileList _currentFileList;
         private xmds.xmds xmdsFile;
 
         public event LayoutFileChangedDelegate LayoutFileChanged;
