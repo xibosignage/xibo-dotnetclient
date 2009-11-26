@@ -30,8 +30,12 @@ namespace XiboClient
 {
     class FileCollector
     {
-        public FileCollector(string xmlString)
+        private CacheManager _cacheManager;
+
+        public FileCollector(CacheManager cacheManager, string xmlString)
         {
+            _cacheManager = cacheManager;
+
             xml = new XmlDocument();
 
             try
@@ -143,11 +147,12 @@ namespace XiboClient
                     // Does this media exist?
                     if (File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
                     {
-                        // MD5 the file to make sure it is the same.
-                        FileStream md5Fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + path, FileMode.Open, FileAccess.Read);
-                        String md5sum = Hashes.MD5(md5Fs);
+                        String md5 = _cacheManager.GetMD5(path);
 
-                        if (md5sum != attributes["md5"].Value)
+                        System.Diagnostics.Debug.WriteLine(String.Format("Comparing current MD5 [{0}] with given MD5 [{1}]", md5, attributes["md5"].Value));
+
+                        // MD5 the file to make sure it is the same.
+                        if (md5 != attributes["md5"].Value)
                         {
                             // File changed
                             fileList.chunkOffset = 0;
@@ -328,10 +333,9 @@ namespace XiboClient
                         }
                         else
                         {
-                            // Do we need to do some sort of MD5 here? To make sure we got what we should have
-                            fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + _currentFileList.path, FileMode.Open, FileAccess.Read);
+                            String md5sum = _cacheManager.GetMD5(_currentFileList.path);
 
-                            string md5sum = Hashes.MD5(fs);
+                            System.Diagnostics.Debug.WriteLine(String.Format("Comparing MD5 of completed download [{0}] with given MD5 [{1}]", md5sum, _currentFileList.md5));
 
                             if (md5sum != _currentFileList.md5)
                             {
@@ -347,7 +351,7 @@ namespace XiboClient
                                     System.Diagnostics.Debug.WriteLine(ex.Message);
                                 }
 
-                                //Reset the chunk offset (otherwise we will try to get this file again - but from the beginning (no so good)
+                                // Reset the chunk offset (otherwise we will try to get this file again - but from the beginning (no so good)
                                 _currentFileList.chunkOffset = 0;
 
                                 System.Diagnostics.Trace.WriteLine(String.Format("Error getting file {0}, HASH failed. Starting again", _currentFileList.path));

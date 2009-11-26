@@ -66,6 +66,7 @@
       <DependentUpon>About.cs</DependentUpon>
     </Compile>
     <Compile Include="BlackList.cs" />
+    <Compile Include="CacheManager.cs" />
     <Compile Include="FileCollector.cs" />
     <Compile Include="Flash.cs">
       <SubType>Form</SubType>
