@@ -90,25 +90,12 @@ namespace XiboClient
                     if (File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path + ".xlf"))
                     {
                         // Read the current layout into a string
-                        String md5sum = "";
-                        try
-                        {
-                            StreamReader sr = new StreamReader(File.Open(Properties.Settings.Default.LibraryPath + @"\" + path + ".xlf", FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                        String md5 = _cacheManager.GetMD5(path + ".xlf");
 
-                            md5sum = Hashes.MD5(sr.ReadToEnd() + "\n");
-
-                            sr.Close();
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine(String.Format("Error opening {0} for MD5 check", Properties.Settings.Default.LibraryPath + @"\" + path + ".xlf"), "FileCollector - CompareAndCollect");
-                            System.Diagnostics.Debug.WriteLine(ex.Message);
-
-                            break;
-                        }
+                        System.Diagnostics.Debug.WriteLine(String.Format("Comparing current MD5 [{0}] with given MD5 [{1}]", md5, attributes["md5"].Value));
 
                         // Now we have the md5, compare it to the md5 in the xml
-                        if (attributes["md5"].Value != md5sum)
+                        if (attributes["md5"].Value != md5)
                         {
                             // They are different 
                             // Get the file and save it
@@ -274,21 +261,14 @@ namespace XiboClient
                     {
                         // Decode this byte[] into a string and stick it in the file.
                         string layoutXml = Encoding.UTF8.GetString(e.Result);
-
-                        // MD5 it to make sure it arrived ok
-                        string md5sum = Hashes.MD5(layoutXml);
-
-                        if (md5sum != _currentFileList.md5)
-                        {
-                            // We need to get this file again
-                        }
+                       
 
                         // We know it is finished and that we need to write to a file
                         try
                         {
                             string fullPath = Properties.Settings.Default.LibraryPath + @"\" + _currentFileList.path + ".xlf";
 
-                            StreamWriter sw = new StreamWriter(File.Open(fullPath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+                            StreamWriter sw = new StreamWriter(File.Open(fullPath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.Default);
                             sw.Write(layoutXml);
                             sw.Close();
 
@@ -300,6 +280,15 @@ namespace XiboClient
                             //What do we do if we cant open the file stream?
                             System.Diagnostics.Debug.WriteLine(ex.Message, "FileCollector - GetFileCompleted");
                         }
+
+                        // Check it
+                        String md5sum = _cacheManager.GetMD5(_currentFileList.path + ".xlf");
+
+                        System.Diagnostics.Debug.WriteLine(String.Format("Comparing MD5 of completed download [{0}] with given MD5 [{1}]", md5sum, _currentFileList.md5));
+
+                        // TODO: What if the MD5 is different?
+                        if (md5sum != _currentFileList.md5)
+                            System.Diagnostics.Trace.WriteLine(new LogMessage("xmdsFile_GetFileCompleted", String.Format("Incorrect MD5 for file: {0}", _currentFileList.path)));
 
                         // Fire a layout complete event
                         LayoutFileChanged(_currentFileList.path + ".xlf");
