@@ -363,10 +363,13 @@ namespace XiboClient
                 // Dispose of the current media
                 try
                 {
-                    // Remove the controls
-                    this.Controls.Remove(media);
-                    media.Dispose();
+                    media.Hide();
+                    Application.DoEvents();
 
+                    // Remove the controls
+                    Controls.Remove(media);
+                    
+                    media.Dispose();
                     media = null;
                 }
                 catch (Exception ex)
@@ -397,7 +400,7 @@ namespace XiboClient
         {
             System.Diagnostics.Debug.WriteLine(String.Format("Media Elapsed: {0}", options.uri), "Region - DurationElapsedEvent");
 
-            //make some decisions about what to do next
+            // make some decisions about what to do next
             EvalOptions();
         }
 

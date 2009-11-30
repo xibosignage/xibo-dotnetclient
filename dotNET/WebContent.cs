@@ -49,6 +49,8 @@ namespace XiboClient
             // Attach event
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
 
+            Controls.Add(webBrowser);
+
             if (!Properties.Settings.Default.powerpointEnabled && options.type == "powerpoint")
             {
                 webBrowser.DocumentText = "<html><body><h1>Powerpoint not enabled on this display</h1></body></html>";
@@ -91,12 +93,10 @@ namespace XiboClient
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             base.Duration = duration;
-
             base.RenderMedia();
 
-            //Add the panel
-            this.Controls.Add(webBrowser);
-
+            // Get ready to show the control
+            Application.DoEvents();
             Show();
         }
 

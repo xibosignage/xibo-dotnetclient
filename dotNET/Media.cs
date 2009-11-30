@@ -78,7 +78,7 @@ namespace XiboClient
 
         protected virtual void timer_Tick(object sender, EventArgs e)
         {
-            //Once it has expired we might as well stop the timer?
+            // Once it has expired we might as well stop the timer?
             timer.Stop();
 
             SignalElapsedEvent();
@@ -105,7 +105,7 @@ namespace XiboClient
             }
             catch (NullReferenceException ex)
             {
-                //Some things dont have a timer
+                // Some things dont have a timer
                 System.Diagnostics.Debug.WriteLine(ex.Message);
             }
 

@@ -82,6 +82,8 @@ namespace XiboClient
 
             // Navigate to temp file
             _webBrowser.Navigate(_tempHtml.Path);
+
+            Controls.Add(_webBrowser);
         }
 
         #region Members
@@ -167,11 +169,8 @@ function init()
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             // We have navigated to the temporary file.
-
-            // Add the control
-            this.Controls.Add(_webBrowser);
-
             Show();
+            Application.DoEvents();
         }
 
         #endregion
