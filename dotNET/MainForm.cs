@@ -29,6 +29,7 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Net;
 using System.IO;
+using System.Drawing.Imaging;
 
 namespace XiboClient
 {
@@ -268,8 +269,13 @@ namespace XiboClient
                     Image img = Image.FromFile(Properties.Settings.Default.LibraryPath + @"\" + layoutAttributes["background"].Value);
 
                     Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight);
+                    EncoderParameters encoderParameters = new EncoderParameters(1);
+                    EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
+                    encoderParameters.Param[0] = qualityParam;
+                    
+                    ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
 
-                    bmp.Save(bgFilePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    bmp.Save(bgFilePath, jpegCodec, encoderParameters);
 
                     img.Dispose();
                     bmp.Dispose();
@@ -333,6 +339,21 @@ namespace XiboClient
 
             //Null stuff
             listRegions = null;
+        }
+
+        /// <summary> 
+        /// Returns the image codec with the given mime type 
+        /// </summary> 
+        private static ImageCodecInfo GetEncoderInfo(string mimeType)
+        {
+            // Get image codecs for all image formats 
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+
+            // Find the correct image codec 
+            for (int i = 0; i < codecs.Length; i++)
+                if (codecs[i].MimeType == mimeType)
+                    return codecs[i];
+            return null;
         }
 
         /// <summary>

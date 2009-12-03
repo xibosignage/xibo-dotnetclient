@@ -12,7 +12,7 @@
     <ManifestCertificateThumbprint>3F1DD8562B79F6E24F700A1576DB3897470C4CB4</ManifestCertificateThumbprint>
     <ManifestKeyFile>XiboClient_TemporaryKey.pfx</ManifestKeyFile>
     <GenerateManifests>false</GenerateManifests>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <StartupObject>XiboClient.Program</StartupObject>
     <TargetZone>LocalIntranet</TargetZone>
@@ -66,6 +66,7 @@
       <DependentUpon>About.cs</DependentUpon>
     </Compile>
     <Compile Include="BlackList.cs" />
+    <Compile Include="CacheManager.cs" />
     <Compile Include="FileCollector.cs" />
     <Compile Include="Flash.cs">
       <SubType>Form</SubType>
@@ -195,14 +196,6 @@
       <Guid>{00020430-0000-0000-C000-000000000046}</Guid>
       <VersionMajor>2</VersionMajor>
       <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>primary</WrapperTool>
-      <Isolated>False</Isolated>
-    </COMReference>
-    <COMReference Include="VBIDE">
-      <Guid>{0002E157-0000-0000-C000-000000000046}</Guid>
-      <VersionMajor>5</VersionMajor>
-      <VersionMinor>3</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>primary</WrapperTool>
       <Isolated>False</Isolated>
