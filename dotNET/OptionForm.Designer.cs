@@ -35,8 +35,8 @@ namespace XiboClient
             this.buttonSaveSettings = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
-            this.checkBoxPowerPoint = new System.Windows.Forms.CheckBox();
             this.checkBoxStats = new System.Windows.Forms.CheckBox();
+            this.checkBoxPowerPoint = new System.Windows.Forms.CheckBox();
             this.buttonReset = new System.Windows.Forms.Button();
             this.buttonLibrary = new System.Windows.Forms.Button();
             this.numericUpDownCollect = new System.Windows.Forms.NumericUpDown();
@@ -71,6 +71,8 @@ namespace XiboClient
             this.onlineHelpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.folderBrowserLibrary = new System.Windows.Forms.FolderBrowserDialog();
             this.xmds1 = new XiboClient.xmds.xmds();
+            this.label9 = new System.Windows.Forms.Label();
+            this.tbHardwareKey = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownCollect)).BeginInit();
@@ -131,6 +133,8 @@ namespace XiboClient
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.tbHardwareKey);
+            this.tabPage1.Controls.Add(this.label9);
             this.tabPage1.Controls.Add(this.checkBoxStats);
             this.tabPage1.Controls.Add(this.checkBoxPowerPoint);
             this.tabPage1.Controls.Add(this.buttonReset);
@@ -152,19 +156,6 @@ namespace XiboClient
             this.tabPage1.Text = "Xibo Settings";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
-            // checkBoxPowerPoint
-            // 
-            this.checkBoxPowerPoint.AutoSize = true;
-            this.checkBoxPowerPoint.Checked = global::XiboClient.Properties.Settings.Default.powerpointEnabled;
-            this.checkBoxPowerPoint.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "powerpointEnabled", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxPowerPoint.Location = new System.Drawing.Point(184, 147);
-            this.checkBoxPowerPoint.Name = "checkBoxPowerPoint";
-            this.checkBoxPowerPoint.Size = new System.Drawing.Size(116, 17);
-            this.checkBoxPowerPoint.TabIndex = 12;
-            this.checkBoxPowerPoint.Text = "Enable PowerPoint";
-            this.checkBoxPowerPoint.UseVisualStyleBackColor = true;
-            this.checkBoxPowerPoint.CheckedChanged += new System.EventHandler(this.checkBoxPowerPoint_CheckedChanged);
-            // 
             // checkBoxStats
             // 
             this.checkBoxStats.AutoSize = true;
@@ -178,6 +169,19 @@ namespace XiboClient
             this.checkBoxStats.Text = "Enable Statistics";
             this.checkBoxStats.UseVisualStyleBackColor = true;
             this.checkBoxStats.CheckedChanged += new System.EventHandler(this.checkBoxStats_CheckedChanged);
+            // 
+            // checkBoxPowerPoint
+            // 
+            this.checkBoxPowerPoint.AutoSize = true;
+            this.checkBoxPowerPoint.Checked = global::XiboClient.Properties.Settings.Default.powerpointEnabled;
+            this.checkBoxPowerPoint.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "powerpointEnabled", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxPowerPoint.Location = new System.Drawing.Point(184, 159);
+            this.checkBoxPowerPoint.Name = "checkBoxPowerPoint";
+            this.checkBoxPowerPoint.Size = new System.Drawing.Size(116, 17);
+            this.checkBoxPowerPoint.TabIndex = 12;
+            this.checkBoxPowerPoint.Text = "Enable PowerPoint";
+            this.checkBoxPowerPoint.UseVisualStyleBackColor = true;
+            this.checkBoxPowerPoint.CheckedChanged += new System.EventHandler(this.checkBoxPowerPoint_CheckedChanged);
             // 
             // buttonReset
             // 
@@ -209,7 +213,7 @@ namespace XiboClient
             0,
             0});
             this.numericUpDownCollect.Minimum = new decimal(new int[] {
-            60,
+            30,
             0,
             0,
             0});
@@ -439,7 +443,7 @@ namespace XiboClient
             this.labelXmdsUrl.AutoSize = true;
             this.labelXmdsUrl.Location = new System.Drawing.Point(139, 10);
             this.labelXmdsUrl.Name = "labelXmdsUrl";
-            this.labelXmdsUrl.Size = new System.Drawing.Size(190, 13);
+            this.labelXmdsUrl.Size = new System.Drawing.Size(193, 13);
             this.labelXmdsUrl.TabIndex = 3;
             this.labelXmdsUrl.Text = global::XiboClient.Properties.Settings.Default.XiboClient_xmds_xmds;
             // 
@@ -468,13 +472,13 @@ namespace XiboClient
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(35, 20);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -484,20 +488,20 @@ namespace XiboClient
             this.aboutToolStripMenuItem1,
             this.onlineHelpToolStripMenuItem});
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(40, 20);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.aboutToolStripMenuItem.Text = "Help";
             // 
             // aboutToolStripMenuItem1
             // 
             this.aboutToolStripMenuItem1.Name = "aboutToolStripMenuItem1";
-            this.aboutToolStripMenuItem1.Size = new System.Drawing.Size(139, 22);
+            this.aboutToolStripMenuItem1.Size = new System.Drawing.Size(137, 22);
             this.aboutToolStripMenuItem1.Text = "About";
             this.aboutToolStripMenuItem1.Click += new System.EventHandler(this.aboutToolStripMenuItem1_Click);
             // 
             // onlineHelpToolStripMenuItem
             // 
             this.onlineHelpToolStripMenuItem.Name = "onlineHelpToolStripMenuItem";
-            this.onlineHelpToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
+            this.onlineHelpToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.onlineHelpToolStripMenuItem.Text = "Online Help";
             this.onlineHelpToolStripMenuItem.Click += new System.EventHandler(this.onlineHelpToolStripMenuItem_Click);
             // 
@@ -506,6 +510,24 @@ namespace XiboClient
             this.xmds1.Credentials = null;
             this.xmds1.Url = "http://localhost/Xibo/server/xmds.php";
             this.xmds1.UseDefaultCredentials = false;
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(6, 119);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(147, 13);
+            this.label9.TabIndex = 13;
+            this.label9.Text = "The Unique Key for this Client";
+            // 
+            // tbHardwareKey
+            // 
+            this.tbHardwareKey.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "hardwareKey", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.tbHardwareKey.Location = new System.Drawing.Point(184, 119);
+            this.tbHardwareKey.Name = "tbHardwareKey";
+            this.tbHardwareKey.Size = new System.Drawing.Size(237, 20);
+            this.tbHardwareKey.TabIndex = 14;
+            this.tbHardwareKey.Text = global::XiboClient.Properties.Settings.Default.hardwareKey;
             // 
             // OptionForm
             // 
@@ -579,5 +601,7 @@ namespace XiboClient
         private System.Windows.Forms.Button buttonProxySave;
         private System.Windows.Forms.TextBox textBoxProxyDomain;
         private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.TextBox tbHardwareKey;
+        private System.Windows.Forms.Label label9;
     }
 }
