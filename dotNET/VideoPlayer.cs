@@ -83,18 +83,12 @@ namespace XiboClient
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            
             try
             {
                 axWindowsMediaPlayer1.Dispose();
             }
             catch (Exception ex)
             {
-                // Some things dont have a timer
                 System.Diagnostics.Debug.WriteLine(ex.Message);
             }
 
