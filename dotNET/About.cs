@@ -42,7 +42,7 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                System.Diagnostics.Process.Start("http://www.xibo.co.uk/manual");
+                System.Diagnostics.Process.Start("http://wiki.xibo.org.uk/wiki/Manual:TOC");
             }
             catch
             {
