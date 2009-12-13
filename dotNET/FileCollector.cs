@@ -98,7 +98,15 @@ namespace XiboClient
                         if (attributes["md5"].Value != md5)
                         {
                             // They are different
-                            // TODO: Delete the old layout as it is wrong
+                            // Delete the old layout as it is wrong
+                            try
+                            {
+                                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + path + ".xlf");
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLine(new LogMessage("CompareAndCollect", "Unable to delete incorrect file because: " + ex.Message));
+                            }
 
                             // Get the file and save it
                             fileList.chunkOffset = 0;
@@ -144,7 +152,15 @@ namespace XiboClient
                         if (md5 != attributes["md5"].Value)
                         {
                             // File changed
-                            //TODO: Delete the old media as it is wrong
+                            // Delete the old media as it is wrong
+                            try
+                            {
+                                File.DeleteProperties.Settings.Default.LibraryPath + @"\" + path);
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLine(new LogMessage("CompareAndCollect", "Unable to delete incorrect file because: " + ex.Message));
+                            }
 
                             // Add to queue
                             fileList.chunkOffset = 0;

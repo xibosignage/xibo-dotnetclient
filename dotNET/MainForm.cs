@@ -109,7 +109,7 @@ namespace XiboClient
             // Flush the stats
             _statLog.Flush();
 
-            // TODO: Write the CacheManager to disk
+            // Write the CacheManager to disk
             WriteCacheManager();
 
             // Flush the logs
