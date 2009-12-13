@@ -22,131 +22,186 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using System.Diagnostics;
 
 namespace XiboClient
 {
     class Text : Media
     {
-        private string filePath;
-        private string direction;
-        private string backgroundImage;
-        private string backgroundColor;
-        private WebBrowser webBrowser;
+        private string _filePath;
+        private string _direction;
+        private string _backgroundImage;
+        private string _backgroundColor;
+        private WebBrowser _webBrowser;
         private string _documentText;
+        private String _headText;
+        private String _headJavaScript;
 
-        private string backgroundTop;
-        private string backgroundLeft;
+        private string _backgroundTop;
+        private string _backgroundLeft;
         private double _scaleFactor;
         private int _scrollSpeed;
 
-        //<summary>
-        //Creates a Text display control
-        //</summary>
-        //<param name="width">The Width of the Panel</param>
+        private TemporaryHtml _tempHtml;
+
+        /// <summary>
+        /// Creates a Text display control
+        /// </summary>
+        /// <param name="options">Region Options for this control</param>
         public Text(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
-            this.filePath = options.uri;
-            this.direction = options.direction;
-            this.backgroundImage = options.backgroundImage;
-            this.backgroundColor = options.backgroundColor;
-            
+            // Collect some options from the Region Options passed in
+            // and store them in member variables.
+            _filePath = options.uri;
+            _direction = options.direction;
+            _backgroundImage = options.backgroundImage;
+            _backgroundColor = options.backgroundColor;
             _scaleFactor = options.scaleFactor;
-
-            backgroundTop = options.backgroundTop + "px";
-            backgroundLeft = options.backgroundLeft + "px";
-
-            webBrowser = new WebBrowser();
-            webBrowser.Size = this.Size;
-            webBrowser.ScrollBarsEnabled = false;
-
-            // set the text
+            _backgroundTop = options.backgroundTop + "px";
+            _backgroundLeft = options.backgroundLeft + "px";
             _documentText = options.text;
             _scrollSpeed = options.scrollSpeed;
-           
-            // What do we want the background to look like
-            String bodyStyle;
-            String document;
+            _headJavaScript = options.javaScript;
+            
+            // Generate a temporary file to store the rendered object in.
+            _tempHtml = new TemporaryHtml();
 
-            if (backgroundImage == null || backgroundImage == "")
-            {
-                bodyStyle = "background-color:" + backgroundColor + " ;";
-            }
-            else
-            {
-                bodyStyle = "background-image: url('" + backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + " background-repeat: no-repeat; background-position: " + backgroundLeft + " " + backgroundTop + ";";
-            }
+            // Generate the Head Html and store to file.
+            GenerateHeadHtml();
+            
+            // Generate the Body Html and store to file.
+            GenerateBodyHtml();
 
-            document = String.Format("<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8' /><script type='text/javascript'>{0}</script>{2}<style type='text/css'>body {{{3}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{1}em; }}</style></head><body></body></html>", Properties.Resources.textRender, options.scaleFactor.ToString(), options.javaScript, bodyStyle);
+            // Fire up a webBrowser control to display the completed file.
+            _webBrowser = new WebBrowser();
+            _webBrowser.Size = this.Size;
+            _webBrowser.ScrollBarsEnabled = false;
+            _webBrowser.ScriptErrorsSuppressed = true;
+            _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
 
-            try
-            {
-                webBrowser.DocumentText = document;
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Trace.WriteLine(e.Message);
-                return;
-            }
+            // Navigate to temp file
+            _webBrowser.Navigate(_tempHtml.Path);
 
-            webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
+            Controls.Add(_webBrowser);
         }
 
-        void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
-        {
-            HtmlDocument htmlDoc = webBrowser.Document;
+        #region Members
 
-            //decide whether we need a marquee or not
-            if (direction == "none")
+        /// <summary>
+        /// Generates the Body Html for this Document
+        /// </summary>
+        private void GenerateBodyHtml()
+        {
+            // Generate the Body
+            if (_direction == "none")
             {
-                //we dont
-                //set the body of the webBrowser to the document text
-                htmlDoc.Body.InnerHtml = _documentText;
+                // Just use the RAW text that was in the XLF
+                _tempHtml.BodyContent = _documentText;
             }
             else
             {
+                // Format the text in some way
                 String textRender = "";
                 String textWrap = "";
-                if (direction == "left" || direction == "right") textWrap = "white-space: nowrap";
+
+                if (_direction == "left" || _direction == "right") textWrap = "white-space: nowrap";
 
                 textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}; height:{1};'>", this.width - 10, this.height);
-                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText);
+                textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; width:{2} {0}'>{1}</div></div>", textWrap, _documentText, this.width - 10);
 
-                htmlDoc.Body.InnerHtml = textRender;
-
-                Object[] objArray = new Object[2];
-                objArray[0] = direction;
-                objArray[1] = _scrollSpeed;
-
-                htmlDoc.InvokeScript("init", objArray);
+                _tempHtml.BodyContent = textRender;
             }
-
-            System.Diagnostics.Debug.WriteLine(htmlDoc.Body.InnerHtml, LogType.Audit.ToString());
-
-            // Try to call the EmbedInit Function
-            try
-            {
-                htmlDoc.InvokeScript("EmbedInit");
-            }
-            catch { }
-
-            // Add the control
-            this.Controls.Add(webBrowser);
-
-            Show();
         }
 
+        /// <summary>
+        /// Generates the Head Html for this Document
+        /// </summary>
+        private void GenerateHeadHtml()
+        {
+            // Handle the background
+            String bodyStyle;
+
+            if (_backgroundImage == null || _backgroundImage == "")
+            {
+                bodyStyle = "background-color:" + _backgroundColor + " ;";
+            }
+            else
+            {
+                bodyStyle = "background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + ";";
+            }
+
+            // Do we need to include the init function to kick off the text render?
+            String initFunction = "";
+
+            if (_direction != "none")
+            {
+                initFunction = @"
+<script type='text/javascript'>
+function init() 
+{ 
+    tr = new TextRender('text', 'innerText', '" + _direction + @"');
+
+    var timer = 0;
+    timer = setInterval('tr.TimerTick()', " + _scrollSpeed.ToString() + @");
+}
+</script>";
+            }
+
+            _headText = String.Format("{1}{3}<style type='text/css'>body {{{2}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{0}em; }}</style>", _scaleFactor.ToString(), _headJavaScript, bodyStyle, initFunction);
+
+            // Store the document text in the temporary HTML space
+            _tempHtml.HeadContent = _headText;
+        }
+
+        /// <summary>
+        /// Render media
+        /// </summary>
         public override void RenderMedia()
         {
             base.StartTimer();
         }
 
+        #endregion
+
+        #region Event Handlers
+
+        void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        {
+            // We have navigated to the temporary file.
+            Show();
+            Application.DoEvents();
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Dispose of this text item
+        /// </summary>
+        /// <param name="disposing"></param>
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                webBrowser.DocumentText = "";
-                webBrowser.Dispose();
+                // Remove the webbrowser control
+                try
+                {
+                    _webBrowser.Dispose();
+                }
+                catch
+                {
+                    System.Diagnostics.Trace.WriteLine(new LogMessage("WebBrowser still in use.", String.Format("Dispose")));
+                }
+
+                // Remove the temporary file we created
+                try
+                {
+                    _tempHtml.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Dispose", String.Format("Unable to dispose TemporaryHtml with exception {0}", ex.Message)));
+                }
             }
 
             base.Dispose(disposing);

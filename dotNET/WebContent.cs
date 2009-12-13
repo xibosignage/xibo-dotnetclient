@@ -44,9 +44,12 @@ namespace XiboClient
 
             webBrowser.Size = this.Size;
             webBrowser.ScrollBarsEnabled = false;
+            webBrowser.ScriptErrorsSuppressed = true;
 
             // Attach event
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
+
+            Controls.Add(webBrowser);
 
             if (!Properties.Settings.Default.powerpointEnabled && options.type == "powerpoint")
             {
@@ -79,9 +82,6 @@ namespace XiboClient
                     System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Unable to show the powerpoint, cannot be located", scheduleId, layoutId, mediaId));
                 }
             }
-            
-            //Add the panel
-            this.Controls.Add(webBrowser);
         }
 
         public override void RenderMedia()
@@ -93,8 +93,11 @@ namespace XiboClient
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             base.Duration = duration;
-
             base.RenderMedia();
+
+            // Get ready to show the control
+            Application.DoEvents();
+            Show();
         }
 
         protected override void Dispose(bool disposing)
