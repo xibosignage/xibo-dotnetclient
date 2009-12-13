@@ -259,5 +259,14 @@ namespace XiboClient.Properties {
                 this["collectInterval"] = value;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("cacheManager.xml")]
+        public string CacheManagerFile {
+            get {
+                return ((string)(this["CacheManagerFile"]));
+            }
+        }
     }
 }

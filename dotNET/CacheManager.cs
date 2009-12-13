@@ -25,9 +25,9 @@ using System.IO;
 
 namespace XiboClient
 {
-    class CacheManager
+    public class CacheManager
     {
-        Collection<Md5Resource> _files;
+        public Collection<Md5Resource> _files;
 
         public CacheManager()
         {
@@ -82,12 +82,14 @@ namespace XiboClient
                 // Add the resource to the collection
                 _files.Add(md5Resource);
 
+                System.Diagnostics.Debug.WriteLine(new LogMessage("CalcMD5", "Adding new MD5 to CacheManager"));
+
                 return md5Resource.md5;
             }
         }
     }
 
-    struct Md5Resource
+    public struct Md5Resource
     {
         public String md5;
         public String path;

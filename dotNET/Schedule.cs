@@ -25,6 +25,8 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml;
+using System.Xml.Serialization;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -55,7 +57,7 @@ namespace XiboClient
         /// Create a schedule
         /// </summary>
         /// <param name="scheduleLocation"></param>
-        public Schedule(string scheduleLocation)
+        public Schedule(string scheduleLocation, ref CacheManager cacheManager)
         {
             // Save the schedule location
             this.scheduleLocation = scheduleLocation;
@@ -63,8 +65,8 @@ namespace XiboClient
             // Create a new collection for the layouts in the schedule
             layoutSchedule = new Collection<LayoutSchedule>();
             
-            // Create a new cache manager
-            _cacheManager = new CacheManager();
+            // Set cachemanager
+            _cacheManager = cacheManager;
 
             // Create a new Xmds service object
             xmds2 = new XiboClient.xmds.xmds();

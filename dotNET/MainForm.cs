@@ -30,6 +30,8 @@ using System.Xml;
 using System.Net;
 using System.IO;
 using System.Drawing.Imaging;
+using System.Xml.Serialization;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -47,12 +49,17 @@ namespace XiboClient
 
         private StatLog _statLog;
         private Stat _stat;
+        private CacheManager _cacheManager;
 
         public MainForm()
         {
             InitializeComponent();
 
             _statLog = new StatLog();
+
+            SetCacheManager();
+
+            this.FormClosing += new FormClosingEventHandler(MainForm_FormClosing);
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -77,7 +84,7 @@ namespace XiboClient
             OptionForm.SetGlobalProxy();
 
             // Create the Schedule
-            schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile);
+            schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager);
 
             schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
 
@@ -91,6 +98,64 @@ namespace XiboClient
                 MessageBox.Show("Fatal Error initialising the application", "Fatal Error");
                 this.Close();
                 this.Dispose();
+            }
+        }
+
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // We want to tidy up some stuff as this form closes.
+
+            // Flush the stats
+            _statLog.Flush();
+
+            // TODO: Write the CacheManager to disk
+            WriteCacheManager();
+
+            // Flush the logs
+            System.Diagnostics.Trace.Flush();
+        }
+
+        /// <summary>
+        /// Writes the CacheManager to disk
+        /// </summary>
+        private void WriteCacheManager()
+        {
+            try
+            {
+                using (StreamWriter streamWriter = new StreamWriter(Properties.Settings.Default.CacheManagerFile))
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
+                    
+                    xmlSerializer.Serialize(streamWriter, _cacheManager);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm_FormClosing", "Unable to write CacheManager to disk because: " + ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Sets the CacheManager
+        /// </summary>
+        private void SetCacheManager()
+        {
+            try
+            {
+                using (FileStream fileStream = File.Open(Properties.Settings.Default.CacheManagerFile, FileMode.Open))
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
+
+                    _cacheManager = (CacheManager)xmlSerializer.Deserialize(fileStream);
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("Schedule", "Unable to reuse the Cache Manager because: " + ex.Message));
+
+                // Create a new cache manager
+                _cacheManager = new CacheManager();
             }
         }
 

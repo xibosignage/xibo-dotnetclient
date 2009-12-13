@@ -97,7 +97,9 @@ namespace XiboClient
                         // Now we have the md5, compare it to the md5 in the xml
                         if (attributes["md5"].Value != md5)
                         {
-                            // They are different 
+                            // They are different
+                            // TODO: Delete the old layout as it is wrong
+
                             // Get the file and save it
                             fileList.chunkOffset = 0;
                             fileList.chunkSize = 0;
@@ -142,6 +144,9 @@ namespace XiboClient
                         if (md5 != attributes["md5"].Value)
                         {
                             // File changed
+                            //TODO: Delete the old media as it is wrong
+
+                            // Add to queue
                             fileList.chunkOffset = 0;
                             fileList.chunkSize = 512000;
                             fileList.complete = false;
