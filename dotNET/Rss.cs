@@ -101,7 +101,7 @@ namespace XiboClient
             _updateInterval = options.updateInterval;
             _scrollSpeed = options.scrollSpeed;
 
-            System.Diagnostics.Trace.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
+            System.Diagnostics.Debug.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
 
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
