@@ -268,5 +268,14 @@ namespace XiboClient.Properties {
                 return ((string)(this["CacheManagerFile"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.0.5")]
+        public string ClientVersion {
+            get {
+                return ((string)(this["ClientVersion"]));
+            }
+        }
     }
 }
