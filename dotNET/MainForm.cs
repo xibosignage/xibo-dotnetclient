@@ -123,7 +123,7 @@ namespace XiboClient
         {
             try
             {
-                using (StreamWriter streamWriter = new StreamWriter(Properties.Settings.Default.CacheManagerFile))
+                using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile))
                 {
                     XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
                     
@@ -143,7 +143,7 @@ namespace XiboClient
         {
             try
             {
-                using (FileStream fileStream = File.Open(Properties.Settings.Default.CacheManagerFile, FileMode.Open))
+                using (FileStream fileStream = File.Open(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile, FileMode.Open))
                 {
                     XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
 
