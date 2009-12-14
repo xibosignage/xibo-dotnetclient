@@ -155,7 +155,7 @@ namespace XiboClient
                             // Delete the old media as it is wrong
                             try
                             {
-                                File.DeleteProperties.Settings.Default.LibraryPath + @"\" + path);
+                                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + path);
                             }
                             catch (Exception ex)
                             {
