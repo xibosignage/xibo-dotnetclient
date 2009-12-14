@@ -160,8 +160,7 @@ namespace XiboClient
                     xmdsProcessing = false;
 
                     // Log and move on
-                    System.Diagnostics.Debug.WriteLine("Error Comparing and Collecting", "Schedule - RequiredFilesCompleted");
-                    System.Diagnostics.Debug.WriteLine(ex.Message, "Schedule - RequiredFilesCompleted");
+                    System.Diagnostics.Trace.WriteLine(new LogMessage("Schedule - RequiredFilesCompleted", "Error Comparing and Collecting: " + ex.Message), LogType.Error.ToString());
                 }
             }
         }

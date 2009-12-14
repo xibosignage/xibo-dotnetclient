@@ -83,6 +83,9 @@ namespace XiboClient
             // Change the default Proxy class
             OptionForm.SetGlobalProxy();
 
+            // UserApp data
+            Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + Application.UserAppDataPath), LogType.Info.ToString());
+
             // Create the Schedule
             schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager);
 

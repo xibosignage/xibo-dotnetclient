@@ -89,7 +89,7 @@ namespace XiboClient
                     // Does this file exist?
                     if (File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path + ".xlf"))
                     {
-                        // Read the current layout into a string
+                        // Calculate a MD5 for the current file
                         String md5 = _cacheManager.GetMD5(path + ".xlf");
 
                         System.Diagnostics.Debug.WriteLine(String.Format("Comparing current MD5 [{0}] with given MD5 [{1}]", md5, attributes["md5"].Value));
@@ -98,6 +98,8 @@ namespace XiboClient
                         if (attributes["md5"].Value != md5)
                         {
                             // They are different
+                            _cacheManager.Remove(path + ".xlf");
+
                             // Delete the old layout as it is wrong
                             try
                             {
@@ -119,6 +121,12 @@ namespace XiboClient
                             fileList.retrys = 0;
 
                             files.Add(fileList);
+                        }
+                        else
+                        {
+                            // The MD5 of the current file and the MD5 in RequiredFiles are the same.
+                            // Therefore make sure this MD5 is in the CacheManager
+                            _cacheManager.Add(path + ".xlf", md5);
                         }
                     }
                     else
@@ -152,6 +160,8 @@ namespace XiboClient
                         if (md5 != attributes["md5"].Value)
                         {
                             // File changed
+                            _cacheManager.Remove(path);
+
                             // Delete the old media as it is wrong
                             try
                             {
@@ -174,6 +184,12 @@ namespace XiboClient
                             fileList.retrys = 0;
 
                             files.Add(fileList);
+                        }
+                        else
+                        {
+                            // The MD5 of the current file and the MD5 in RequiredFiles are the same.
+                            // Therefore make sure this MD5 is in the CacheManager
+                            _cacheManager.Add(path, md5);
                         }
                     }
                     else
@@ -309,7 +325,15 @@ namespace XiboClient
 
                         // TODO: What if the MD5 is different?
                         if (md5sum != _currentFileList.md5)
+                        {
+                            // Error
                             System.Diagnostics.Trace.WriteLine(new LogMessage("xmdsFile_GetFileCompleted", String.Format("Incorrect MD5 for file: {0}", _currentFileList.path)));
+                        }
+                        else
+                        {
+                            // Add to the CacheManager
+                            _cacheManager.Add(_currentFileList.path + ".xlf", md5sum);
+                        }
 
                         // Fire a layout complete event
                         LayoutFileChanged(_currentFileList.path + ".xlf");
@@ -368,6 +392,9 @@ namespace XiboClient
                             }
                             else
                             {
+                                // Add the MD5 to the CacheManager
+                                _cacheManager.Add(_currentFileList.path, md5sum);
+
                                 // This file is complete
                                 _currentFileList.complete = true;
 
