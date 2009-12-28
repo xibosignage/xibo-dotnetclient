@@ -36,6 +36,16 @@ namespace XiboClient
             System.Diagnostics.Debug.WriteLine("[IN]", "OptionForm");
             System.Diagnostics.Debug.WriteLine("Initialise Option Form Components", "OptionForm");
 
+            // Get a hardware key here, just in case we havent been able to get one before
+            try
+            {
+                hardwareKey = new HardwareKey();
+            }
+            catch
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("OptionForm", "Unable to generate a hardware key"), LogType.Error.ToString());
+            }
+
             InitializeComponent();
 
             System.Diagnostics.Debug.WriteLine("Register some Event Handlers", "OptionForm");
@@ -52,14 +62,8 @@ namespace XiboClient
             textBoxProxyUser.TextChanged += new EventHandler(proxySetting_TextChanged);
             maskedTextBoxProxyPass.TextChanged += new EventHandler(proxySetting_TextChanged);
             textBoxProxyDomain.TextChanged += new EventHandler(proxySetting_TextChanged);
+            tbHardwareKey.TextChanged += new EventHandler(tbHardwareKey_TextChanged);
 
-
-            // Get the hardware key
-            System.Diagnostics.Debug.WriteLine("Getting the Hardware Key", "OptionForm");
-            hardwareKey = new HardwareKey();
-
-            // Regenerate the key
-            hardwareKey.Regenerate();
 
             System.Diagnostics.Debug.WriteLine("Getting the Library Path", "OptionForm");
             if (Properties.Settings.Default.LibraryPath == "DEFAULT")
@@ -79,6 +83,11 @@ namespace XiboClient
             OptionForm.SetGlobalProxy();
 
             System.Diagnostics.Debug.WriteLine("[OUT]", "OptionForm");
+        }
+
+        void tbHardwareKey_TextChanged(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
         }
 
         void proxySetting_TextChanged(object sender, EventArgs e)
@@ -115,6 +124,9 @@ namespace XiboClient
 
         private void buttonRegister_Click(object sender, EventArgs e)
         {
+            // Make a new hardware key just in case we have changed it in the form.
+            hardwareKey = new HardwareKey();
+
             textBoxResults.Text = "Sending Request";
 
             this.xmds1.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
@@ -142,6 +154,8 @@ namespace XiboClient
                 Properties.Settings.Default.powerpointEnabled = checkBoxPowerPoint.Checked;
                 Properties.Settings.Default.statsEnabled = checkBoxStats.Checked;
                 Properties.Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
+                Properties.Settings.Default.hardwareKey = tbHardwareKey.Text;
+
                 buttonSaveSettings.Enabled = false;
 
                 //Also tweak the address of the xmds1
