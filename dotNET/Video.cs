@@ -38,63 +38,68 @@ namespace XiboClient
             videoPlayer.Height = options.height;
             videoPlayer.Location = new System.Drawing.Point(0, 0);
 
-            videoPlayer.VideoPlayerElapsedEvent += new VideoPlayer.VideoPlayerElapsed(videoPlayer_VideoPlayerElapsedEvent);
-
-            Controls.Add(videoPlayer);
-        }
-
-        void videoPlayer_VideoPlayerElapsedEvent()
-        {
-            Hide();
-            videoPlayer.Hide();
-
-            // Time is up
-            SignalElapsedEvent();
+            this.Controls.Add(videoPlayer);
         }
 
         public override void RenderMedia()
         {
+            if (duration == 0)
+            {
+                // Determine the end time ourselves
+                base.Duration = 1; //check every second
+            }
+
+            base.RenderMedia();
+
+            videoPlayer.Show();
+
             try 
             {
                 videoPlayer.StartPlayer(filePath);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.WriteLine(ex.Message);
-                SignalElapsedEvent();
+                System.Diagnostics.Debug.WriteLine(ex.Message);
                 return;
             }
+        }
 
-            // Do we start a timer?
-            if (duration != 0)
+        protected override void timer_Tick(object sender, EventArgs e)
+        {
+            if (duration == 0)
             {
-                base.RenderMedia();
+                   // Has the video finished playing
+                if (videoPlayer.FinishedPlaying)
+                {
+                    // Raise the expired tick which will clear this media
+                    base.timer_Tick(sender, e);
+                }
+            }
+            else
+            {
+                // Our user defined timer duration has expired - so raise the base timer tick which will clear this media
+                base.timer_Tick(sender, e);
             }
 
-            // Add and show the control
-            Show();
-            videoPlayer.Show();
-            Application.DoEvents();
+            return;
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                // Dispose of managed resources
+               
             }
-            
-            // Unmanaged resources
-            Controls.Remove(videoPlayer);
 
             try
             {
                 videoPlayer.Hide();
+                Controls.Remove(videoPlayer);
                 videoPlayer.Dispose();
             }
             catch
             {
-                System.Diagnostics.Debug.WriteLine("Unable to dispose of video player", "Dispose");
+
             }
 
             base.Dispose(disposing);

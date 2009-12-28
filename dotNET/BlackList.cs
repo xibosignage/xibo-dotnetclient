@@ -23,6 +23,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -89,6 +90,8 @@ namespace XiboClient
         /// <param name="items">The XMLNodeList containing the blacklist items. Each node must have an "id".</param>
         public void Add(XmlNodeList items)
         {
+            Trace.WriteLine(new LogMessage("Blacklist - Add", "Adding XMLNodeList to Blacklist"), LogType.Info.ToString());
+
             foreach (XmlNode node in items)
             {
                 XmlAttributeCollection attributes = node.Attributes;

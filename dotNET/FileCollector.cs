@@ -100,7 +100,7 @@ namespace XiboClient
                             // They are different
                             _cacheManager.Remove(path + ".xlf");
 
-                            // Delete the old layout as it is wrong
+                            //TODO: This might be bad! Delete the old layout as it is wrong
                             try
                             {
                                 File.Delete(Properties.Settings.Default.LibraryPath + @"\" + path + ".xlf");
@@ -267,6 +267,7 @@ namespace XiboClient
                     System.Diagnostics.Trace.WriteLine(String.Format("Error From WebService Get File. File=[{1}], Error=[{0}], Try No [{2}]", e.Error.Message, _currentFileList.path, _currentFileList.retrys));
 
                     // Retry?
+                    //TODO: What if we are disconnected from XMDS?
                     if (_currentFileList.retrys < 5)
                     {
                         // Increment the Retrys
@@ -381,7 +382,7 @@ namespace XiboClient
                                 catch (Exception ex)
                                 {
                                     // Unable to delete incorrect file
-                                    // Hopefully we will overwrite it
+                                    //TODO: Should we black list this file?
                                     System.Diagnostics.Debug.WriteLine(ex.Message);
                                 }
 
@@ -416,6 +417,8 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("xmdsFile_GetFileCompleted", "Unable to get the file. Exception: " + ex.Message));
+
+                // TODO: Blacklist the file?
 
                 // Consider this file complete because we couldn't write it....
                 _currentFileList.complete = true;

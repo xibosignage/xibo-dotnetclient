@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -107,61 +108,69 @@ namespace XiboClient
             }
 
             System.Diagnostics.Debug.WriteLine(String.Format("Creating new media: {0}, {1}", options.type, options.mediaid), "Region - EvalOptions");
-            
-            switch (options.type)
+
+            try
             {
-                case "image":
-                    options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
-                    media = new ImagePosition(options);
-                    break;
+                switch (options.type)
+                {
+                    case "image":
+                        options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
+                        media = new ImagePosition(options);
+                        break;
 
-                case "text":
-                    media = new Text(options);
-                    break;
+                    case "text":
+                        media = new Text(options);
+                        break;
 
-                case "powerpoint":
-                    options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
-                    media = new WebContent(options);
-                    break;
+                    case "powerpoint":
+                        options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
+                        media = new WebContent(options);
+                        break;
 
-                case "video":
-                    options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
-                    media = new Video(options);
-                    break;
+                    case "video":
+                        options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
+                        media = new Video(options);
+                        break;
 
-                case "webpage":
-                    media = new WebContent(options);
-                    break;
+                    case "webpage":
+                        media = new WebContent(options);
+                        break;
 
-                case "flash":
-                    options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
-                    media = new Flash(options);
-                    break;
+                    case "flash":
+                        options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
+                        media = new Flash(options);
+                        break;
 
-                case "ticker":
-                    media = new Rss(options);
-                    break;
+                    case "ticker":
+                        media = new Rss(options);
+                        break;
 
-                case "embedded":
-                    media = new Text(options);
-                    break;
+                    case "embedded":
+                        media = new Text(options);
+                        break;
 
-                default:
-                    //do nothing
-                    SetNextMediaNode();
-                    return;
+                    default:
+                        //do nothing
+                        SetNextMediaNode();
+                        return;
+                }
+
+                //sets up the timer for this media
+                media.Duration = options.duration;
+
+                //add event handler
+                media.DurationElapsedEvent += new Media.DurationElapsedDelegate(media_DurationElapsedEvent);
+
+                //any additional media specific render options (and starts the timer)
+                media.RenderMedia();
+
+                Controls.Add(media);
             }
-
-            //sets up the timer for this media
-            media.Duration = options.duration;
-
-            //add event handler
-            media.DurationElapsedEvent += new Media.DurationElapsedDelegate(media_DurationElapsedEvent);
-
-            //any additional media specific render options (and starts the timer)
-            media.RenderMedia();
-
-            Controls.Add(media);
+            catch
+            {
+                Trace.WriteLine(new LogMessage("EvalOptions", "Unable to start media"), LogType.Error.ToString());
+                SetNextMediaNode();
+            }
 
             // This media has started and is being replaced
             _stat = new Stat();
@@ -230,7 +239,7 @@ namespace XiboClient
             // Get a media node
             bool validNode = false;
             int numAttempts = 0;
-
+            
             while (!validNode)
             {
                 numAttempts++;
@@ -253,6 +262,15 @@ namespace XiboClient
                     if (currentSequence >= options.mediaNodes.Count)
                     {
                         currentSequence = 0; //zero it
+
+                        hasExpired = true; //we have expired (want to raise an expired event to the parent)
+
+                        System.Diagnostics.Debug.WriteLine("Media Expired:" + options.ToString() + " . Reached the end of the sequence. Starting from the beginning.", "Region - SetNextMediaNode");
+
+                        DurationElapsedEvent();
+
+                        // We want to continue on to show the next media (unless the duration elapsed event triggers a region change)
+                        if (layoutExpired) return;
                     }
                 }
                 else
@@ -265,6 +283,8 @@ namespace XiboClient
 
                     // Type and Duration will always be on the media node
                     options.type        = nodeAttributes["type"].Value;
+
+                    //TODO: Check the type of node we have, and make sure it is supported.
                     
                     if (nodeAttributes["duration"].Value != "")
                     {
@@ -341,7 +361,11 @@ namespace XiboClient
                         }
                     }
 
-                    // That should cover all the new options
+                    // TODO: What if the file isnt there?
+                    // Do we need to have access to the CacheManager here... if we did then we could store whether or not a file
+                    // existed in there, instead of having to check it here...
+                    // we could also do away with the BlackList at the top and build it into here (at the moment its file based, we write
+                    // the cachemanager to file anyway)
                 }
 
                 if (numAttempts > options.mediaNodes.Count)
