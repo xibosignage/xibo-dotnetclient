@@ -33,6 +33,28 @@ namespace XiboClient
     /// </summary>
     class Schedule
     {
+        public delegate void ScheduleChangeDelegate(string layoutPath, int scheduleId, int layoutId);
+        public event ScheduleChangeDelegate ScheduleChangeEvent;
+
+        private Collection<LayoutSchedule> layoutSchedule;
+        private int currentLayout = 0;
+        private string scheduleLocation;
+
+        //FileCollector
+        private XiboClient.xmds.xmds xmds2;
+        private bool xmdsProcessing;
+        private bool forceChange = false;
+
+        // Key
+        private HardwareKey hardwareKey;
+
+        // Cache Manager
+        private CacheManager _cacheManager;
+
+        /// <summary>
+        /// Create a schedule
+        /// </summary>
+        /// <param name="scheduleLocation"></param>
         public Schedule(string scheduleLocation)
         {
             // Save the schedule location
@@ -40,6 +62,9 @@ namespace XiboClient
 
             // Create a new collection for the layouts in the schedule
             layoutSchedule = new Collection<LayoutSchedule>();
+            
+            // Create a new cache manager
+            _cacheManager = new CacheManager();
 
             // Create a new Xmds service object
             xmds2 = new XiboClient.xmds.xmds();
@@ -119,7 +144,7 @@ namespace XiboClient
                 try
                 {
                     // Load the result into XML
-                    FileCollector fileCollector = new FileCollector(e.Result);
+                    FileCollector fileCollector = new FileCollector(_cacheManager, e.Result);
 
                     // Bind some events that the fileCollector will raise
                     fileCollector.LayoutFileChanged += new FileCollector.LayoutFileChangedDelegate(fileCollector_LayoutFileChanged);
@@ -380,20 +405,5 @@ namespace XiboClient
             public int id;
             public int scheduleid;
         }
-
-        public delegate void ScheduleChangeDelegate(string layoutPath, int scheduleId, int layoutId);
-        public event ScheduleChangeDelegate ScheduleChangeEvent;
-
-        private Collection<LayoutSchedule> layoutSchedule;
-        private int currentLayout = 0;
-        private string scheduleLocation;
-
-        //FileCollector
-        private XiboClient.xmds.xmds xmds2;
-        private bool xmdsProcessing;
-        private bool forceChange = false;
-
-        // Key
-        private HardwareKey hardwareKey;
     }
 }
