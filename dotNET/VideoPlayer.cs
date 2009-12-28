@@ -29,12 +29,16 @@ namespace XiboClient
 {
     public partial class VideoPlayer : Form
     {
+        private bool _finished;
+        public delegate void VideoPlayerElapsed();
+        public event VideoPlayerElapsed VideoPlayerElapsedEvent;
+
         public VideoPlayer()
         {
             InitializeComponent();
             this.TopLevel = false;
 
-            finished = false;
+            _finished = false;
         }
 
         public void StartPlayer(string filePath)
@@ -56,10 +60,13 @@ namespace XiboClient
         {
             if (e.newState == 8)
             {
-                //indicate we are stopped
+                // indicate we are stopped
                 axWindowsMediaPlayer1.Visible = false;
 
-                finished = true;
+                _finished = true;
+
+                // Fire an event to say we have elapsed
+                VideoPlayerElapsedEvent();
             }
         }
 
@@ -70,10 +77,22 @@ namespace XiboClient
         {
             get
             {
-                return this.finished;
+                return this._finished;
             }
         }
 
-        private bool finished;
+        protected override void Dispose(bool disposing)
+        {
+            try
+            {
+                axWindowsMediaPlayer1.Dispose();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+            }
+
+            base.Dispose(disposing);
+        }
     }
 }

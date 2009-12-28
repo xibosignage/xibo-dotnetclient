@@ -125,6 +125,8 @@ namespace XiboClient
         /// <param name="stat"></param>
         public void RecordStat(Stat stat)
         {
+            if (!Properties.Settings.Default.statsEnabled) return;
+
             System.Diagnostics.Debug.WriteLine(String.Format("Recording a Stat Record. Current Count = {0}", _stats.Count.ToString()), LogType.Audit.ToString());
 
             _stats.Add(stat);
