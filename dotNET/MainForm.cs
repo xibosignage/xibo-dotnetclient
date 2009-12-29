@@ -113,30 +113,10 @@ namespace XiboClient
             _statLog.Flush();
 
             // Write the CacheManager to disk
-            WriteCacheManager();
+            _cacheManager.WriteCacheManager();
 
             // Flush the logs
             System.Diagnostics.Trace.Flush();
-        }
-
-        /// <summary>
-        /// Writes the CacheManager to disk
-        /// </summary>
-        private void WriteCacheManager()
-        {
-            try
-            {
-                using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile))
-                {
-                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
-                    
-                    xmlSerializer.Serialize(streamWriter, _cacheManager);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm_FormClosing", "Unable to write CacheManager to disk because: " + ex.Message));
-            }
         }
 
         /// <summary>

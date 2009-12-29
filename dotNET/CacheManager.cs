@@ -22,6 +22,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.IO;
+using System.Windows.Forms;
+using System.Xml.Serialization;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -120,6 +123,28 @@ namespace XiboClient
 
                     System.Diagnostics.Debug.WriteLine(new LogMessage("Remove", "Removing stale MD5 from the CacheManager"), LogType.Info.ToString());
                 }
+            }
+        }
+
+        /// <summary>
+        /// Writes the CacheManager to disk
+        /// </summary>
+        public void WriteCacheManager()
+        {
+            Debug.WriteLine(new LogMessage("CacheManager - WriteCacheManager", "About to Write the Cache Manager"), LogType.Info.ToString());
+
+            try
+            {
+                using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile))
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
+
+                    xmlSerializer.Serialize(streamWriter, this);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm_FormClosing", "Unable to write CacheManager to disk because: " + ex.Message));
             }
         }
     }
