@@ -243,6 +243,7 @@ function init()
 
                 _wc = new System.Net.WebClient();
                 _wc.UseDefaultCredentials = true;
+                
                 _wc.OpenReadCompleted += new System.Net.OpenReadCompletedEventHandler(wc_OpenReadCompleted);
                 
                 _wc.OpenReadAsync(new Uri(_filePath));
@@ -486,6 +487,15 @@ function init()
                 catch
                 {
                     System.Diagnostics.Debug.WriteLine("Web browser control already disposed", "Rss - Dispose");
+                }
+
+                try
+                {
+                    _wc.Dispose();
+                }
+                catch
+                {
+                    System.Diagnostics.Debug.WriteLine("Web Client control already disposed", "Rss - Dispose");
                 }
             }
 
