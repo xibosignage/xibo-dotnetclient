@@ -121,8 +121,8 @@ namespace XiboClient
 
             if (e.Error != null)
             {
-                //There was an error - what do we do?
-                System.Diagnostics.Trace.WriteLine(e.Error.Message);
+                // There was an error - what do we do?
+                System.Diagnostics.Trace.WriteLine(new LogMessage("Schedule - RequiredFilesCompleted", e.Error.Message), LogType.Error.ToString());
 
                 // Is it a "not licensed" error
                 if (e.Error.Message == "This display client is not licensed")
@@ -301,8 +301,7 @@ namespace XiboClient
 
             if (layoutSchedule.Count == 1 && !forceChange)
             {
-                //dont bother raising the event, just keep on this until the schedule gets changed
-                return;
+                Debug.WriteLine(new LogMessage("Schedule - NextLayout", "Only 1 layout showing, refreshing it"), LogType.Info.ToString());
             }
 
             System.Diagnostics.Debug.WriteLine(String.Format("Next layout: {0}", layoutSchedule[currentLayout].layoutFile), "Schedule - Next Layout");

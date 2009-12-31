@@ -68,6 +68,8 @@ namespace XiboClient
             // Create a temporary file
             _filePath = System.IO.Path.GetTempFileName();
 
+            Debug.WriteLine(_filePath);
+
             // Open the resource file
             Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
             

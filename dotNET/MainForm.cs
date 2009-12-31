@@ -421,7 +421,7 @@ namespace XiboClient
                 }
             }
 
-            if (isExpired && (schedule.ActiveLayouts > 1))
+            if (isExpired)
             {
                 // Inform each region that the layout containing it has expired
                 foreach (Region temp in regions)

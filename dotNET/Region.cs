@@ -166,9 +166,9 @@ namespace XiboClient
 
                 Controls.Add(media);
             }
-            catch
+            catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("EvalOptions", "Unable to start media"), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("EvalOptions", "Unable to start media. " + ex.Message), LogType.Error.ToString());
                 SetNextMediaNode();
             }
 
