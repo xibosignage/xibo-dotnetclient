@@ -9,10 +9,10 @@
       <Value Profile="(Default)">schedule.xml</Value>
     </Setting>
     <Setting Name="XiboClient_xmds_xmds" Type="(Web Service URL)" Scope="User">
-      <Value Profile="(Default)">http://localhost/1.0.0/server/xmds.php</Value>
+      <Value Profile="(Default)">http://localhost/xibo/xmds.php</Value>
     </Setting>
     <Setting Name="ServerKey" Type="System.String" Scope="User">
-      <Value Profile="(Default)">changetocustomerkey</Value>
+      <Value Profile="(Default)">yourserverkey</Value>
     </Setting>
     <Setting Name="displayName" Type="System.String" Scope="User">
       <Value Profile="(Default)">COMPUTERNAME</Value>
@@ -30,7 +30,7 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="serverURI" Type="System.String" Scope="User">
-      <Value Profile="(Default)">https://www.xibo.co.uk/changetocustomersite</Value>
+      <Value Profile="(Default)">http://localhost/xibo</Value>
     </Setting>
     <Setting Name="ProxyUser" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
