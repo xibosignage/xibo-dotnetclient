@@ -22,12 +22,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.IO;
+using System.Windows.Forms;
+using System.Xml.Serialization;
+using System.Diagnostics;
 
 namespace XiboClient
 {
-    class CacheManager
+    public class CacheManager
     {
-        Collection<Md5Resource> _files;
+        public Collection<Md5Resource> _files;
 
         public CacheManager()
         {
@@ -69,25 +72,84 @@ namespace XiboClient
         /// <returns></returns>
         private string CalcMD5(String path)
         {
+            // Open the file and get the MD5
+            using (FileStream md5Fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + path, FileMode.Open, FileAccess.Read))
+            {
+                return Hashes.MD5(md5Fs);
+            }
+        }
+
+        /// <summary>
+        /// Adds a MD5 to the CacheManager
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="md5"></param>
+        public void Add(String path, String md5)
+        {
+            // First check to see if this path is in the collection
+            foreach (Md5Resource file in _files)
+            {
+                if (file.path == path)
+                    return;
+            }
+
             // We need to generate the MD5 and store it for later
             Md5Resource md5Resource = new Md5Resource();
 
             md5Resource.path = path;
+            md5Resource.md5 = md5;
+            md5Resource.cacheDate = DateTime.Now;
 
-            using (FileStream md5Fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + path, FileMode.Open, FileAccess.Read))
+            // Add the resource to the collection
+            _files.Add(md5Resource);
+
+            System.Diagnostics.Debug.WriteLine(new LogMessage("Add", "Adding new MD5 to CacheManager"), LogType.Info.ToString());
+        }
+
+        /// <summary>
+        /// Removes the MD5 resource associated with the Path given
+        /// </summary>
+        /// <param name="path"></param>
+        public void Remove(String path)
+        {
+            // Loop through all MD5s and remove any that match the path
+            for (int i = 0; i < _files.Count; i++)
             {
-                md5Resource.md5 = Hashes.MD5(md5Fs);
-                md5Resource.cacheDate = DateTime.Now;
+                Md5Resource file = _files[i];
 
-                // Add the resource to the collection
-                _files.Add(md5Resource);
+                if (file.path == path)
+                {
+                    _files.Remove(file);
 
-                return md5Resource.md5;
+                    System.Diagnostics.Debug.WriteLine(new LogMessage("Remove", "Removing stale MD5 from the CacheManager"), LogType.Info.ToString());
+                }
+            }
+        }
+
+        /// <summary>
+        /// Writes the CacheManager to disk
+        /// </summary>
+        public void WriteCacheManager()
+        {
+            Debug.WriteLine(new LogMessage("CacheManager - WriteCacheManager", "About to Write the Cache Manager"), LogType.Info.ToString());
+
+            try
+            {
+                using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile))
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
+
+                    xmlSerializer.Serialize(streamWriter, this);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm_FormClosing", "Unable to write CacheManager to disk because: " + ex.Message));
             }
         }
     }
 
-    struct Md5Resource
+    public struct Md5Resource
     {
         public String md5;
         public String path;

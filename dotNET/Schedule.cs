@@ -25,6 +25,8 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml;
+using System.Xml.Serialization;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -55,7 +57,7 @@ namespace XiboClient
         /// Create a schedule
         /// </summary>
         /// <param name="scheduleLocation"></param>
-        public Schedule(string scheduleLocation)
+        public Schedule(string scheduleLocation, ref CacheManager cacheManager)
         {
             // Save the schedule location
             this.scheduleLocation = scheduleLocation;
@@ -63,8 +65,8 @@ namespace XiboClient
             // Create a new collection for the layouts in the schedule
             layoutSchedule = new Collection<LayoutSchedule>();
             
-            // Create a new cache manager
-            _cacheManager = new CacheManager();
+            // Set cachemanager
+            _cacheManager = cacheManager;
 
             // Create a new Xmds service object
             xmds2 = new XiboClient.xmds.xmds();
@@ -119,8 +121,8 @@ namespace XiboClient
 
             if (e.Error != null)
             {
-                //There was an error - what do we do?
-                System.Diagnostics.Trace.WriteLine(e.Error.Message);
+                // There was an error - what do we do?
+                System.Diagnostics.Trace.WriteLine(new LogMessage("Schedule - RequiredFilesCompleted", e.Error.Message), LogType.Error.ToString());
 
                 // Is it a "not licensed" error
                 if (e.Error.Message == "This display client is not licensed")
@@ -158,9 +160,10 @@ namespace XiboClient
                     xmdsProcessing = false;
 
                     // Log and move on
-                    System.Diagnostics.Debug.WriteLine("Error Comparing and Collecting", "Schedule - RequiredFilesCompleted");
-                    System.Diagnostics.Debug.WriteLine(ex.Message, "Schedule - RequiredFilesCompleted");
+                    System.Diagnostics.Trace.WriteLine(new LogMessage("Schedule - RequiredFilesCompleted", "Error Comparing and Collecting: " + ex.Message), LogType.Error.ToString());
                 }
+
+                _cacheManager.WriteCacheManager();
             }
         }
 
@@ -298,8 +301,7 @@ namespace XiboClient
 
             if (layoutSchedule.Count == 1 && !forceChange)
             {
-                //dont bother raising the event, just keep on this until the schedule gets changed
-                return;
+                Debug.WriteLine(new LogMessage("Schedule - NextLayout", "Only 1 layout showing, refreshing it"), LogType.Info.ToString());
             }
 
             System.Diagnostics.Debug.WriteLine(String.Format("Next layout: {0}", layoutSchedule[currentLayout].layoutFile), "Schedule - Next Layout");

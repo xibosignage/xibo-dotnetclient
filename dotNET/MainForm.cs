@@ -30,6 +30,8 @@ using System.Xml;
 using System.Net;
 using System.IO;
 using System.Drawing.Imaging;
+using System.Xml.Serialization;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -47,12 +49,17 @@ namespace XiboClient
 
         private StatLog _statLog;
         private Stat _stat;
+        private CacheManager _cacheManager;
 
         public MainForm()
         {
             InitializeComponent();
 
             _statLog = new StatLog();
+
+            SetCacheManager();
+
+            this.FormClosing += new FormClosingEventHandler(MainForm_FormClosing);
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -76,8 +83,11 @@ namespace XiboClient
             // Change the default Proxy class
             OptionForm.SetGlobalProxy();
 
+            // UserApp data
+            Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + Application.UserAppDataPath), LogType.Info.ToString());
+
             // Create the Schedule
-            schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile);
+            schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager);
 
             schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
 
@@ -91,6 +101,44 @@ namespace XiboClient
                 MessageBox.Show("Fatal Error initialising the application", "Fatal Error");
                 this.Close();
                 this.Dispose();
+            }
+        }
+
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // We want to tidy up some stuff as this form closes.
+
+            // Flush the stats
+            _statLog.Flush();
+
+            // Write the CacheManager to disk
+            _cacheManager.WriteCacheManager();
+
+            // Flush the logs
+            System.Diagnostics.Trace.Flush();
+        }
+
+        /// <summary>
+        /// Sets the CacheManager
+        /// </summary>
+        private void SetCacheManager()
+        {
+            try
+            {
+                using (FileStream fileStream = File.Open(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile, FileMode.Open))
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
+
+                    _cacheManager = (CacheManager)xmlSerializer.Deserialize(fileStream);
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("Schedule", "Unable to reuse the Cache Manager because: " + ex.Message));
+
+                // Create a new cache manager
+                _cacheManager = new CacheManager();
             }
         }
 
@@ -373,7 +421,7 @@ namespace XiboClient
                 }
             }
 
-            if (isExpired && (schedule.ActiveLayouts > 1))
+            if (isExpired)
             {
                 // Inform each region that the layout containing it has expired
                 foreach (Region temp in regions)

@@ -89,7 +89,7 @@ namespace XiboClient
                     // Does this file exist?
                     if (File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path + ".xlf"))
                     {
-                        // Read the current layout into a string
+                        // Calculate a MD5 for the current file
                         String md5 = _cacheManager.GetMD5(path + ".xlf");
 
                         System.Diagnostics.Debug.WriteLine(String.Format("Comparing current MD5 [{0}] with given MD5 [{1}]", md5, attributes["md5"].Value));
@@ -97,7 +97,19 @@ namespace XiboClient
                         // Now we have the md5, compare it to the md5 in the xml
                         if (attributes["md5"].Value != md5)
                         {
-                            // They are different 
+                            // They are different
+                            _cacheManager.Remove(path + ".xlf");
+
+                            //TODO: This might be bad! Delete the old layout as it is wrong
+                            try
+                            {
+                                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + path + ".xlf");
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLine(new LogMessage("CompareAndCollect", "Unable to delete incorrect file because: " + ex.Message));
+                            }
+
                             // Get the file and save it
                             fileList.chunkOffset = 0;
                             fileList.chunkSize = 0;
@@ -109,6 +121,12 @@ namespace XiboClient
                             fileList.retrys = 0;
 
                             files.Add(fileList);
+                        }
+                        else
+                        {
+                            // The MD5 of the current file and the MD5 in RequiredFiles are the same.
+                            // Therefore make sure this MD5 is in the CacheManager
+                            _cacheManager.Add(path + ".xlf", md5);
                         }
                     }
                     else
@@ -142,6 +160,19 @@ namespace XiboClient
                         if (md5 != attributes["md5"].Value)
                         {
                             // File changed
+                            _cacheManager.Remove(path);
+
+                            // Delete the old media as it is wrong
+                            try
+                            {
+                                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + path);
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLine(new LogMessage("CompareAndCollect", "Unable to delete incorrect file because: " + ex.Message));
+                            }
+
+                            // Add to queue
                             fileList.chunkOffset = 0;
                             fileList.chunkSize = 512000;
                             fileList.complete = false;
@@ -153,6 +184,12 @@ namespace XiboClient
                             fileList.retrys = 0;
 
                             files.Add(fileList);
+                        }
+                        else
+                        {
+                            // The MD5 of the current file and the MD5 in RequiredFiles are the same.
+                            // Therefore make sure this MD5 is in the CacheManager
+                            _cacheManager.Add(path, md5);
                         }
                     }
                     else
@@ -230,6 +267,7 @@ namespace XiboClient
                     System.Diagnostics.Trace.WriteLine(String.Format("Error From WebService Get File. File=[{1}], Error=[{0}], Try No [{2}]", e.Error.Message, _currentFileList.path, _currentFileList.retrys));
 
                     // Retry?
+                    //TODO: What if we are disconnected from XMDS?
                     if (_currentFileList.retrys < 5)
                     {
                         // Increment the Retrys
@@ -288,7 +326,15 @@ namespace XiboClient
 
                         // TODO: What if the MD5 is different?
                         if (md5sum != _currentFileList.md5)
+                        {
+                            // Error
                             System.Diagnostics.Trace.WriteLine(new LogMessage("xmdsFile_GetFileCompleted", String.Format("Incorrect MD5 for file: {0}", _currentFileList.path)));
+                        }
+                        else
+                        {
+                            // Add to the CacheManager
+                            _cacheManager.Add(_currentFileList.path + ".xlf", md5sum);
+                        }
 
                         // Fire a layout complete event
                         LayoutFileChanged(_currentFileList.path + ".xlf");
@@ -336,7 +382,7 @@ namespace XiboClient
                                 catch (Exception ex)
                                 {
                                     // Unable to delete incorrect file
-                                    // Hopefully we will overwrite it
+                                    //TODO: Should we black list this file?
                                     System.Diagnostics.Debug.WriteLine(ex.Message);
                                 }
 
@@ -347,6 +393,9 @@ namespace XiboClient
                             }
                             else
                             {
+                                // Add the MD5 to the CacheManager
+                                _cacheManager.Add(_currentFileList.path, md5sum);
+
                                 // This file is complete
                                 _currentFileList.complete = true;
 
@@ -368,6 +417,8 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("xmdsFile_GetFileCompleted", "Unable to get the file. Exception: " + ex.Message));
+
+                // TODO: Blacklist the file?
 
                 // Consider this file complete because we couldn't write it....
                 _currentFileList.complete = true;

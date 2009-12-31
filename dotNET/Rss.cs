@@ -24,6 +24,7 @@ using System.IO;
 using System.Windows.Forms;
 using System.Xml;
 using System.Net;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -101,7 +102,7 @@ namespace XiboClient
             _updateInterval = options.updateInterval;
             _scrollSpeed = options.scrollSpeed;
 
-            System.Diagnostics.Trace.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
+            System.Diagnostics.Debug.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
 
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
@@ -225,7 +226,7 @@ function init()
 </script>";
             }
 
-            _headText = String.Format("{2}<style type='text/css'>body {{{1}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{0}em; }}</style>", _scaleFactor.ToString(), bodyStyle, initFunction);
+            _headText = initFunction + "<style type='text/css'>body {" + bodyStyle + " font-size:" + _scaleFactor.ToString() + "em; }</style>";
 
             // Store the document text in the temporary HTML space
             _tempHtml.HeadContent = _headText;
@@ -243,6 +244,7 @@ function init()
 
                 _wc = new System.Net.WebClient();
                 _wc.UseDefaultCredentials = true;
+                
                 _wc.OpenReadCompleted += new System.Net.OpenReadCompletedEventHandler(wc_OpenReadCompleted);
                 
                 _wc.OpenReadAsync(new Uri(_filePath));
@@ -486,6 +488,25 @@ function init()
                 catch
                 {
                     System.Diagnostics.Debug.WriteLine("Web browser control already disposed", "Rss - Dispose");
+                }
+
+                try
+                {
+                    _wc.Dispose();
+                }
+                catch
+                {
+                    System.Diagnostics.Debug.WriteLine("Web Client control already disposed", "Rss - Dispose");
+                }
+
+                // Remove the temporary file we created
+                try
+                {
+                    _tempHtml.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Dispose", String.Format("Unable to dispose TemporaryHtml with exception {0}", ex.Message)));
                 }
             }
 

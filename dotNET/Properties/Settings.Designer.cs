@@ -12,7 +12,7 @@ namespace XiboClient.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "8.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "9.0.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -47,7 +47,7 @@ namespace XiboClient.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/1.0.0/server/xmds.php")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/xibo/xmds.php")]
         public string XiboClient_xmds_xmds {
             get {
                 return ((string)(this["XiboClient_xmds_xmds"]));
@@ -59,7 +59,7 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("changetocustomerkey")]
+        [global::System.Configuration.DefaultSettingValueAttribute("yourserverkey")]
         public string ServerKey {
             get {
                 return ((string)(this["ServerKey"]));
@@ -128,7 +128,7 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://www.xibo.co.uk/changetocustomersite")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/xibo")]
         public string serverURI {
             get {
                 return ((string)(this["serverURI"]));
@@ -257,6 +257,24 @@ namespace XiboClient.Properties {
             }
             set {
                 this["collectInterval"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("cacheManager.xml")]
+        public string CacheManagerFile {
+            get {
+                return ((string)(this["CacheManagerFile"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.0.5")]
+        public string ClientVersion {
+            get {
+                return ((string)(this["ClientVersion"]));
             }
         }
     }

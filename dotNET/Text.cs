@@ -148,7 +148,7 @@ function init()
 </script>";
             }
 
-            _headText = String.Format("{1}{3}<style type='text/css'>body {{{2}}}, p, h1, h2, h3, h4, h5 {{ margin:2px; font-size:{0}em; }}</style>", _scaleFactor.ToString(), _headJavaScript, bodyStyle, initFunction);
+            _headText = _headJavaScript + initFunction + "<style type='text/css'>body {" + bodyStyle + " font-size:" + _scaleFactor.ToString() + "em; }</style>";
 
             // Store the document text in the temporary HTML space
             _tempHtml.HeadContent = _headText;
