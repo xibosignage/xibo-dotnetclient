@@ -37,8 +37,15 @@ namespace XiboClient
             // Is the key empty?
             if (hardwareKey == "")
             {
-                // Calculate the Hardware key from the CPUID and Volume Serial
-                hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+                try
+                {
+                    // Calculate the Hardware key from the CPUID and Volume Serial
+                    hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+                }
+                catch
+                {
+                    hardwareKey = "Change for Unique Key";
+                }
 
                 // Store the key
                 Properties.Settings.Default.hardwareKey = hardwareKey;

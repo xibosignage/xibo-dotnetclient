@@ -102,19 +102,17 @@ namespace XiboClient
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            System.Diagnostics.Debug.WriteLine(String.Format("Disposing {0}", filePath));
+            
+            try
             {
-                System.Diagnostics.Debug.WriteLine(String.Format("Disposing {0}", filePath));
-
-                try
-                {
-                    if (webBrowser != null)
-                    {
-                        if (webBrowser.Document != null) webBrowser.Document.Body.InnerHtml = "";
-                        webBrowser.Dispose();
-                    }
-                }
-                catch { }
+                Controls.Remove(webBrowser);
+                webBrowser.Dispose();
+                GC.Collect();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(String.Format("Unable to dispose {0} because {1}", filePath, ex.Message));
             }
 
             base.Dispose(disposing);

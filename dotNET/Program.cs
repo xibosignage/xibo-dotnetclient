@@ -20,6 +20,8 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -31,31 +33,80 @@ namespace XiboClient
         [STAThread]
         static void Main(string[] arg)
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-
-            System.Diagnostics.Trace.Listeners.Add(new XiboTraceListener());
-            System.Diagnostics.Trace.AutoFlush = false;
-
-            Form formMain;
-
-            if (arg.GetLength(0) > 0)
+            Process[] RunningProcesses = Process.GetProcessesByName("XiboClient");
+         
+            if(RunningProcesses.Length <= 1)
             {
-                System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Options Started"), LogType.Info.ToString());
-                formMain = new OptionForm(); 
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+
+                System.Diagnostics.Trace.Listeners.Add(new XiboTraceListener());
+                System.Diagnostics.Trace.AutoFlush = false;
+
+                Form formMain;
+
+                try
+                {
+                    if (arg.GetLength(0) > 0)
+                    {
+                        System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Options Started"), LogType.Info.ToString());
+                        formMain = new OptionForm();
+                    }
+                    else
+                    {
+                        System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
+                        formMain = new MainForm();
+                    }
+                    
+                    Application.Run(formMain);
+                }
+                catch (Exception ex)
+                {
+                    HandleUnhandledException(ex);
+                }
+
+                // Catch unhandled exceptions
+                AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+                Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+
+                // Always flush at the end
+                System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
+                System.Diagnostics.Trace.Flush();
             }
             else
             {
-                System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
-                formMain = new MainForm();
+                ShowWindowAsync(RunningProcesses[0].MainWindowHandle, 6);
+                ShowWindowAsync(RunningProcesses[0].MainWindowHandle, 9);
             }
-            
-            Application.Run(formMain);
-
-            // Always flush at the end
-            System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
-            System.Diagnostics.Trace.Flush();
         }
+
+        static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
+        {
+            HandleUnhandledException(e);
+        }
+
+        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            HandleUnhandledException(e);
+        }
+
+        static void HandleUnhandledException(Object o)
+        {
+            Exception e = o as Exception;
+
+            // What happens if we cannot start?
+            Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
+            Environment.Exit(1);
+
+            // TODO: Can we just restart the application?
+
+            // Shutdown the application
+            Environment.Exit(1);
+        }
+
+        [DllImport("User32.dll")]
+        public static extern int ShowWindowAsync(IntPtr hWnd , int swCommand);
     }
 
     static class Options

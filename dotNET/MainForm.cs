@@ -371,7 +371,7 @@ namespace XiboClient
                 // All the media nodes for this region / layout combination
                 options.mediaNodes = region.ChildNodes;
 
-                Region temp = new Region(ref _statLog);
+                Region temp = new Region(ref _statLog, ref _cacheManager);
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(temp_DurationElapsedEvent);
 
                 System.Diagnostics.Debug.WriteLine("Created new region", "MainForm - Prepare Layout");

@@ -54,8 +54,18 @@ namespace XiboClient
 
                     if (lastWrite > file.cacheDate)
                     {
+                        Debug.WriteLine(new LogMessage("GetMD5", "File has been written to since cache, recalculating"), LogType.Info.ToString());
+
                         // Get the MD5 again
-                        return CalcMD5(path);
+                        String md5 = CalcMD5(path);
+
+                        // Store the new cacheDate AND the new MD5
+                        Remove(path);
+
+                        Add(path, md5);
+                        
+                        // Return the new MD5
+                        return md5;
                     }
 
                     return file.md5;
@@ -72,10 +82,20 @@ namespace XiboClient
         /// <returns></returns>
         private string CalcMD5(String path)
         {
-            // Open the file and get the MD5
-            using (FileStream md5Fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + path, FileMode.Open, FileAccess.Read))
+            try
             {
-                return Hashes.MD5(md5Fs);
+                // Open the file and get the MD5
+                using (FileStream md5Fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + path, FileMode.Open, FileAccess.Read))
+                {
+                    return Hashes.MD5(md5Fs);
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("CalcMD5", "Unable to calc the MD5 because: " + ex.Message), LogType.Error.ToString());
+                
+                // Return a 0 MD5 which will immediately invalidate the file
+                return "0";
             }
         }
 
@@ -146,6 +166,48 @@ namespace XiboClient
             {
                 System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm_FormClosing", "Unable to write CacheManager to disk because: " + ex.Message));
             }
+        }
+
+        /// <summary>
+        /// Is the given URI a valid file?
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>True is it is and false if it isnt</returns>
+        public bool IsValid(String path)
+        {
+            // TODO: what makes a path valid?
+            // Currently a path is valid if it is in the cache
+            if (String.IsNullOrEmpty(path))
+                return false;
+
+            // Search for this path
+            foreach (Md5Resource file in _files)
+            {
+                if (file.path == path)
+                {
+                    try
+                    {
+                        // Check to see if this file has been modified since the MD5 cache
+                        // If it has then we assume invalid, otherwise its valid
+                        DateTime lastWrite = File.GetLastWriteTime(Properties.Settings.Default.LibraryPath + @"\" + path);
+
+                        if (lastWrite <= file.cacheDate)
+                            return true;
+                        else
+                            return false;
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine(new LogMessage("IsValid", "Unable to determine if the file is valid. Assuming not valid: " + ex.Message), LogType.Error.ToString());
+
+                        // Assume invalid
+                        return false;
+                    }
+                }
+            }
+
+            // Reached the end of the cache and havent found the file.
+            return false;
         }
     }
 

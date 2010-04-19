@@ -45,10 +45,17 @@ namespace XiboClient
         private StatLog _statLog;
         private Stat _stat;
 
-        public Region(ref StatLog statLog)
+        // Cache Manager
+        private CacheManager _cacheManager;
+
+        public Region(ref StatLog statLog, ref CacheManager cacheManager)
         {
             // Store the statLog
             _statLog = statLog;
+
+            // Store the cache manager
+            // TODO: What happens if the cachemanger changes during the lifecycle of this region?
+            _cacheManager = cacheManager;
 
             //default options
             options.width = 1024;
@@ -361,11 +368,12 @@ namespace XiboClient
                         }
                     }
 
-                    // TODO: What if the file isnt there?
-                    // Do we need to have access to the CacheManager here... if we did then we could store whether or not a file
-                    // existed in there, instead of having to check it here...
-                    // we could also do away with the BlackList at the top and build it into here (at the moment its file based, we write
-                    // the cachemanager to file anyway)
+                    // Is this a file based media node?
+                    if (options.type == "video" || options.type == "flash" || options.type == "image" || options.type == "powerpoint")
+                    {
+                        // Use the cache manager to determine if the file is valid
+                        validNode = _cacheManager.IsValid(options.uri);
+                    }
                 }
 
                 if (numAttempts > options.mediaNodes.Count)

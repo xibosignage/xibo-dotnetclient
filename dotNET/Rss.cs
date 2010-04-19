@@ -218,7 +218,7 @@ function init()
 <script type='text/javascript'>
 function init() 
 { 
-    tr = new TextRender('text', 'innerText', '" + _direction + @"');
+    tr = new TextRender('text', 'innerText', '" + _direction + @"', " + Properties.Settings.Default.scrollStepAmount.ToString() + @");
 
     var timer = 0;
     timer = setInterval('tr.TimerTick()', " + _scrollSpeed.ToString() + @");
@@ -346,8 +346,13 @@ function init()
                 }
                 else
                 {
+                    String startPosition = "left";
+
+                    if (_direction == "right")
+                        startPosition = "right";
+
                     textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this.width - 10, this.height);
-                    textRender += string.Format("<div id='innerText' style='position:absolute; left: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText);
+                    textRender += string.Format("<div id='innerText' style='position:absolute; {2}: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText, startPosition);
                 }
 
                 _bodyText = textRender;

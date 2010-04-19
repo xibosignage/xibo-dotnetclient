@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006 - 2010 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -77,11 +77,6 @@ namespace XiboClient
         /// </summary>
         public void InitializeComponents() 
         {
-            //
-            // Parse and Load the Schedule into the Collection
-            //
-            this.GetSchedule();
-
             // Get the key for this display
             hardwareKey = new HardwareKey();
 
@@ -110,6 +105,11 @@ namespace XiboClient
 
             // Fire off a get required files event - async
             xmds2.RequiredFilesAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, Properties.Settings.Default.Version);
+
+            //
+            // Parse and Load the Schedule into the Collection
+            //
+            this.GetSchedule();
         }
 
         void xmds2_RequiredFilesCompleted(object sender, XiboClient.xmds.RequiredFilesCompletedEventArgs e)
@@ -117,7 +117,7 @@ namespace XiboClient
             System.Diagnostics.Debug.WriteLine("RequiredFilesAsync complete.", "Schedule - RequiredFilesCompleted");
 
             //Dont let this effect the rendering
-            Application.DoEvents();
+            //Application.DoEvents();
 
             if (e.Error != null)
             {
@@ -260,6 +260,16 @@ namespace XiboClient
 
         void xmdsTimer_Tick(object sender, EventArgs e)
         {
+            // The Date/time of last XMDS is recorded - this cannot be longer that the xmdsProcessingTimeout flag
+            DateTime lastXmdsSuccess = Properties.Settings.Default.XmdsLastConnection;
+            int xmdsResetTimeout = Properties.Settings.Default.xmdsResetTimeout;
+
+            // Work out if XMDS has been active for longer than the reset period (means its crashed)
+            if (lastXmdsSuccess < (DateTime.Now.AddSeconds(-1 * xmdsResetTimeout)))
+            {
+                Trace.WriteLine(new LogMessage("xmdsTimer_Tick", String.Format("XMDS reset, last connection was at {0}", lastXmdsSuccess.ToString())), LogType.Error.ToString());
+                xmdsProcessing = false;
+            }
 
             // Ticks every "collectInterval"
             if (xmdsProcessing)

@@ -59,8 +59,10 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-                return;
+                System.Diagnostics.Trace.WriteLine(ex.Message);
+                
+                // Unable to start video - expire this media immediately
+                base.timer_Tick(null, null);
             }
         }
 

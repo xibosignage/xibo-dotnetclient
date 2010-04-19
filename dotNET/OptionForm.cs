@@ -37,14 +37,7 @@ namespace XiboClient
             System.Diagnostics.Debug.WriteLine("Initialise Option Form Components", "OptionForm");
 
             // Get a hardware key here, just in case we havent been able to get one before
-            try
-            {
-                hardwareKey = new HardwareKey();
-            }
-            catch
-            {
-                System.Diagnostics.Trace.WriteLine(new LogMessage("OptionForm", "Unable to generate a hardware key"), LogType.Error.ToString());
-            }
+            hardwareKey = new HardwareKey();
 
             InitializeComponent();
 
@@ -57,6 +50,7 @@ namespace XiboClient
             textBoxServerKey.TextChanged += new EventHandler(setting_TextChanged);
             textBoxLibraryPath.TextChanged += new EventHandler(setting_TextChanged);
             numericUpDownCollect.ValueChanged += new EventHandler(setting_TextChanged);
+            nupScrollStepAmount.ValueChanged += new EventHandler(nupScrollStepAmount_ValueChanged);
 
             // Bind some events to the proxy settings fields
             textBoxProxyUser.TextChanged += new EventHandler(proxySetting_TextChanged);
@@ -83,6 +77,11 @@ namespace XiboClient
             OptionForm.SetGlobalProxy();
 
             System.Diagnostics.Debug.WriteLine("[OUT]", "OptionForm");
+        }
+
+        void nupScrollStepAmount_ValueChanged(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
         }
 
         void tbHardwareKey_TextChanged(object sender, EventArgs e)
@@ -155,6 +154,7 @@ namespace XiboClient
                 Properties.Settings.Default.statsEnabled = checkBoxStats.Checked;
                 Properties.Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
                 Properties.Settings.Default.hardwareKey = tbHardwareKey.Text;
+                Properties.Settings.Default.scrollStepAmount = nupScrollStepAmount.Value;
 
                 buttonSaveSettings.Enabled = false;
 

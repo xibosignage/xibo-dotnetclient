@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006 - 2010 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -255,16 +255,28 @@ namespace XiboClient
 
         void xmdsFile_GetFileCompleted(object sender, XiboClient.xmds.GetFileCompletedEventArgs e)
         {
+            Debug.WriteLine("Get File Completed");
+
             try
             {
-                // Expect new schedule XML
+                // Success / Failure
                 if (e.Error != null)
                 {
-                    //There was an error - what do we do?
-                    // Log it
-                    System.Diagnostics.Debug.WriteLine(e.Error.Message, "WS Error");
+                    // There was an error - what do we do?
+                    if (e.Cancelled)
+                    {
+                        Debug.WriteLine("The GetFile Request has been cancelled.");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("The GetFile Request is still active, cancelling.");
 
-                    System.Diagnostics.Trace.WriteLine(String.Format("Error From WebService Get File. File=[{1}], Error=[{0}], Try No [{2}]", e.Error.Message, _currentFileList.path, _currentFileList.retrys));
+                        // Make sure we cancel the request
+                        xmdsFile.CancelAsync(e.UserState);
+                    }
+
+                    // Log it
+                    Trace.WriteLine(String.Format("Error From WebService Get File. File=[{1}], Error=[{0}], Try No [{2}]", e.Error.Message, _currentFileList.path, _currentFileList.retrys));
 
                     // Retry?
                     //TODO: What if we are disconnected from XMDS?
@@ -278,14 +290,35 @@ namespace XiboClient
                     }
                     else
                     {
-                        // Blacklist this file
+                        // Delete the file
+                        try
+                        {
+                            if (_currentFileList.type == "layout")
+                                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + _currentFileList.path + ".xlf");
+                            else
+                                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + _currentFileList.path);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine(new LogMessage("xmdsFile_GetFileCompleted", "Unable to delete the failed file: " + 
+                                _currentFileList.path + " Message: " + ex.Message));
+                        }
+
+                        // Removed this blacklist code. Files that are not in the cachemanager will not be played on the client (and therefore
+                        // we wont try to play a corrupt / partial file).
+                        // If we blacklist here we will never try to get this file again, until the blacklist is cleared in XMDS
+                        // Better to just skip it for now, and retry it once we have the required files list again
+
+                        /*// Blacklist this file?
                         string[] mediaPath = _currentFileList.path.Split('.');
                         string mediaId = mediaPath[0];
 
                         BlackList blackList = new BlackList();
-                        blackList.Add(_currentFileList.path, BlackListType.All, String.Format("Max number of retrys failed. BlackListing for all displays. Error {0}", e.Error.Message));
+                        blackList.Add(mediaId, BlackListType.Single, String.Format("Max number of retrys failed. BlackListing for this display. Error: {0}", e.Error.Message));
+                        */
 
                         // Move on
+                        _currentFileList.complete = true;
                         _currentFile++;
                     }
                 }
@@ -306,7 +339,7 @@ namespace XiboClient
                         {
                             string fullPath = Properties.Settings.Default.LibraryPath + @"\" + _currentFileList.path + ".xlf";
 
-                            StreamWriter sw = new StreamWriter(File.Open(fullPath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.Default);
+                            StreamWriter sw = new StreamWriter(File.Open(fullPath, FileMode.Create, FileAccess.Write, FileShare.Read));
                             sw.Write(layoutXml);
                             sw.Close();
 
@@ -416,7 +449,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("xmdsFile_GetFileCompleted", "Unable to get the file. Exception: " + ex.Message));
+                Trace.WriteLine(new LogMessage("xmdsFile_GetFileCompleted", "Unhanded Exception when processing getFile response: " + ex.Message));
 
                 // TODO: Blacklist the file?
 
