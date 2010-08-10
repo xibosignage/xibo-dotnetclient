@@ -104,7 +104,13 @@ namespace XiboClient
             int temp = currentSequence;
             
             //set the next media node for this panel
-            SetNextMediaNode();
+            if (!SetNextMediaNode())
+            {
+                // For some reason we cannot set a media node... so we need this region to become invalid
+                hasExpired = true;
+                DurationElapsedEvent();
+                return;
+            }
 
             // If the sequence hasnt been changed, OR the layout has been expired
             if (currentSequence == temp || layoutExpired)
@@ -194,7 +200,7 @@ namespace XiboClient
         /// Sets the next media node. Should be used either from a mediaComplete event, or an options reset from 
         /// the parent.
         /// </summary>
-        void SetNextMediaNode()
+        private bool SetNextMediaNode()
         {
             int playingSequence = currentSequence;
 
@@ -203,7 +209,7 @@ namespace XiboClient
             {
                 System.Diagnostics.Debug.WriteLine("No media nodes to display", "Region - SetNextMediaNode");
                 hasExpired = true;
-                return;
+                return false;
             }
             
             if (options.mediaNodes.Count == 1 && currentSequence != -1)
@@ -213,7 +219,7 @@ namespace XiboClient
                 hasExpired = true;
 
                 DurationElapsedEvent();
-                return;
+                return true;
             }
 
             // Move the sequence on
@@ -230,7 +236,7 @@ namespace XiboClient
                 DurationElapsedEvent();
               
                 // We want to continue on to show the next media (unless the duration elapsed event triggers a region change)
-                if (layoutExpired) return;
+                if (layoutExpired) return true;
             }
 
             //Zero out the options that are persisted
@@ -277,7 +283,7 @@ namespace XiboClient
                         DurationElapsedEvent();
 
                         // We want to continue on to show the next media (unless the duration elapsed event triggers a region change)
-                        if (layoutExpired) return;
+                        if (layoutExpired) return true;
                     }
                 }
                 else
@@ -382,7 +388,7 @@ namespace XiboClient
                     System.Diagnostics.Trace.WriteLine("No Valid media nodes to display", "Region - SetNextMediaNode");
                     
                     hasExpired = true;
-                    return;
+                    return false;
                 }
             }
 
@@ -423,6 +429,8 @@ namespace XiboClient
                     System.Diagnostics.Trace.WriteLine("No Stat record when one was expected", LogType.Error.ToString());
                 }
             }
+
+            return true;
         }
 
         /// <summary>
