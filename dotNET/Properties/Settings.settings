@@ -69,13 +69,25 @@
       <Value Profile="(Default)">cacheManager.xml</Value>
     </Setting>
     <Setting Name="ClientVersion" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">1.2.0-rc1</Value>
+      <Value Profile="(Default)">1.2.0-rc2</Value>
     </Setting>
     <Setting Name="scrollStepAmount" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">1</Value>
     </Setting>
     <Setting Name="xmdsResetTimeout" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">900</Value>
+    </Setting>
+    <Setting Name="sizeX" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="sizeY" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="offsetX" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="offsetY" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>
 </SettingsFile>

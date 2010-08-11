@@ -58,6 +58,10 @@ namespace XiboClient
             textBoxProxyDomain.TextChanged += new EventHandler(proxySetting_TextChanged);
             tbHardwareKey.TextChanged += new EventHandler(tbHardwareKey_TextChanged);
 
+            clientHeight.ValueChanged += new EventHandler(clientHeight_ValueChanged);
+            clientWidth.ValueChanged += new EventHandler(clientWidth_ValueChanged);
+            offsetX.ValueChanged += new EventHandler(offsetX_ValueChanged);
+            offsetY.ValueChanged += new EventHandler(offsetY_ValueChanged);
 
             System.Diagnostics.Debug.WriteLine("Getting the Library Path", "OptionForm");
             if (Properties.Settings.Default.LibraryPath == "DEFAULT")
@@ -77,6 +81,26 @@ namespace XiboClient
             OptionForm.SetGlobalProxy();
 
             System.Diagnostics.Debug.WriteLine("[OUT]", "OptionForm");
+        }
+
+        void offsetY_ValueChanged(object sender, EventArgs e)
+        {
+            btnAdvSave.Enabled = true;
+        }
+
+        void offsetX_ValueChanged(object sender, EventArgs e)
+        {
+            btnAdvSave.Enabled = true;
+        }
+
+        void clientWidth_ValueChanged(object sender, EventArgs e)
+        {
+            btnAdvSave.Enabled = true;
+        }
+
+        void clientHeight_ValueChanged(object sender, EventArgs e)
+        {
+            btnAdvSave.Enabled = true;
         }
 
         void nupScrollStepAmount_ValueChanged(object sender, EventArgs e)
@@ -164,6 +188,25 @@ namespace XiboClient
                 labelXmdsUrl.Text = Properties.Settings.Default.XiboClient_xmds_xmds;
 
                 //Commit these changes back to the user settings
+                Properties.Settings.Default.Save();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void btnAdvSave_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Properties.Settings.Default.sizeX = clientWidth.Value;
+                Properties.Settings.Default.sizeY = clientHeight.Value;
+                Properties.Settings.Default.offsetX = offsetX.Value;
+                Properties.Settings.Default.offsetY = offsetY.Value;
+
+                btnAdvSave.Enabled = false;
+
                 Properties.Settings.Default.Save();
             }
             catch (Exception ex)

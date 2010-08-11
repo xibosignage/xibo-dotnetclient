@@ -35,6 +35,7 @@ namespace XiboClient
             this.buttonSaveSettings = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.label10 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.buttonReset = new System.Windows.Forms.Button();
             this.buttonLibrary = new System.Windows.Forms.Button();
@@ -61,7 +62,17 @@ namespace XiboClient
             this.aboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.onlineHelpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.folderBrowserLibrary = new System.Windows.Forms.FolderBrowserDialog();
-            this.label10 = new System.Windows.Forms.Label();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.label11 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
+            this.clientWidth = new System.Windows.Forms.NumericUpDown();
+            this.clientHeight = new System.Windows.Forms.NumericUpDown();
+            this.offsetX = new System.Windows.Forms.NumericUpDown();
+            this.offsetY = new System.Windows.Forms.NumericUpDown();
+            this.labelXmdsUrl = new System.Windows.Forms.Label();
+            this.textBoxDisplayName = new System.Windows.Forms.TextBox();
             this.nupScrollStepAmount = new System.Windows.Forms.NumericUpDown();
             this.tbHardwareKey = new System.Windows.Forms.TextBox();
             this.checkBoxStats = new System.Windows.Forms.CheckBox();
@@ -72,9 +83,8 @@ namespace XiboClient
             this.textBoxProxyDomain = new System.Windows.Forms.TextBox();
             this.maskedTextBoxProxyPass = new System.Windows.Forms.MaskedTextBox();
             this.textBoxProxyUser = new System.Windows.Forms.TextBox();
-            this.labelXmdsUrl = new System.Windows.Forms.Label();
-            this.textBoxDisplayName = new System.Windows.Forms.TextBox();
             this.xmds1 = new XiboClient.xmds.xmds();
+            this.btnAdvSave = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownCollect)).BeginInit();
@@ -82,6 +92,11 @@ namespace XiboClient
             this.groupBox2.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
+            this.tabPage4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.clientHeight)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.offsetX)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.offsetY)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).BeginInit();
             this.SuspendLayout();
             // 
@@ -126,8 +141,9 @@ namespace XiboClient
             // tabControl1
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Location = new System.Drawing.Point(12, 27);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -138,21 +154,21 @@ namespace XiboClient
             // 
             this.tabPage1.Controls.Add(this.nupScrollStepAmount);
             this.tabPage1.Controls.Add(this.label10);
-            this.tabPage1.Controls.Add(this.tbHardwareKey);
             this.tabPage1.Controls.Add(this.label9);
-            this.tabPage1.Controls.Add(this.checkBoxStats);
-            this.tabPage1.Controls.Add(this.checkBoxPowerPoint);
             this.tabPage1.Controls.Add(this.buttonReset);
             this.tabPage1.Controls.Add(this.buttonLibrary);
             this.tabPage1.Controls.Add(this.numericUpDownCollect);
             this.tabPage1.Controls.Add(this.label5);
             this.tabPage1.Controls.Add(this.label1);
             this.tabPage1.Controls.Add(this.buttonSaveSettings);
-            this.tabPage1.Controls.Add(this.textBoxXmdsUri);
             this.tabPage1.Controls.Add(this.label3);
+            this.tabPage1.Controls.Add(this.label2);
+            this.tabPage1.Controls.Add(this.tbHardwareKey);
+            this.tabPage1.Controls.Add(this.checkBoxStats);
+            this.tabPage1.Controls.Add(this.checkBoxPowerPoint);
+            this.tabPage1.Controls.Add(this.textBoxXmdsUri);
             this.tabPage1.Controls.Add(this.textBoxServerKey);
             this.tabPage1.Controls.Add(this.textBoxLibraryPath);
-            this.tabPage1.Controls.Add(this.label2);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
@@ -160,6 +176,15 @@ namespace XiboClient
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Xibo Settings";
             this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(6, 147);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(117, 13);
+            this.label10.TabIndex = 15;
+            this.label10.Text = "Scroll Step Amount (px)";
             // 
             // label9
             // 
@@ -419,14 +444,134 @@ namespace XiboClient
             this.onlineHelpToolStripMenuItem.Text = "Online Help";
             this.onlineHelpToolStripMenuItem.Click += new System.EventHandler(this.onlineHelpToolStripMenuItem_Click);
             // 
-            // label10
+            // tabPage4
             // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(6, 147);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(117, 13);
-            this.label10.TabIndex = 15;
-            this.label10.Text = "Scroll Step Amount (px)";
+            this.tabPage4.Controls.Add(this.btnAdvSave);
+            this.tabPage4.Controls.Add(this.offsetX);
+            this.tabPage4.Controls.Add(this.offsetY);
+            this.tabPage4.Controls.Add(this.clientHeight);
+            this.tabPage4.Controls.Add(this.clientWidth);
+            this.tabPage4.Controls.Add(this.label14);
+            this.tabPage4.Controls.Add(this.label13);
+            this.tabPage4.Controls.Add(this.label12);
+            this.tabPage4.Controls.Add(this.label11);
+            this.tabPage4.Location = new System.Drawing.Point(4, 22);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(436, 290);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "Client Positioning";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(9, 17);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(64, 13);
+            this.label11.TabIndex = 0;
+            this.label11.Text = "Client Width";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(9, 43);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(67, 13);
+            this.label12.TabIndex = 1;
+            this.label12.Text = "Client Height";
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(9, 69);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(45, 13);
+            this.label13.TabIndex = 2;
+            this.label13.Text = "Offset X";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(9, 96);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(45, 13);
+            this.label14.TabIndex = 3;
+            this.label14.Text = "Offset Y";
+            // 
+            // clientWidth
+            // 
+            this.clientWidth.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "sizeX", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.clientWidth.Location = new System.Drawing.Point(77, 15);
+            this.clientWidth.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.clientWidth.Name = "clientWidth";
+            this.clientWidth.Size = new System.Drawing.Size(77, 20);
+            this.clientWidth.TabIndex = 4;
+            this.clientWidth.Value = global::XiboClient.Properties.Settings.Default.sizeX;
+            // 
+            // clientHeight
+            // 
+            this.clientHeight.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "sizeY", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.clientHeight.Location = new System.Drawing.Point(77, 41);
+            this.clientHeight.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.clientHeight.Name = "clientHeight";
+            this.clientHeight.Size = new System.Drawing.Size(77, 20);
+            this.clientHeight.TabIndex = 5;
+            this.clientHeight.Value = global::XiboClient.Properties.Settings.Default.sizeY;
+            // 
+            // offsetX
+            // 
+            this.offsetX.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "offsetX", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.offsetX.Location = new System.Drawing.Point(77, 67);
+            this.offsetX.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.offsetX.Name = "offsetX";
+            this.offsetX.Size = new System.Drawing.Size(77, 20);
+            this.offsetX.TabIndex = 6;
+            this.offsetX.Value = global::XiboClient.Properties.Settings.Default.offsetX;
+            // 
+            // offsetY
+            // 
+            this.offsetY.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "offsetY", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.offsetY.Location = new System.Drawing.Point(77, 94);
+            this.offsetY.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.offsetY.Name = "offsetY";
+            this.offsetY.Size = new System.Drawing.Size(77, 20);
+            this.offsetY.TabIndex = 7;
+            this.offsetY.Value = global::XiboClient.Properties.Settings.Default.offsetY;
+            // 
+            // labelXmdsUrl
+            // 
+            this.labelXmdsUrl.AutoSize = true;
+            this.labelXmdsUrl.Location = new System.Drawing.Point(139, 10);
+            this.labelXmdsUrl.Name = "labelXmdsUrl";
+            this.labelXmdsUrl.Size = new System.Drawing.Size(154, 13);
+            this.labelXmdsUrl.TabIndex = 3;
+            this.labelXmdsUrl.Text = global::XiboClient.Properties.Settings.Default.XiboClient_xmds_xmds;
+            // 
+            // textBoxDisplayName
+            // 
+            this.textBoxDisplayName.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "displayName", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.textBoxDisplayName.Location = new System.Drawing.Point(142, 37);
+            this.textBoxDisplayName.Name = "textBoxDisplayName";
+            this.textBoxDisplayName.Size = new System.Drawing.Size(264, 20);
+            this.textBoxDisplayName.TabIndex = 0;
+            this.textBoxDisplayName.Text = global::XiboClient.Properties.Settings.Default.displayName;
             // 
             // nupScrollStepAmount
             // 
@@ -533,37 +678,29 @@ namespace XiboClient
             this.textBoxProxyUser.TabIndex = 3;
             this.textBoxProxyUser.Text = global::XiboClient.Properties.Settings.Default.ProxyUser;
             // 
-            // labelXmdsUrl
-            // 
-            this.labelXmdsUrl.AutoSize = true;
-            this.labelXmdsUrl.Location = new System.Drawing.Point(139, 10);
-            this.labelXmdsUrl.Name = "labelXmdsUrl";
-            this.labelXmdsUrl.Size = new System.Drawing.Size(154, 13);
-            this.labelXmdsUrl.TabIndex = 3;
-            this.labelXmdsUrl.Text = global::XiboClient.Properties.Settings.Default.XiboClient_xmds_xmds;
-            // 
-            // textBoxDisplayName
-            // 
-            this.textBoxDisplayName.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "displayName", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.textBoxDisplayName.Location = new System.Drawing.Point(142, 37);
-            this.textBoxDisplayName.Name = "textBoxDisplayName";
-            this.textBoxDisplayName.Size = new System.Drawing.Size(264, 20);
-            this.textBoxDisplayName.TabIndex = 0;
-            this.textBoxDisplayName.Text = global::XiboClient.Properties.Settings.Default.displayName;
-            // 
             // xmds1
             // 
             this.xmds1.Credentials = null;
             this.xmds1.Url = "http://localhost/Xibo/server/xmds.php";
             this.xmds1.UseDefaultCredentials = false;
             // 
+            // btnAdvSave
+            // 
+            this.btnAdvSave.Location = new System.Drawing.Point(77, 227);
+            this.btnAdvSave.Name = "btnAdvSave";
+            this.btnAdvSave.Size = new System.Drawing.Size(75, 23);
+            this.btnAdvSave.TabIndex = 8;
+            this.btnAdvSave.Text = "Save";
+            this.btnAdvSave.UseVisualStyleBackColor = true;
+            this.btnAdvSave.Click += new System.EventHandler(this.btnAdvSave_Click);
+            // 
             // OptionForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(469, 355);
-            this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.menuStrip1);
+            this.Controls.Add(this.tabControl1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "OptionForm";
@@ -580,6 +717,12 @@ namespace XiboClient
             this.tabPage2.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.tabPage4.ResumeLayout(false);
+            this.tabPage4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.clientHeight)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.offsetX)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.offsetY)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -634,5 +777,15 @@ namespace XiboClient
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.NumericUpDown nupScrollStepAmount;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.NumericUpDown clientWidth;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.NumericUpDown offsetY;
+        private System.Windows.Forms.NumericUpDown offsetX;
+        private System.Windows.Forms.NumericUpDown clientHeight;
+        private System.Windows.Forms.Button btnAdvSave;
     }
 }
