@@ -271,7 +271,7 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.2.0-rc1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.2.0-rc2")]
         public string ClientVersion {
             get {
                 return ((string)(this["ClientVersion"]));
@@ -296,6 +296,54 @@ namespace XiboClient.Properties {
         public int xmdsResetTimeout {
             get {
                 return ((int)(this["xmdsResetTimeout"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public decimal sizeX {
+            get {
+                return ((decimal)(this["sizeX"]));
+            }
+            set {
+                this["sizeX"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public decimal sizeY {
+            get {
+                return ((decimal)(this["sizeY"]));
+            }
+            set {
+                this["sizeY"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public decimal offsetX {
+            get {
+                return ((decimal)(this["offsetX"]));
+            }
+            set {
+                this["offsetX"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public decimal offsetY {
+            get {
+                return ((decimal)(this["offsetY"]));
+            }
+            set {
+                this["offsetY"] = value;
             }
         }
     }

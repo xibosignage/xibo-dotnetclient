@@ -264,6 +264,16 @@ namespace XiboClient
 
             Size clientSize = SystemInformation.PrimaryMonitorSize;
 
+            // If we're running "windowed", make the player artificially small.
+            if (Properties.Settings.Default.sizeX != 0)
+            {
+                clientSize = new Size((int)Properties.Settings.Default.sizeX, (int)Properties.Settings.Default.sizeY);
+                this.Size = clientSize;
+                this.WindowState = FormWindowState.Normal;
+                this.Location = new Point((int)Properties.Settings.Default.offsetX, (int)Properties.Settings.Default.offsetY);
+                this.StartPosition = FormStartPosition.Manual;
+            }
+
             // Scaling factor, will be applied to all regions
             scaleFactor = Math.Min(clientSize.Width / layoutWidth, clientSize.Height / layoutHeight);
        
@@ -310,27 +320,36 @@ namespace XiboClient
             // Get the background
             try
             {
-                string bgFilePath = Properties.Settings.Default.LibraryPath + @"\backgrounds\" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value;
-
-                if (!File.Exists(bgFilePath))
+                if (layoutAttributes["background"] == null)
                 {
-                    Image img = Image.FromFile(Properties.Settings.Default.LibraryPath + @"\" + layoutAttributes["background"].Value);
-
-                    Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight);
-                    EncoderParameters encoderParameters = new EncoderParameters(1);
-                    EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
-                    encoderParameters.Param[0] = qualityParam;
-                    
-                    ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
-
-                    bmp.Save(bgFilePath, jpegCodec, encoderParameters);
-
-                    img.Dispose();
-                    bmp.Dispose();
+                    // Assume there is no background image
+                    this.BackgroundImage = null;
+                    options.backgroundImage = "";
                 }
-                
-                this.BackgroundImage = new Bitmap(bgFilePath);
-                options.backgroundImage = bgFilePath;
+                else
+                {
+                    string bgFilePath = Properties.Settings.Default.LibraryPath + @"\backgrounds\" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value;
+
+                    if (!File.Exists(bgFilePath))
+                    {
+                        Image img = Image.FromFile(Properties.Settings.Default.LibraryPath + @"\" + layoutAttributes["background"].Value);
+
+                        Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight);
+                        EncoderParameters encoderParameters = new EncoderParameters(1);
+                        EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
+                        encoderParameters.Param[0] = qualityParam;
+
+                        ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
+
+                        bmp.Save(bgFilePath, jpegCodec, encoderParameters);
+
+                        img.Dispose();
+                        bmp.Dispose();
+                    }
+
+                    this.BackgroundImage = new Bitmap(bgFilePath);
+                    options.backgroundImage = bgFilePath;
+                }
             }
             catch (Exception ex)
             {
