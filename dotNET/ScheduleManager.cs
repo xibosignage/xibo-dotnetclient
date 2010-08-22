@@ -43,9 +43,10 @@ namespace XiboClient
 
             // Create an empty layout schedule
             _layoutSchedule = new Collection<LayoutSchedule>();
+            _currentSchedule = new Collection<LayoutSchedule>();
 
             // Evaluate the Schedule
-            EvaluateSchedule();
+            IsNewScheduleAvailable();
         }
 
         #region "Properties"
@@ -57,7 +58,7 @@ namespace XiboClient
         {
             get
             {
-                return EvaluateSchedule();
+                return IsNewScheduleAvailable();
             }
         }
 
@@ -94,40 +95,110 @@ namespace XiboClient
         /// Determine if there is a new schedule available
         /// </summary>
         /// <returns></returns>
-        private bool EvaluateSchedule()
+        private bool IsNewScheduleAvailable()
         {
             // If we dont currently have a cached schedule load one from the scheduleLocation
             // also do this if we have been told to Refresh the schedule
             if (_layoutSchedule.Count == 0 || RefreshSchedule)
             {
-                _layoutSchedule = LoadScheduleFromFile();
+                LoadScheduleFromFile();
 
                 // Set RefreshSchedule to be false (this means we will not need to load the file constantly)
                 RefreshSchedule = false;
             }
-            
-            // We need to build the current schedule from the layout schedule (obeying date/time)
 
-            return false;
+            // Load the new Schedule
+            Collection<LayoutSchedule> newSchedule = LoadNewSchdule();
+
+            bool forceChange = false;
+
+            // If the current schedule is empty, always overwrite
+            if (_currentSchedule.Count == 0)
+                forceChange = true;
+
+            // Are all the items that were in the _currentSchedule still there?
+            foreach (LayoutSchedule layout in _currentSchedule)
+            {
+                if (!newSchedule.Contains(layout))
+                    forceChange = true;
+            }
+
+            // Set the new schedule
+            _currentSchedule = newSchedule;
+
+            // Return True if we want to refresh the schedule OR false if we are OK to leave the current one.
+            // We can update the current schedule and still return false - this will not trigger a schedule change event.
+            // We do this if ALL the current layouts are still in the schedule
+            return forceChange;
+        }
+
+        /// <summary>
+        /// Loads a new schedule from _layoutSchedules
+        /// </summary>
+        /// <returns></returns>
+        private Collection<LayoutSchedule> LoadNewSchdule()
+        {
+            // We need to build the current schedule from the layout schedule (obeying date/time)
+            Collection<LayoutSchedule> newSchedule = new Collection<LayoutSchedule>();
+            Collection<LayoutSchedule> prioritySchedule = new Collection<LayoutSchedule>();
+            
+            // Temporary default Layout incase we have no layout nodes.
+            LayoutSchedule defaultLayout = new LayoutSchedule();
+
+            // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
+            foreach (LayoutSchedule layout in _layoutSchedule)
+            {
+                // If this is the default, skip it
+                if (layout.NodeName == "default")
+                {
+                    // Store it before skipping it
+                    defaultLayout = layout;
+                    continue;
+                }
+
+                // Look at the Date/Time to see if it should be on the schedule or not
+                if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)
+                {
+                    // Priority layouts should generate their own list
+                    if (layout.Priority)
+                    {
+                        prioritySchedule.Add(layout);
+                    }
+                    else
+                    {
+                        newSchedule.Add(layout);
+                    }
+                }
+            }
+
+            // If we have any priority schedules then we need to return those instead
+            if (prioritySchedule.Count > 0)
+                return prioritySchedule;
+
+            // If the current schedule is empty by the end of all this, then slip the default in
+            if (newSchedule.Count == 0)
+                newSchedule.Add(defaultLayout);
+
+            return newSchedule;
         }
 
         /// <summary>
         /// Loads the schedule from file.
         /// </summary>
         /// <returns></returns>
-        private Collection<LayoutSchedule> LoadScheduleFromFile()
+        private void LoadScheduleFromFile()
         {
+            // Empty the current schedule collection
+            _layoutSchedule.Clear();
+
             // Get the schedule XML
             XmlDocument scheduleXml = GetScheduleXml();
 
-            // This function must either exit without doing anything (i.e. continue playing the current list of layouts)
-            // OR repopulate the layoutSchedule collection with a new list of layouts and call change on the first one.
+            // Parse the schedule xml
+            XmlNodeList nodes = scheduleXml["schedule"].ChildNodes;
 
-            // Get the layouts in this schedule
-            XmlNodeList listLayouts = scheduleXml.SelectNodes("/schedule/layout");
-
-            // Have we got some?
-            if (listLayouts.Count == 0)
+            // Are there any nodes in the document
+            if (nodes.Count == 0)
             {
                 // Schedule up the default
                 LayoutSchedule temp = new LayoutSchedule();
@@ -136,34 +207,54 @@ namespace XiboClient
                 temp.scheduleid = 0;
 
                 _layoutSchedule.Add(temp);
+
+                return;
             }
-            else
+
+            // We have nodes, go through each one and add them to the layoutschedule collection
+            foreach (XmlNode node in nodes)
             {
-                // Get them and add to collection
-                foreach (XmlNode layout in listLayouts)
+                LayoutSchedule temp = new LayoutSchedule();
+
+                // Node name
+                temp.NodeName = node.Name;
+
+                // Pull attributes from layout nodes
+                XmlAttributeCollection attributes = node.Attributes;
+
+                // All nodes have file properties
+                temp.layoutFile = attributes["file"].Value;
+                
+                // Replace the .xml extension with nothing
+                string replace = ".xml";
+                string layoutFile = temp.layoutFile.TrimEnd(replace.ToCharArray());
+
+                // Set these on the temp layoutschedule
+                temp.layoutFile = Properties.Settings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
+                temp.id = int.Parse(layoutFile);
+
+                if (temp.NodeName != "default")
                 {
-                    XmlAttributeCollection attributes = layout.Attributes;
+                    // Get the fromdt,todt
+                    temp.FromDt = DateTime.Parse(attributes["fromdt"].Value);
+                    temp.ToDt = DateTime.Parse(attributes["todt"].Value);
 
-                    string layoutFile = attributes["file"].Value;
-                    string replace = ".xml";
-                    layoutFile = layoutFile.TrimEnd(replace.ToCharArray());
-
+                    // Pull out the scheduleid if there is one
                     string scheduleId = "";
                     if (attributes["scheduleid"] != null) scheduleId = attributes["scheduleid"].Value;
 
-                    LayoutSchedule temp = new LayoutSchedule();
-                    temp.layoutFile = Properties.Settings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
-                    temp.id = int.Parse(layoutFile);
-
+                    // Add it to the layout schedule
                     if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
-
-                    _layoutSchedule.Add(temp);
                 }
+
+                _layoutSchedule.Add(temp);
             }
 
             // Clean up
-            listLayouts = null;
+            nodes = null;
             scheduleXml = null;
+
+            // We now have the saved XML contained in the _layoutSchedule object
         }
 
         /// <summary>
@@ -200,8 +291,14 @@ namespace XiboClient
     [Serializable]
     public struct LayoutSchedule
     {
+        public string NodeName;
         public string layoutFile;
         public int id;
         public int scheduleid;
+
+        public bool Priority;
+
+        public DateTime FromDt;
+        public DateTime ToDt;
     }
 }

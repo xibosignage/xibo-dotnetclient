@@ -62,6 +62,8 @@ namespace XiboClient
         /// <param name="scheduleLocation"></param>
         public Schedule(string scheduleLocation, ref CacheManager cacheManager)
         {
+            Debug.WriteLine(string.Format("XMDS Location: {0}", Properties.Settings.Default.XiboClient_xmds_xmds));
+
             // Save the schedule location
             _scheduleLocation = scheduleLocation;
 
@@ -112,6 +114,9 @@ namespace XiboClient
             // Manual first tick
             _xmdsProcessing = true;
 
+            // We must have a schedule by now.
+            UpdateLayoutSchedule(true);
+
             // Fire off a get required files event - async
             _xmds2.RequiredFilesAsync(Properties.Settings.Default.ServerKey, _hardwareKey.Key, Properties.Settings.Default.Version);
         }
@@ -123,11 +128,26 @@ namespace XiboClient
         /// <param name="e"></param>
         void scheduleTimer_Tick(object sender, EventArgs e)
         {
+            Debug.WriteLine(string.Format("Schedule Timer Ticked at {0}. There are {1} items in the schedule.", DateTime.Now.ToString(), _layoutSchedule.Count.ToString()));
+
             // Ask the schedule manager if we need to clear the layoutSchedule collection
-            if (_scheduleManager.NewScheduleAvailable)
+            UpdateLayoutSchedule(_scheduleManager.NewScheduleAvailable);
+        }
+
+        /// <summary>
+        /// Updates the layout schedule
+        /// Forces a new layout to load
+        /// </summary>
+        private void UpdateLayoutSchedule(bool forceChange)
+        {
+            Debug.WriteLine("Updating Layout Schedule");
+
+            _layoutSchedule = _scheduleManager.CurrentSchedule;
+
+            // Do we need to force a change to the schedule?
+            if (forceChange)
             {
-                // Update layoutSchedule collection
-                _layoutSchedule = _scheduleManager.CurrentSchedule;
+                Debug.WriteLine("Forcing a change to the current schedule");
 
                 // Set the current pointer to 0
                 _currentLayout = 0;
