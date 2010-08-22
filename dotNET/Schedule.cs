@@ -140,8 +140,6 @@ namespace XiboClient
         /// </summary>
         private void UpdateLayoutSchedule(bool forceChange)
         {
-            Debug.WriteLine("Updating Layout Schedule");
-
             _layoutSchedule = _scheduleManager.CurrentSchedule;
 
             // Do we need to force a change to the schedule?

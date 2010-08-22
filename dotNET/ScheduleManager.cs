@@ -126,6 +126,9 @@ namespace XiboClient
             // Set the new schedule
             _currentSchedule = newSchedule;
 
+            // Clear up
+            newSchedule = null;
+
             // Return True if we want to refresh the schedule OR false if we are OK to leave the current one.
             // We can update the current schedule and still return false - this will not trigger a schedule change event.
             // We do this if ALL the current layouts are still in the schedule
@@ -233,8 +236,12 @@ namespace XiboClient
                 temp.layoutFile = Properties.Settings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
                 temp.id = int.Parse(layoutFile);
 
+                // Get attributes that only exist on the default
                 if (temp.NodeName != "default")
                 {
+                    // Priority flag
+                    temp.Priority = (attributes["priority"].Value == "1") ? true : false;
+
                     // Get the fromdt,todt
                     temp.FromDt = DateTime.Parse(attributes["fromdt"].Value);
                     temp.ToDt = DateTime.Parse(attributes["todt"].Value);
