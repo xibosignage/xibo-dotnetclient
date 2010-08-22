@@ -37,15 +37,16 @@ namespace XiboClient
 {
     public partial class MainForm : Form
     {
-        private Schedule schedule;
-        private Collection<Region> regions;
-        private bool isExpired = false;
-        private int scheduleId;
-        private int layoutId;
+        private Schedule _schedule;
+        private Collection<Region> _regions;
+        private bool _isExpired = false;
+        private int _scheduleId;
+        private int _layoutId;
 
-        double layoutWidth;
-        double layoutHeight;
-        double scaleFactor;
+        double _layoutWidth;
+        double _layoutHeight;
+        double _scaleFactor;
+        private Size _clientSize;
 
         private StatLog _statLog;
         private Stat _stat;
@@ -55,29 +56,44 @@ namespace XiboClient
         {
             InitializeComponent();
 
+            // Override the default size if necessary
+            if (Properties.Settings.Default.sizeX != 0)
+            {
+                _clientSize = new Size((int)Properties.Settings.Default.sizeX, (int)Properties.Settings.Default.sizeY);
+                Size = _clientSize;
+                WindowState = FormWindowState.Normal;
+                Location = new Point((int)Properties.Settings.Default.offsetX, (int)Properties.Settings.Default.offsetY);
+                StartPosition = FormStartPosition.Manual;
+            }
+            else
+            {
+                _clientSize = SystemInformation.PrimaryMonitorSize;
+            }
+
             _statLog = new StatLog();
 
+            // Create a cachemanager
             SetCacheManager();
 
             this.FormClosing += new FormClosingEventHandler(MainForm_FormClosing);
         }
 
+        /// <summary>
+        /// Called when the form has finished loading
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MainForm_Load(object sender, EventArgs e)
         {
             // Check the directories exist
             if (!Directory.Exists(Properties.Settings.Default.LibraryPath) || !Directory.Exists(Properties.Settings.Default.LibraryPath + @"\backgrounds\"))
             {
-                //Will handle the create of everything here
-                try
-                {
-                    Directory.CreateDirectory(Properties.Settings.Default.LibraryPath + @"\backgrounds");
-                }
-                catch (Exception ex)
-                { System.Diagnostics.Trace.WriteLine(ex.Message); }
+                // Will handle the create of everything here
+                Directory.CreateDirectory(Properties.Settings.Default.LibraryPath + @"\backgrounds");
             }
 
             // Hide the cursor
-            Cursor.Position = new Point(ClientSize.Width, ClientSize.Height);
+            Cursor.Position = new Point(_clientSize.Width, _clientSize.Height);
             Cursor.Hide();
 
             // Change the default Proxy class
@@ -87,23 +103,22 @@ namespace XiboClient
             Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + Application.UserAppDataPath), LogType.Info.ToString());
 
             // Create the Schedule
-            schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager);
+            _schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager);
 
-            schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
+            _schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
 
             try
             {
-                schedule.InitializeComponents();
+                _schedule.InitializeComponents();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message, LogType.Error.ToString());
+                Debug.WriteLine(ex.Message, LogType.Error.ToString());
                 MessageBox.Show("Fatal Error initialising the application", "Fatal Error");
-                this.Close();
-                this.Dispose();
+                Close();
+                Dispose();
             }
         }
-
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -150,8 +165,8 @@ namespace XiboClient
         {
             System.Diagnostics.Debug.WriteLine(String.Format("Schedule Changing to {0}", layoutPath), "MainForm - ScheduleChangeEvent");
 
-            this.scheduleId = scheduleId;
-            this.layoutId = layoutId;
+            _scheduleId = scheduleId;
+            _layoutId = layoutId;
 
             if (_stat != null)
             {
@@ -164,16 +179,16 @@ namespace XiboClient
 
             try
             {
-                this.DestroyLayout();
+                DestroyLayout();
 
-                isExpired = false;
+                _isExpired = false;
 
-                this.PrepareLayout(layoutPath);
+                PrepareLayout(layoutPath);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-                isExpired = true;
+                Debug.WriteLine(ex.Message);
+                _isExpired = true;
             }
         }
 
@@ -186,8 +201,8 @@ namespace XiboClient
             // Create a start record for this layout
             _stat = new Stat();
             _stat.type = StatType.Layout;
-            _stat.scheduleID = scheduleId;
-            _stat.layoutID = layoutId;
+            _stat.scheduleID = _scheduleId;
+            _stat.layoutID = _layoutId;
             _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
             // Get this layouts XML
@@ -205,7 +220,7 @@ namespace XiboClient
                 {
                     Image bgSplash = Image.FromStream(resourceStream);
 
-                    Bitmap bmpSplash = new Bitmap(bgSplash, SystemInformation.PrimaryMonitorSize);
+                    Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
                     this.BackgroundImage = bmpSplash;
                 }
                 catch
@@ -259,35 +274,24 @@ namespace XiboClient
             XmlAttributeCollection layoutAttributes =  layoutNode.Attributes;
             
             // Set the background and size of the form
-            layoutWidth = int.Parse(layoutAttributes["width"].Value);
-            layoutHeight = int.Parse(layoutAttributes["height"].Value);
+            _layoutWidth = int.Parse(layoutAttributes["width"].Value);
+            _layoutHeight = int.Parse(layoutAttributes["height"].Value);
 
-            Size clientSize = SystemInformation.PrimaryMonitorSize;
-
-            // If we're running "windowed", make the player artificially small.
-            if (Properties.Settings.Default.sizeX != 0)
-            {
-                clientSize = new Size((int)Properties.Settings.Default.sizeX, (int)Properties.Settings.Default.sizeY);
-                this.Size = clientSize;
-                this.WindowState = FormWindowState.Normal;
-                this.Location = new Point((int)Properties.Settings.Default.offsetX, (int)Properties.Settings.Default.offsetY);
-                this.StartPosition = FormStartPosition.Manual;
-            }
 
             // Scaling factor, will be applied to all regions
-            scaleFactor = Math.Min(clientSize.Width / layoutWidth, clientSize.Height / layoutHeight);
+            _scaleFactor = Math.Min(_clientSize.Width / _layoutWidth, _clientSize.Height / _layoutHeight);
        
             // Want to be able to center this shiv - therefore work out which one of these is going to have left overs
-            int backgroundWidth = (int)(layoutWidth * scaleFactor);
-            int backgroundHeight = (int)(layoutHeight * scaleFactor);
+            int backgroundWidth = (int)(_layoutWidth * _scaleFactor);
+            int backgroundHeight = (int)(_layoutHeight * _scaleFactor);
 
             double leftOverX;
             double leftOverY;
 
             try
             {
-                leftOverX = Math.Abs(clientSize.Width - backgroundWidth);
-                leftOverY = Math.Abs(clientSize.Height - backgroundHeight);
+                leftOverX = Math.Abs(_clientSize.Width - backgroundWidth);
+                leftOverY = Math.Abs(_clientSize.Height - backgroundHeight);
 
                 if (leftOverX != 0) leftOverX = leftOverX / 2;
                 if (leftOverY != 0) leftOverY = leftOverY / 2;
@@ -299,7 +303,7 @@ namespace XiboClient
             }
 
             // New region and region options objects
-            regions = new Collection<Region>();
+            _regions = new Collection<Region>();
             RegionOptions options = new RegionOptions();
 
             // Deal with the color
@@ -371,13 +375,13 @@ namespace XiboClient
                 //each region
                 XmlAttributeCollection nodeAttibutes = region.Attributes;
 
-                options.scheduleId = scheduleId;
-                options.layoutId = layoutId;
-                options.width = (int) (double.Parse(nodeAttibutes["width"].Value) * scaleFactor);
-                options.height = (int) (double.Parse(nodeAttibutes["height"].Value) * scaleFactor);
-                options.left = (int) (double.Parse(nodeAttibutes["left"].Value) * scaleFactor);
-                options.top = (int) (double.Parse(nodeAttibutes["top"].Value) * scaleFactor);
-                options.scaleFactor = scaleFactor;
+                options.scheduleId = _scheduleId;
+                options.layoutId = _layoutId;
+                options.width = (int) (double.Parse(nodeAttibutes["width"].Value) * _scaleFactor);
+                options.height = (int) (double.Parse(nodeAttibutes["height"].Value) * _scaleFactor);
+                options.left = (int) (double.Parse(nodeAttibutes["left"].Value) * _scaleFactor);
+                options.top = (int) (double.Parse(nodeAttibutes["top"].Value) * _scaleFactor);
+                options.scaleFactor = _scaleFactor;
 
                 // Set the backgrounds (used for Web content offsets)
                 options.backgroundLeft = options.left * -1;
@@ -396,7 +400,7 @@ namespace XiboClient
                 System.Diagnostics.Debug.WriteLine("Created new region", "MainForm - Prepare Layout");
                 temp.regionOptions = options;
 
-                regions.Add(temp);
+                _regions.Add(temp);
                 this.Controls.Add(temp);
 
                 System.Diagnostics.Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
@@ -430,26 +434,26 @@ namespace XiboClient
         {
             System.Diagnostics.Debug.WriteLine("Region Elapsed", "MainForm - DurationElapsedEvent");
 
-            isExpired = true;
+            _isExpired = true;
             //check the other regions to see if they are also expired.
-            foreach (Region temp in regions)
+            foreach (Region temp in _regions)
             {
                 if (!temp.hasExpired)
                 {
-                    isExpired = false;
+                    _isExpired = false;
                 }
             }
 
-            if (isExpired)
+            if (_isExpired)
             {
                 // Inform each region that the layout containing it has expired
-                foreach (Region temp in regions)
+                foreach (Region temp in _regions)
                 {
                     temp.layoutExpired = true;
                 }
 
                 System.Diagnostics.Debug.WriteLine("Region Expired - Next Region.", "MainForm - DurationElapsedEvent");
-                schedule.NextLayout();
+                _schedule.NextLayout();
             }
 
             Application.DoEvents();
@@ -464,9 +468,9 @@ namespace XiboClient
 
             Application.DoEvents();
 
-            if (regions == null) return;
+            if (_regions == null) return;
 
-            foreach (Region region in regions)
+            foreach (Region region in _regions)
             {
                 region.Clear();
 
@@ -484,8 +488,8 @@ namespace XiboClient
                 }
             }
 
-            regions.Clear();
-            regions = null;
+            _regions.Clear();
+            _regions = null;
         }
 
         /// <summary>

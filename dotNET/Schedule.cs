@@ -38,20 +38,23 @@ namespace XiboClient
         public delegate void ScheduleChangeDelegate(string layoutPath, int scheduleId, int layoutId);
         public event ScheduleChangeDelegate ScheduleChangeEvent;
 
-        private Collection<LayoutSchedule> layoutSchedule;
-        private int currentLayout = 0;
-        private string scheduleLocation;
+        private Collection<LayoutSchedule> _layoutSchedule;
+        private int _currentLayout = 0;
+        private string _scheduleLocation;
 
-        //FileCollector
-        private XiboClient.xmds.xmds xmds2;
-        private bool xmdsProcessing;
-        private bool forceChange = false;
+        // FileCollector
+        private XiboClient.xmds.xmds _xmds2;
+        private bool _xmdsProcessing;
+        private bool _forceChange = false;
 
         // Key
-        private HardwareKey hardwareKey;
+        private HardwareKey _hardwareKey;
 
         // Cache Manager
         private CacheManager _cacheManager;
+
+        // Schedule Manager
+        private ScheduleManager _scheduleManager;
 
         /// <summary>
         /// Create a schedule
@@ -60,16 +63,19 @@ namespace XiboClient
         public Schedule(string scheduleLocation, ref CacheManager cacheManager)
         {
             // Save the schedule location
-            this.scheduleLocation = scheduleLocation;
+            _scheduleLocation = scheduleLocation;
 
             // Create a new collection for the layouts in the schedule
-            layoutSchedule = new Collection<LayoutSchedule>();
+            _layoutSchedule = new Collection<LayoutSchedule>();
             
             // Set cachemanager
             _cacheManager = cacheManager;
 
+            // Create a schedule manager
+            _scheduleManager = new ScheduleManager(scheduleLocation);
+
             // Create a new Xmds service object
-            xmds2 = new XiboClient.xmds.xmds();
+            _xmds2 = new XiboClient.xmds.xmds();
         }
 
         /// <summary>
@@ -78,40 +84,257 @@ namespace XiboClient
         public void InitializeComponents() 
         {
             // Get the key for this display
-            hardwareKey = new HardwareKey();
+            _hardwareKey = new HardwareKey();
 
-            //
             // Start up the Xmds Service Object
-            //
-            this.xmds2.Credentials = null;
-            this.xmds2.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
-            this.xmds2.UseDefaultCredentials = false;
+            _xmds2.Credentials = null;
+            _xmds2.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
+            _xmds2.UseDefaultCredentials = false;
 
-            xmdsProcessing = false;
-            xmds2.RequiredFilesCompleted += new XiboClient.xmds.RequiredFilesCompletedEventHandler(xmds2_RequiredFilesCompleted);
-            xmds2.ScheduleCompleted += new XiboClient.xmds.ScheduleCompletedEventHandler(xmds2_ScheduleCompleted);
+            _xmdsProcessing = false;
+            _xmds2.RequiredFilesCompleted += new XiboClient.xmds.RequiredFilesCompletedEventHandler(xmds2_RequiredFilesCompleted);
+            _xmds2.ScheduleCompleted += new XiboClient.xmds.ScheduleCompletedEventHandler(xmds2_ScheduleCompleted);
 
-            System.Diagnostics.Trace.WriteLine(String.Format("Collection Interval: {0}", Properties.Settings.Default.collectInterval), "Schedule - InitializeComponents");
-            //
+            Trace.WriteLine(String.Format("Collection Interval: {0}", Properties.Settings.Default.collectInterval), "Schedule - InitializeComponents");
+
             // The Timer for the Service call
-            //
             Timer xmdsTimer = new Timer();
             xmdsTimer.Interval = (int) Properties.Settings.Default.collectInterval * 1000;
             xmdsTimer.Tick += new EventHandler(xmdsTimer_Tick);
             xmdsTimer.Start();
 
+            // The Timer for the Schedule Polling
+            Timer scheduleTimer = new Timer();
+            scheduleTimer.Interval = 10000; // 10 Seconds
+            scheduleTimer.Tick += new EventHandler(scheduleTimer_Tick);
+            scheduleTimer.Start();
+
             // Manual first tick
-            xmdsProcessing = true;
+            _xmdsProcessing = true;
 
             // Fire off a get required files event - async
-            xmds2.RequiredFilesAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, Properties.Settings.Default.Version);
-
-            //
-            // Parse and Load the Schedule into the Collection
-            //
-            this.GetSchedule();
+            _xmds2.RequiredFilesAsync(Properties.Settings.Default.ServerKey, _hardwareKey.Key, Properties.Settings.Default.Version);
         }
 
+        /// <summary>
+        /// Event handler for every schedule update timer tick
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void scheduleTimer_Tick(object sender, EventArgs e)
+        {
+            // Ask the schedule manager if we need to clear the layoutSchedule collection
+            if (_scheduleManager.NewScheduleAvailable)
+            {
+                // Update layoutSchedule collection
+                _layoutSchedule = _scheduleManager.CurrentSchedule;
+
+                // Set the current pointer to 0
+                _currentLayout = 0;
+
+                // Raise a schedule change event
+                ScheduleChangeEvent(_layoutSchedule[0].layoutFile, _layoutSchedule[0].scheduleid, _layoutSchedule[0].id);
+            }
+        }
+        
+        /// <summary>
+        /// XMDS timer
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void xmdsTimer_Tick(object sender, EventArgs e)
+        {
+            // The Date/time of last XMDS is recorded - this cannot be longer that the xmdsProcessingTimeout flag
+            DateTime lastXmdsSuccess = Properties.Settings.Default.XmdsLastConnection;
+            int xmdsResetTimeout = Properties.Settings.Default.xmdsResetTimeout;
+
+            // Work out if XMDS has been active for longer than the reset period (means its crashed)
+            if (lastXmdsSuccess < (DateTime.Now.AddSeconds(-1 * xmdsResetTimeout)))
+            {
+                Trace.WriteLine(new LogMessage("xmdsTimer_Tick", String.Format("XMDS reset, last connection was at {0}", lastXmdsSuccess.ToString())), LogType.Error.ToString());
+                _xmdsProcessing = false;
+            }
+
+            // Ticks every "collectInterval"
+            if (_xmdsProcessing)
+            {
+                System.Diagnostics.Debug.WriteLine("Collection Timer Ticked, but previous request still active", "XmdsTicker");
+                return;
+            }
+            else
+            {
+                Application.DoEvents(); // Make sure everything that is queued to render does
+
+                _xmdsProcessing = true;
+
+                System.Diagnostics.Debug.WriteLine("Collection Timer Ticked, Firing RequiredFilesAsync");
+
+                // Fire off a get required files event - async
+                _xmds2.RequiredFilesAsync(Properties.Settings.Default.ServerKey, _hardwareKey.Key, Properties.Settings.Default.Version);
+            }
+
+            // Flush the log
+            System.Diagnostics.Trace.Flush();
+        }
+
+        /// <summary>
+        /// Moves the layout on
+        /// </summary>
+        public void NextLayout()
+        {
+            int previousLayout = _currentLayout;
+
+            // increment the current layout
+            _currentLayout++;
+
+            // if the current layout is greater than the count of layouts, then reset to 0
+            if (_currentLayout >= _layoutSchedule.Count)
+            {
+                _currentLayout = 0;
+            }
+
+            if (_layoutSchedule.Count == 1 && !_forceChange)
+            {
+                Debug.WriteLine(new LogMessage("Schedule - NextLayout", "Only 1 layout showing, refreshing it"), LogType.Info.ToString());
+            }
+
+            Debug.WriteLine(String.Format("Next layout: {0}", _layoutSchedule[_currentLayout].layoutFile), "Schedule - Next Layout");
+
+            _forceChange = false;
+
+            // Raise the event
+            ScheduleChangeEvent(_layoutSchedule[_currentLayout].layoutFile, _layoutSchedule[_currentLayout].scheduleid, _layoutSchedule[_currentLayout].id);
+        }
+        
+        /// <summary>
+        /// The number of active layouts in the current schedule
+        /// </summary>
+        public int ActiveLayouts
+        {
+            get
+            {
+                return _layoutSchedule.Count;
+            }
+        }
+
+        #region "Event Handers"
+
+        /// <summary>
+        /// Event Handler for when the FileCollector has changed a media file
+        /// </summary>
+        /// <param name="path"></param>
+        void fileCollector_MediaFileChanged(string path)
+        {
+            System.Diagnostics.Debug.WriteLine("Media file changed");
+            return;
+        }
+
+        /// <summary>
+        /// Event Handler for when the FileCollector has finished file collection cycle
+        /// </summary>
+        void fileCollector_CollectionComplete()
+        {
+            System.Diagnostics.Debug.WriteLine("File Collector Complete - getting Schedule.");
+
+            // All the files have been collected, so we want to update the schedule (do we want to send off a MD5 of the schedule?)
+            _xmds2.ScheduleAsync(Properties.Settings.Default.ServerKey, _hardwareKey.Key, Properties.Settings.Default.Version);
+        }
+
+        /// <summary>
+        /// Schedule XMDS call completed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void xmds2_ScheduleCompleted(object sender, XiboClient.xmds.ScheduleCompletedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("Schedule Retrival Complete.");
+
+            // Set XMDS to no longer be processing
+            _xmdsProcessing = false;
+
+            // Expect new schedule XML
+            if (e.Error != null)
+            {
+                // There was an error - what do we do?
+                System.Diagnostics.Trace.WriteLine(e.Error.Message);
+            }
+            else
+            {
+                // Only update the schedule if its changed.
+                String md5CurrentSchedule = "";
+
+                // Set the flag to indicate we have a connection to XMDS
+                Properties.Settings.Default.XmdsLastConnection = DateTime.Now;
+
+                // Hash of the result
+                String md5NewSchedule = Hashes.MD5(e.Result);
+
+                try
+                {
+                    StreamReader sr = new StreamReader(File.Open(_scheduleLocation, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite));
+
+                    // Yes - get the MD5 of it, and compare to the MD5 of the file in the XML
+                    md5CurrentSchedule = Hashes.MD5(sr.ReadToEnd());
+
+                    sr.Close();
+
+                    // Compare the existing to the new
+                    if (md5CurrentSchedule == md5NewSchedule) return;
+                }
+                catch (Exception ex)
+                {
+                    // Failed to get the MD5 of the existing schedule - just continue and overwrite it
+                    Debug.WriteLine(ex.Message);
+                }
+
+                System.Diagnostics.Debug.WriteLine("Different Schedules Detected, writing new schedule.", "Schedule - ScheduleCompleted");
+
+                // Write the result to the schedule xml location
+                StreamWriter sw = new StreamWriter(_scheduleLocation, false, Encoding.UTF8);
+                sw.Write(e.Result);
+
+                sw.Close();
+
+                Debug.WriteLine("New Schedule Recieved", "xmds_ScheduleCompleted");
+
+                // Indicate to the schedule manager that it should read the XML file
+                _scheduleManager.RefreshSchedule = true;
+            }
+        }
+
+        /// <summary>
+        /// A layout file has changed
+        /// </summary>
+        /// <param name="layoutPath"></param>
+        void fileCollector_LayoutFileChanged(string layoutPath)
+        {
+            System.Diagnostics.Debug.WriteLine("Layout file changed");
+
+            // Are we set to expire modified layouts? If not then just return as if
+            // nothing had happened.
+            if (!Properties.Settings.Default.expireModifiedLayouts)
+                return;
+
+            // If the layout that got changed is the current layout, move on
+            try
+            {
+                if (_layoutSchedule[_currentLayout].layoutFile == Properties.Settings.Default.LibraryPath + @"\" + layoutPath)
+                {
+                    _forceChange = true;
+                    NextLayout();
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("fileCollector_LayoutFileChanged", String.Format("Unable to determine current layout with exception {0}", ex.Message)), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Event Handler for required files being complete
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void xmds2_RequiredFilesCompleted(object sender, XiboClient.xmds.RequiredFilesCompletedEventArgs e)
         {
             System.Diagnostics.Debug.WriteLine("RequiredFilesAsync complete.", "Schedule - RequiredFilesCompleted");
@@ -130,7 +353,7 @@ namespace XiboClient
                     Properties.Settings.Default.licensed = 0;
                 }
 
-                xmdsProcessing = false;
+                _xmdsProcessing = false;
             }
             else
             {
@@ -157,7 +380,7 @@ namespace XiboClient
                 }
                 catch (Exception ex)
                 {
-                    xmdsProcessing = false;
+                    _xmdsProcessing = false;
 
                     // Log and move on
                     System.Diagnostics.Trace.WriteLine(new LogMessage("Schedule - RequiredFilesCompleted", "Error Comparing and Collecting: " + ex.Message), LogType.Error.ToString());
@@ -167,255 +390,6 @@ namespace XiboClient
             }
         }
 
-        void fileCollector_MediaFileChanged(string path)
-        {
-            System.Diagnostics.Debug.WriteLine("Media file changed");
-            return;
-        }
-
-        void fileCollector_CollectionComplete()
-        {
-            System.Diagnostics.Debug.WriteLine("File Collector Complete - getting Schedule.");
-            
-            // All the files have been collected, so we want to update the schedule (do we want to send off a MD5 of the schedule?)
-            xmds2.ScheduleAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, Properties.Settings.Default.Version);
-        }
-
-        void xmds2_ScheduleCompleted(object sender, XiboClient.xmds.ScheduleCompletedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine("Schedule Retrival Complete.");
-
-            // Set XMDS to no longer be processing
-            xmdsProcessing = false;
-
-            // Expect new schedule XML
-            if (e.Error != null)
-            {
-                //There was an error - what do we do?
-                System.Diagnostics.Trace.WriteLine(e.Error.Message);
-            }
-            else
-            {
-                // Only update the schedule if its changed.
-                String md5CurrentSchedule = "";
-
-                // Set the flag to indicate we have a connection to XMDS
-                Properties.Settings.Default.XmdsLastConnection = DateTime.Now;
-
-                try
-                {
-                    StreamReader sr = new StreamReader(File.Open(this.scheduleLocation, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite));
-
-                    // Yes - get the MD5 of it, and compare to the MD5 of the file in the XML
-                    md5CurrentSchedule = Hashes.MD5(sr.ReadToEnd());
-
-                    sr.Close();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine(ex.Message);
-                }
-
-                // Hash of the result
-                String md5NewSchedule = Hashes.MD5(e.Result);
-
-                if (md5CurrentSchedule == md5NewSchedule) return;
-
-                System.Diagnostics.Debug.WriteLine("Different Schedules Detected, writing new schedule.", "Schedule - ScheduleCompleted");
-
-                // Write the result to the schedule xml location
-                StreamWriter sw = new StreamWriter(this.scheduleLocation, false, Encoding.UTF8);
-                sw.Write(e.Result);
-
-                sw.Close();
-
-                System.Diagnostics.Debug.WriteLine("New Schedule Recieved", "xmds_ScheduleCompleted");
-
-                // The schedule has been updated with new information.
-                // We could improve the logic here, perhaps generating a new layoutSchedule collection and comparing the two before we destroy this one..
-                layoutSchedule.Clear();
-
-                this.GetSchedule();
-            }
-        }
-
-        void fileCollector_LayoutFileChanged(string layoutPath)
-        {
-            System.Diagnostics.Debug.WriteLine("Layout file changed");
-
-            // If the layout that got changed is the current layout, move on
-            try
-            {
-                if (layoutSchedule[currentLayout].layoutFile == Properties.Settings.Default.LibraryPath + @"\" + layoutPath)
-                {
-                    forceChange = true;
-                    NextLayout();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.WriteLine(new LogMessage("fileCollector_LayoutFileChanged", String.Format("Unable to determine current layout with exception {0}", ex.Message)), LogType.Error.ToString());
-            }
-        }
-
-        void xmdsTimer_Tick(object sender, EventArgs e)
-        {
-            // The Date/time of last XMDS is recorded - this cannot be longer that the xmdsProcessingTimeout flag
-            DateTime lastXmdsSuccess = Properties.Settings.Default.XmdsLastConnection;
-            int xmdsResetTimeout = Properties.Settings.Default.xmdsResetTimeout;
-
-            // Work out if XMDS has been active for longer than the reset period (means its crashed)
-            if (lastXmdsSuccess < (DateTime.Now.AddSeconds(-1 * xmdsResetTimeout)))
-            {
-                Trace.WriteLine(new LogMessage("xmdsTimer_Tick", String.Format("XMDS reset, last connection was at {0}", lastXmdsSuccess.ToString())), LogType.Error.ToString());
-                xmdsProcessing = false;
-            }
-
-            // Ticks every "collectInterval"
-            if (xmdsProcessing)
-            {
-                System.Diagnostics.Debug.WriteLine("Collection Timer Ticked, but previous request still active", "XmdsTicker");
-                return;
-            }
-            else
-            {
-                Application.DoEvents(); // Make sure everything that is queued to render does
-
-                xmdsProcessing = true;
-
-                System.Diagnostics.Debug.WriteLine("Collection Timer Ticked, Firing RequiredFilesAsync");
-
-                // Fire off a get required files event - async
-                xmds2.RequiredFilesAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, Properties.Settings.Default.Version);
-            }
-
-            // Flush the log
-            System.Diagnostics.Trace.Flush();
-        }
-
-        /// <summary>
-        /// Moves the layout on
-        /// </summary>
-        public void NextLayout()
-        {
-            int previousLayout = currentLayout;
-
-            //increment the current layout
-            currentLayout++;
-
-            //if the current layout is greater than the count of layouts, then reset to 0
-            if (currentLayout >= layoutSchedule.Count)
-            {
-                currentLayout = 0;
-            }
-
-            if (layoutSchedule.Count == 1 && !forceChange)
-            {
-                Debug.WriteLine(new LogMessage("Schedule - NextLayout", "Only 1 layout showing, refreshing it"), LogType.Info.ToString());
-            }
-
-            System.Diagnostics.Debug.WriteLine(String.Format("Next layout: {0}", layoutSchedule[currentLayout].layoutFile), "Schedule - Next Layout");
-
-            forceChange = false;
-
-            //Raise the event
-            ScheduleChangeEvent(layoutSchedule[currentLayout].layoutFile, layoutSchedule[currentLayout].scheduleid, layoutSchedule[currentLayout].id);
-        }
-
-        /// <summary>
-        /// Gets the schedule from the schedule location
-        /// If the schedule location doesn't exist - use the default.xml (how to we guarentee that the default.xml exists?)
-        /// If layouts in the schedule file dont exist, then ignore them - if none of them exist then add a default one?
-        /// </summary>
-        void GetSchedule()
-        {
-            XmlDocument scheduleXml;
-
-            // Check the schedule file exists
-            if (File.Exists(scheduleLocation))
-            {
-                // Read the schedule file
-                XmlReader reader = XmlReader.Create(scheduleLocation);
-
-                scheduleXml = new XmlDocument();
-                scheduleXml.Load(reader);
-
-                reader.Close();
-            }
-            else
-            {
-                // Use the default XML
-                scheduleXml = new XmlDocument();
-                scheduleXml.LoadXml("<schedule></schedule>");
-            }
-
-            // Get the layouts in this schedule
-            XmlNodeList listLayouts = scheduleXml.SelectNodes("/schedule/layout");
-
-            // Have we got some?
-            if (listLayouts.Count == 0)
-            {
-                // Schedule up the default
-                LayoutSchedule temp = new LayoutSchedule();
-                temp.layoutFile = Properties.Settings.Default.LibraryPath + @"\Default.xml";
-                temp.id = 0;
-                temp.scheduleid = 0;
-
-                layoutSchedule.Add(temp);
-            }
-            else
-            {
-                // Get them and add to collection
-                foreach (XmlNode layout in listLayouts)
-                {
-                    XmlAttributeCollection attributes = layout.Attributes;
-
-                    string layoutFile = attributes["file"].Value;
-                    string replace = ".xml";
-                    layoutFile = layoutFile.TrimEnd(replace.ToCharArray());
-                    
-                    string scheduleId = "";
-                    if (attributes["scheduleid"] != null) scheduleId = attributes["scheduleid"].Value;
-
-                    LayoutSchedule temp = new LayoutSchedule();
-                    temp.layoutFile = Properties.Settings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
-                    temp.id = int.Parse(layoutFile);
-                    
-                    if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
-
-                    layoutSchedule.Add(temp);
-                }
-            }
-
-            //clean up
-            listLayouts = null;
-            scheduleXml = null;
-
-            //raise an event
-            ScheduleChangeEvent(layoutSchedule[0].layoutFile, layoutSchedule[0].scheduleid, layoutSchedule[0].id);
-
-        }
-
-        /// <summary>
-        /// The number of active layouts in the current schedule
-        /// </summary>
-        public int ActiveLayouts
-        {
-            get
-            {
-                return layoutSchedule.Count;
-            }
-        }
-
-        /// <summary>
-        /// A LayoutSchedule
-        /// </summary>
-        [Serializable]
-        public struct LayoutSchedule
-        {
-            public string layoutFile;
-            public int id;
-            public int scheduleid;
-        }
+        #endregion
     }
 }
