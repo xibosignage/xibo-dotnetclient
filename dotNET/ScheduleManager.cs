@@ -30,13 +30,23 @@ using System.Diagnostics;
 
 namespace XiboClient
 {
+    /// <summary>
+    /// Schedule manager controls the currently running schedule
+    /// </summary>
     class ScheduleManager
     {
+        #region "Constructor"
+
+        // Member Varialbes
         private string _location;
         private Collection<LayoutSchedule> _layoutSchedule;
         private Collection<LayoutSchedule> _currentSchedule;
         private bool _refreshSchedule;
 
+        /// <summary>
+        /// Creates a new schedule Manager
+        /// </summary>
+        /// <param name="scheduleLocation"></param>
         public ScheduleManager(string scheduleLocation)
         {
             _location = scheduleLocation;
@@ -48,6 +58,8 @@ namespace XiboClient
             // Evaluate the Schedule
             IsNewScheduleAvailable();
         }
+
+        #endregion
 
         #region "Properties"
 
@@ -90,18 +102,33 @@ namespace XiboClient
 
         #endregion
 
-        
+        #region "Methods"
+
         /// <summary>
         /// Determine if there is a new schedule available
         /// </summary>
         /// <returns></returns>
         private bool IsNewScheduleAvailable()
         {
+            Debug.WriteLine("Checking if a new schedule is available", LogType.Info.ToString());
+
             // If we dont currently have a cached schedule load one from the scheduleLocation
             // also do this if we have been told to Refresh the schedule
             if (_layoutSchedule.Count == 0 || RefreshSchedule)
             {
-                LoadScheduleFromFile();
+                // Try to load the schedule from disk
+                try
+                {
+                    LoadScheduleFromFile();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("IsNewScheduleAvailable", string.Format("Unable to load schedule from disk: {0}", ex.Message)), 
+                        LogType.Error.ToString());
+
+                    // If we cant load the schedule from disk then use an empty schedule.
+                    SetEmptySchedule();
+                }
 
                 // Set RefreshSchedule to be false (this means we will not need to load the file constantly)
                 RefreshSchedule = false;
@@ -203,14 +230,7 @@ namespace XiboClient
             // Are there any nodes in the document
             if (nodes.Count == 0)
             {
-                // Schedule up the default
-                LayoutSchedule temp = new LayoutSchedule();
-                temp.layoutFile = Properties.Settings.Default.LibraryPath + @"\Default.xml";
-                temp.id = 0;
-                temp.scheduleid = 0;
-
-                _layoutSchedule.Add(temp);
-
+                SetEmptySchedule();
                 return;
             }
 
@@ -265,12 +285,34 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Sets an empty schedule into the _layoutSchedule Collection
+        /// </summary>
+        private void SetEmptySchedule()
+        {
+            Debug.WriteLine("Setting an empty schedule", LogType.Info.ToString());
+
+            // Remove the existing schedule
+            _layoutSchedule.Clear();
+
+            // Schedule up the default
+            LayoutSchedule temp = new LayoutSchedule();
+            temp.layoutFile = Properties.Settings.Default.LibraryPath + @"\Default.xml";
+            temp.id = 0;
+            temp.scheduleid = 0;
+
+            _layoutSchedule.Add(temp);
+        }
+
+        /// <summary>
         /// Gets the Schedule XML
         /// </summary>
         /// <returns></returns>
         private XmlDocument GetScheduleXml()
         {
+            Debug.WriteLine("Getting the Schedule XML", LogType.Info.ToString());
+            
             XmlDocument scheduleXml;
+            
             // Check the schedule file exists
             if (File.Exists(_location))
             {
@@ -288,8 +330,11 @@ namespace XiboClient
                 scheduleXml = new XmlDocument();
                 scheduleXml.LoadXml("<schedule></schedule>");
             }
+
             return scheduleXml;
         }
+    
+        #endregion
     }
 
     /// <summary>

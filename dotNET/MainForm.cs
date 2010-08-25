@@ -102,13 +102,15 @@ namespace XiboClient
             // UserApp data
             Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + Application.UserAppDataPath), LogType.Info.ToString());
 
-            // Create the Schedule
-            _schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager);
-
-            _schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
-
             try
             {
+                // Create the Schedule
+                _schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager);
+
+                // Bind to the schedule change event - notifys of changes to the schedule
+                _schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
+
+                // Initialize the other schedule components
                 _schedule.InitializeComponents();
             }
             catch (Exception ex)
@@ -209,7 +211,7 @@ namespace XiboClient
             XmlDocument layoutXml = new XmlDocument();
 
             // Default or not
-            if (layoutPath == Properties.Settings.Default.LibraryPath + @"\Default.xml")
+            if (layoutPath == Properties.Settings.Default.LibraryPath + @"\Default.xml" || String.IsNullOrEmpty(layoutPath))
             {
                 // We are running with the Default.xml - meaning the schedule doesnt exist
                 System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
@@ -255,7 +257,7 @@ namespace XiboClient
                     {
                         Image bgSplash = Image.FromStream(resourceStream);
 
-                        Bitmap bmpSplash = new Bitmap(bgSplash, SystemInformation.PrimaryMonitorSize);
+                        Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
                         this.BackgroundImage = bmpSplash;
                     }
                     catch
