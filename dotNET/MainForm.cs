@@ -374,7 +374,16 @@ namespace XiboClient
                 }
                 else
                 {
-                    // TODO: We ideally want to move on to the next layout without further adoo
+                    Trace.WriteLine(new LogMessage("PrepareLayout", 
+                        string.Format(string.Format("An empty layout detected, will show for {0} seconds.", Properties.Settings.Default.emptyLayoutDuration.ToString()))), LogType.Info.ToString());
+
+                    // Put a small dummy region in place, with a small dummy media node - which expires in 10 seconds.
+                    XmlDocument dummyXml = new XmlDocument();
+                    dummyXml.LoadXml(string.Format("<region id='blah' width='1' height='1' top='1' left='1'><media id='blah' type='text' duration='{0}'><raw><text></text></raw></media></region>", 
+                        Properties.Settings.Default.emptyLayoutDuration.ToString()));
+
+                    // Replace the list of regions (they mean nothing as they are empty)
+                    listRegions = dummyXml.SelectNodes("/region");
                 }
             }
 

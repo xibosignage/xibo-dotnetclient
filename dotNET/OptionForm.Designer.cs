@@ -41,13 +41,6 @@ namespace XiboClient
             this.buttonLibrary = new System.Windows.Forms.Button();
             this.numericUpDownCollect = new System.Windows.Forms.NumericUpDown();
             this.label5 = new System.Windows.Forms.Label();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
-            this.label8 = new System.Windows.Forms.Label();
-            this.buttonProxySave = new System.Windows.Forms.Button();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.labelProxyDomain = new System.Windows.Forms.Label();
-            this.labelProxyPass = new System.Windows.Forms.Label();
-            this.labelProxyUser = new System.Windows.Forms.Label();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.buttonDisplayAdmin = new System.Windows.Forms.Button();
             this.label7 = new System.Windows.Forms.Label();
@@ -55,6 +48,17 @@ namespace XiboClient
             this.label6 = new System.Windows.Forms.Label();
             this.buttonRegister = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.label8 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.labelProxyDomain = new System.Windows.Forms.Label();
+            this.labelProxyPass = new System.Windows.Forms.Label();
+            this.labelProxyUser = new System.Windows.Forms.Label();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.label14 = new System.Windows.Forms.Label();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.label11 = new System.Windows.Forms.Label();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -62,17 +66,9 @@ namespace XiboClient
             this.aboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.onlineHelpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.folderBrowserLibrary = new System.Windows.Forms.FolderBrowserDialog();
-            this.tabPage4 = new System.Windows.Forms.TabPage();
-            this.label11 = new System.Windows.Forms.Label();
-            this.label12 = new System.Windows.Forms.Label();
-            this.label13 = new System.Windows.Forms.Label();
-            this.label14 = new System.Windows.Forms.Label();
-            this.clientWidth = new System.Windows.Forms.NumericUpDown();
-            this.clientHeight = new System.Windows.Forms.NumericUpDown();
-            this.offsetX = new System.Windows.Forms.NumericUpDown();
-            this.offsetY = new System.Windows.Forms.NumericUpDown();
-            this.labelXmdsUrl = new System.Windows.Forms.Label();
-            this.textBoxDisplayName = new System.Windows.Forms.TextBox();
+            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.label15 = new System.Windows.Forms.Label();
+            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.nupScrollStepAmount = new System.Windows.Forms.NumericUpDown();
             this.tbHardwareKey = new System.Windows.Forms.TextBox();
             this.checkBoxStats = new System.Windows.Forms.CheckBox();
@@ -80,24 +76,32 @@ namespace XiboClient
             this.textBoxXmdsUri = new System.Windows.Forms.TextBox();
             this.textBoxServerKey = new System.Windows.Forms.TextBox();
             this.textBoxLibraryPath = new System.Windows.Forms.TextBox();
+            this.labelXmdsUrl = new System.Windows.Forms.Label();
+            this.textBoxDisplayName = new System.Windows.Forms.TextBox();
             this.textBoxProxyDomain = new System.Windows.Forms.TextBox();
             this.maskedTextBoxProxyPass = new System.Windows.Forms.MaskedTextBox();
             this.textBoxProxyUser = new System.Windows.Forms.TextBox();
+            this.offsetX = new System.Windows.Forms.NumericUpDown();
+            this.offsetY = new System.Windows.Forms.NumericUpDown();
+            this.clientHeight = new System.Windows.Forms.NumericUpDown();
+            this.clientWidth = new System.Windows.Forms.NumericUpDown();
+            this.cbExpireModifiedLayouts = new System.Windows.Forms.CheckBox();
             this.xmds1 = new XiboClient.xmds.xmds();
-            this.btnAdvSave = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownCollect)).BeginInit();
+            this.tabPage2.SuspendLayout();
             this.tabPage3.SuspendLayout();
             this.groupBox2.SuspendLayout();
-            this.tabPage2.SuspendLayout();
-            this.menuStrip1.SuspendLayout();
             this.tabPage4.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.clientHeight)).BeginInit();
+            this.menuStrip1.SuspendLayout();
+            this.tabPage5.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetX)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetY)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.clientHeight)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
@@ -130,7 +134,7 @@ namespace XiboClient
             // buttonSaveSettings
             // 
             this.buttonSaveSettings.Enabled = false;
-            this.buttonSaveSettings.Location = new System.Drawing.Point(185, 233);
+            this.buttonSaveSettings.Location = new System.Drawing.Point(200, 320);
             this.buttonSaveSettings.Name = "buttonSaveSettings";
             this.buttonSaveSettings.Size = new System.Drawing.Size(75, 23);
             this.buttonSaveSettings.TabIndex = 6;
@@ -144,10 +148,11 @@ namespace XiboClient
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
+            this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Location = new System.Drawing.Point(12, 27);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(444, 316);
+            this.tabControl1.Size = new System.Drawing.Size(444, 287);
             this.tabControl1.TabIndex = 7;
             // 
             // tabPage1
@@ -155,12 +160,10 @@ namespace XiboClient
             this.tabPage1.Controls.Add(this.nupScrollStepAmount);
             this.tabPage1.Controls.Add(this.label10);
             this.tabPage1.Controls.Add(this.label9);
-            this.tabPage1.Controls.Add(this.buttonReset);
             this.tabPage1.Controls.Add(this.buttonLibrary);
             this.tabPage1.Controls.Add(this.numericUpDownCollect);
             this.tabPage1.Controls.Add(this.label5);
             this.tabPage1.Controls.Add(this.label1);
-            this.tabPage1.Controls.Add(this.buttonSaveSettings);
             this.tabPage1.Controls.Add(this.label3);
             this.tabPage1.Controls.Add(this.label2);
             this.tabPage1.Controls.Add(this.tbHardwareKey);
@@ -172,7 +175,7 @@ namespace XiboClient
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(436, 290);
+            this.tabPage1.Size = new System.Drawing.Size(436, 261);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Xibo Settings";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -197,7 +200,7 @@ namespace XiboClient
             // 
             // buttonReset
             // 
-            this.buttonReset.Location = new System.Drawing.Point(266, 233);
+            this.buttonReset.Location = new System.Drawing.Point(281, 320);
             this.buttonReset.Name = "buttonReset";
             this.buttonReset.Size = new System.Drawing.Size(75, 23);
             this.buttonReset.TabIndex = 11;
@@ -247,81 +250,6 @@ namespace XiboClient
             this.label5.TabIndex = 8;
             this.label5.Text = "The collection interval for content";
             // 
-            // tabPage3
-            // 
-            this.tabPage3.Controls.Add(this.label8);
-            this.tabPage3.Controls.Add(this.buttonProxySave);
-            this.tabPage3.Controls.Add(this.groupBox2);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(436, 290);
-            this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "Proxy Server";
-            this.tabPage3.UseVisualStyleBackColor = true;
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(26, 17);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(278, 13);
-            this.label8.TabIndex = 9;
-            this.label8.Text = "Please set the Proxy Address and Port in Internet Explorer";
-            // 
-            // buttonProxySave
-            // 
-            this.buttonProxySave.Enabled = false;
-            this.buttonProxySave.Location = new System.Drawing.Point(29, 204);
-            this.buttonProxySave.Name = "buttonProxySave";
-            this.buttonProxySave.Size = new System.Drawing.Size(75, 23);
-            this.buttonProxySave.TabIndex = 8;
-            this.buttonProxySave.Text = "Save";
-            this.buttonProxySave.UseVisualStyleBackColor = true;
-            this.buttonProxySave.Click += new System.EventHandler(this.buttonProxySave_Click);
-            // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.textBoxProxyDomain);
-            this.groupBox2.Controls.Add(this.maskedTextBoxProxyPass);
-            this.groupBox2.Controls.Add(this.textBoxProxyUser);
-            this.groupBox2.Controls.Add(this.labelProxyDomain);
-            this.groupBox2.Controls.Add(this.labelProxyPass);
-            this.groupBox2.Controls.Add(this.labelProxyUser);
-            this.groupBox2.Location = new System.Drawing.Point(29, 48);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(276, 139);
-            this.groupBox2.TabIndex = 7;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Authentication Information";
-            // 
-            // labelProxyDomain
-            // 
-            this.labelProxyDomain.AutoSize = true;
-            this.labelProxyDomain.Location = new System.Drawing.Point(7, 98);
-            this.labelProxyDomain.Name = "labelProxyDomain";
-            this.labelProxyDomain.Size = new System.Drawing.Size(43, 13);
-            this.labelProxyDomain.TabIndex = 2;
-            this.labelProxyDomain.Text = "Domain";
-            // 
-            // labelProxyPass
-            // 
-            this.labelProxyPass.AutoSize = true;
-            this.labelProxyPass.Location = new System.Drawing.Point(7, 70);
-            this.labelProxyPass.Name = "labelProxyPass";
-            this.labelProxyPass.Size = new System.Drawing.Size(53, 13);
-            this.labelProxyPass.TabIndex = 1;
-            this.labelProxyPass.Text = "Password";
-            // 
-            // labelProxyUser
-            // 
-            this.labelProxyUser.AutoSize = true;
-            this.labelProxyUser.Location = new System.Drawing.Point(7, 44);
-            this.labelProxyUser.Name = "labelProxyUser";
-            this.labelProxyUser.Size = new System.Drawing.Size(55, 13);
-            this.labelProxyUser.TabIndex = 0;
-            this.labelProxyUser.Text = "Username";
-            // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.buttonDisplayAdmin);
@@ -335,7 +263,7 @@ namespace XiboClient
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(436, 290);
+            this.tabPage2.Size = new System.Drawing.Size(436, 261);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Register Display";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -395,6 +323,123 @@ namespace XiboClient
             this.label4.TabIndex = 1;
             this.label4.Text = "Display Name";
             // 
+            // tabPage3
+            // 
+            this.tabPage3.Controls.Add(this.label8);
+            this.tabPage3.Controls.Add(this.groupBox2);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(436, 261);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Proxy Server";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(26, 17);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(278, 13);
+            this.label8.TabIndex = 9;
+            this.label8.Text = "Please set the Proxy Address and Port in Internet Explorer";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.textBoxProxyDomain);
+            this.groupBox2.Controls.Add(this.maskedTextBoxProxyPass);
+            this.groupBox2.Controls.Add(this.textBoxProxyUser);
+            this.groupBox2.Controls.Add(this.labelProxyDomain);
+            this.groupBox2.Controls.Add(this.labelProxyPass);
+            this.groupBox2.Controls.Add(this.labelProxyUser);
+            this.groupBox2.Location = new System.Drawing.Point(29, 48);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(276, 139);
+            this.groupBox2.TabIndex = 7;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Authentication Information";
+            // 
+            // labelProxyDomain
+            // 
+            this.labelProxyDomain.AutoSize = true;
+            this.labelProxyDomain.Location = new System.Drawing.Point(7, 98);
+            this.labelProxyDomain.Name = "labelProxyDomain";
+            this.labelProxyDomain.Size = new System.Drawing.Size(43, 13);
+            this.labelProxyDomain.TabIndex = 2;
+            this.labelProxyDomain.Text = "Domain";
+            // 
+            // labelProxyPass
+            // 
+            this.labelProxyPass.AutoSize = true;
+            this.labelProxyPass.Location = new System.Drawing.Point(7, 70);
+            this.labelProxyPass.Name = "labelProxyPass";
+            this.labelProxyPass.Size = new System.Drawing.Size(53, 13);
+            this.labelProxyPass.TabIndex = 1;
+            this.labelProxyPass.Text = "Password";
+            // 
+            // labelProxyUser
+            // 
+            this.labelProxyUser.AutoSize = true;
+            this.labelProxyUser.Location = new System.Drawing.Point(7, 44);
+            this.labelProxyUser.Name = "labelProxyUser";
+            this.labelProxyUser.Size = new System.Drawing.Size(55, 13);
+            this.labelProxyUser.TabIndex = 0;
+            this.labelProxyUser.Text = "Username";
+            // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.label14);
+            this.tabPage4.Controls.Add(this.label13);
+            this.tabPage4.Controls.Add(this.label12);
+            this.tabPage4.Controls.Add(this.label11);
+            this.tabPage4.Controls.Add(this.offsetX);
+            this.tabPage4.Controls.Add(this.offsetY);
+            this.tabPage4.Controls.Add(this.clientHeight);
+            this.tabPage4.Controls.Add(this.clientWidth);
+            this.tabPage4.Location = new System.Drawing.Point(4, 22);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(436, 261);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "Client Positioning";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(9, 96);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(45, 13);
+            this.label14.TabIndex = 3;
+            this.label14.Text = "Offset Y";
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(9, 69);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(45, 13);
+            this.label13.TabIndex = 2;
+            this.label13.Text = "Offset X";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(9, 43);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(67, 13);
+            this.label12.TabIndex = 1;
+            this.label12.Text = "Client Height";
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(9, 17);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(64, 13);
+            this.label11.TabIndex = 0;
+            this.label11.Text = "Client Width";
+            // 
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -444,134 +489,36 @@ namespace XiboClient
             this.onlineHelpToolStripMenuItem.Text = "Online Help";
             this.onlineHelpToolStripMenuItem.Click += new System.EventHandler(this.onlineHelpToolStripMenuItem_Click);
             // 
-            // tabPage4
+            // tabPage5
             // 
-            this.tabPage4.Controls.Add(this.btnAdvSave);
-            this.tabPage4.Controls.Add(this.offsetX);
-            this.tabPage4.Controls.Add(this.offsetY);
-            this.tabPage4.Controls.Add(this.clientHeight);
-            this.tabPage4.Controls.Add(this.clientWidth);
-            this.tabPage4.Controls.Add(this.label14);
-            this.tabPage4.Controls.Add(this.label13);
-            this.tabPage4.Controls.Add(this.label12);
-            this.tabPage4.Controls.Add(this.label11);
-            this.tabPage4.Location = new System.Drawing.Point(4, 22);
-            this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(436, 290);
-            this.tabPage4.TabIndex = 3;
-            this.tabPage4.Text = "Client Positioning";
-            this.tabPage4.UseVisualStyleBackColor = true;
+            this.tabPage5.Controls.Add(this.cbExpireModifiedLayouts);
+            this.tabPage5.Controls.Add(this.numericUpDown1);
+            this.tabPage5.Controls.Add(this.label15);
+            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(436, 261);
+            this.tabPage5.TabIndex = 4;
+            this.tabPage5.Text = "Advanced";
+            this.tabPage5.UseVisualStyleBackColor = true;
             // 
-            // label11
+            // label15
             // 
-            this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(9, 17);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(64, 13);
-            this.label11.TabIndex = 0;
-            this.label11.Text = "Client Width";
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(20, 25);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(136, 13);
+            this.label15.TabIndex = 0;
+            this.label15.Text = "Duration for Empty Regions";
             // 
-            // label12
+            // numericUpDown1
             // 
-            this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(9, 43);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(67, 13);
-            this.label12.TabIndex = 1;
-            this.label12.Text = "Client Height";
-            // 
-            // label13
-            // 
-            this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(9, 69);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(45, 13);
-            this.label13.TabIndex = 2;
-            this.label13.Text = "Offset X";
-            // 
-            // label14
-            // 
-            this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(9, 96);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(45, 13);
-            this.label14.TabIndex = 3;
-            this.label14.Text = "Offset Y";
-            // 
-            // clientWidth
-            // 
-            this.clientWidth.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "sizeX", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.clientWidth.Location = new System.Drawing.Point(77, 15);
-            this.clientWidth.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.clientWidth.Name = "clientWidth";
-            this.clientWidth.Size = new System.Drawing.Size(77, 20);
-            this.clientWidth.TabIndex = 4;
-            this.clientWidth.Value = global::XiboClient.Properties.Settings.Default.sizeX;
-            // 
-            // clientHeight
-            // 
-            this.clientHeight.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "sizeY", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.clientHeight.Location = new System.Drawing.Point(77, 41);
-            this.clientHeight.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.clientHeight.Name = "clientHeight";
-            this.clientHeight.Size = new System.Drawing.Size(77, 20);
-            this.clientHeight.TabIndex = 5;
-            this.clientHeight.Value = global::XiboClient.Properties.Settings.Default.sizeY;
-            // 
-            // offsetX
-            // 
-            this.offsetX.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "offsetX", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.offsetX.Location = new System.Drawing.Point(77, 67);
-            this.offsetX.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.offsetX.Name = "offsetX";
-            this.offsetX.Size = new System.Drawing.Size(77, 20);
-            this.offsetX.TabIndex = 6;
-            this.offsetX.Value = global::XiboClient.Properties.Settings.Default.offsetX;
-            // 
-            // offsetY
-            // 
-            this.offsetY.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "offsetY", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.offsetY.Location = new System.Drawing.Point(77, 94);
-            this.offsetY.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.offsetY.Name = "offsetY";
-            this.offsetY.Size = new System.Drawing.Size(77, 20);
-            this.offsetY.TabIndex = 7;
-            this.offsetY.Value = global::XiboClient.Properties.Settings.Default.offsetY;
-            // 
-            // labelXmdsUrl
-            // 
-            this.labelXmdsUrl.AutoSize = true;
-            this.labelXmdsUrl.Location = new System.Drawing.Point(139, 10);
-            this.labelXmdsUrl.Name = "labelXmdsUrl";
-            this.labelXmdsUrl.Size = new System.Drawing.Size(154, 13);
-            this.labelXmdsUrl.TabIndex = 3;
-            this.labelXmdsUrl.Text = global::XiboClient.Properties.Settings.Default.XiboClient_xmds_xmds;
-            // 
-            // textBoxDisplayName
-            // 
-            this.textBoxDisplayName.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "displayName", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.textBoxDisplayName.Location = new System.Drawing.Point(142, 37);
-            this.textBoxDisplayName.Name = "textBoxDisplayName";
-            this.textBoxDisplayName.Size = new System.Drawing.Size(264, 20);
-            this.textBoxDisplayName.TabIndex = 0;
-            this.textBoxDisplayName.Text = global::XiboClient.Properties.Settings.Default.displayName;
+            this.numericUpDown1.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "emptyLayoutDuration", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.numericUpDown1.Location = new System.Drawing.Point(176, 23);
+            this.numericUpDown1.Name = "numericUpDown1";
+            this.numericUpDown1.Size = new System.Drawing.Size(91, 20);
+            this.numericUpDown1.TabIndex = 1;
+            this.numericUpDown1.Value = global::XiboClient.Properties.Settings.Default.emptyLayoutDuration;
             // 
             // nupScrollStepAmount
             // 
@@ -650,6 +597,24 @@ namespace XiboClient
             this.textBoxLibraryPath.TabIndex = 4;
             this.textBoxLibraryPath.Text = global::XiboClient.Properties.Settings.Default.LibraryPath;
             // 
+            // labelXmdsUrl
+            // 
+            this.labelXmdsUrl.AutoSize = true;
+            this.labelXmdsUrl.Location = new System.Drawing.Point(139, 10);
+            this.labelXmdsUrl.Name = "labelXmdsUrl";
+            this.labelXmdsUrl.Size = new System.Drawing.Size(154, 13);
+            this.labelXmdsUrl.TabIndex = 3;
+            this.labelXmdsUrl.Text = global::XiboClient.Properties.Settings.Default.XiboClient_xmds_xmds;
+            // 
+            // textBoxDisplayName
+            // 
+            this.textBoxDisplayName.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "displayName", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.textBoxDisplayName.Location = new System.Drawing.Point(142, 37);
+            this.textBoxDisplayName.Name = "textBoxDisplayName";
+            this.textBoxDisplayName.Size = new System.Drawing.Size(264, 20);
+            this.textBoxDisplayName.TabIndex = 0;
+            this.textBoxDisplayName.Text = global::XiboClient.Properties.Settings.Default.displayName;
+            // 
             // textBoxProxyDomain
             // 
             this.textBoxProxyDomain.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "ProxyDomain", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
@@ -678,21 +643,80 @@ namespace XiboClient
             this.textBoxProxyUser.TabIndex = 3;
             this.textBoxProxyUser.Text = global::XiboClient.Properties.Settings.Default.ProxyUser;
             // 
+            // offsetX
+            // 
+            this.offsetX.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "offsetX", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.offsetX.Location = new System.Drawing.Point(77, 67);
+            this.offsetX.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.offsetX.Name = "offsetX";
+            this.offsetX.Size = new System.Drawing.Size(77, 20);
+            this.offsetX.TabIndex = 6;
+            this.offsetX.Value = global::XiboClient.Properties.Settings.Default.offsetX;
+            // 
+            // offsetY
+            // 
+            this.offsetY.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "offsetY", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.offsetY.Location = new System.Drawing.Point(77, 94);
+            this.offsetY.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.offsetY.Name = "offsetY";
+            this.offsetY.Size = new System.Drawing.Size(77, 20);
+            this.offsetY.TabIndex = 7;
+            this.offsetY.Value = global::XiboClient.Properties.Settings.Default.offsetY;
+            // 
+            // clientHeight
+            // 
+            this.clientHeight.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "sizeY", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.clientHeight.Location = new System.Drawing.Point(77, 41);
+            this.clientHeight.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.clientHeight.Name = "clientHeight";
+            this.clientHeight.Size = new System.Drawing.Size(77, 20);
+            this.clientHeight.TabIndex = 5;
+            this.clientHeight.Value = global::XiboClient.Properties.Settings.Default.sizeY;
+            // 
+            // clientWidth
+            // 
+            this.clientWidth.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "sizeX", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.clientWidth.Location = new System.Drawing.Point(77, 15);
+            this.clientWidth.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.clientWidth.Name = "clientWidth";
+            this.clientWidth.Size = new System.Drawing.Size(77, 20);
+            this.clientWidth.TabIndex = 4;
+            this.clientWidth.Value = global::XiboClient.Properties.Settings.Default.sizeX;
+            // 
+            // cbExpireModifiedLayouts
+            // 
+            this.cbExpireModifiedLayouts.AutoSize = true;
+            this.cbExpireModifiedLayouts.Checked = global::XiboClient.Properties.Settings.Default.expireModifiedLayouts;
+            this.cbExpireModifiedLayouts.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbExpireModifiedLayouts.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "expireModifiedLayouts", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.cbExpireModifiedLayouts.Location = new System.Drawing.Point(176, 66);
+            this.cbExpireModifiedLayouts.Name = "cbExpireModifiedLayouts";
+            this.cbExpireModifiedLayouts.Size = new System.Drawing.Size(243, 17);
+            this.cbExpireModifiedLayouts.TabIndex = 2;
+            this.cbExpireModifiedLayouts.Text = "Expire modified layouts while they are playing?";
+            this.cbExpireModifiedLayouts.UseVisualStyleBackColor = true;
+            // 
             // xmds1
             // 
             this.xmds1.Credentials = null;
             this.xmds1.Url = "http://localhost/Xibo/server/xmds.php";
             this.xmds1.UseDefaultCredentials = false;
-            // 
-            // btnAdvSave
-            // 
-            this.btnAdvSave.Location = new System.Drawing.Point(77, 227);
-            this.btnAdvSave.Name = "btnAdvSave";
-            this.btnAdvSave.Size = new System.Drawing.Size(75, 23);
-            this.btnAdvSave.TabIndex = 8;
-            this.btnAdvSave.Text = "Save";
-            this.btnAdvSave.UseVisualStyleBackColor = true;
-            this.btnAdvSave.Click += new System.EventHandler(this.btnAdvSave_Click);
             // 
             // OptionForm
             // 
@@ -701,6 +725,8 @@ namespace XiboClient
             this.ClientSize = new System.Drawing.Size(469, 355);
             this.Controls.Add(this.menuStrip1);
             this.Controls.Add(this.tabControl1);
+            this.Controls.Add(this.buttonSaveSettings);
+            this.Controls.Add(this.buttonReset);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "OptionForm";
@@ -709,21 +735,24 @@ namespace XiboClient
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownCollect)).EndInit();
+            this.tabPage2.ResumeLayout(false);
+            this.tabPage2.PerformLayout();
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
-            this.tabPage2.ResumeLayout(false);
-            this.tabPage2.PerformLayout();
-            this.menuStrip1.ResumeLayout(false);
-            this.menuStrip1.PerformLayout();
             this.tabPage4.ResumeLayout(false);
             this.tabPage4.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.clientHeight)).EndInit();
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
+            this.tabPage5.ResumeLayout(false);
+            this.tabPage5.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetX)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetY)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.clientHeight)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -770,7 +799,6 @@ namespace XiboClient
         private System.Windows.Forms.Label labelProxyDomain;
         private System.Windows.Forms.Label labelProxyPass;
         private System.Windows.Forms.Label labelProxyUser;
-        private System.Windows.Forms.Button buttonProxySave;
         private System.Windows.Forms.TextBox textBoxProxyDomain;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.TextBox tbHardwareKey;
@@ -786,6 +814,9 @@ namespace XiboClient
         private System.Windows.Forms.NumericUpDown offsetY;
         private System.Windows.Forms.NumericUpDown offsetX;
         private System.Windows.Forms.NumericUpDown clientHeight;
-        private System.Windows.Forms.Button btnAdvSave;
+        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.CheckBox cbExpireModifiedLayouts;
     }
 }

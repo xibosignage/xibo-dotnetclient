@@ -358,5 +358,17 @@ namespace XiboClient.Properties {
                 this["expireModifiedLayouts"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public decimal emptyLayoutDuration {
+            get {
+                return ((decimal)(this["emptyLayoutDuration"]));
+            }
+            set {
+                this["emptyLayoutDuration"] = value;
+            }
+        }
     }
 }
