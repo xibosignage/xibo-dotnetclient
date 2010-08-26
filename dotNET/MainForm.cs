@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-10 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -213,23 +213,7 @@ namespace XiboClient
             // Default or not
             if (layoutPath == Properties.Settings.Default.LibraryPath + @"\Default.xml" || String.IsNullOrEmpty(layoutPath))
             {
-                // We are running with the Default.xml - meaning the schedule doesnt exist
-                System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                Stream resourceStream = assembly.GetManifestResourceStream("XiboClient.Resources.splash.jpg");
-
-                // Load into a stream and then into an Image
-                try
-                {
-                    Image bgSplash = Image.FromStream(resourceStream);
-
-                    Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
-                    this.BackgroundImage = bmpSplash;
-                }
-                catch
-                {
-                    //Log
-                    System.Diagnostics.Debug.WriteLine("Showing Splash Screen");
-                }
+                ShowSplashScreen();
                 return;
             }
             else
@@ -329,13 +313,14 @@ namespace XiboClient
                 if (layoutAttributes["background"] == null)
                 {
                     // Assume there is no background image
-                    this.BackgroundImage = null;
+                    BackgroundImage = null;
                     options.backgroundImage = "";
                 }
                 else
                 {
                     string bgFilePath = Properties.Settings.Default.LibraryPath + @"\backgrounds\" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value;
 
+                    // Create a correctly sized background image in the temp folder
                     if (!File.Exists(bgFilePath))
                     {
                         Image img = Image.FromFile(Properties.Settings.Default.LibraryPath + @"\" + layoutAttributes["background"].Value);
@@ -353,13 +338,13 @@ namespace XiboClient
                         bmp.Dispose();
                     }
 
-                    this.BackgroundImage = new Bitmap(bgFilePath);
+                    BackgroundImage = new Bitmap(bgFilePath);
                     options.backgroundImage = bgFilePath;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
+                Debug.WriteLine("Unable to set background: " + ex.Message);
 
                 // Assume there is no background image
                 this.BackgroundImage = null;
@@ -369,11 +354,38 @@ namespace XiboClient
             // Get it to paint the background now
             Application.DoEvents();
 
-            //get the regions
+            // Get the regions
             XmlNodeList listRegions = layoutXml.SelectNodes("/layout/region");
+            XmlNodeList listMedia = layoutXml.SelectNodes("/layout/region/media");
+
+            // Check to see if there are any regions on this layout.
+            if (listRegions.Count == 0 || listMedia.Count == 0)
+            {
+                Trace.WriteLine(new LogMessage("PrepareLayout", 
+                    string.Format("A layout with {0} regions and {1} media has been detected.", listRegions.Count.ToString(), listMedia.Count.ToString())), 
+                    LogType.Info.ToString());
+
+                if (_schedule.ActiveLayouts == 1)
+                {
+                    Trace.WriteLine(new LogMessage("PrepareLayout", "Only 1 layout scheduled and it has nothing to show."), LogType.Info.ToString());
+
+                    // Fall back to the splash screen (will only shift from here once a new schedule is detected)
+                    ShowSplashScreen();
+                }
+                else
+                {
+                    // TODO: We ideally want to move on to the next layout without further adoo
+                }
+            }
 
             foreach (XmlNode region in listRegions)
             {
+                // Is there any media
+                if (region.ChildNodes.Count == 0)
+                {
+                    Debug.WriteLine("A region with no media detected");
+                }
+
                 //each region
                 XmlAttributeCollection nodeAttibutes = region.Attributes;
 
@@ -399,19 +411,48 @@ namespace XiboClient
                 Region temp = new Region(ref _statLog, ref _cacheManager);
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(temp_DurationElapsedEvent);
 
-                System.Diagnostics.Debug.WriteLine("Created new region", "MainForm - Prepare Layout");
+                Debug.WriteLine("Created new region", "MainForm - Prepare Layout");
+                
+                // Dont be fooled, this innocent little statement kicks everything off
                 temp.regionOptions = options;
 
                 _regions.Add(temp);
-                this.Controls.Add(temp);
+                Controls.Add(temp);
 
-                System.Diagnostics.Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
+                Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
 
                 Application.DoEvents();
             }
 
-            //Null stuff
+            // Null stuff
             listRegions = null;
+            listMedia = null;
+        }
+
+        /// <summary>
+        /// Shows the splash screen (set the background to the embedded resource)
+        /// </summary>
+        private void ShowSplashScreen()
+        {
+            // We are running with the Default.xml - meaning the schedule doesnt exist
+            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            Stream resourceStream = assembly.GetManifestResourceStream("XiboClient.Resources.splash.jpg");
+
+            Debug.WriteLine("Showing Splash Screen");
+
+            // Load into a stream and then into an Image
+            try
+            {
+                Image bgSplash = Image.FromStream(resourceStream);
+
+                Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
+                this.BackgroundImage = bmpSplash;
+            }
+            catch (Exception ex)
+            {
+                // Log
+                Debug.WriteLine("Failed Showing Splash Screen: " + ex.Message);
+            }
         }
 
         /// <summary> 
@@ -434,10 +475,11 @@ namespace XiboClient
         /// </summary>
         void temp_DurationElapsedEvent()
         {
-            System.Diagnostics.Debug.WriteLine("Region Elapsed", "MainForm - DurationElapsedEvent");
+            Debug.WriteLine("Region Elapsed", "MainForm - DurationElapsedEvent");
 
             _isExpired = true;
-            //check the other regions to see if they are also expired.
+            
+            // Check the other regions to see if they are also expired.
             foreach (Region temp in _regions)
             {
                 if (!temp.hasExpired)
