@@ -354,5 +354,40 @@ namespace XiboClient
 
             return;
         }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void cbExpireModifiedLayouts_CheckedChanged(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void clientWidth_ValueChanged_1(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void clientHeight_ValueChanged_1(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void offsetX_ValueChanged_1(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void offsetY_ValueChanged_1(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void textBoxDisplayName_TextChanged(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
     }
 }
