@@ -166,6 +166,7 @@
     </Compile>
     <Compile Include="RssReader.cs" />
     <Compile Include="Schedule.cs" />
+    <Compile Include="ScheduleManager.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="StatLog.cs" />
     <Compile Include="TemporaryHtml.cs" />

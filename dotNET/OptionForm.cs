@@ -85,22 +85,22 @@ namespace XiboClient
 
         void offsetY_ValueChanged(object sender, EventArgs e)
         {
-            btnAdvSave.Enabled = true;
+            buttonSaveSettings.Enabled = true;
         }
 
         void offsetX_ValueChanged(object sender, EventArgs e)
         {
-            btnAdvSave.Enabled = true;
+            buttonSaveSettings.Enabled = true;
         }
 
         void clientWidth_ValueChanged(object sender, EventArgs e)
         {
-            btnAdvSave.Enabled = true;
+            buttonSaveSettings.Enabled = true;
         }
 
         void clientHeight_ValueChanged(object sender, EventArgs e)
         {
-            btnAdvSave.Enabled = true;
+            buttonSaveSettings.Enabled = true;
         }
 
         void nupScrollStepAmount_ValueChanged(object sender, EventArgs e)
@@ -115,7 +115,7 @@ namespace XiboClient
 
         void proxySetting_TextChanged(object sender, EventArgs e)
         {
-            buttonProxySave.Enabled = true;
+            buttonSaveSettings.Enabled = true;
         }
 
         /// <summary>
@@ -169,7 +169,9 @@ namespace XiboClient
         {
             try
             {
-                //Suck up the settings and save them
+                buttonSaveSettings.Enabled = false;
+
+                // Simple settings
                 Properties.Settings.Default.ServerKey = textBoxServerKey.Text;
                 Properties.Settings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
                 Properties.Settings.Default.serverURI = textBoxXmdsUri.Text;
@@ -180,33 +182,29 @@ namespace XiboClient
                 Properties.Settings.Default.hardwareKey = tbHardwareKey.Text;
                 Properties.Settings.Default.scrollStepAmount = nupScrollStepAmount.Value;
 
-                buttonSaveSettings.Enabled = false;
-
-                //Also tweak the address of the xmds1
-                this.xmds1.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
-
+                // Also tweak the address of the xmds1
+                xmds1.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
                 labelXmdsUrl.Text = Properties.Settings.Default.XiboClient_xmds_xmds;
 
-                //Commit these changes back to the user settings
-                Properties.Settings.Default.Save();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
+                // Proxy Settings
+                Properties.Settings.Default.ProxyUser = textBoxProxyUser.Text;
+                Properties.Settings.Default.ProxyPassword = maskedTextBoxProxyPass.Text;
+                Properties.Settings.Default.ProxyDomain = textBoxProxyDomain.Text;
 
-        private void btnAdvSave_Click(object sender, EventArgs e)
-        {
-            try
-            {
+                // Change the default Proxy class
+                OptionForm.SetGlobalProxy();
+
+                // Client settings
                 Properties.Settings.Default.sizeX = clientWidth.Value;
                 Properties.Settings.Default.sizeY = clientHeight.Value;
                 Properties.Settings.Default.offsetX = offsetX.Value;
                 Properties.Settings.Default.offsetY = offsetY.Value;
 
-                btnAdvSave.Enabled = false;
+                // Advanced settings
+                Properties.Settings.Default.expireModifiedLayouts = cbExpireModifiedLayouts.Checked;
+                Properties.Settings.Default.emptyLayoutDuration = numericUpDown1.Value;
 
+                // Commit these changes back to the user settings
                 Properties.Settings.Default.Save();
             }
             catch (Exception ex)
@@ -306,26 +304,7 @@ namespace XiboClient
 
         private void buttonProxySave_Click(object sender, EventArgs e)
         {
-            try
-            {
-                // Sucks all the info and Writes to the settings
-                buttonProxySave.Enabled = false;
-
-                // Read all the settings
-                Properties.Settings.Default.ProxyUser = textBoxProxyUser.Text;
-                Properties.Settings.Default.ProxyPassword = maskedTextBoxProxyPass.Text;
-                Properties.Settings.Default.ProxyDomain = textBoxProxyDomain.Text;
-
-                // Save the settings
-                Properties.Settings.Default.Save();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-
-            // Change the default Proxy class
-            OptionForm.SetGlobalProxy();
+            
         }
 
         /// <summary>
@@ -374,6 +353,41 @@ namespace XiboClient
             System.Diagnostics.Debug.WriteLine("[OUT]", "SetGlobalProxy");
 
             return;
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void cbExpireModifiedLayouts_CheckedChanged(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void clientWidth_ValueChanged_1(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void clientHeight_ValueChanged_1(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void offsetX_ValueChanged_1(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void offsetY_ValueChanged_1(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void textBoxDisplayName_TextChanged(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
         }
     }
 }
