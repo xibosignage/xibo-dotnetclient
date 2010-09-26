@@ -292,6 +292,8 @@ function init()
                 temp = temp.Replace("[Title]", _item[i].Title);
                 temp = temp.Replace("[Description]", _item[i].Description);
                 temp = temp.Replace("[Date]", _item[i].Date.ToString());
+                //temp = temp.Replace("[Date]", _item[i].DateString);
+
                 temp = temp.Replace("[Link]", _item[i].Link);
 
                 // Assemble the RSS items based on the direction we are displaying

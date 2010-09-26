@@ -116,7 +116,14 @@ namespace XiboClient
 
                 string date = null;
                 ParseDocElements(node, "pubDate", ref date);
-                DateTime.TryParse(date.Substring(0, date.Length - 4), out item.Date);
+
+                item.DateString = date;
+
+                // Fudge the date...
+                if (date.Contains("+"))
+                    DateTime.TryParse(date, out item.Date);
+                else
+                    DateTime.TryParse(date.Substring(0, date.Length - 4), out item.Date);
 
                 feedItems.Add(item);
             }
@@ -178,6 +185,8 @@ namespace XiboClient
             /// The publishing date.
             /// </summary>
             public DateTime Date;
+
+            public string DateString;
 
             /// <summary>
             /// The title of the feed
