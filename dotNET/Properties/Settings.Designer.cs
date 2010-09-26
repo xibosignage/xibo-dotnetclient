@@ -271,7 +271,7 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.2.0-rc2")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.2.0")]
         public string ClientVersion {
             get {
                 return ((string)(this["ClientVersion"]));
