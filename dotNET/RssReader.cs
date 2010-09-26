@@ -116,7 +116,7 @@ namespace XiboClient
 
                 string date = null;
                 ParseDocElements(node, "pubDate", ref date);
-                DateTime.TryParse(date, out item.Date);
+                DateTime.TryParse(date.Substring(0, date.Length - 4), out item.Date);
 
                 feedItems.Add(item);
             }
