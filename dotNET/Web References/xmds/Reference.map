@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DiscoveryClientResultsFile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Results>
-    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.ContractReference" url="http://localhost/1.0.0/server/xmds.php?wsdl" filename="xmds.wsdl" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.ContractReference" url="http://localhost/Series 1.2/server-121-soap-wsdl/server/xmds.php?wsdl" filename="xmds.wsdl" />
   </Results>
 </DiscoveryClientResultsFile>

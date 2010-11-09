@@ -191,9 +191,26 @@ namespace XiboClient
             {
                 Debug.WriteLine(ex.Message);
                 _isExpired = true;
+
+                ShowSplashScreen();
+
+                // In 10 seconds fire the next layout?
+                Timer timer = new Timer();
+                timer.Interval = 10000;
+                timer.Tick += new EventHandler(splashScreenTimer_Tick);
             }
         }
 
+        void splashScreenTimer_Tick(object sender, EventArgs e)
+        {
+            Debug.WriteLine(new LogMessage("timer_Tick", "Loading next layout after splashscreen"));
+
+            Timer timer = (Timer)sender;
+            timer.Stop();
+            timer.Dispose();
+
+            _schedule.NextLayout();
+        }
 
         /// <summary>
         /// Prepares the Layout.. rendering all the necessary controls
@@ -213,8 +230,7 @@ namespace XiboClient
             // Default or not
             if (layoutPath == Properties.Settings.Default.LibraryPath + @"\Default.xml" || String.IsNullOrEmpty(layoutPath))
             {
-                ShowSplashScreen();
-                return;
+                throw new Exception("Default layout");
             }
             else
             {
@@ -232,33 +248,16 @@ namespace XiboClient
                 }
                 catch (Exception ex)
                 {
-                    // couldnt open the layout file, so use the embedded one
-                    System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                    Stream resourceStream = assembly.GetManifestResourceStream("XiboClient.Resources.splash.jpg");
-
-                    // Load into a stream and then into an Image
-                    try
-                    {
-                        Image bgSplash = Image.FromStream(resourceStream);
-
-                        Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
-                        this.BackgroundImage = bmpSplash;
-                    }
-                    catch
-                    {
-                        // Log
-                        System.Diagnostics.Debug.WriteLine(ex.Message);
-                        System.Diagnostics.Trace.WriteLine("Could not find the layout file {0}", layoutPath);
-                    }
-                    return;
+                    Trace.WriteLine(string.Format("Could not find the layout file {0}: {1}", layoutPath, ex.Message));
+                    throw;
                 }
             }
 
             // Attributes of the main layout node
             XmlNode layoutNode = layoutXml.SelectSingleNode("/layout");
-            
-            XmlAttributeCollection layoutAttributes =  layoutNode.Attributes;
-            
+
+            XmlAttributeCollection layoutAttributes = layoutNode.Attributes;
+
             // Set the background and size of the form
             _layoutWidth = int.Parse(layoutAttributes["width"].Value);
             _layoutHeight = int.Parse(layoutAttributes["height"].Value);
@@ -266,7 +265,7 @@ namespace XiboClient
 
             // Scaling factor, will be applied to all regions
             _scaleFactor = Math.Min(_clientSize.Width / _layoutWidth, _clientSize.Height / _layoutHeight);
-       
+
             // Want to be able to center this shiv - therefore work out which one of these is going to have left overs
             int backgroundWidth = (int)(_layoutWidth * _scaleFactor);
             int backgroundHeight = (int)(_layoutHeight * _scaleFactor);
@@ -282,7 +281,7 @@ namespace XiboClient
                 if (leftOverX != 0) leftOverX = leftOverX / 2;
                 if (leftOverY != 0) leftOverY = leftOverY / 2;
             }
-            catch 
+            catch
             {
                 leftOverX = 0;
                 leftOverY = 0;
@@ -361,25 +360,24 @@ namespace XiboClient
             // Check to see if there are any regions on this layout.
             if (listRegions.Count == 0 || listMedia.Count == 0)
             {
-                Trace.WriteLine(new LogMessage("PrepareLayout", 
-                    string.Format("A layout with {0} regions and {1} media has been detected.", listRegions.Count.ToString(), listMedia.Count.ToString())), 
+                Trace.WriteLine(new LogMessage("PrepareLayout",
+                    string.Format("A layout with {0} regions and {1} media has been detected.", listRegions.Count.ToString(), listMedia.Count.ToString())),
                     LogType.Info.ToString());
 
                 if (_schedule.ActiveLayouts == 1)
                 {
                     Trace.WriteLine(new LogMessage("PrepareLayout", "Only 1 layout scheduled and it has nothing to show."), LogType.Info.ToString());
 
-                    // Fall back to the splash screen (will only shift from here once a new schedule is detected)
-                    ShowSplashScreen();
+                    throw new Exception("Only 1 layout schduled and it has nothing to show");
                 }
                 else
                 {
-                    Trace.WriteLine(new LogMessage("PrepareLayout", 
+                    Trace.WriteLine(new LogMessage("PrepareLayout",
                         string.Format(string.Format("An empty layout detected, will show for {0} seconds.", Properties.Settings.Default.emptyLayoutDuration.ToString()))), LogType.Info.ToString());
 
                     // Put a small dummy region in place, with a small dummy media node - which expires in 10 seconds.
                     XmlDocument dummyXml = new XmlDocument();
-                    dummyXml.LoadXml(string.Format("<region id='blah' width='1' height='1' top='1' left='1'><media id='blah' type='text' duration='{0}'><raw><text></text></raw></media></region>", 
+                    dummyXml.LoadXml(string.Format("<region id='blah' width='1' height='1' top='1' left='1'><media id='blah' type='text' duration='{0}'><raw><text></text></raw></media></region>",
                         Properties.Settings.Default.emptyLayoutDuration.ToString()));
 
                     // Replace the list of regions (they mean nothing as they are empty)
@@ -400,10 +398,10 @@ namespace XiboClient
 
                 options.scheduleId = _scheduleId;
                 options.layoutId = _layoutId;
-                options.width = (int) (double.Parse(nodeAttibutes["width"].Value) * _scaleFactor);
-                options.height = (int) (double.Parse(nodeAttibutes["height"].Value) * _scaleFactor);
-                options.left = (int) (double.Parse(nodeAttibutes["left"].Value) * _scaleFactor);
-                options.top = (int) (double.Parse(nodeAttibutes["top"].Value) * _scaleFactor);
+                options.width = (int)(double.Parse(nodeAttibutes["width"].Value) * _scaleFactor);
+                options.height = (int)(double.Parse(nodeAttibutes["height"].Value) * _scaleFactor);
+                options.left = (int)(double.Parse(nodeAttibutes["left"].Value) * _scaleFactor);
+                options.top = (int)(double.Parse(nodeAttibutes["top"].Value) * _scaleFactor);
                 options.scaleFactor = _scaleFactor;
 
                 // Set the backgrounds (used for Web content offsets)
@@ -411,9 +409,9 @@ namespace XiboClient
                 options.backgroundTop = options.top * -1;
 
                 //Account for scaling
-                options.left = options.left + (int) leftOverX;
-                options.top = options.top + (int) leftOverY;
-                
+                options.left = options.left + (int)leftOverX;
+                options.top = options.top + (int)leftOverY;
+
                 // All the media nodes for this region / layout combination
                 options.mediaNodes = region.ChildNodes;
 
@@ -421,7 +419,7 @@ namespace XiboClient
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(temp_DurationElapsedEvent);
 
                 Debug.WriteLine("Created new region", "MainForm - Prepare Layout");
-                
+
                 // Dont be fooled, this innocent little statement kicks everything off
                 temp.regionOptions = options;
 
@@ -456,6 +454,8 @@ namespace XiboClient
 
                 Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
                 this.BackgroundImage = bmpSplash;
+
+                bgSplash.Dispose();
             }
             catch (Exception ex)
             {
