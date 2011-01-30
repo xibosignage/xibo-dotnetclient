@@ -198,6 +198,9 @@ namespace XiboClient
                 Timer timer = new Timer();
                 timer.Interval = 10000;
                 timer.Tick += new EventHandler(splashScreenTimer_Tick);
+
+                // Start the timer
+                timer.Start();
             }
         }
 
