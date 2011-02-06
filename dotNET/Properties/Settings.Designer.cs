@@ -47,7 +47,7 @@ namespace XiboClient.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/xibo/xmds.php")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/Series%201.3/client-media-inventory/server/xmds.php")]
         public string XiboClient_xmds_xmds {
             get {
                 return ((string)(this["XiboClient_xmds_xmds"]));
@@ -368,6 +368,18 @@ namespace XiboClient.Properties {
             }
             set {
                 this["emptyLayoutDuration"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("requiredFiles.xml")]
+        public string RequiredFilesFile {
+            get {
+                return ((string)(this["RequiredFilesFile"]));
+            }
+            set {
+                this["RequiredFilesFile"] = value;
             }
         }
     }

@@ -161,6 +161,7 @@
     <Compile Include="Region.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="RequiredFiles.cs" />
     <Compile Include="Rss.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -267,10 +268,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://localhost/1.0.0/server/xmds.php%3fwsdl">
+    <WebReferenceUrl Include="http://localhost/Series%25201.3/client-media-inventory/server/xmds.php%3fwsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>http://localhost/1.0.0/server/xmds.php%3fwsdl</UpdateFromURL>
+      <UpdateFromURL>http://localhost/Series%25201.3/client-media-inventory/server/xmds.php%3fwsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
