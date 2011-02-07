@@ -200,7 +200,7 @@
   </wsdl:binding>
   <wsdl:service name="xmds">
     <wsdl:port name="xmdsPort" binding="tns:xmdsBinding">
-      <soap:address location="http://localhost/1.0.0/server/xmds.php" />
+      <soap:address location="http://localhost/Series%201.2/server-121-soap-wsdl/server/xmds.php" />
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

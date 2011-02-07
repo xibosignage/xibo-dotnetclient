@@ -47,7 +47,7 @@ namespace XiboClient.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/xibo/xmds.php")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/Series%201.2/server-121-soap-wsdl/server/xmds.php")]
         public string XiboClient_xmds_xmds {
             get {
                 return ((string)(this["XiboClient_xmds_xmds"]));

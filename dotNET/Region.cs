@@ -309,6 +309,14 @@ namespace XiboClient
                         System.Diagnostics.Trace.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
                     }
 
+                    // We cannot have a 0 duration here... not sure why we would... but
+                    if (options.duration == 0)
+                        options.duration = int.Parse(Properties.Settings.Default.emptyLayoutDuration.ToString());
+
+                    // Fail safe
+                    if (options.duration == 0)
+                        options.duration = 10;
+
                     // There will be some stuff on option nodes
                     XmlNode optionNode = mediaNode.FirstChild;                    
 

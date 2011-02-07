@@ -234,7 +234,15 @@ namespace XiboClient
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine(String.Format("There are {0} files to get", files.Count.ToString()));
+            Debug.WriteLine(String.Format("There are {0} files to get", files.Count.ToString()));
+
+            // Output a list of the files we need to get
+            string debugMessage = "";
+
+            foreach (FileList fileToGet in files)
+                debugMessage += string.Format("File: {0}, Type: {1}, MD5: {2}. ", fileToGet.path, fileToGet.type, fileToGet.md5);
+
+            Debug.WriteLine(debugMessage);
 
             // Is there anything to get?
             if (files.Count == 0)
