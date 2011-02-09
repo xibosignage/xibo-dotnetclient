@@ -294,10 +294,11 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\splash.jpg" />
+    <EmbeddedResource Include="Resources\HtmlTemplate.htm" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\HtmlTemplate.htm" />
+    <EmbeddedResource Include="Resources\splash.jpg">
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
