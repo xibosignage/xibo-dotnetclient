@@ -45,6 +45,8 @@ namespace XiboClient.xmds {
         
         private System.Threading.SendOrPostCallback SubmitStatsOperationCompleted;
         
+        private System.Threading.SendOrPostCallback MediaInventoryOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
@@ -106,6 +108,9 @@ namespace XiboClient.xmds {
         
         /// <remarks/>
         public event SubmitStatsCompletedEventHandler SubmitStatsCompleted;
+        
+        /// <remarks/>
+        public event MediaInventoryCompletedEventHandler MediaInventoryCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#RegisterDisplay", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
@@ -402,6 +407,42 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#MediaInventory", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [return: System.Xml.Serialization.SoapElementAttribute("success")]
+        public bool MediaInventory(string version, string serverKey, string hardwareKey, [System.Xml.Serialization.SoapElementAttribute("mediaInventory")] string mediaInventory1) {
+            object[] results = this.Invoke("MediaInventory", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        mediaInventory1});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void MediaInventoryAsync(string version, string serverKey, string hardwareKey, string mediaInventory1) {
+            this.MediaInventoryAsync(version, serverKey, hardwareKey, mediaInventory1, null);
+        }
+        
+        /// <remarks/>
+        public void MediaInventoryAsync(string version, string serverKey, string hardwareKey, string mediaInventory1, object userState) {
+            if ((this.MediaInventoryOperationCompleted == null)) {
+                this.MediaInventoryOperationCompleted = new System.Threading.SendOrPostCallback(this.OnMediaInventoryOperationCompleted);
+            }
+            this.InvokeAsync("MediaInventory", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        mediaInventory1}, this.MediaInventoryOperationCompleted, userState);
+        }
+        
+        private void OnMediaInventoryOperationCompleted(object arg) {
+            if ((this.MediaInventoryCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.MediaInventoryCompleted(this, new MediaInventoryCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -615,6 +656,32 @@ namespace XiboClient.xmds {
         private object[] results;
         
         internal SubmitStatsCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.4927")]
+    public delegate void MediaInventoryCompletedEventHandler(object sender, MediaInventoryCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.4927")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class MediaInventoryCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal MediaInventoryCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
                 base(exception, cancelled, userState) {
             this.results = results;
         }

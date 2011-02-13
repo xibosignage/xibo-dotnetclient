@@ -370,5 +370,17 @@ namespace XiboClient.Properties {
                 this["emptyLayoutDuration"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("requiredFiles.xml")]
+        public string RequiredFilesFile {
+            get {
+                return ((string)(this["RequiredFilesFile"]));
+            }
+            set {
+                this["RequiredFilesFile"] = value;
+            }
+        }
     }
 }

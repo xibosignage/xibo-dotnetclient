@@ -95,5 +95,8 @@
     <Setting Name="emptyLayoutDuration" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">10</Value>
     </Setting>
+    <Setting Name="RequiredFilesFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">requiredFiles.xml</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
