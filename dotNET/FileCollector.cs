@@ -50,7 +50,7 @@ namespace XiboClient
             hardwareKey = new HardwareKey();
 
             // Make a new filelist collection
-            _files = new Collection<requiredFile>();
+            _files = new Collection<RequiredFile>();
 
             // Create a webservice call
             xmdsFile = new XiboClient.xmds.xmds();
@@ -77,7 +77,7 @@ namespace XiboClient
             foreach (XmlNode file in fileNodes)
             {
                 XmlAttributeCollection attributes = file.Attributes;
-                requiredFile fileList = new requiredFile();
+                RequiredFile fileList = new RequiredFile();
 
                 if (attributes["type"].Value == "layout")
                 {
@@ -237,12 +237,12 @@ namespace XiboClient
                 }
             }
 
-            Debug.WriteLine(String.Format("There are {0} files to get", files.Count.ToString()));
+            Debug.WriteLine(String.Format("There are {0} files to get", _files.Count.ToString()));
 
             // Output a list of the files we need to get
             string debugMessage = "";
 
-            foreach (FileList fileToGet in files)
+            foreach (RequiredFile fileToGet in _files)
                 debugMessage += string.Format("File: {0}, Type: {1}, MD5: {2}. ", fileToGet.path, fileToGet.type, fileToGet.md5);
 
             Debug.WriteLine(debugMessage);
@@ -525,7 +525,7 @@ namespace XiboClient
         }
 
         [Serializable]
-        private struct requiredFile
+        private struct RequiredFile
         {
             public string path;
             public string type;
@@ -540,9 +540,9 @@ namespace XiboClient
 
         private XmlDocument xml;
         private HardwareKey hardwareKey;
-        private Collection<requiredFile> _files;
+        private Collection<RequiredFile> _files;
         private int _currentFile;
-        private requiredFile _currentFileList;
+        private RequiredFile _currentFileList;
         private xmds.xmds xmdsFile;
 
         public event LayoutFileChangedDelegate LayoutFileChanged;
