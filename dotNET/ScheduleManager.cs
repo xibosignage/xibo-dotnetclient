@@ -42,13 +42,15 @@ namespace XiboClient
         private Collection<LayoutSchedule> _layoutSchedule;
         private Collection<LayoutSchedule> _currentSchedule;
         private bool _refreshSchedule;
+        private CacheManager _cacheManager;
 
         /// <summary>
         /// Creates a new schedule Manager
         /// </summary>
         /// <param name="scheduleLocation"></param>
-        public ScheduleManager(string scheduleLocation)
+        public ScheduleManager(CacheManager cacheManager, string scheduleLocation)
         {
+            _cacheManager = cacheManager;
             _location = scheduleLocation;
 
             // Create an empty layout schedule
@@ -185,6 +187,10 @@ namespace XiboClient
                     defaultLayout = layout;
                     continue;
                 }
+
+                // Is the layout valid in the cachemanager?
+                if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                    continue;
 
                 // Look at the Date/Time to see if it should be on the schedule or not
                 if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)

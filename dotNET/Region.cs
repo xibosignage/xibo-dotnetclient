@@ -385,7 +385,7 @@ namespace XiboClient
                     if (options.type == "video" || options.type == "flash" || options.type == "image" || options.type == "powerpoint")
                     {
                         // Use the cache manager to determine if the file is valid
-                        validNode = _cacheManager.IsValid(options.uri);
+                        validNode = _cacheManager.IsValidPath(options.uri);
                     }
                 }
 

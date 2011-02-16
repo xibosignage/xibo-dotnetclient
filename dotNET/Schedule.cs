@@ -74,7 +74,7 @@ namespace XiboClient
             _cacheManager = cacheManager;
 
             // Create a schedule manager
-            _scheduleManager = new ScheduleManager(scheduleLocation);
+            _scheduleManager = new ScheduleManager(_cacheManager, scheduleLocation);
 
             // Create a new Xmds service object
             _xmds2 = new XiboClient.xmds.xmds();

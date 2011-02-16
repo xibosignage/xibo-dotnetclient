@@ -174,7 +174,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="path"></param>
         /// <returns>True is it is and false if it isnt</returns>
-        public bool IsValid(String path)
+        public bool IsValidPath(String path)
         {
             // TODO: what makes a path valid?
             // Currently a path is valid if it is in the cache
@@ -186,6 +186,10 @@ namespace XiboClient
             {
                 if (file.path == path)
                 {
+                    // If we cached it over 2 minutes ago, then check the GetLastWriteTime
+                    if (file.cacheDate > DateTime.Now.AddMinutes(-2))
+                        return true;
+
                     try
                     {
                         // Check to see if this file has been modified since the MD5 cache
@@ -212,6 +216,48 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Is the provided layout file a valid layout (has all media)
+        /// </summary>
+        /// <param name="layoutFile"></param>
+        /// <returns></returns>
+        public bool IsValidLayout(string layoutFile)
+        {
+            if (!IsValidPath(layoutFile))
+                return false;
+
+            // Load the XLF, get all media ID's
+            XmlDocument layoutXml = new XmlDocument();
+            layoutXml.Load(Properties.Settings.Default.LibraryPath + @"\" + layoutFile);
+
+            XmlNodeList layoutNodes = layoutXml.SelectNodes("//media");
+
+            foreach (XmlNode layout in layoutNodes)
+            {
+                // Is this a stored media type?
+                XmlAttributeCollection layoutAttributes = layout.Attributes;
+
+                switch (layoutAttributes["type"].Value)
+                {
+                    case "video":
+                    case "image":
+                    case "flash":
+                    case "ppt":
+
+                        // Get the path and see if its valid
+                        if (!IsValidPath(layoutAttributes["path"].Value))
+                            return false;
+
+                        break;
+
+                    default:
+                        continue;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Regenerate from Required Files
         /// </summary>
         public void Regenerate()
@@ -223,16 +269,18 @@ namespace XiboClient
             XmlDocument xml = new XmlDocument();
             xml.Load(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile);
 
-            XmlNodeList fileNodes = xml.SelectNodes("/files/file");
+            XmlNodeList fileNodes = xml.SelectNodes("//RequiredFile/Path");
 
             foreach (XmlNode file in fileNodes)
             {
-                // Get the attributes
-                XmlAttributeCollection attributes = file.Attributes;
+                string path = file.InnerText;
 
                 // Does the file exist?
-                if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + attributes["path"].Value))
+                if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
                     continue;
+
+                // Add this file to the cache manager
+                Add(path, GetMD5(path));
             }
         }
     }

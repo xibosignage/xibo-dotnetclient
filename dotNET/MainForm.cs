@@ -72,35 +72,22 @@ namespace XiboClient
 
             _statLog = new StatLog();
 
-            // Create a cachemanager
-            SetCacheManager();
-
             this.FormClosing += new FormClosingEventHandler(MainForm_FormClosing);
+            this.Shown += new EventHandler(MainForm_Shown);
         }
 
         /// <summary>
-        /// Called when the form has finished loading
+        /// Called after the form has been shown
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void MainForm_Load(object sender, EventArgs e)
+        void MainForm_Shown(object sender, EventArgs e)
         {
-            // Check the directories exist
-            if (!Directory.Exists(Properties.Settings.Default.LibraryPath) || !Directory.Exists(Properties.Settings.Default.LibraryPath + @"\backgrounds\"))
-            {
-                // Will handle the create of everything here
-                Directory.CreateDirectory(Properties.Settings.Default.LibraryPath + @"\backgrounds");
-            }
+            // Process any stuff that has happened during the loading process
+            Application.DoEvents();
 
-            // Hide the cursor
-            Cursor.Position = new Point(_clientSize.Width, _clientSize.Height);
-            Cursor.Hide();
-
-            // Change the default Proxy class
-            OptionForm.SetGlobalProxy();
-
-            // UserApp data
-            Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + Application.UserAppDataPath), LogType.Info.ToString());
+            // Create a cachemanager
+            SetCacheManager();
 
             try
             {
@@ -120,6 +107,33 @@ namespace XiboClient
                 Close();
                 Dispose();
             }
+        }
+
+        /// <summary>
+        /// Called before the form has loaded for the first time
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            // Check the directories exist
+            if (!Directory.Exists(Properties.Settings.Default.LibraryPath) || !Directory.Exists(Properties.Settings.Default.LibraryPath + @"\backgrounds\"))
+            {
+                // Will handle the create of everything here
+                Directory.CreateDirectory(Properties.Settings.Default.LibraryPath + @"\backgrounds");
+            }
+
+            // Hide the cursor
+            Cursor.Position = new Point(_clientSize.Width, _clientSize.Height);
+            Cursor.Hide();
+
+            ShowSplashScreen();
+
+            // Change the default Proxy class
+            OptionForm.SetGlobalProxy();
+
+            // UserApp data
+            Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + Application.UserAppDataPath), LogType.Info.ToString());
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
