@@ -222,6 +222,8 @@ namespace XiboClient
         /// <returns></returns>
         public bool IsValidLayout(string layoutFile)
         {
+            Debug.WriteLine("Checking Layout " + layoutFile + " is valid");
+
             if (!IsValidPath(layoutFile))
                 return false;
 
@@ -229,14 +231,12 @@ namespace XiboClient
             XmlDocument layoutXml = new XmlDocument();
             layoutXml.Load(Properties.Settings.Default.LibraryPath + @"\" + layoutFile);
 
-            XmlNodeList layoutNodes = layoutXml.SelectNodes("//media");
+            XmlNodeList mediaNodes = layoutXml.SelectNodes("//media");
 
-            foreach (XmlNode layout in layoutNodes)
+            foreach (XmlNode media in mediaNodes)
             {
                 // Is this a stored media type?
-                XmlAttributeCollection layoutAttributes = layout.Attributes;
-
-                switch (layoutAttributes["type"].Value)
+                switch (media.Attributes["type"].Value)
                 {
                     case "video":
                     case "image":
@@ -244,7 +244,7 @@ namespace XiboClient
                     case "ppt":
 
                         // Get the path and see if its valid
-                        if (!IsValidPath(layoutAttributes["path"].Value))
+                        if (!IsValidPath(media.InnerText))
                             return false;
 
                         break;

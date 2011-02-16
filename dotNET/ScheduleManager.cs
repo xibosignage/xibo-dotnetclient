@@ -189,8 +189,17 @@ namespace XiboClient
                 }
 
                 // Is the layout valid in the cachemanager?
-                if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                try
+                {
+                    if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                        continue;
+                }
+                catch
+                {
+                    // TODO: Ignore this layout.. raise an error?
+                    Trace.WriteLine("Unable to determine if layout is valid or not");
                     continue;
+                }
 
                 // Look at the Date/Time to see if it should be on the schedule or not
                 if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)
