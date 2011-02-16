@@ -310,12 +310,11 @@ namespace XiboClient
                     }
 
                     // We cannot have a 0 duration here... not sure why we would... but
-                    if (options.duration == 0)
-                        options.duration = int.Parse(Properties.Settings.Default.emptyLayoutDuration.ToString());
-
-                    // Fail safe
-                    if (options.duration == 0)
-                        options.duration = 10;
+                    if (options.duration == 0 && options.type != "video")
+                    {
+                        int emptyLayoutDuration = int.Parse(Properties.Settings.Default.emptyLayoutDuration.ToString());
+                        options.duration = (emptyLayoutDuration == 0) ? 10 : emptyLayoutDuration;
+                    }
 
                     // There will be some stuff on option nodes
                     XmlNode optionNode = mediaNode.FirstChild;                    

@@ -152,10 +152,19 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("Schedule", "Unable to reuse the Cache Manager because: " + ex.Message));
+                Trace.WriteLine(new LogMessage("MainForm - SetCacheManager", "Unable to reuse the Cache Manager because: " + ex.Message));
 
                 // Create a new cache manager
                 _cacheManager = new CacheManager();
+            }
+
+            try
+            {
+                _cacheManager.Regenerate();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("MainForm - SetCacheManager", "Regenerate failed because: " + ex.Message));
             }
         }
 

@@ -25,6 +25,7 @@ using System.IO;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using System.Diagnostics;
+using System.Xml;
 
 namespace XiboClient
 {
@@ -208,6 +209,31 @@ namespace XiboClient
 
             // Reached the end of the cache and havent found the file.
             return false;
+        }
+
+        /// <summary>
+        /// Regenerate from Required Files
+        /// </summary>
+        public void Regenerate()
+        {
+            if (!File.Exists(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile))
+                return;
+
+            // Open the XML file and check each required file that isnt already there
+            XmlDocument xml = new XmlDocument();
+            xml.Load(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile);
+
+            XmlNodeList fileNodes = xml.SelectNodes("/files/file");
+
+            foreach (XmlNode file in fileNodes)
+            {
+                // Get the attributes
+                XmlAttributeCollection attributes = file.Attributes;
+
+                // Does the file exist?
+                if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + attributes["path"].Value))
+                    continue;
+            }
         }
     }
 

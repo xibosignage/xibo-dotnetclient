@@ -72,10 +72,12 @@ namespace XiboClient
                 {
                     string[] filePart = attributes["path"].Value.Split('.');
                     rf.Id = int.Parse(filePart[0]);
+                    rf.Path = attributes["path"].Value;
                 }
                 else if (rf.FileType == "layout")
                 {
                     rf.Id = int.Parse(attributes["path"].Value);
+                    rf.Path = attributes["path"].Value + ".xlf";
                 }
                 else
                 {
@@ -199,5 +201,6 @@ namespace XiboClient
         public int Complete;
         public DateTime LastChecked;
         public string Md5;
+        public string Path;
     }
 }
