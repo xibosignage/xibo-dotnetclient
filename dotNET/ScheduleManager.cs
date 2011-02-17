@@ -180,14 +180,6 @@ namespace XiboClient
             // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
             foreach (LayoutSchedule layout in _layoutSchedule)
             {
-                // If this is the default, skip it
-                if (layout.NodeName == "default")
-                {
-                    // Store it before skipping it
-                    defaultLayout = layout;
-                    continue;
-                }
-
                 // Is the layout valid in the cachemanager?
                 try
                 {
@@ -198,6 +190,14 @@ namespace XiboClient
                 {
                     // TODO: Ignore this layout.. raise an error?
                     Trace.WriteLine("Unable to determine if layout is valid or not");
+                    continue;
+                }
+
+                // If this is the default, skip it
+                if (layout.NodeName == "default")
+                {
+                    // Store it before skipping it
+                    defaultLayout = layout;
                     continue;
                 }
 
