@@ -25,6 +25,7 @@ using System.IO;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using System.Diagnostics;
+using System.Xml;
 
 namespace XiboClient
 {
@@ -173,7 +174,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="path"></param>
         /// <returns>True is it is and false if it isnt</returns>
-        public bool IsValid(String path)
+        public bool IsValidPath(String path)
         {
             // TODO: what makes a path valid?
             // Currently a path is valid if it is in the cache
@@ -185,6 +186,10 @@ namespace XiboClient
             {
                 if (file.path == path)
                 {
+                    // If we cached it over 2 minutes ago, then check the GetLastWriteTime
+                    if (file.cacheDate > DateTime.Now.AddMinutes(-2))
+                        return true;
+
                     try
                     {
                         // Check to see if this file has been modified since the MD5 cache
@@ -208,6 +213,75 @@ namespace XiboClient
 
             // Reached the end of the cache and havent found the file.
             return false;
+        }
+
+        /// <summary>
+        /// Is the provided layout file a valid layout (has all media)
+        /// </summary>
+        /// <param name="layoutFile"></param>
+        /// <returns></returns>
+        public bool IsValidLayout(string layoutFile)
+        {
+            Debug.WriteLine("Checking Layout " + layoutFile + " is valid");
+
+            if (!IsValidPath(layoutFile))
+                return false;
+
+            // Load the XLF, get all media ID's
+            XmlDocument layoutXml = new XmlDocument();
+            layoutXml.Load(Properties.Settings.Default.LibraryPath + @"\" + layoutFile);
+
+            XmlNodeList mediaNodes = layoutXml.SelectNodes("//media");
+
+            foreach (XmlNode media in mediaNodes)
+            {
+                // Is this a stored media type?
+                switch (media.Attributes["type"].Value)
+                {
+                    case "video":
+                    case "image":
+                    case "flash":
+                    case "ppt":
+
+                        // Get the path and see if its valid
+                        if (!IsValidPath(media.InnerText))
+                            return false;
+
+                        break;
+
+                    default:
+                        continue;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Regenerate from Required Files
+        /// </summary>
+        public void Regenerate()
+        {
+            if (!File.Exists(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile))
+                return;
+
+            // Open the XML file and check each required file that isnt already there
+            XmlDocument xml = new XmlDocument();
+            xml.Load(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile);
+
+            XmlNodeList fileNodes = xml.SelectNodes("//RequiredFile/Path");
+
+            foreach (XmlNode file in fileNodes)
+            {
+                string path = file.InnerText;
+
+                // Does the file exist?
+                if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                    continue;
+
+                // Add this file to the cache manager
+                Add(path, GetMD5(path));
+            }
         }
     }
 

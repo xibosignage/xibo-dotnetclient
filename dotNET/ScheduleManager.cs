@@ -42,13 +42,15 @@ namespace XiboClient
         private Collection<LayoutSchedule> _layoutSchedule;
         private Collection<LayoutSchedule> _currentSchedule;
         private bool _refreshSchedule;
+        private CacheManager _cacheManager;
 
         /// <summary>
         /// Creates a new schedule Manager
         /// </summary>
         /// <param name="scheduleLocation"></param>
-        public ScheduleManager(string scheduleLocation)
+        public ScheduleManager(CacheManager cacheManager, string scheduleLocation)
         {
+            _cacheManager = cacheManager;
             _location = scheduleLocation;
 
             // Create an empty layout schedule
@@ -178,6 +180,19 @@ namespace XiboClient
             // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
             foreach (LayoutSchedule layout in _layoutSchedule)
             {
+                // Is the layout valid in the cachemanager?
+                try
+                {
+                    if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                        continue;
+                }
+                catch
+                {
+                    // TODO: Ignore this layout.. raise an error?
+                    Trace.WriteLine("Unable to determine if layout is valid or not");
+                    continue;
+                }
+
                 // If this is the default, skip it
                 if (layout.NodeName == "default")
                 {

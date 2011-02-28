@@ -31,28 +31,26 @@ namespace XiboClient
     class FileCollector
     {
         private CacheManager _cacheManager;
+        private RequiredFiles _requiredFiles;
+        private XmlDocument _xml;
 
         public FileCollector(CacheManager cacheManager, string xmlString)
         {
             _cacheManager = cacheManager;
 
-            xml = new XmlDocument();
+            // Load the XML file RF call
+            _xml = new XmlDocument();
+            _xml.LoadXml(xmlString);
 
-            try
-            {
-                xml.LoadXml(xmlString);
-            }
-            catch (Exception e)
-            {
-                //Log this error
-                System.Diagnostics.Debug.WriteLine(e.Message);
-            }
+            // Create a required files object
+            _requiredFiles = new RequiredFiles();
+            _requiredFiles.RequiredFilesXml = _xml;
 
             // Get the key for later use
             hardwareKey = new HardwareKey();
 
             // Make a new filelist collection
-            files = new Collection<FileList>();
+            _files = new Collection<RequiredFile>();
 
             // Create a webservice call
             xmdsFile = new XiboClient.xmds.xmds();
@@ -73,13 +71,13 @@ namespace XiboClient
         /// </summary>
         public void CompareAndCollect()
         {
-            XmlNodeList fileNodes = xml.SelectNodes("/files/file");
+            XmlNodeList fileNodes = _xml.SelectNodes("/files/file");
 
             //Inspect each file we have here
             foreach (XmlNode file in fileNodes)
             {
                 XmlAttributeCollection attributes = file.Attributes;
-                FileList fileList = new FileList();
+                RequiredFile fileList = new RequiredFile();
 
                 if (attributes["type"].Value == "layout")
                 {
@@ -120,13 +118,15 @@ namespace XiboClient
                             fileList.md5 = attributes["md5"].Value;
                             fileList.retrys = 0;
 
-                            files.Add(fileList);
+                            _files.Add(fileList);
                         }
                         else
                         {
                             // The MD5 of the current file and the MD5 in RequiredFiles are the same.
                             // Therefore make sure this MD5 is in the CacheManager
                             _cacheManager.Add(path + ".xlf", md5);
+
+                            _requiredFiles.MarkComplete(int.Parse(path), md5); 
                         }
                     }
                     else
@@ -141,7 +141,7 @@ namespace XiboClient
                         fileList.md5 = attributes["md5"].Value;
                         fileList.retrys = 0;
 
-                        files.Add(fileList);
+                        _files.Add(fileList);
                     }
                 }
                 else if (attributes["type"].Value == "media")
@@ -183,13 +183,16 @@ namespace XiboClient
                             fileList.md5 = attributes["md5"].Value;
                             fileList.retrys = 0;
 
-                            files.Add(fileList);
+                            _files.Add(fileList);
                         }
                         else
                         {
                             // The MD5 of the current file and the MD5 in RequiredFiles are the same.
                             // Therefore make sure this MD5 is in the CacheManager
                             _cacheManager.Add(path, md5);
+
+                            string[] filePart = path.Split('.');
+                            _requiredFiles.MarkComplete(int.Parse(filePart[0]), md5); 
                         }
                     }
                     else
@@ -205,7 +208,7 @@ namespace XiboClient
                         fileList.md5 = attributes["md5"].Value;
                         fileList.retrys = 0;
 
-                        files.Add(fileList);
+                        _files.Add(fileList);
                     }
                 }
                 else if (attributes["type"].Value == "blacklist")
@@ -234,18 +237,24 @@ namespace XiboClient
                 }
             }
 
-            Debug.WriteLine(String.Format("There are {0} files to get", files.Count.ToString()));
+            Debug.WriteLine(String.Format("There are {0} files to get", _files.Count.ToString()));
 
             // Output a list of the files we need to get
             string debugMessage = "";
 
-            foreach (FileList fileToGet in files)
+            foreach (RequiredFile fileToGet in _files)
                 debugMessage += string.Format("File: {0}, Type: {1}, MD5: {2}. ", fileToGet.path, fileToGet.type, fileToGet.md5);
 
             Debug.WriteLine(debugMessage);
 
+            // Report the files files back to XMDS
+            _requiredFiles.ReportInventory();
+
+            // Write Required Files
+            _requiredFiles.WriteRequiredFiles();
+
             // Is there anything to get?
-            if (files.Count == 0)
+            if (_files.Count == 0)
             {
                 CollectionComplete();
                 return;
@@ -255,7 +264,7 @@ namespace XiboClient
             _currentFile = 0;
 
             // Preload the first filelist
-            _currentFileList = files[_currentFile];
+            _currentFileList = _files[_currentFile];
 
             // Get the first file
             GetFile();
@@ -375,6 +384,10 @@ namespace XiboClient
                         {
                             // Add to the CacheManager
                             _cacheManager.Add(_currentFileList.path + ".xlf", md5sum);
+
+                            // Report this completion back to XMDS
+                            _requiredFiles.MarkComplete(int.Parse(_currentFileList.path), md5sum);
+                            _requiredFiles.ReportInventory();
                         }
 
                         // Fire a layout complete event
@@ -445,6 +458,11 @@ namespace XiboClient
 
                                 System.Diagnostics.Debug.WriteLine(string.Format("File downloaded: {0}", _currentFileList.path));
 
+                                // Report this completion back to XMDS
+                                string[] filePart = _currentFileList.path.Split('.');
+                                _requiredFiles.MarkComplete(int.Parse(filePart[0]), md5sum);
+                                _requiredFiles.ReportInventory();
+
                                 // All the file has been recieved. Move on to the next file.
                                 _currentFile++;
                             }
@@ -475,13 +493,16 @@ namespace XiboClient
         /// </summary>
         public void GetFile()
         {
-            if (_currentFile > (files.Count - 1))
+            if (_currentFile > (_files.Count - 1))
             {
-                System.Diagnostics.Debug.WriteLine(String.Format("Finished Recieving {0} files", files.Count));
+                System.Diagnostics.Debug.WriteLine(String.Format("Finished Receiving {0} files", _files.Count));
 
                 // Clean up
-                files.Clear();
-                xmdsFile.Dispose();                
+                _files.Clear();
+                xmdsFile.Dispose();
+             
+                // Write Required Files
+                _requiredFiles.WriteRequiredFiles();
 
                 // Finished getting this file list
                 CollectionComplete();
@@ -491,7 +512,7 @@ namespace XiboClient
                 // Get the current file into the currentfilelist if the current one is finished
                 if (_currentFileList.complete)
                 {
-                    _currentFileList = files[_currentFile];
+                    _currentFileList = _files[_currentFile];
                 }
 
                 System.Diagnostics.Debug.WriteLine(String.Format("Getting the file : {0} chunk : {1}", _currentFileList.path, _currentFileList.chunkOffset.ToString()));
@@ -504,7 +525,7 @@ namespace XiboClient
         }
 
         [Serializable]
-        private struct FileList
+        private struct RequiredFile
         {
             public string path;
             public string type;
@@ -519,9 +540,9 @@ namespace XiboClient
 
         private XmlDocument xml;
         private HardwareKey hardwareKey;
-        private Collection<FileList> files;
+        private Collection<RequiredFile> _files;
         private int _currentFile;
-        private FileList _currentFileList;
+        private RequiredFile _currentFileList;
         private xmds.xmds xmdsFile;
 
         public event LayoutFileChangedDelegate LayoutFileChanged;

@@ -161,6 +161,7 @@
     <Compile Include="Region.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="RequiredFiles.cs" />
     <Compile Include="Rss.cs">
       <SubType>Form</SubType>
     </Compile>

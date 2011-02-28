@@ -271,7 +271,7 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.2.0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.2.2")]
         public string ClientVersion {
             get {
                 return ((string)(this["ClientVersion"]));
@@ -368,6 +368,18 @@ namespace XiboClient.Properties {
             }
             set {
                 this["emptyLayoutDuration"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("requiredFiles.xml")]
+        public string RequiredFilesFile {
+            get {
+                return ((string)(this["RequiredFilesFile"]));
+            }
+            set {
+                this["RequiredFilesFile"] = value;
             }
         }
     }
