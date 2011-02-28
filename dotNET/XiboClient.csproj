@@ -267,10 +267,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://localhost/1.0.0/server/xmds.php%3fwsdl">
+    <WebReferenceUrl Include="http://localhost/Series%25201.2/server-121-soap-wsdl/server/xmds.php%3fwsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>http://localhost/1.0.0/server/xmds.php%3fwsdl</UpdateFromURL>
+      <UpdateFromURL>http://localhost/Series%25201.2/server-121-soap-wsdl/server/xmds.php%3fwsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -294,10 +294,11 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\splash.jpg" />
+    <EmbeddedResource Include="Resources\HtmlTemplate.htm" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\HtmlTemplate.htm" />
+    <EmbeddedResource Include="Resources\splash.jpg">
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

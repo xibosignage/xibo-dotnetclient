@@ -120,7 +120,7 @@ namespace XiboClient
                 item.DateString = date;
 
                 // Fudge the date...
-                if (date.Contains("+"))
+                if (date.Contains("+") || date.Contains("-"))
                     DateTime.TryParse(date, out item.Date);
                 else
                     DateTime.TryParse(date.Substring(0, date.Length - 4), out item.Date);
