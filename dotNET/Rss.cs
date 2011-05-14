@@ -25,6 +25,7 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Net;
 using System.Diagnostics;
+using System.ServiceModel.Syndication;
 
 namespace XiboClient
 {
@@ -78,7 +79,7 @@ namespace XiboClient
             // Try to make a URI out of the file path
             try
             {
-                this._filePath = Uri.UnescapeDataString(options.uri);
+                _filePath = Uri.UnescapeDataString(options.uri);
             }
             catch (Exception ex)
             {
@@ -86,6 +87,8 @@ namespace XiboClient
 
                 throw new ArgumentNullException("Uri", "The URI is invalid.");
             }
+
+            Debug.WriteLine("Ticker URL: " + _filePath + ". Options count: " + options.mediaOptions.Count.ToString());
 
             // Set the parameters based on the RegionOptions
             _direction = options.direction;
@@ -102,7 +105,7 @@ namespace XiboClient
             _updateInterval = options.updateInterval;
             _scrollSpeed = options.scrollSpeed;
 
-            System.Diagnostics.Debug.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
+            Debug.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
 
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
@@ -133,7 +136,10 @@ namespace XiboClient
             if (_rssReady)
             {
                 // Load the RSS
-                LoadRss();
+                LoadRssIntoTempFile();
+
+                // Navigate to temp file
+                _webBrowser.Navigate(_tempHtml.Path);
             }
         }
 
@@ -256,119 +262,106 @@ function init()
         }
 
         /// <summary>
-        /// Loads the RSS into the temporary file
+        /// Load the feed, and substitute the relevant templated fields for each item
+        /// Save to a temporary file
         /// </summary>
-        private void LoadRss()
+        private void LoadRssIntoTempFile()
         {
-            // Create the BODY content of the HTML file.
-
-            // Get the RSS
-            _rssReader = new RssReader();
-            _rssReader.Url = _rssFilePath;
-
             try
             {
-                _rssReader.GetFeed();
+                string localFeedUrl = Properties.Settings.Default.LibraryPath + @"\" + _mediaid + ".xml";
+
+                using (XmlReader reader = XmlReader.Create(localFeedUrl))
+                {
+                    SyndicationFeed feed = SyndicationFeed.Load(reader);
+
+                    foreach(SyndicationItem item in feed.Items)
+                    {
+                        string temp = _documentTemplate;
+
+                        temp = temp.Replace("[Title]", item.Title.Text.ToString());
+                        temp = temp.Replace("[Description]", item.Summary.Text.ToString());
+                        temp = temp.Replace("[Date]", item.PublishDate.ToString());
+
+                        if (item.Links.Count > 0)
+                            temp = temp.Replace("[Link]", item.Links[0].Uri.ToString());                       
+
+                        // Assemble the RSS items based on the direction we are displaying
+                        if (_direction == "left" || _direction == "right")
+                        {
+                            // Remove all <p></p> from the temp
+                            temp = temp.Replace("<p>", "");
+                            temp = temp.Replace("</p>", "");
+
+                            // Sub in the temp to the format string
+                            _documentText += string.Format("<span class='article' style='padding-left:4px;'>{0}</span>", temp);
+                        }
+                        else
+                        {
+                            _documentText += string.Format("<div class='XiboRssItem' style='display:block;padding:4px;width:{1}'>{0}</div>", temp, this.width - 10);
+                        }
+                    }
+
+                    // Add the Copyright Notice
+                    _documentText += CopyrightNotice;
+
+                    // Decide whether we need a marquee or not
+                    if (_direction == "none")
+                    {
+                        // we dont
+                        // set the body of the webBrowser to the document text (altered by the RSS feed)
+                        _bodyText = _documentText;
+                    }
+                    else
+                    {
+
+                        String textRender = "";
+                        String textWrap = "";
+                        if (_direction == "left" || _direction == "right")
+                        {
+                            // Make sure the text does not wrap when going from left to right.
+                            textWrap = "white-space: nowrap";
+                            _documentText = String.Format("<nobr>{0}</nobr>", _documentText);
+                        }
+                        else
+                        {
+                            // Up and Down
+                            textWrap = String.Format("width: {0}px;", this.width - 50);
+                        }
+
+
+                        // If we are displaying a single item at a time we do not need to mask out the inner text
+                        if (_direction == "single")
+                        {
+                            textRender += string.Format("<div id='text'>{0}</div>", _documentText);
+                        }
+                        else
+                        {
+                            String startPosition = "left";
+
+                            if (_direction == "right")
+                                startPosition = "right";
+
+                            textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this.width - 10, this.height);
+                            textRender += string.Format("<div id='innerText' style='position:absolute; {2}: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText, startPosition);
+                        }
+
+                        _bodyText = textRender;
+                    }
+
+                    _tempHtml.BodyContent = _bodyText;
+                }
             }
             catch (Exception ex)
             {
-                // TODO: What is the right thing to do here? Exception and never show the RSS, or error?
-                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, _scheduleId, _layoutId, _mediaid));
+                Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, _scheduleId, _layoutId, _mediaid));
 
                 _bodyText = "<h1>Unable to load feed</h1>";
                 _tempHtml.BodyContent = _bodyText;
-                _rssReader.Dispose();
 
-                return;
+                // Delete the temporary file we have saved - it is clearly not working.
+                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + _mediaid + ".xml");
             }
-
-            _item = _rssReader.RssItems;
-
-            // for each item that has been returned by the feed, do some trickery
-            for (int i = 0; i < _item.Count; i++)
-            {
-                String temp = _documentTemplate;
-
-                temp = temp.Replace("[Title]", _item[i].Title);
-                temp = temp.Replace("[Description]", _item[i].Description);
-                temp = temp.Replace("[Date]", _item[i].Date.ToString());
-                //temp = temp.Replace("[Date]", _item[i].DateString);
-
-                temp = temp.Replace("[Link]", _item[i].Link);
-
-                // Assemble the RSS items based on the direction we are displaying
-                if (_direction == "left" || _direction == "right")
-                {
-                    // Remove all <p></p> from the temp
-                    temp = temp.Replace("<p>", "");
-                    temp = temp.Replace("</p>", "");
-
-                    // Sub in the temp to the format string
-                    _documentText += string.Format("<span class='article' style='padding-left:4px;'>{0}</span>", temp);
-                }
-                else
-                {
-                    _documentText += string.Format("<div class='XiboRssItem' style='display:block;padding:4px;width:{1}'>{0}</div>", temp, this.width - 10);
-                }
-            }
-
-            // Add the Copyright Notice
-            _documentText += CopyrightNotice;
-
-            // Decide whether we need a marquee or not
-            if (_direction == "none")
-            {
-                // we dont
-                // set the body of the webBrowser to the document text (altered by the RSS feed)
-                _bodyText = _documentText;
-            }
-            else
-            {
-                
-                String textRender = "";
-                String textWrap = "";
-                if (_direction == "left" || _direction == "right")
-                {
-                    // Make sure the text does not wrap when going from left to right.
-                    textWrap = "white-space: nowrap";
-                    _documentText = String.Format("<nobr>{0}</nobr>", _documentText);
-                }
-                else
-                {
-                    // Up and Down
-                    textWrap = String.Format("width: {0}px;", this.width - 50);
-                }
-
-
-                // If we are displaying a single item at a time we do not need to mask out the inner text
-                if (_direction == "single")
-                {
-                    textRender += string.Format("<div id='text'>{0}</div>", _documentText);
-                }
-                else
-                {
-                    String startPosition = "left";
-
-                    if (_direction == "right")
-                        startPosition = "right";
-
-                    textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this.width - 10, this.height);
-                    textRender += string.Format("<div id='innerText' style='position:absolute; {2}: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText, startPosition);
-                }
-
-                _bodyText = textRender;
-            }
-
-            _tempHtml.BodyContent = _bodyText;
-
-            // Navigate to temp file
-            _webBrowser.Navigate(_tempHtml.Path);
-
-            // Clean up
-            _item.Clear();
-
-            // We dont need the reader anymore
-            _rssReader.Dispose();
         }
 
         /// <summary>
@@ -450,7 +443,10 @@ function init()
             {
                 if (_rssReady)
                 {
-                    LoadRss();
+                    LoadRssIntoTempFile();
+
+                    // Navigate to temp file
+                    _webBrowser.Navigate(_tempHtml.Path);
                 }
             }
             catch (Exception ex)
