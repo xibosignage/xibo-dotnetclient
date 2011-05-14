@@ -169,7 +169,6 @@
     <Compile Include="Rss.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="RssReader.cs" />
     <Compile Include="Schedule.cs" />
     <Compile Include="ScheduleManager.cs" />
     <Compile Include="Settings.cs" />

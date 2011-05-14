@@ -26,6 +26,7 @@ using System.Xml;
 using System.Net;
 using System.Diagnostics;
 using System.ServiceModel.Syndication;
+using System.Globalization;
 
 namespace XiboClient
 {
@@ -33,7 +34,6 @@ namespace XiboClient
     {
         private int _scheduleId;
         private int _layoutId;
-        private Collection<RssItem.Item> _item;
         private string _filePath;
         private string _direction;
         private string _backgroundImage;
@@ -46,6 +46,10 @@ namespace XiboClient
         private double _scaleFactor;
         private int _duration;
 
+        private int _numberOfItems;
+        private string _takeItemsFrom;
+        private int _durationIsPerItem;
+
         private string _rssFilePath;
 
         // Build up the RSS feed
@@ -57,8 +61,6 @@ namespace XiboClient
         private WebClient _wc;
 
         private bool _rssReady;
-
-        private RssReader _rssReader;
 
         private String _headText;
         private String _bodyText;
@@ -106,6 +108,9 @@ namespace XiboClient
             _scrollSpeed = options.scrollSpeed;
 
             Debug.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
+
+            // Items to show and duration
+            
 
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
@@ -275,13 +280,23 @@ function init()
                 {
                     SyndicationFeed feed = SyndicationFeed.Load(reader);
 
+                    //int numberOfItems = _opti
+
                     foreach(SyndicationItem item in feed.Items)
                     {
                         string temp = _documentTemplate;
 
                         temp = temp.Replace("[Title]", item.Title.Text.ToString());
-                        temp = temp.Replace("[Description]", item.Summary.Text.ToString());
-                        temp = temp.Replace("[Date]", item.PublishDate.ToString());
+                        
+                        string description;
+
+                        if (item.Summary == null)
+                            description = item.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/")[0].ToString();
+                        else
+                            description = item.Summary.Text;
+
+                        temp = temp.Replace("[Description]", description);
+                        temp = temp.Replace("[Date]", item.PublishDate.ToString("F"));
 
                         if (item.Links.Count > 0)
                             temp = temp.Replace("[Link]", item.Links[0].Uri.ToString());                       
@@ -471,16 +486,6 @@ function init()
         {
             if (disposing)
             {
-                if (_item != null) _item.Clear();
-
-                if (_rssReader != null)
-                {
-                     // We dont need the reader anymore
-                     _rssReader.Dispose();
-
-                     System.Diagnostics.Debug.WriteLine("Disposed of the RSS Reader", "Rss - Dispose");
-                }
-
                 try
                 {
                     _webBrowser.Dispose();
