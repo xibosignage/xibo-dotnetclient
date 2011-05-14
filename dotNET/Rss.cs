@@ -305,7 +305,6 @@ function init()
 
                     // Sub in the temp to the format string
                     _documentText += string.Format("<span class='article' style='padding-left:4px;'>{0}</span>", temp);
-                    _documentText += string.Format("<span style='padding-left:4px;'>{0}</span>", " - ");
                 }
                 else
                 {
