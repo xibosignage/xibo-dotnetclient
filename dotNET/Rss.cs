@@ -448,41 +448,34 @@ function init()
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void wc_OpenReadCompleted(object sender, System.Net.OpenReadCompletedEventArgs e)
+        private void wc_OpenReadCompleted(object sender, System.Net.OpenReadCompletedEventArgs e)
         {
-            String rssContents;
-            System.Net.WebClient wc = (System.Net.WebClient)sender;
-
-            if (e.Error != null)
+            using (WebClient wc = (System.Net.WebClient)sender)
             {
-                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", e.Error, _scheduleId, _layoutId, _mediaid));
+                if (e.Error != null)
+                {
+                    Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", e.Error, _scheduleId, _layoutId, _mediaid));
+                    return;
+                }
 
-                return;
-            }
+                try
+                {
+                    using (StreamReader sr = new StreamReader(e.Result, wc.Encoding))
+                    {
+                        using (StreamWriter sw = new StreamWriter(File.Open(_rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), wc.Encoding))
+                        {
+                            Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
 
-            System.IO.Stream data = e.Result;
+                            sw.Write(sr.ReadToEnd());
+                        }
 
-            wc.Dispose();
-
-            try
-            {
-                System.IO.StreamReader sr = new System.IO.StreamReader(data, wc.Encoding);
-                rssContents = sr.ReadToEnd();
-
-                StreamWriter sw = new StreamWriter(File.Open(_rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), wc.Encoding);
-
-                System.Diagnostics.Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
-
-                sw.Write(rssContents);
-
-                sr.Close();
-                sw.Close();
-
-                _rssReady = true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, _scheduleId, _layoutId, _mediaid));
+                        _rssReady = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, _scheduleId, _layoutId, _mediaid));
+                }
             }
 
             try
