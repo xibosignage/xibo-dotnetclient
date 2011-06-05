@@ -31,7 +31,8 @@ using System.Linq;
 
 namespace XiboClient
 {
-    class Rss : Media
+    class Rss 
+        : Media
     {
         private int _scheduleId;
         private int _layoutId;
@@ -215,13 +216,16 @@ function init()
 {
     var totalDuration = " + _duration.ToString() + @" * 1000;
     var itemCount = $('.XiboRssItem').size();
-
-    var itemTime = totalDuration / itemCount;
+    var durationIsPerItem = " + _durationIsPerItem.ToString() + @"
+    
+    if (durationIsPerItem == 0)
+        var itemTime = totalDuration / itemCount;
+    else
+        var itemTime = totalDuration;
 
     if (itemTime < 2000) itemTime = 2000;
 
    // Try to get the itemTime from an element we expect to be in the HTML 
- 
    $('#text').cycle({fx: 'fade', timeout:itemTime});
 }
 </script>";
@@ -505,7 +509,11 @@ function init()
         /// </summary>
         public override void RenderMedia()
         {
-            // Only start the timer - this media node displays itself
+            // Override the duration if necessary
+            if (_durationIsPerItem == 1)
+                Duration = Duration * _numItems;
+
+            // Start the timer
             base.StartTimer();
         }
 
