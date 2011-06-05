@@ -248,7 +248,7 @@ namespace XiboClient
             options.uri = "";
             options.direction = "none";
             options.javaScript = "";
-            options.mediaOptions = new List<MediaOption>();
+            options.Dictionary = new MediaDictionary();
 
             // Get a media node
             bool validNode = false;
@@ -359,7 +359,7 @@ namespace XiboClient
                         }
 
                         // Add this to the options object
-                        options.mediaOptions.Add(new MediaOption(option.Name, option.InnerText));
+                        options.Dictionary.Add(option.Name, option.InnerText);
                     }
 
                     // And some stuff on Raw nodes
@@ -546,7 +546,7 @@ namespace XiboClient
         public string backgroundImage;
         public string backgroundColor;
 
-        public List<MediaOption> mediaOptions;
+        public MediaDictionary Dictionary;
 
         public override string ToString()
         {

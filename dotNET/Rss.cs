@@ -27,6 +27,7 @@ using System.Net;
 using System.Diagnostics;
 using System.ServiceModel.Syndication;
 using System.Globalization;
+using System.Linq;
 
 namespace XiboClient
 {
@@ -46,7 +47,7 @@ namespace XiboClient
         private double _scaleFactor;
         private int _duration;
 
-        private int _numberOfItems;
+        private int _numItems;
         private string _takeItemsFrom;
         private int _durationIsPerItem;
 
@@ -90,7 +91,7 @@ namespace XiboClient
                 throw new ArgumentNullException("Uri", "The URI is invalid.");
             }
 
-            Debug.WriteLine("Ticker URL: " + _filePath + ". Options count: " + options.mediaOptions.Count.ToString());
+            Debug.WriteLine("Ticker URL: " + _filePath + ". Options count: " + options.Dictionary.Count.ToString());
 
             // Set the parameters based on the RegionOptions
             _direction = options.direction;
@@ -110,7 +111,9 @@ namespace XiboClient
             Debug.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
 
             // Items to show and duration
-            
+            _numItems = Convert.ToInt32(options.Dictionary.Get("numItems", "0"));
+            _durationIsPerItem = Convert.ToInt32(options.Dictionary.Get("durationIsPerItem", "0"));
+            _takeItemsFrom = options.Dictionary.Get("takeItemsFrom", "start");
 
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
@@ -280,10 +283,34 @@ function init()
                 {
                     SyndicationFeed feed = SyndicationFeed.Load(reader);
 
-                    //int numberOfItems = _opti
+                    int countItems = 0;
+                    int currentItem = 0;
 
+                    foreach (SyndicationItem item in feed.Items)
+                        countItems++;
+
+                    // Make sure we dont have a count higher than the actual number of items returned
+                    if (_numItems > countItems)
+                        _numItems = countItems;
+
+                    // Go through each item and construct the HTML for the feed
                     foreach(SyndicationItem item in feed.Items)
                     {
+                        currentItem++;
+
+                        if (_takeItemsFrom == "end")
+                        {
+                            if (currentItem < _numItems)
+                                continue;
+                        }
+                        else
+                        {
+                            // Take items from the start of the feed
+                            if (currentItem > _numItems)
+                                continue;
+                        }
+
+                        // Load the template into a temporary variable
                         string temp = _documentTemplate;
 
                         temp = temp.Replace("[Title]", item.Title.Text.ToString());
