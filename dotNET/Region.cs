@@ -248,6 +248,7 @@ namespace XiboClient
             options.uri = "";
             options.direction = "none";
             options.javaScript = "";
+            options.Dictionary = new MediaDictionary();
 
             // Get a media node
             bool validNode = false;
@@ -356,6 +357,9 @@ namespace XiboClient
                                 System.Diagnostics.Trace.WriteLine("Non integer updateInterval in XLF", "Region - SetNextMediaNode");
                             }
                         }
+
+                        // Add this to the options object
+                        options.Dictionary.Add(option.Name, option.InnerText);
                     }
 
                     // And some stuff on Raw nodes
@@ -541,6 +545,8 @@ namespace XiboClient
         //general options
         public string backgroundImage;
         public string backgroundColor;
+
+        public MediaDictionary Dictionary;
 
         public override string ToString()
         {

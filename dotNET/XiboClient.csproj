@@ -38,6 +38,7 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -74,11 +75,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Management" />
+    <Reference Include="System.ServiceModel.Web, Version=3.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -115,6 +118,8 @@
     </Compile>
     <Compile Include="Media.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MediaOption.cs">
     </Compile>
     <Compile Include="OptionForm.cs">
       <SubType>Form</SubType>
@@ -165,7 +170,6 @@
     <Compile Include="Rss.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="RssReader.cs" />
     <Compile Include="Schedule.cs" />
     <Compile Include="ScheduleManager.cs" />
     <Compile Include="Settings.cs" />
@@ -300,6 +304,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\splash.jpg">
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="favicon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -67,6 +67,9 @@ namespace XiboClient
             }
         }
 
+        /// <summary>
+        /// Render Media call
+        /// </summary>
         public virtual void RenderMedia() 
         {
             // Start the timer for this media
