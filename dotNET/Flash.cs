@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2011 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -21,90 +21,123 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace XiboClient
 {
-    class Flash : Media
+    class Flash 
+        : Media
     {
+        private TemporaryHtml _tempHtml;
+        private WebBrowser _webBrowser; 
+        private string _backgroundImage;
+        private string _backgroundColor;
+        private string _backgroundTop;
+        private string _backgroundLeft;
+
         public Flash (RegionOptions options)
             : base(options.width, options.height, options.top, options.left) 
         {
-            this.filePath = options.uri;
-            duration = options.duration;
+            _tempHtml = new TemporaryHtml();
 
-            // Create the flash player form
-            flashPlayer = new FlashNew();
-            flashPlayer.Width = options.width;
-            flashPlayer.Height = options.height;
-            flashPlayer.Location = new System.Drawing.Point(0, 0);
+            _backgroundImage = options.backgroundImage;
+            _backgroundColor = options.backgroundColor; 
+            _backgroundTop = options.backgroundTop + "px";
+            _backgroundLeft = options.backgroundLeft + "px";
 
-            this.Controls.Add(flashPlayer);
+            // Create the HEAD of the document
+            GenerateHeadHtml();
 
-            return;
+            // Set the body
+            string html = @"
+                <object classid='clsid:d27cdb6e-ae6d-11cf-96b8-444553540000' codebase='http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=7,0,0,0' width='400' height='400' id='analog_clock' align='middle'>
+                    <param name='allowScriptAccess' value='sameDomain' />
+                    <param name='movie' value='{1}' />
+                    <param name='quality' value='high' />
+                    <param name='bgcolor' value='#000' />
+                    <param name='WMODE' value='transparent' />
+                    <embed src='{1}' quality='high' wmode='transparent' bgcolor='#ffffff' width='400' height='400' name='analog_clock' align='middle' allowScriptAccess='sameDomain' type='application/x-shockwave-flash' pluginspage='http://www.macromedia.com/go/getflashplayer' />
+                </object>
+            ";
+
+            _tempHtml.BodyContent = string.Format(html, options.uri, options.uri);
+
+            // Fire up a webBrowser control to display the completed file.
+            _webBrowser = new WebBrowser();
+            _webBrowser.Size = this.Size;
+            _webBrowser.ScrollBarsEnabled = false;
+            _webBrowser.ScriptErrorsSuppressed = true;
+            _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(_webBrowser_DocumentCompleted);
+
+            // Navigate to temp file
+            _webBrowser.Navigate(_tempHtml.Path);
+
+            Controls.Add(_webBrowser);
         }
 
-        public override void RenderMedia()
+        /// <summary>
+        /// Generates the Head Html for this Document
+        /// </summary>
+        private void GenerateHeadHtml()
         {
-            // Have we been provided with a duration? Or is the duration 0 (auto determine)
-            if (duration == 0)
+            // Handle the background
+            String bodyStyle;
+
+            if (_backgroundImage == null || _backgroundImage == "")
             {
-                // We do our own timing
-                determineTime = true;
-                base.Duration = 5; //Check every 5 seconds
-            }
-
-            base.RenderMedia();
-
-            // Show this flash form
-            flashPlayer.Show();
-
-            try
-            {
-                flashPlayer.StartPlayer(filePath);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-            }
-
-            return;
-        }
-
-        protected override void timer_Tick(object sender, EventArgs e)
-        {
-            // If we are dealing with the time && we havent reached the end yet, keep going.
-            if (determineTime && flashPlayer.IsPlaying())
-            {
-                return;
+                bodyStyle = "background-color:" + _backgroundColor + " ;";
             }
             else
             {
-                base.timer_Tick(sender, e);
+                bodyStyle = "background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + ";";
             }
-            return;
+
+            // Store the document text in the temporary HTML space
+            _tempHtml.HeadContent = "<style type='text/css'>body {" + bodyStyle + " }</style>"; ;
         }
 
+        /// <summary>
+        /// Web browser completed event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void _webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        {
+            // We have navigated to the temporary file.
+            Show();
+            Application.DoEvents();
+        }
+
+        /// <summary>
+        /// Dispose
+        /// </summary>
+        /// <param name="disposing"></param>
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                //Make sure we correctly clear these values
+                // Remove the webbrowser control
                 try
                 {
-                    flashPlayer.Close();
-                    this.Controls.Remove(flashPlayer);
-                    flashPlayer.Dispose();
+                    _webBrowser.Dispose();
                 }
-                catch { }
+                catch
+                {
+                    System.Diagnostics.Trace.WriteLine(new LogMessage("WebBrowser still in use.", String.Format("Dispose")));
+                }
+
+                // Remove the temporary file we created
+                try
+                {
+                    _tempHtml.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Dispose", String.Format("Unable to dispose TemporaryHtml with exception {0}", ex.Message)));
+                }
             }
 
             base.Dispose(disposing);
         }
-
-        private string filePath;
-        private int duration;
-        private bool determineTime = false;
-
-        FlashNew flashPlayer;
     }
 }

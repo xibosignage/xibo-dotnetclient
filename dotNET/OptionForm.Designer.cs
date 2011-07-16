@@ -75,6 +75,7 @@ namespace XiboClient
             this.clientHeight = new System.Windows.Forms.NumericUpDown();
             this.clientWidth = new System.Windows.Forms.NumericUpDown();
             this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.enableMouseCb = new System.Windows.Forms.CheckBox();
             this.cbExpireModifiedLayouts = new System.Windows.Forms.CheckBox();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.label15 = new System.Windows.Forms.Label();
@@ -149,7 +150,7 @@ namespace XiboClient
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage5);
-            this.tabControl1.Location = new System.Drawing.Point(12, 27);
+            this.tabControl1.Location = new System.Drawing.Point(12, 28);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(444, 287);
@@ -395,7 +396,7 @@ namespace XiboClient
             this.labelXmdsUrl.AutoSize = true;
             this.labelXmdsUrl.Location = new System.Drawing.Point(139, 10);
             this.labelXmdsUrl.Name = "labelXmdsUrl";
-            this.labelXmdsUrl.Size = new System.Drawing.Size(154, 13);
+            this.labelXmdsUrl.Size = new System.Drawing.Size(338, 13);
             this.labelXmdsUrl.TabIndex = 3;
             this.labelXmdsUrl.Text = global::XiboClient.Properties.Settings.Default.XiboClient_xmds_xmds;
             // 
@@ -616,6 +617,7 @@ namespace XiboClient
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.enableMouseCb);
             this.tabPage5.Controls.Add(this.cbExpireModifiedLayouts);
             this.tabPage5.Controls.Add(this.numericUpDown1);
             this.tabPage5.Controls.Add(this.label15);
@@ -626,6 +628,20 @@ namespace XiboClient
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Advanced";
             this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // enableMouseCb
+            // 
+            this.enableMouseCb.AutoSize = true;
+            this.enableMouseCb.Checked = global::XiboClient.Properties.Settings.Default.EnableMouse;
+            this.enableMouseCb.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.enableMouseCb.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "EnableMouse", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.enableMouseCb.Location = new System.Drawing.Point(176, 103);
+            this.enableMouseCb.Name = "enableMouseCb";
+            this.enableMouseCb.Size = new System.Drawing.Size(94, 17);
+            this.enableMouseCb.TabIndex = 3;
+            this.enableMouseCb.Text = "Enable Mouse";
+            this.enableMouseCb.UseVisualStyleBackColor = true;
+            this.enableMouseCb.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // cbExpireModifiedLayouts
             // 
@@ -825,5 +841,6 @@ namespace XiboClient
         private System.Windows.Forms.NumericUpDown numericUpDown1;
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.CheckBox cbExpireModifiedLayouts;
+        private System.Windows.Forms.CheckBox enableMouseCb;
     }
 }

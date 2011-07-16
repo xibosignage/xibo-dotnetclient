@@ -125,7 +125,9 @@ namespace XiboClient
 
             // Hide the cursor
             Cursor.Position = new Point(_clientSize.Width, _clientSize.Height);
-            Cursor.Hide();
+            
+            if (!Properties.Settings.Default.EnableMouse)
+                Cursor.Hide();
 
             ShowSplashScreen();
 

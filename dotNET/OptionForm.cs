@@ -181,6 +181,7 @@ namespace XiboClient
                 Properties.Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
                 Properties.Settings.Default.hardwareKey = tbHardwareKey.Text;
                 Properties.Settings.Default.scrollStepAmount = nupScrollStepAmount.Value;
+                Properties.Settings.Default.EnableMouse = enableMouseCb.Checked;
 
                 // Also tweak the address of the xmds1
                 xmds1.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
@@ -386,6 +387,11 @@ namespace XiboClient
         }
 
         private void textBoxDisplayName_TextChanged(object sender, EventArgs e)
+        {
+            buttonSaveSettings.Enabled = true;
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             buttonSaveSettings.Enabled = true;
         }
