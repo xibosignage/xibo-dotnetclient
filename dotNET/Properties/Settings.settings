@@ -98,5 +98,8 @@
     <Setting Name="RequiredFilesFile" Type="System.String" Scope="User">
       <Value Profile="(Default)">requiredFiles.xml</Value>
     </Setting>
+    <Setting Name="EnableMouse" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
