@@ -90,6 +90,17 @@
   <wsdl:message name="MediaInventoryResponse">
     <wsdl:part name="success" type="xsd:boolean" />
   </wsdl:message>
+  <wsdl:message name="GetResourceRequest">
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="layoutId" type="xsd:int" />
+    <wsdl:part name="regionId" type="xsd:string" />
+    <wsdl:part name="mediaId" type="xsd:string" />
+    <wsdl:part name="version" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetResourceResponse">
+    <wsdl:part name="resource" type="xsd:string" />
+  </wsdl:message>
   <wsdl:portType name="xmdsPortType">
     <wsdl:operation name="RegisterDisplay">
       <documentation>Registered the Display on the Xibo Network</documentation>
@@ -135,6 +146,11 @@
       <documentation>Report back the clients MediaInventory</documentation>
       <wsdl:input message="tns:MediaInventoryRequest" />
       <wsdl:output message="tns:MediaInventoryResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetResource">
+      <documentation>Gets the file requested</documentation>
+      <wsdl:input message="tns:GetResourceRequest" />
+      <wsdl:output message="tns:GetResourceResponse" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="xmdsBinding" type="tns:xmdsPortType">
@@ -220,10 +236,19 @@
         <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
       </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="GetResource">
+      <soap:operation soapAction="urn:xmds#GetResource" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
   </wsdl:binding>
   <wsdl:service name="xmds">
     <wsdl:port name="xmdsPort" binding="tns:xmdsBinding">
-      <soap:address location="http://localhost/Series%201.2/server-121-soap-wsdl/server/xmds.php" />
+      <soap:address location="http://localhost/Series%201.3/131-datasets/server/xmds.php" />
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

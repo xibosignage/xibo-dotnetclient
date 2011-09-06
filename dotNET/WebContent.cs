@@ -49,8 +49,6 @@ namespace XiboClient
             // Attach event
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
 
-            Controls.Add(webBrowser);
-
             if (!Properties.Settings.Default.powerpointEnabled && options.type == "powerpoint")
             {
                 webBrowser.DocumentText = "<html><body><h1>Powerpoint not enabled on this display</h1></body></html>";
@@ -96,8 +94,9 @@ namespace XiboClient
             base.RenderMedia();
 
             // Get ready to show the control
-            Application.DoEvents();
             Show();
+            Application.DoEvents();
+            Controls.Add(webBrowser);
         }
 
         protected override void Dispose(bool disposing)

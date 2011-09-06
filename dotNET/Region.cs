@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008,2009,2010 Daniel Garner and James Packer
+ * Copyright (C) 2006,2007,2008,2009,2010,2011 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -160,6 +160,10 @@ namespace XiboClient
 
                     case "embedded":
                         media = new Text(options);
+                        break;
+
+                    case "datasetview":
+                        media = new DataSetView(options);
                         break;
 
                     default:
@@ -540,6 +544,7 @@ namespace XiboClient
         //The identification for this region
         public string mediaid;
         public int layoutId;
+        public string regionId;
         public int scheduleId;
        
         //general options

@@ -9,7 +9,7 @@
       <Value Profile="(Default)">schedule.xml</Value>
     </Setting>
     <Setting Name="XiboClient_xmds_xmds" Type="(Web Service URL)" Scope="User">
-      <Value Profile="(Default)">http://localhost/Series%201.2/server-121-soap-wsdl/server/xmds.php</Value>
+      <Value Profile="(Default)">http://localhost/Series%201.3/131-datasets/server/xmds.php</Value>
     </Setting>
     <Setting Name="ServerKey" Type="System.String" Scope="User">
       <Value Profile="(Default)">yourserverkey</Value>

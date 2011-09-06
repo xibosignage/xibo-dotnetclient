@@ -426,6 +426,7 @@ namespace XiboClient
 
                 options.scheduleId = _scheduleId;
                 options.layoutId = _layoutId;
+                options.regionId = nodeAttibutes["id"].Value.ToString();
                 options.width = (int)(double.Parse(nodeAttibutes["width"].Value) * _scaleFactor);
                 options.height = (int)(double.Parse(nodeAttibutes["height"].Value) * _scaleFactor);
                 options.left = (int)(double.Parse(nodeAttibutes["left"].Value) * _scaleFactor);
