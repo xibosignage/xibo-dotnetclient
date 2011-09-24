@@ -71,8 +71,6 @@ namespace XiboClient
 
             // Navigate to temp file
             _webBrowser.Navigate(_tempHtml.Path);
-
-            Controls.Add(_webBrowser);
         }
 
         /// <summary>
@@ -105,6 +103,7 @@ namespace XiboClient
         {
             // We have navigated to the temporary file.
             Show();
+            Controls.Add(_webBrowser);
             Application.DoEvents();
         }
 

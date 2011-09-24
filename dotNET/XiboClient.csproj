@@ -95,6 +95,9 @@
     </Compile>
     <Compile Include="BlackList.cs" />
     <Compile Include="CacheManager.cs" />
+    <Compile Include="DataSetView.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FileCollector.cs" />
     <Compile Include="Flash.cs">
       <SubType>Form</SubType>
@@ -266,10 +269,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://localhost/Series%25201.2/server-121-soap-wsdl/server/xmds.php%3fwsdl">
+    <WebReferenceUrl Include="http://localhost/Series%25201.3/131-datasets/server/xmds.php%3fwsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>http://localhost/Series%25201.2/server-121-soap-wsdl/server/xmds.php%3fwsdl</UpdateFromURL>
+      <UpdateFromURL>http://localhost/Series%25201.3/131-datasets/server/xmds.php%3fwsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>

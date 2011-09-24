@@ -139,8 +139,6 @@ namespace XiboClient
             _webBrowser.ScrollBarsEnabled = false;
             _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
 
-            Controls.Add(_webBrowser);
-
             // Is the RSS ready to be loaded into the temp location?
             if (_rssReady)
             {
@@ -440,6 +438,7 @@ function init()
         {
             // Show the control
             Show();
+            Controls.Add(_webBrowser);
             Application.DoEvents();
         }
 
