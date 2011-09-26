@@ -50,17 +50,17 @@ namespace XiboClient
 
             // Set the body
             string html = @"
-                <object classid='clsid:d27cdb6e-ae6d-11cf-96b8-444553540000' codebase='http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=7,0,0,0' width='400' height='400' id='analog_clock' align='middle'>
+                <object classid='clsid:d27cdb6e-ae6d-11cf-96b8-444553540000' codebase='http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=7,0,0,0' width='{2}' height='{3}' id='analog_clock' align='middle'>
                     <param name='allowScriptAccess' value='sameDomain' />
                     <param name='movie' value='{1}' />
                     <param name='quality' value='high' />
                     <param name='bgcolor' value='#000' />
                     <param name='WMODE' value='transparent' />
-                    <embed src='{1}' quality='high' wmode='transparent' bgcolor='#ffffff' width='400' height='400' name='analog_clock' align='middle' allowScriptAccess='sameDomain' type='application/x-shockwave-flash' pluginspage='http://www.macromedia.com/go/getflashplayer' />
+                    <embed src='{1}' quality='high' wmode='transparent' bgcolor='#ffffff' width='{2}' height='{3}' name='analog_clock' align='middle' allowScriptAccess='sameDomain' type='application/x-shockwave-flash' pluginspage='http://www.macromedia.com/go/getflashplayer' />
                 </object>
             ";
 
-            _tempHtml.BodyContent = string.Format(html, options.uri, options.uri);
+            _tempHtml.BodyContent = string.Format(html, options.uri, options.uri, options.width.ToString(), options.height.ToString());
 
             // Fire up a webBrowser control to display the completed file.
             _webBrowser = new WebBrowser();
