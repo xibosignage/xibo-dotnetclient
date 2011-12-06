@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
+using XiboClient.Properties;
 
 namespace XiboClient
 {
@@ -48,8 +49,11 @@ namespace XiboClient
             this.BackColor = System.Drawing.Color.Transparent;
             this.TransparencyKey = System.Drawing.Color.White;
 
-            SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
-            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            if (Settings.Default.DoubleBuffering)
+            {
+                SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+                SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            }
         }
 
         protected void StartTimer()

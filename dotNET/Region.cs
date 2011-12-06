@@ -23,6 +23,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using System.Diagnostics;
+using XiboClient.Properties;
 
 namespace XiboClient
 {
@@ -68,8 +69,11 @@ namespace XiboClient
             this.Size = new System.Drawing.Size(options.width, options.height);
             this.BackColor = System.Drawing.Color.Transparent;
 
-            SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
-            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            if (Settings.Default.DoubleBuffering)
+            {
+                SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+                SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            }
 
             // Create a new BlackList for us to use
             blackList = new BlackList();

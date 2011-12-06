@@ -75,11 +75,11 @@ namespace XiboClient
             this.clientHeight = new System.Windows.Forms.NumericUpDown();
             this.clientWidth = new System.Windows.Forms.NumericUpDown();
             this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.doubleBufferingCheckBox = new System.Windows.Forms.CheckBox();
             this.enableMouseCb = new System.Windows.Forms.CheckBox();
             this.cbExpireModifiedLayouts = new System.Windows.Forms.CheckBox();
-            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
+            this.numericUpDownEmptyRegions = new System.Windows.Forms.NumericUpDown();
             this.label15 = new System.Windows.Forms.Label();
-            this.buttonReset = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -101,7 +101,7 @@ namespace XiboClient
             ((System.ComponentModel.ISupportInitialize)(this.clientHeight)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).BeginInit();
             this.tabPage5.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownEmptyRegions)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -183,7 +183,6 @@ namespace XiboClient
             // 
             // nupScrollStepAmount
             // 
-            this.nupScrollStepAmount.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "scrollStepAmount", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.nupScrollStepAmount.Location = new System.Drawing.Point(184, 145);
             this.nupScrollStepAmount.Minimum = new decimal(new int[] {
             1,
@@ -193,7 +192,11 @@ namespace XiboClient
             this.nupScrollStepAmount.Name = "nupScrollStepAmount";
             this.nupScrollStepAmount.Size = new System.Drawing.Size(76, 20);
             this.nupScrollStepAmount.TabIndex = 16;
-            this.nupScrollStepAmount.Value = global::XiboClient.Properties.Settings.Default.scrollStepAmount;
+            this.nupScrollStepAmount.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             // 
             // label10
             // 
@@ -257,66 +260,56 @@ namespace XiboClient
             // 
             // tbHardwareKey
             // 
-            this.tbHardwareKey.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "hardwareKey", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.tbHardwareKey.Location = new System.Drawing.Point(184, 119);
             this.tbHardwareKey.Name = "tbHardwareKey";
             this.tbHardwareKey.Size = new System.Drawing.Size(237, 20);
             this.tbHardwareKey.TabIndex = 14;
-            this.tbHardwareKey.Text = global::XiboClient.Properties.Settings.Default.hardwareKey;
             // 
             // checkBoxStats
             // 
             this.checkBoxStats.AutoSize = true;
-            this.checkBoxStats.Checked = global::XiboClient.Properties.Settings.Default.statsEnabled;
+            this.checkBoxStats.Checked = true;
             this.checkBoxStats.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxStats.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "statsEnabled", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.checkBoxStats.Location = new System.Drawing.Point(184, 204);
             this.checkBoxStats.Name = "checkBoxStats";
             this.checkBoxStats.Size = new System.Drawing.Size(104, 17);
             this.checkBoxStats.TabIndex = 0;
             this.checkBoxStats.Text = "Enable Statistics";
             this.checkBoxStats.UseVisualStyleBackColor = true;
-            this.checkBoxStats.CheckedChanged += new System.EventHandler(this.checkBoxStats_CheckedChanged);
             // 
             // checkBoxPowerPoint
             // 
             this.checkBoxPowerPoint.AutoSize = true;
-            this.checkBoxPowerPoint.Checked = global::XiboClient.Properties.Settings.Default.powerpointEnabled;
-            this.checkBoxPowerPoint.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "powerpointEnabled", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.checkBoxPowerPoint.Location = new System.Drawing.Point(184, 181);
             this.checkBoxPowerPoint.Name = "checkBoxPowerPoint";
             this.checkBoxPowerPoint.Size = new System.Drawing.Size(116, 17);
             this.checkBoxPowerPoint.TabIndex = 12;
             this.checkBoxPowerPoint.Text = "Enable PowerPoint";
             this.checkBoxPowerPoint.UseVisualStyleBackColor = true;
-            this.checkBoxPowerPoint.CheckedChanged += new System.EventHandler(this.checkBoxPowerPoint_CheckedChanged);
             // 
             // textBoxXmdsUri
             // 
-            this.textBoxXmdsUri.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "serverURI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.textBoxXmdsUri.Location = new System.Drawing.Point(184, 11);
             this.textBoxXmdsUri.Name = "textBoxXmdsUri";
             this.textBoxXmdsUri.Size = new System.Drawing.Size(237, 20);
             this.textBoxXmdsUri.TabIndex = 0;
-            this.textBoxXmdsUri.Text = global::XiboClient.Properties.Settings.Default.serverURI;
+            this.textBoxXmdsUri.Text = "http://localhost/xibo";
             // 
             // textBoxServerKey
             // 
-            this.textBoxServerKey.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "ServerKey", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.textBoxServerKey.Location = new System.Drawing.Point(184, 38);
             this.textBoxServerKey.Name = "textBoxServerKey";
             this.textBoxServerKey.Size = new System.Drawing.Size(237, 20);
             this.textBoxServerKey.TabIndex = 2;
-            this.textBoxServerKey.Text = global::XiboClient.Properties.Settings.Default.ServerKey;
+            this.textBoxServerKey.Text = "yourserverkey";
             // 
             // textBoxLibraryPath
             // 
-            this.textBoxLibraryPath.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "LibraryPath", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.textBoxLibraryPath.Location = new System.Drawing.Point(184, 65);
             this.textBoxLibraryPath.Name = "textBoxLibraryPath";
             this.textBoxLibraryPath.Size = new System.Drawing.Size(156, 20);
             this.textBoxLibraryPath.TabIndex = 4;
-            this.textBoxLibraryPath.Text = global::XiboClient.Properties.Settings.Default.LibraryPath;
+            this.textBoxLibraryPath.Text = "DEFAULT";
             // 
             // tabPage2
             // 
@@ -396,19 +389,17 @@ namespace XiboClient
             this.labelXmdsUrl.AutoSize = true;
             this.labelXmdsUrl.Location = new System.Drawing.Point(139, 10);
             this.labelXmdsUrl.Name = "labelXmdsUrl";
-            this.labelXmdsUrl.Size = new System.Drawing.Size(338, 13);
+            this.labelXmdsUrl.Size = new System.Drawing.Size(299, 13);
             this.labelXmdsUrl.TabIndex = 3;
-            this.labelXmdsUrl.Text = global::XiboClient.Properties.Settings.Default.XiboClient_xmds_xmds;
+            this.labelXmdsUrl.Text = "http://localhost/Series%201.3/131-datasets/server/xmds.php";
             // 
             // textBoxDisplayName
             // 
-            this.textBoxDisplayName.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "displayName", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.textBoxDisplayName.Location = new System.Drawing.Point(142, 37);
             this.textBoxDisplayName.Name = "textBoxDisplayName";
             this.textBoxDisplayName.Size = new System.Drawing.Size(264, 20);
             this.textBoxDisplayName.TabIndex = 0;
-            this.textBoxDisplayName.Text = global::XiboClient.Properties.Settings.Default.displayName;
-            this.textBoxDisplayName.TextChanged += new System.EventHandler(this.textBoxDisplayName_TextChanged);
+            this.textBoxDisplayName.Text = "COMPUTERNAME";
             // 
             // tabPage3
             // 
@@ -448,31 +439,25 @@ namespace XiboClient
             // 
             // textBoxProxyDomain
             // 
-            this.textBoxProxyDomain.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "ProxyDomain", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.textBoxProxyDomain.Location = new System.Drawing.Point(99, 95);
             this.textBoxProxyDomain.Name = "textBoxProxyDomain";
             this.textBoxProxyDomain.Size = new System.Drawing.Size(171, 20);
             this.textBoxProxyDomain.TabIndex = 7;
-            this.textBoxProxyDomain.Text = global::XiboClient.Properties.Settings.Default.ProxyDomain;
             // 
             // maskedTextBoxProxyPass
             // 
-            this.maskedTextBoxProxyPass.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "ProxyPassword", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.maskedTextBoxProxyPass.Location = new System.Drawing.Point(99, 67);
             this.maskedTextBoxProxyPass.Name = "maskedTextBoxProxyPass";
             this.maskedTextBoxProxyPass.Size = new System.Drawing.Size(171, 20);
             this.maskedTextBoxProxyPass.TabIndex = 5;
-            this.maskedTextBoxProxyPass.Text = global::XiboClient.Properties.Settings.Default.ProxyPassword;
             this.maskedTextBoxProxyPass.UseSystemPasswordChar = true;
             // 
             // textBoxProxyUser
             // 
-            this.textBoxProxyUser.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::XiboClient.Properties.Settings.Default, "ProxyUser", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.textBoxProxyUser.Location = new System.Drawing.Point(99, 41);
             this.textBoxProxyUser.Name = "textBoxProxyUser";
             this.textBoxProxyUser.Size = new System.Drawing.Size(171, 20);
             this.textBoxProxyUser.TabIndex = 3;
-            this.textBoxProxyUser.Text = global::XiboClient.Properties.Settings.Default.ProxyUser;
             // 
             // labelProxyDomain
             // 
@@ -557,7 +542,6 @@ namespace XiboClient
             // 
             // offsetX
             // 
-            this.offsetX.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "offsetX", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.offsetX.Location = new System.Drawing.Point(77, 67);
             this.offsetX.Maximum = new decimal(new int[] {
             10000,
@@ -567,12 +551,9 @@ namespace XiboClient
             this.offsetX.Name = "offsetX";
             this.offsetX.Size = new System.Drawing.Size(77, 20);
             this.offsetX.TabIndex = 6;
-            this.offsetX.Value = global::XiboClient.Properties.Settings.Default.offsetX;
-            this.offsetX.ValueChanged += new System.EventHandler(this.offsetX_ValueChanged_1);
             // 
             // offsetY
             // 
-            this.offsetY.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "offsetY", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.offsetY.Location = new System.Drawing.Point(77, 94);
             this.offsetY.Maximum = new decimal(new int[] {
             10000,
@@ -582,12 +563,9 @@ namespace XiboClient
             this.offsetY.Name = "offsetY";
             this.offsetY.Size = new System.Drawing.Size(77, 20);
             this.offsetY.TabIndex = 7;
-            this.offsetY.Value = global::XiboClient.Properties.Settings.Default.offsetY;
-            this.offsetY.ValueChanged += new System.EventHandler(this.offsetY_ValueChanged_1);
             // 
             // clientHeight
             // 
-            this.clientHeight.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "sizeY", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.clientHeight.Location = new System.Drawing.Point(77, 41);
             this.clientHeight.Maximum = new decimal(new int[] {
             10000,
@@ -597,12 +575,9 @@ namespace XiboClient
             this.clientHeight.Name = "clientHeight";
             this.clientHeight.Size = new System.Drawing.Size(77, 20);
             this.clientHeight.TabIndex = 5;
-            this.clientHeight.Value = global::XiboClient.Properties.Settings.Default.sizeY;
-            this.clientHeight.ValueChanged += new System.EventHandler(this.clientHeight_ValueChanged_1);
             // 
             // clientWidth
             // 
-            this.clientWidth.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "sizeX", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.clientWidth.Location = new System.Drawing.Point(77, 15);
             this.clientWidth.Maximum = new decimal(new int[] {
             10000,
@@ -612,14 +587,13 @@ namespace XiboClient
             this.clientWidth.Name = "clientWidth";
             this.clientWidth.Size = new System.Drawing.Size(77, 20);
             this.clientWidth.TabIndex = 4;
-            this.clientWidth.Value = global::XiboClient.Properties.Settings.Default.sizeX;
-            this.clientWidth.ValueChanged += new System.EventHandler(this.clientWidth_ValueChanged_1);
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.doubleBufferingCheckBox);
             this.tabPage5.Controls.Add(this.enableMouseCb);
             this.tabPage5.Controls.Add(this.cbExpireModifiedLayouts);
-            this.tabPage5.Controls.Add(this.numericUpDown1);
+            this.tabPage5.Controls.Add(this.numericUpDownEmptyRegions);
             this.tabPage5.Controls.Add(this.label15);
             this.tabPage5.Location = new System.Drawing.Point(4, 22);
             this.tabPage5.Name = "tabPage5";
@@ -629,43 +603,51 @@ namespace XiboClient
             this.tabPage5.Text = "Advanced";
             this.tabPage5.UseVisualStyleBackColor = true;
             // 
+            // doubleBufferingCheckBox
+            // 
+            this.doubleBufferingCheckBox.AutoSize = true;
+            this.doubleBufferingCheckBox.Location = new System.Drawing.Point(176, 140);
+            this.doubleBufferingCheckBox.Name = "doubleBufferingCheckBox";
+            this.doubleBufferingCheckBox.Size = new System.Drawing.Size(141, 17);
+            this.doubleBufferingCheckBox.TabIndex = 4;
+            this.doubleBufferingCheckBox.Text = "Enable Double Buffering";
+            this.doubleBufferingCheckBox.UseVisualStyleBackColor = true;
+            // 
             // enableMouseCb
             // 
             this.enableMouseCb.AutoSize = true;
-            this.enableMouseCb.Checked = global::XiboClient.Properties.Settings.Default.EnableMouse;
+            this.enableMouseCb.Checked = true;
             this.enableMouseCb.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.enableMouseCb.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "EnableMouse", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.enableMouseCb.Location = new System.Drawing.Point(176, 103);
             this.enableMouseCb.Name = "enableMouseCb";
             this.enableMouseCb.Size = new System.Drawing.Size(94, 17);
             this.enableMouseCb.TabIndex = 3;
             this.enableMouseCb.Text = "Enable Mouse";
             this.enableMouseCb.UseVisualStyleBackColor = true;
-            this.enableMouseCb.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // cbExpireModifiedLayouts
             // 
             this.cbExpireModifiedLayouts.AutoSize = true;
-            this.cbExpireModifiedLayouts.Checked = global::XiboClient.Properties.Settings.Default.expireModifiedLayouts;
+            this.cbExpireModifiedLayouts.Checked = true;
             this.cbExpireModifiedLayouts.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cbExpireModifiedLayouts.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::XiboClient.Properties.Settings.Default, "expireModifiedLayouts", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.cbExpireModifiedLayouts.Location = new System.Drawing.Point(176, 66);
             this.cbExpireModifiedLayouts.Name = "cbExpireModifiedLayouts";
             this.cbExpireModifiedLayouts.Size = new System.Drawing.Size(243, 17);
             this.cbExpireModifiedLayouts.TabIndex = 2;
             this.cbExpireModifiedLayouts.Text = "Expire modified layouts while they are playing?";
             this.cbExpireModifiedLayouts.UseVisualStyleBackColor = true;
-            this.cbExpireModifiedLayouts.CheckedChanged += new System.EventHandler(this.cbExpireModifiedLayouts_CheckedChanged);
             // 
-            // numericUpDown1
+            // numericUpDownEmptyRegions
             // 
-            this.numericUpDown1.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::XiboClient.Properties.Settings.Default, "emptyLayoutDuration", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.numericUpDown1.Location = new System.Drawing.Point(176, 23);
-            this.numericUpDown1.Name = "numericUpDown1";
-            this.numericUpDown1.Size = new System.Drawing.Size(91, 20);
-            this.numericUpDown1.TabIndex = 1;
-            this.numericUpDown1.Value = global::XiboClient.Properties.Settings.Default.emptyLayoutDuration;
-            this.numericUpDown1.ValueChanged += new System.EventHandler(this.numericUpDown1_ValueChanged);
+            this.numericUpDownEmptyRegions.Location = new System.Drawing.Point(176, 23);
+            this.numericUpDownEmptyRegions.Name = "numericUpDownEmptyRegions";
+            this.numericUpDownEmptyRegions.Size = new System.Drawing.Size(91, 20);
+            this.numericUpDownEmptyRegions.TabIndex = 1;
+            this.numericUpDownEmptyRegions.Value = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
             // 
             // label15
             // 
@@ -675,16 +657,6 @@ namespace XiboClient
             this.label15.Size = new System.Drawing.Size(136, 13);
             this.label15.TabIndex = 0;
             this.label15.Text = "Duration for Empty Regions";
-            // 
-            // buttonReset
-            // 
-            this.buttonReset.Location = new System.Drawing.Point(281, 320);
-            this.buttonReset.Name = "buttonReset";
-            this.buttonReset.Size = new System.Drawing.Size(75, 23);
-            this.buttonReset.TabIndex = 11;
-            this.buttonReset.Text = "Reset";
-            this.buttonReset.UseVisualStyleBackColor = true;
-            this.buttonReset.Click += new System.EventHandler(this.buttonReset_Click);
             // 
             // menuStrip1
             // 
@@ -749,7 +721,6 @@ namespace XiboClient
             this.Controls.Add(this.menuStrip1);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.buttonSaveSettings);
-            this.Controls.Add(this.buttonReset);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "OptionForm";
@@ -773,7 +744,7 @@ namespace XiboClient
             ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).EndInit();
             this.tabPage5.ResumeLayout(false);
             this.tabPage5.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownEmptyRegions)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -810,7 +781,6 @@ namespace XiboClient
         private System.Windows.Forms.NumericUpDown numericUpDownCollect;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserLibrary;
         private System.Windows.Forms.Button buttonLibrary;
-        private System.Windows.Forms.Button buttonReset;
         private System.Windows.Forms.ToolStripMenuItem onlineHelpToolStripMenuItem;
         private System.Windows.Forms.CheckBox checkBoxPowerPoint;
         private System.Windows.Forms.CheckBox checkBoxStats;
@@ -838,9 +808,10 @@ namespace XiboClient
         private System.Windows.Forms.NumericUpDown offsetX;
         private System.Windows.Forms.NumericUpDown clientHeight;
         private System.Windows.Forms.TabPage tabPage5;
-        private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.NumericUpDown numericUpDownEmptyRegions;
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.CheckBox cbExpireModifiedLayouts;
         private System.Windows.Forms.CheckBox enableMouseCb;
+        private System.Windows.Forms.CheckBox doubleBufferingCheckBox;
     }
 }
