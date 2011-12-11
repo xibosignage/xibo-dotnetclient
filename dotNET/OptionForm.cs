@@ -152,8 +152,6 @@ namespace XiboClient
         {
             try
             {
-                buttonSaveSettings.Enabled = false;
-
                 // Simple settings
                 Settings.Default.ServerKey = textBoxServerKey.Text;
                 Settings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
@@ -253,45 +251,51 @@ namespace XiboClient
         /// </summary>
         public static void SetGlobalProxy()
         {
-            System.Diagnostics.Debug.WriteLine("[IN]", "SetGlobalProxy");
+            Debug.WriteLine("[IN]", "SetGlobalProxy");
 
-            System.Diagnostics.Debug.WriteLine("Trying to detect a proxy.", "SetGlobalProxy");
+            Debug.WriteLine("Trying to detect a proxy.", "SetGlobalProxy");
             
             if (Properties.Settings.Default.ProxyUser != "")
             {
-                System.Diagnostics.Debug.WriteLine("Creating a network credential using the Proxy User.", "SetGlobalProxy");
-                NetworkCredential nc = new NetworkCredential(Properties.Settings.Default.ProxyUser, Properties.Settings.Default.ProxyPassword);
-                if (Properties.Settings.Default.ProxyDomain != "") nc.Domain = Properties.Settings.Default.ProxyDomain;
+                // disable expect100Continue
+                ServicePointManager.Expect100Continue = false;
+
+                Debug.WriteLine("Creating a network credential using the Proxy User.", "SetGlobalProxy");
+
+                NetworkCredential nc = new NetworkCredential(Settings.Default.ProxyUser, Settings.Default.ProxyPassword);
+
+                if (Properties.Settings.Default.ProxyDomain != "") 
+                    nc.Domain = Properties.Settings.Default.ProxyDomain;
 
                 WebRequest.DefaultWebProxy.Credentials = nc;
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("No Proxy.", "SetGlobalProxy");
+                Debug.WriteLine("No Proxy.", "SetGlobalProxy");
                 WebRequest.DefaultWebProxy.Credentials = null;
             }
 
             // What if the URL for XMDS has a SSL certificate?
             ServicePointManager.ServerCertificateValidationCallback += delegate(object sender, X509Certificate certificate, X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
             {
-                System.Diagnostics.Debug.WriteLine("[IN]", "ServerCertificateValidationCallback");
+                Debug.WriteLine("[IN]", "ServerCertificateValidationCallback");
                 bool validationResult = false;
 
-                System.Diagnostics.Debug.WriteLine(certificate.Subject);
-                System.Diagnostics.Debug.WriteLine(certificate.Issuer);
+                Debug.WriteLine(certificate.Subject);
+                Debug.WriteLine(certificate.Issuer);
 
                 if (sslPolicyErrors != System.Net.Security.SslPolicyErrors.None)
                 {
-                    System.Diagnostics.Debug.WriteLine(sslPolicyErrors.ToString());
+                    Debug.WriteLine(sslPolicyErrors.ToString());
                 }
 
                 validationResult = true;
 
-                System.Diagnostics.Debug.WriteLine("[OUT]", "ServerCertificateValidationCallback");
+                Debug.WriteLine("[OUT]", "ServerCertificateValidationCallback");
                 return validationResult;
             };
 
-            System.Diagnostics.Debug.WriteLine("[OUT]", "SetGlobalProxy");
+            Debug.WriteLine("[OUT]", "SetGlobalProxy");
 
             return;
         }

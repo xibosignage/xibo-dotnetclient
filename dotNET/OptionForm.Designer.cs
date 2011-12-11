@@ -134,7 +134,6 @@ namespace XiboClient
             // 
             // buttonSaveSettings
             // 
-            this.buttonSaveSettings.Enabled = false;
             this.buttonSaveSettings.Location = new System.Drawing.Point(200, 320);
             this.buttonSaveSettings.Name = "buttonSaveSettings";
             this.buttonSaveSettings.Size = new System.Drawing.Size(75, 23);

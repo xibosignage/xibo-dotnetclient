@@ -187,7 +187,7 @@ namespace XiboClient
                     rf.FileType, rf.Id.ToString(), rf.Complete.ToString(), rf.LastChecked.ToString(), rf.Md5);
             }
 
-            xml = string.Format("<files>{0}</files>", xml);
+            xml = string.Format("<files macAddress=\"{1}\">{0}</files>", xml, hardwareKey.MacAddress);
 
             _report.MediaInventoryAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey,
                 hardwareKey.Key, xml);

@@ -27,29 +27,43 @@ namespace XiboClient
 {
     class HardwareKey
     {
+        private string _hardwareKey;
+        private string _macAddress;
+
+        public string MacAddress
+        {
+            get
+            {
+                return _macAddress;
+            }
+        }
+
         public HardwareKey()
         {
             System.Diagnostics.Debug.WriteLine("[IN]", "HardwareKey");
 
             // Get the key from the Settings
-            hardwareKey = Properties.Settings.Default.hardwareKey;
+            _hardwareKey = Properties.Settings.Default.hardwareKey;
 
             // Is the key empty?
-            if (hardwareKey == "")
+            if (_hardwareKey == "")
             {
                 try
                 {
                     // Calculate the Hardware key from the CPUID and Volume Serial
-                    hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+                    _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
                 }
                 catch
                 {
-                    hardwareKey = "Change for Unique Key";
+                    _hardwareKey = "Change for Unique Key";
                 }
 
                 // Store the key
-                Properties.Settings.Default.hardwareKey = hardwareKey;
+                Properties.Settings.Default.hardwareKey = _hardwareKey;
             }
+
+            // Get the Mac Address
+            _macAddress = GetMACAddress();
 
             System.Diagnostics.Debug.WriteLine("[OUT]", "HardwareKey");
         }
@@ -61,7 +75,7 @@ namespace XiboClient
         {
             get 
             { 
-                return this.hardwareKey; 
+                return this._hardwareKey; 
             }
         }
 
@@ -71,10 +85,10 @@ namespace XiboClient
         public void Regenerate()
         {
             // Calculate the Hardware key from the CPUID and Volume Serial
-            hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+            _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
 
             // Store the key
-            Properties.Settings.Default.hardwareKey = hardwareKey;
+            Properties.Settings.Default.hardwareKey = _hardwareKey;
             Properties.Settings.Default.Save();
         }
 
@@ -105,6 +119,7 @@ namespace XiboClient
             ManagementClass mc = new ManagementClass("Win32_NetworkAdapterConfiguration");
             ManagementObjectCollection moc = mc.GetInstances();
             string MACAddress = String.Empty;
+
             foreach (ManagementObject mo in moc)
             {
                 if (MACAddress == String.Empty)  // only return MAC Address from first card
@@ -113,7 +128,7 @@ namespace XiboClient
                 }
                 mo.Dispose();
             }
-            MACAddress = MACAddress.Replace(":", "");
+            
             return MACAddress;
         }
 
@@ -141,7 +156,5 @@ namespace XiboClient
 
             return cpuInfo;
         }
-
-        private string hardwareKey;
     }
 }

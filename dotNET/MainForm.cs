@@ -70,6 +70,9 @@ namespace XiboClient
                 _clientSize = SystemInformation.PrimaryMonitorSize;
             }
 
+            // Setup the proxy information
+            OptionForm.SetGlobalProxy();
+
             _statLog = new StatLog();
 
             this.FormClosing += new FormClosingEventHandler(MainForm_FormClosing);
