@@ -422,6 +422,7 @@ namespace XiboClient
                 if (region.ChildNodes.Count == 0)
                 {
                     Debug.WriteLine("A region with no media detected");
+                    continue;
                 }
 
                 //each region
