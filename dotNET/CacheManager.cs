@@ -222,7 +222,7 @@ namespace XiboClient
         /// <returns></returns>
         public bool IsValidLayout(string layoutFile)
         {
-            Debug.WriteLine("Checking Layout " + layoutFile + " is valid");
+            Debug.WriteLine("Checking if Layout " + layoutFile + " is valid");
 
             if (!IsValidPath(layoutFile))
                 return false;
@@ -245,7 +245,10 @@ namespace XiboClient
 
                         // Get the path and see if its valid
                         if (!IsValidPath(media.InnerText))
+                        {
+                            Debug.WriteLine("Invalid Media: " + media.Attributes["id"].Value.ToString());
                             return false;
+                        }
 
                         break;
 
@@ -253,6 +256,8 @@ namespace XiboClient
                         continue;
                 }
             }
+
+            Debug.WriteLine("Layout " + layoutFile + " is valid");
 
             return true;
         }

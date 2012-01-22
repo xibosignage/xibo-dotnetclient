@@ -1,3 +1,4 @@
+using XiboClient.Properties;
 namespace XiboClient
 {
     partial class MainForm
@@ -38,7 +39,7 @@ namespace XiboClient
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.ClientSize = new System.Drawing.Size(1024, 768);
-            this.DoubleBuffered = true;
+            this.DoubleBuffered = Settings.Default.DoubleBuffering;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";

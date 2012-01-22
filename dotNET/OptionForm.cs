@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-11 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -26,109 +26,86 @@ using System.Drawing;
 using System.Text;
 using System.Net;
 using System.Windows.Forms;
+using XiboClient.Properties;
+using System.Diagnostics;
 
 namespace XiboClient
 {
     public partial class OptionForm : Form
     {
+        private HardwareKey _hardwareKey;
+
+
         public OptionForm()
         {
-            System.Diagnostics.Debug.WriteLine("[IN]", "OptionForm");
+            InitializeComponent();
+
             System.Diagnostics.Debug.WriteLine("Initialise Option Form Components", "OptionForm");
 
             // Get a hardware key here, just in case we havent been able to get one before
-            hardwareKey = new HardwareKey();
+            _hardwareKey = new HardwareKey();
 
-            InitializeComponent();
-
-            System.Diagnostics.Debug.WriteLine("Register some Event Handlers", "OptionForm");
-
-            this.xmds1.RegisterDisplayCompleted += new XiboClient.xmds.RegisterDisplayCompletedEventHandler(xmds1_RegisterDisplayCompleted);
+            // XMDS completed event
+            xmds1.RegisterDisplayCompleted += new XiboClient.xmds.RegisterDisplayCompletedEventHandler(xmds1_RegisterDisplayCompleted);
             
-            // Bind some events to the settings fields
-            textBoxXmdsUri.TextChanged += new EventHandler(setting_TextChanged);
-            textBoxServerKey.TextChanged += new EventHandler(setting_TextChanged);
-            textBoxLibraryPath.TextChanged += new EventHandler(setting_TextChanged);
-            numericUpDownCollect.ValueChanged += new EventHandler(setting_TextChanged);
-            nupScrollStepAmount.ValueChanged += new EventHandler(nupScrollStepAmount_ValueChanged);
-
-            // Bind some events to the proxy settings fields
-            textBoxProxyUser.TextChanged += new EventHandler(proxySetting_TextChanged);
-            maskedTextBoxProxyPass.TextChanged += new EventHandler(proxySetting_TextChanged);
-            textBoxProxyDomain.TextChanged += new EventHandler(proxySetting_TextChanged);
-            tbHardwareKey.TextChanged += new EventHandler(tbHardwareKey_TextChanged);
-
-            clientHeight.ValueChanged += new EventHandler(clientHeight_ValueChanged);
-            clientWidth.ValueChanged += new EventHandler(clientWidth_ValueChanged);
-            offsetX.ValueChanged += new EventHandler(offsetX_ValueChanged);
-            offsetY.ValueChanged += new EventHandler(offsetY_ValueChanged);
-
-            System.Diagnostics.Debug.WriteLine("Getting the Library Path", "OptionForm");
+            // Library Path
             if (Properties.Settings.Default.LibraryPath == "DEFAULT")
             {
+                Debug.WriteLine("Getting the Library Path", "OptionForm");
                 Properties.Settings.Default.LibraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\Xibo Library";
                 Properties.Settings.Default.Save();
             }
 
-            System.Diagnostics.Debug.WriteLine("Getting the display Name", "OptionForm");
-            if (Properties.Settings.Default.displayName == "COMPUTERNAME")
+            // Computer name if the display name hasnt been set yet
+            if (Settings.Default.displayName == "COMPUTERNAME")
             {
-                Properties.Settings.Default.displayName = Environment.MachineName;
-                Properties.Settings.Default.Save();
+                Debug.WriteLine("Getting the display Name", "OptionForm");
+                Settings.Default.displayName = Environment.MachineName;
+                Settings.Default.Save();
             }
 
-            System.Diagnostics.Debug.WriteLine("About to call SetGlobalProxy", "OptionForm");
+            // Set global proxy information
             OptionForm.SetGlobalProxy();
 
-            System.Diagnostics.Debug.WriteLine("[OUT]", "OptionForm");
-        }
+            // Settings Tab
+            textBoxXmdsUri.Text = Settings.Default.serverURI;
+            textBoxServerKey.Text = Settings.Default.ServerKey;
+            textBoxLibraryPath.Text = Settings.Default.LibraryPath;
+            tbHardwareKey.Text = Settings.Default.hardwareKey;
+            numericUpDownCollect.Value = Settings.Default.collectInterval;
+            checkBoxPowerPoint.Checked = Settings.Default.powerpointEnabled;
+            checkBoxStats.Checked = Settings.Default.statsEnabled;
+            nupScrollStepAmount.Value = Settings.Default.scrollStepAmount;
 
-        void offsetY_ValueChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
+            // Register Tab
+            labelXmdsUrl.Text = Settings.Default.XiboClient_xmds_xmds;
+            textBoxDisplayName.Text = Settings.Default.displayName;
 
-        void offsetX_ValueChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
+            // Proxy Tab
+            textBoxProxyUser.Text = Settings.Default.ProxyUser;
+            maskedTextBoxProxyPass.Text = Settings.Default.ProxyPassword;
+            textBoxProxyDomain.Text = Settings.Default.ProxyDomain;
 
-        void clientWidth_ValueChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
+            // Client Tab
+            clientWidth.Value = Settings.Default.sizeX;
+            clientHeight.Value = Settings.Default.sizeY;
+            offsetX.Value = Settings.Default.offsetX;
+            offsetY.Value = Settings.Default.offsetY;
 
-        void clientHeight_ValueChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
+            // Advanced Tab
+            numericUpDownEmptyRegions.Value = Settings.Default.emptyLayoutDuration;
+            cbExpireModifiedLayouts.Checked = Settings.Default.expireModifiedLayouts;
+            enableMouseCb.Checked = Settings.Default.EnableMouse;
+            doubleBufferingCheckBox.Checked = Settings.Default.DoubleBuffering;            
 
-        void nupScrollStepAmount_ValueChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        void tbHardwareKey_TextChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        void proxySetting_TextChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
+            System.Diagnostics.Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
 
         /// <summary>
-        /// Fired when a setting is changed
+        /// Register display completed
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void setting_TextChanged(object sender, EventArgs e)
-        {
-            //Set the button to be enabled
-            buttonSaveSettings.Enabled = true;
-        }
-
         void xmds1_RegisterDisplayCompleted(object sender, XiboClient.xmds.RegisterDisplayCompletedEventArgs e)
         {
             if (e.Error != null)
@@ -145,19 +122,25 @@ namespace XiboClient
             }
         }
 
+        /// <summary>
+        /// Register display clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void buttonRegister_Click(object sender, EventArgs e)
         {
             // Make a new hardware key just in case we have changed it in the form.
-            hardwareKey = new HardwareKey();
+            _hardwareKey = new HardwareKey();
 
             textBoxResults.Text = "Sending Request";
 
-            this.xmds1.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
+            Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
+            xmds1.Url = Settings.Default.XiboClient_xmds_xmds;
 
             Properties.Settings.Default.displayName = textBoxDisplayName.Text;
             Properties.Settings.Default.Save();
 
-            xmds1.RegisterDisplayAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, textBoxDisplayName.Text, Properties.Settings.Default.Version);
+            xmds1.RegisterDisplayAsync(Properties.Settings.Default.ServerKey, _hardwareKey.Key, textBoxDisplayName.Text, Properties.Settings.Default.Version);
         }
 
        /// <summary>
@@ -169,44 +152,43 @@ namespace XiboClient
         {
             try
             {
-                buttonSaveSettings.Enabled = false;
-
                 // Simple settings
-                Properties.Settings.Default.ServerKey = textBoxServerKey.Text;
-                Properties.Settings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
-                Properties.Settings.Default.serverURI = textBoxXmdsUri.Text;
-                Properties.Settings.Default.collectInterval = numericUpDownCollect.Value;
-                Properties.Settings.Default.powerpointEnabled = checkBoxPowerPoint.Checked;
-                Properties.Settings.Default.statsEnabled = checkBoxStats.Checked;
-                Properties.Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
-                Properties.Settings.Default.hardwareKey = tbHardwareKey.Text;
-                Properties.Settings.Default.scrollStepAmount = nupScrollStepAmount.Value;
-                Properties.Settings.Default.EnableMouse = enableMouseCb.Checked;
+                Settings.Default.ServerKey = textBoxServerKey.Text;
+                Settings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
+                Settings.Default.serverURI = textBoxXmdsUri.Text;
+                Settings.Default.collectInterval = numericUpDownCollect.Value;
+                Settings.Default.powerpointEnabled = checkBoxPowerPoint.Checked;
+                Settings.Default.statsEnabled = checkBoxStats.Checked;
+                Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
+                Settings.Default.hardwareKey = tbHardwareKey.Text;
+                Settings.Default.scrollStepAmount = nupScrollStepAmount.Value;
+                Settings.Default.EnableMouse = enableMouseCb.Checked;
+                Settings.Default.DoubleBuffering = doubleBufferingCheckBox.Checked;
 
                 // Also tweak the address of the xmds1
                 xmds1.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
                 labelXmdsUrl.Text = Properties.Settings.Default.XiboClient_xmds_xmds;
 
                 // Proxy Settings
-                Properties.Settings.Default.ProxyUser = textBoxProxyUser.Text;
-                Properties.Settings.Default.ProxyPassword = maskedTextBoxProxyPass.Text;
-                Properties.Settings.Default.ProxyDomain = textBoxProxyDomain.Text;
+                Settings.Default.ProxyUser = textBoxProxyUser.Text;
+                Settings.Default.ProxyPassword = maskedTextBoxProxyPass.Text;
+                Settings.Default.ProxyDomain = textBoxProxyDomain.Text;
 
                 // Change the default Proxy class
                 OptionForm.SetGlobalProxy();
 
                 // Client settings
-                Properties.Settings.Default.sizeX = clientWidth.Value;
-                Properties.Settings.Default.sizeY = clientHeight.Value;
-                Properties.Settings.Default.offsetX = offsetX.Value;
-                Properties.Settings.Default.offsetY = offsetY.Value;
+                Settings.Default.sizeX = clientWidth.Value;
+                Settings.Default.sizeY = clientHeight.Value;
+                Settings.Default.offsetX = offsetX.Value;
+                Settings.Default.offsetY = offsetY.Value;
 
                 // Advanced settings
-                Properties.Settings.Default.expireModifiedLayouts = cbExpireModifiedLayouts.Checked;
-                Properties.Settings.Default.emptyLayoutDuration = numericUpDown1.Value;
+                Settings.Default.expireModifiedLayouts = cbExpireModifiedLayouts.Checked;
+                Settings.Default.emptyLayoutDuration = numericUpDownEmptyRegions.Value;
 
                 // Commit these changes back to the user settings
-                Properties.Settings.Default.Save();
+                Settings.Default.Save();
             }
             catch (Exception ex)
             {
@@ -219,7 +201,6 @@ namespace XiboClient
             this.Close();
         }
 
-        private HardwareKey hardwareKey;
 
         private void buttonLibrary_Click(object sender, EventArgs e)
         {
@@ -233,25 +214,12 @@ namespace XiboClient
             }
         }
 
-        private void buttonReset_Click(object sender, EventArgs e)
-        {
-            if (MessageBox.Show("Reset to Default Settings?", "Xibo: Are you sure", MessageBoxButtons.YesNo) == DialogResult.Yes)
-            {
-                Properties.Settings.Default.Reset();
-            }
-
-            // Make sure the special settings are delt with
-            Properties.Settings.Default.LibraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\Xibo Library";
-            Properties.Settings.Default.displayName = Environment.MachineName;
-            Properties.Settings.Default.Save();
-        }
-
         private void onlineHelpToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // open URL in separate instance of default browser
             try
             {
-                System.Diagnostics.Process.Start("http://www.xibo.org.uk/manual");
+                System.Diagnostics.Process.Start("http://wiki.xibo.org.uk/wiki/Manual:TOC");
             }
             catch
             {
@@ -263,31 +231,6 @@ namespace XiboClient
         {
             About about = new About();
             about.ShowDialog();
-        }
-
-        private void checkBoxPowerPoint_CheckedChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-
-            if (checkBoxPowerPoint.Checked)
-            {
-                // PowerPoint enabled
-                // check for it installed
-
-                // enable the IE setting?
-            }
-
-            return;
-        }
-
-        private void checkBoxStats_CheckedChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        private void checkBoxAudit_CheckedChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
         }
 
         private void buttonDisplayAdmin_Click(object sender, EventArgs e)
@@ -303,97 +246,58 @@ namespace XiboClient
             }
         }
 
-        private void buttonProxySave_Click(object sender, EventArgs e)
-        {
-            
-        }
-
         /// <summary>
         /// Sets up the global proxy
         /// </summary>
         public static void SetGlobalProxy()
         {
-            System.Diagnostics.Debug.WriteLine("[IN]", "SetGlobalProxy");
+            Debug.WriteLine("[IN]", "SetGlobalProxy");
 
-            System.Diagnostics.Debug.WriteLine("Trying to detect a proxy.", "SetGlobalProxy");
+            Debug.WriteLine("Trying to detect a proxy.", "SetGlobalProxy");
             
             if (Properties.Settings.Default.ProxyUser != "")
             {
-                System.Diagnostics.Debug.WriteLine("Creating a network credential using the Proxy User.", "SetGlobalProxy");
-                NetworkCredential nc = new NetworkCredential(Properties.Settings.Default.ProxyUser, Properties.Settings.Default.ProxyPassword);
-                if (Properties.Settings.Default.ProxyDomain != "") nc.Domain = Properties.Settings.Default.ProxyDomain;
+                // disable expect100Continue
+                ServicePointManager.Expect100Continue = false;
+
+                Debug.WriteLine("Creating a network credential using the Proxy User.", "SetGlobalProxy");
+
+                NetworkCredential nc = new NetworkCredential(Settings.Default.ProxyUser, Settings.Default.ProxyPassword);
+
+                if (Properties.Settings.Default.ProxyDomain != "") 
+                    nc.Domain = Properties.Settings.Default.ProxyDomain;
 
                 WebRequest.DefaultWebProxy.Credentials = nc;
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("No Proxy.", "SetGlobalProxy");
+                Debug.WriteLine("No Proxy.", "SetGlobalProxy");
                 WebRequest.DefaultWebProxy.Credentials = null;
             }
 
             // What if the URL for XMDS has a SSL certificate?
             ServicePointManager.ServerCertificateValidationCallback += delegate(object sender, X509Certificate certificate, X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
             {
-                System.Diagnostics.Debug.WriteLine("[IN]", "ServerCertificateValidationCallback");
+                Debug.WriteLine("[IN]", "ServerCertificateValidationCallback");
                 bool validationResult = false;
 
-                System.Diagnostics.Debug.WriteLine(certificate.Subject);
-                System.Diagnostics.Debug.WriteLine(certificate.Issuer);
+                Debug.WriteLine(certificate.Subject);
+                Debug.WriteLine(certificate.Issuer);
 
                 if (sslPolicyErrors != System.Net.Security.SslPolicyErrors.None)
                 {
-                    System.Diagnostics.Debug.WriteLine(sslPolicyErrors.ToString());
+                    Debug.WriteLine(sslPolicyErrors.ToString());
                 }
 
                 validationResult = true;
 
-                System.Diagnostics.Debug.WriteLine("[OUT]", "ServerCertificateValidationCallback");
+                Debug.WriteLine("[OUT]", "ServerCertificateValidationCallback");
                 return validationResult;
             };
 
-            System.Diagnostics.Debug.WriteLine("[OUT]", "SetGlobalProxy");
+            Debug.WriteLine("[OUT]", "SetGlobalProxy");
 
             return;
-        }
-
-        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        private void cbExpireModifiedLayouts_CheckedChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        private void clientWidth_ValueChanged_1(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        private void clientHeight_ValueChanged_1(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        private void offsetX_ValueChanged_1(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        private void offsetY_ValueChanged_1(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        private void textBoxDisplayName_TextChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
-        }
-
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            buttonSaveSettings.Enabled = true;
         }
     }
 }
