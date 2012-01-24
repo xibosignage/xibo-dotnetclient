@@ -291,6 +291,10 @@ function init()
                     foreach (SyndicationItem item in feed.Items)
                         countItems++;
 
+                    // What if the _numItems we want is 0? Take them all.
+                    if (_numItems == 0)
+                        _numItems = countItems;
+
                     // Make sure we dont have a count higher than the actual number of items returned
                     if (_numItems > countItems)
                         _numItems = countItems;
