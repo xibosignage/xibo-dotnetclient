@@ -406,5 +406,29 @@ namespace XiboClient.Properties {
                 this["DoubleBuffering"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public int MaxConcurrentDownloads {
+            get {
+                return ((int)(this["MaxConcurrentDownloads"]));
+            }
+            set {
+                this["MaxConcurrentDownloads"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("info")]
+        public string LogLevel {
+            get {
+                return ((string)(this["LogLevel"]));
+            }
+            set {
+                this["LogLevel"] = value;
+            }
+        }
     }
 }

@@ -192,6 +192,10 @@ namespace XiboClient
 
                     try
                     {
+                        // Check to see if this file has been deleted since the Cache Manager registered it
+                        if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                            return false;
+
                         // Check to see if this file has been modified since the MD5 cache
                         // If it has then we assume invalid, otherwise its valid
                         DateTime lastWrite = File.GetLastWriteTime(Properties.Settings.Default.LibraryPath + @"\" + path);

@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2011 Daniel Garner
+ * Copyright (C) 2011-12 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -27,18 +27,37 @@ using System.Xml;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Xml.Serialization;
+using XiboClient.Properties;
+
+/// 17/02/12 Dan Enriched to also manage currently downloading files
 
 namespace XiboClient
 {
     public class RequiredFiles
     {
         private XmlDocument _requiredFilesXml;
-        public Collection<RequiredFile> _requiredFiles;
+        public Collection<RequiredFile> RequiredFileList;
         private xmds.xmds _report;
+
+        /// <summary>
+        /// The Current CacheManager for this Xibo Client
+        /// </summary>
+        public CacheManager CurrentCacheManager
+        {
+            get
+            {
+                return _cacheManager;
+            }
+            set
+            {
+                _cacheManager = value;
+            }
+        }
+        private CacheManager _cacheManager;
 
         public RequiredFiles()
         {
-            _requiredFiles = new Collection<RequiredFile>();
+            RequiredFileList = new Collection<RequiredFile>();
 
             // Create a webservice call
             _report = new XiboClient.xmds.xmds();
@@ -64,27 +83,65 @@ namespace XiboClient
                 XmlAttributeCollection attributes = file.Attributes;
 
                 rf.FileType = attributes["type"].Value;
-                rf.Complete = 0;
-                rf.Md5 = "";
-                rf.LastChecked = DateTime.Now;
 
+                if (rf.FileType != "media" && rf.FileType != "layout")
+                    continue;
+
+                rf.Md5 = attributes["md5"].Value;
+                rf.LastChecked = DateTime.Now;
+                rf.ChunkOffset = 0;
+                rf.ChunkSize = 0;
+
+                rf.Downloading = false;
+                rf.Complete = false;
+                
+                // Fill in some information that we already know
                 if (rf.FileType == "media")
                 {
                     string[] filePart = attributes["path"].Value.Split('.');
                     rf.Id = int.Parse(filePart[0]);
                     rf.Path = attributes["path"].Value;
+                    rf.Size = int.Parse(attributes["size"].Value);
+                    rf.ChunkSize = 512000;
                 }
                 else if (rf.FileType == "layout")
                 {
                     rf.Id = int.Parse(attributes["path"].Value);
                     rf.Path = attributes["path"].Value + ".xlf";
                 }
-                else
+
+                Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "Building required file node for " + rf.Id.ToString()), LogType.Audit.ToString());
+
+                // Does this file exist?
+                if (File.Exists(Settings.Default.LibraryPath + @"\" + rf.Path))
                 {
-                    continue;
+                    // Compare MD5 of the file we currently have, to what we should have
+                    if (rf.Md5 != _cacheManager.GetMD5(rf.Path))
+                    {
+                        Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "MD5 different for existing file: " + rf.Path), LogType.Info.ToString());
+
+                        // They are different
+                        _cacheManager.Remove(rf.Path);
+
+                        // TODO: This might be bad! Delete the old file as it is wrong (what if it is currently running?!)
+                        try
+                        {
+                            File.Delete(Properties.Settings.Default.LibraryPath + @"\" + rf.Path);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine(new LogMessage("CompareAndCollect", "Unable to delete incorrect file because: " + ex.Message));
+                        }
+                    }
+                    else
+                    {
+                        // The MD5 is equal - we already have an up to date version of this file.
+                        rf.Complete = true;
+                        _cacheManager.Add(rf.Path + ".xlf", rf.Md5);
+                    }
                 }
 
-                _requiredFiles.Add(rf);
+                RequiredFileList.Add(rf);
             }
         }
 
@@ -101,24 +158,40 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Get Required File using the ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public RequiredFile GetRequiredFile(int id)
+        {
+            foreach (RequiredFile rf in RequiredFileList)
+            {
+                if (rf.Id == id)
+                    return rf;
+            }
+
+            throw new FileNotFoundException("Not required file found with ID: " + id.ToString());
+        }
+
+        /// <summary>
         /// Mark a RequiredFile as complete
         /// </summary>
         /// <param name="id"></param>
         /// <param name="md5"></param>
         public void MarkComplete(int id, string md5)
         {
-            foreach (RequiredFile rf in _requiredFiles)
+            foreach (RequiredFile rf in RequiredFileList)
             {
                 if (rf.Id == id)
                 {
                     RequiredFile newRf = rf;
 
-                    newRf.Complete = 1;
+                    newRf.Complete = true;
                     newRf.Md5 = md5;
 
 
-                    _requiredFiles.Add(newRf);
-                    _requiredFiles.Remove(rf);
+                    RequiredFileList.Add(newRf);
+                    RequiredFileList.Remove(rf);
 
                     return;
                 }
@@ -132,17 +205,17 @@ namespace XiboClient
         /// <param name="md5"></param>
         public void MarkIncomplete(int id, string md5)
         {
-            foreach (RequiredFile rf in _requiredFiles)
+            foreach (RequiredFile rf in RequiredFileList)
             {
                 if (rf.Id == id)
                 {
                     RequiredFile newRf = rf;
 
-                    newRf.Complete = 0;
+                    newRf.Complete = false;
                     newRf.Md5 = md5;
 
-                    _requiredFiles.Add(newRf);
-                    _requiredFiles.Remove(rf);
+                    RequiredFileList.Add(newRf);
+                    RequiredFileList.Remove(rf);
 
                     return;
                 }
@@ -176,15 +249,17 @@ namespace XiboClient
         /// </summary>
         public void ReportInventory()
         {
+            Trace.WriteLine(new LogMessage("RequiredFiles - ReportInventory", "Reporting Inventory"), LogType.Info.ToString());
+
             HardwareKey hardwareKey = new HardwareKey();
 
             // Build the XML required by media file
             string xml = "";
             
-            foreach (RequiredFile rf in _requiredFiles)
+            foreach (RequiredFile rf in RequiredFileList)
             {
                 xml += string.Format("<file type=\"{0}\" id=\"{1}\" complete=\"{2}\" lastChecked=\"{3}\" md5=\"{4}\" />", 
-                    rf.FileType, rf.Id.ToString(), rf.Complete.ToString(), rf.LastChecked.ToString(), rf.Md5);
+                    rf.FileType, rf.Id.ToString(), (rf.Complete) ? "1" : "0", rf.LastChecked.ToString(), rf.Md5);
             }
 
             xml = string.Format("<files macAddress=\"{1}\">{0}</files>", xml, hardwareKey.MacAddress);
@@ -198,9 +273,16 @@ namespace XiboClient
     {
         public string FileType;
         public int Id;
-        public int Complete;
         public DateTime LastChecked;
         public string Md5;
         public string Path;
+
+        public bool Downloading;
+        public bool Complete;
+
+        public int ChunkOffset;
+        public int ChunkSize;
+        public int Size;
+        public int Retrys;
     }
 }

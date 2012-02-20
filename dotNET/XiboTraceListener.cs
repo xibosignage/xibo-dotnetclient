@@ -26,6 +26,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Forms;
 
+/// 17/02/12 Dan Changed to always Log audit if no category is given
+
 namespace XiboClient
 {
     class XiboTraceListener : TraceListener
@@ -193,12 +195,12 @@ namespace XiboClient
 
         public override void Write(string message)
         {
-            AddToCollection(message, "Audit");
+            AddToCollection(message, LogType.Audit.ToString());
         }
 
         public override void Write(object o)
         {
-            AddToCollection(o.ToString(), "Audit");
+            AddToCollection(o.ToString(), LogType.Audit.ToString());
         }
 
         public override void Write(string message, string category)

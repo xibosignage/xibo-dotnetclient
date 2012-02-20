@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-10 Daniel Garner and James Packer
+ * Copyright (C) 2006-12 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -32,6 +32,7 @@ using System.IO;
 using System.Drawing.Imaging;
 using System.Xml.Serialization;
 using System.Diagnostics;
+using XiboClient.Log;
 
 namespace XiboClient
 {
@@ -51,6 +52,8 @@ namespace XiboClient
         private StatLog _statLog;
         private Stat _stat;
         private CacheManager _cacheManager;
+
+        private ClientInfo _clientInfoForm;
 
         public MainForm()
         {
@@ -77,6 +80,37 @@ namespace XiboClient
 
             this.FormClosing += new FormClosingEventHandler(MainForm_FormClosing);
             this.Shown += new EventHandler(MainForm_Shown);
+
+            // Create the info form
+            _clientInfoForm = new ClientInfo();
+            _clientInfoForm.TopMost = true;
+            _clientInfoForm.Hide();
+
+            // Trace listener for Client Info
+            ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener(_clientInfoForm);
+            Trace.Listeners.Add(clientInfoTraceListener);
+
+            // TODO: Create a key listener - to show the Info Form.
+            KeyDown += new KeyEventHandler(MainForm_KeyDown);
+
+            Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
+        }
+
+        /// <summary>
+        /// Capture the key down event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void MainForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.I)
+            {
+                // Toggle
+                if (_clientInfoForm.Visible)
+                    _clientInfoForm.Hide();
+                else
+                    _clientInfoForm.Show();
+            }
         }
 
         /// <summary>
@@ -95,7 +129,7 @@ namespace XiboClient
             try
             {
                 // Create the Schedule
-                _schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager);
+                _schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager, ref _clientInfoForm);
 
                 // Bind to the schedule change event - notifys of changes to the schedule
                 _schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
@@ -141,9 +175,17 @@ namespace XiboClient
             Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + Application.UserAppDataPath), LogType.Info.ToString());
         }
 
+        /// <summary>
+        /// Called as the Main Form starts to close
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             // We want to tidy up some stuff as this form closes.
+
+            // Stop the schedule object
+            _schedule.Stop();
 
             // Flush the stats
             _statLog.Flush();
@@ -232,6 +274,11 @@ namespace XiboClient
             }
         }
 
+        /// <summary>
+        /// Expire the Splash Screen
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void splashScreenTimer_Tick(object sender, EventArgs e)
         {
             Debug.WriteLine(new LogMessage("timer_Tick", "Loading next layout after splashscreen"));

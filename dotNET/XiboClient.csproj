@@ -98,7 +98,6 @@
     <Compile Include="DataSetView.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="FileCollector.cs" />
     <Compile Include="Flash.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -107,6 +106,13 @@
     <Compile Include="Image.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Log\ClientInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Log\ClientInfo.Designer.cs">
+      <DependentUpon>ClientInfo.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Log\ClientInfoTraceListener.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -195,6 +201,9 @@
     </Compile>
     <Compile Include="WindowAnimator.cs" />
     <Compile Include="XiboTraceListener.cs" />
+    <Compile Include="XmdsAgents\FileAgent.cs" />
+    <Compile Include="XmdsAgents\RequiredFilesAgent.cs" />
+    <Compile Include="XmdsAgents\ScheduleAgent.cs" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="AxShockwaveFlashObjects">
@@ -295,6 +304,10 @@
     <EmbeddedResource Include="Resources\HtmlTemplate.htm" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Log\ClientInfo.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ClientInfo.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\splash.jpg">
     </EmbeddedResource>
   </ItemGroup>
