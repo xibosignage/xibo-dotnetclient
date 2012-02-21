@@ -51,6 +51,18 @@ namespace XiboClient.Log
         }
 
         /// <summary>
+        /// Required Files Object
+        /// </summary>
+        public RequiredFiles RequiredFiles
+        {
+            set
+            {
+                _requiredFiles = value;
+            }
+        }
+        private RequiredFiles _requiredFiles;
+
+        /// <summary>
         /// Client Info Object
         /// </summary>
         public ClientInfo()

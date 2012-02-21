@@ -83,7 +83,6 @@ namespace XiboClient
 
             // Create the info form
             _clientInfoForm = new ClientInfo();
-            _clientInfoForm.TopMost = true;
             _clientInfoForm.Hide();
 
             // Trace listener for Client Info
@@ -109,7 +108,10 @@ namespace XiboClient
                 if (_clientInfoForm.Visible)
                     _clientInfoForm.Hide();
                 else
+                {
                     _clientInfoForm.Show();
+                    _clientInfoForm.BringToFront();
+                }
             }
         }
 

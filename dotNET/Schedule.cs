@@ -33,6 +33,7 @@ using XiboClient.Properties;
 using XiboClient.Log;
 
 /// 17/02/12 Dan Removed Schedule call, introduced ScheduleAgent
+/// 21/02/12 Dan Named the threads
 
 namespace XiboClient
 {
@@ -107,6 +108,7 @@ namespace XiboClient
 
             // Create a thread for the Schedule Agent to run in - but dont start it up yet.
             _scheduleAgentThread = new Thread(new ThreadStart(_scheduleAgent.Run));
+            _scheduleAgentThread.Name = "ScheduleAgentThread";
 
             // Create a RequiredFilesAgent
             _requiredFilesAgent = new RequiredFilesAgent();
@@ -116,6 +118,7 @@ namespace XiboClient
 
             // Create a thread for the RequiredFiles Agent to run in - but dont start it up yet.
             _requiredFilesAgentThread = new Thread(new ThreadStart(_requiredFilesAgent.Run));
+            _requiredFilesAgentThread.Name = "RequiredFilesAgentThread";
         }
 
         /// <summary>

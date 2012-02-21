@@ -33,7 +33,7 @@ namespace XiboClient.XmdsAgents
 {
     class RequiredFilesAgent
     {
-        public object _locker = new object();
+        private object _locker = new object();
         public bool forceStop = false;
 
         private RequiredFiles _requiredFiles;
@@ -140,6 +140,10 @@ namespace XiboClient.XmdsAgents
                                 _requiredFiles.CurrentCacheManager = _cacheManager;
                                 _requiredFiles.RequiredFilesXml = xml;
 
+                                // Pass the new required files to the ClientInfo
+                                _clientInfoForm.RequiredFiles = _requiredFiles;
+
+                                // List of Threads to start
                                 List<Thread> threadsToStart = new List<Thread>();
 
                                 // Required files now contains a list of files to download (this will be updated by the various worker threads)
@@ -155,7 +159,8 @@ namespace XiboClient.XmdsAgents
                                     fileAgent.HardwareKey = _hardwareKey;
                                     fileAgent.RequiredFiles = _requiredFiles;
                                     fileAgent.RequiredFileId = fileToDownload.Id;
-                                    
+                                    fileAgent.OnComplete += new FileAgent.OnCompleteDelegate(fileAgent_OnComplete);
+                                                                        
                                     // Create the thread and add it to the list of threads to start
                                     Thread thread = new Thread(new ThreadStart(fileAgent.Run));
                                     thread.Name = "FileAgent_Id_" + fileToDownload.Id.ToString();
@@ -163,7 +168,7 @@ namespace XiboClient.XmdsAgents
                                 }
 
                                 // Start the threads after we have built them all - otherwise they will modify the collection we 
-                                // are itterating over.
+                                // are iterating over.
                                 foreach (Thread thread in threadsToStart)
                                     thread.Start();
 
@@ -192,6 +197,16 @@ namespace XiboClient.XmdsAgents
                 // Sleep this thread until the next collection interval
                 Thread.Sleep((int)Settings.Default.collectInterval * 1000);
             }
+        }
+
+        /// <summary>
+        /// FileAgent OnComplete
+        /// </summary>
+        /// <param name="fileId"></param>
+        void fileAgent_OnComplete(int fileId)
+        {
+            // Notify the player thread using another event (chained events? bad idea?)
+            Trace.WriteLine(new LogMessage("RequiredFilesAgent - fileAgent_OnComplete", "FileId finished downloading" + fileId.ToString()));
         }
     }
 }

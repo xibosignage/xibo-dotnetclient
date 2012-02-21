@@ -26,12 +26,20 @@ using System.Diagnostics;
 using System.IO;
 
 /// 17/02/12 Dan Created
+/// 21/02/12 Dan Added OnComplete Delegate and event
 
 namespace XiboClient.XmdsAgents
 {
     class FileAgent
     {
         private xmds.xmds _xmds;
+
+        /// <summary>
+        /// OnComplete delegate
+        /// </summary>
+        /// <param name="fileId"></param>
+        public delegate void OnCompleteDelegate(int fileId);
+        public event OnCompleteDelegate OnComplete;
 
         /// <summary>
         /// Client Hardware key
@@ -185,9 +193,8 @@ namespace XiboClient.XmdsAgents
                     Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5. " + file.Path), LogType.Error.ToString());
                 }
 
-                // TODO: We somehow need to inform the Player thread that a file has been modified.
-                // Particularly Layout Files.
-                // Schedule class has a "LayoutFileModified" method that does the necessaries
+                // TODO: Inform the Player thread that a file has been modified.
+                OnComplete(file.Id);
             }
             catch (Exception ex)
             {
