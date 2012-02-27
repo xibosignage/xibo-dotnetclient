@@ -115,6 +115,7 @@ namespace XiboClient
             _requiredFilesAgent.CurrentCacheManager = cacheManager;
             _requiredFilesAgent.HardwareKey = _hardwareKey.Key;
             _requiredFilesAgent.ClientInfoForm = _clientInfoForm;
+            _requiredFilesAgent.OnComplete += new RequiredFilesAgent.OnCompleteDelegate(LayoutFileModified);
 
             // Create a thread for the RequiredFiles Agent to run in - but dont start it up yet.
             _requiredFilesAgentThread = new Thread(new ThreadStart(_requiredFilesAgent.Run));
@@ -222,7 +223,7 @@ namespace XiboClient
         /// <param name="layoutPath"></param>
         private void LayoutFileModified(string layoutPath)
         {
-            System.Diagnostics.Debug.WriteLine("Layout file changed");
+            Debug.WriteLine("Layout file changed");
 
             // Are we set to expire modified layouts? If not then just return as if
             // nothing had happened.

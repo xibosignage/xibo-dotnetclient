@@ -28,6 +28,7 @@ using XiboClient.Log;
 
 /// 17/02/12 Dan Created
 /// 20/02/12 Dan Added ClientInfo
+/// 27/02/12 Dan Updated to raise an event when a file has completed downloading
 
 namespace XiboClient.XmdsAgents
 {
@@ -35,6 +36,13 @@ namespace XiboClient.XmdsAgents
     {
         private object _locker = new object();
         public bool forceStop = false;
+
+        /// <summary>
+        /// OnComplete delegate
+        /// </summary>
+        /// <param name="fileId"></param>
+        public delegate void OnCompleteDelegate(string path);
+        public event OnCompleteDelegate OnComplete;
 
         private RequiredFiles _requiredFiles;
         private Semaphore _fileDownloadLimit;
@@ -181,7 +189,13 @@ namespace XiboClient.XmdsAgents
                                 // Write the Cache Manager to Disk
                                 _cacheManager.WriteCacheManager();
 
-                                _clientInfoForm.RequiredFilesStatus = string.Format("Sleeping: {0} files to download", threadsToStart.Count.ToString());
+                                // Set the status on the client info screen
+                                if (threadsToStart.Count == 0)
+                                    _clientInfoForm.RequiredFilesStatus = "Sleeping";
+                                else
+                                    _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", threadsToStart.Count.ToString());
+                                
+                                _clientInfoForm.UpdateRequiredFiles();
                             }
                         }
                     }
@@ -207,6 +221,23 @@ namespace XiboClient.XmdsAgents
         {
             // Notify the player thread using another event (chained events? bad idea?)
             Trace.WriteLine(new LogMessage("RequiredFilesAgent - fileAgent_OnComplete", "FileId finished downloading" + fileId.ToString()));
+
+            // Get the required file associated with this ID
+            RequiredFile rf = _requiredFiles.GetRequiredFile(fileId);
+
+            // Set the status on the client info screen
+            if (_requiredFiles.FilesToDownload == 0)
+                _clientInfoForm.RequiredFilesStatus = "Sleeping";
+            else
+                _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", _requiredFiles.FilesToDownload.ToString());
+
+            _clientInfoForm.UpdateRequiredFiles();
+
+            if (rf.FileType == "layout")
+            {
+                // Raise an event to say it is completed
+                OnComplete(rf.Path);
+            }
         }
     }
 }

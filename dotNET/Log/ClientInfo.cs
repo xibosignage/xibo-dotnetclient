@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Xml.Serialization;
 
 namespace XiboClient.Log
 {
@@ -94,6 +95,15 @@ namespace XiboClient.Log
         }
 
         /// <summary>
+        /// Set the required files textbox
+        /// </summary>
+        /// <param name="status"></param>
+        public void SetRequiredFilesTextBox(string status)
+        {
+            requiredFilesTextBox.Text = status;
+        }
+
+        /// <summary>
         /// Adds a log message
         /// </summary>
         /// <param name="message"></param>
@@ -122,6 +132,32 @@ namespace XiboClient.Log
             logDataGridView.Rows[newRow].Cells[1].Value = logType.ToString();
             logDataGridView.Rows[newRow].Cells[2].Value = logMessage._method;
             logDataGridView.Rows[newRow].Cells[3].Value = logMessage._message;
+        }
+
+        /// <summary>
+        /// Update the required files text box
+        /// </summary>
+        public void UpdateRequiredFiles()
+        {
+            string requiredFilesTextBox = "";
+
+            if (_requiredFiles != null)
+            {
+                foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
+                {
+                    string percentComplete = (requiredFile.Downloading) ? (requiredFile.ChunkOffset / requiredFile.Size).ToString() : "100";
+                    requiredFilesTextBox = requiredFilesTextBox + requiredFile.FileType + ": " + requiredFile.Path + ". (" + percentComplete + "%)" + Environment.NewLine;
+                }
+            }
+
+            if (InvokeRequired)
+            {
+                BeginInvoke(new StatusDelegate(SetRequiredFilesTextBox), requiredFilesTextBox);
+            }
+            else
+            {
+                SetRequiredFilesTextBox(requiredFilesTextBox);
+            }
         }
 
         /// <summary>

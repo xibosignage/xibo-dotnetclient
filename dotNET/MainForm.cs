@@ -89,7 +89,8 @@ namespace XiboClient
             ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener(_clientInfoForm);
             Trace.Listeners.Add(clientInfoTraceListener);
 
-            // TODO: Create a key listener - to show the Info Form.
+            // Create a key listener - to show the Info Form.
+            KeyPreview = true;
             KeyDown += new KeyEventHandler(MainForm_KeyDown);
 
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
@@ -237,7 +238,7 @@ namespace XiboClient
         /// <param name="layoutPath"></param>
         void schedule_ScheduleChangeEvent(string layoutPath, int scheduleId, int layoutId)
         {
-            System.Diagnostics.Debug.WriteLine(String.Format("Schedule Changing to {0}", layoutPath), "MainForm - ScheduleChangeEvent");
+            Debug.WriteLine(String.Format("Schedule Changing to {0}", layoutPath), "MainForm - ScheduleChangeEvent");
 
             _scheduleId = scheduleId;
             _layoutId = layoutId;
@@ -317,14 +318,16 @@ namespace XiboClient
                 try
                 {
                     // try to open the layout file
-                    FileStream fs = File.Open(layoutPath, FileMode.Open, FileAccess.Read, FileShare.Write);
+                    using (FileStream fs = File.Open(layoutPath, FileMode.Open, FileAccess.Read, FileShare.Write))
+                    {
+                        using (XmlReader reader = XmlReader.Create(fs))
+                        {
+                            layoutXml.Load(reader);
 
-                    XmlReader reader = XmlReader.Create(fs);
-
-                    layoutXml.Load(reader);
-
-                    reader.Close();
-                    fs.Close();
+                            reader.Close();
+                        }
+                        fs.Close();
+                    }
                 }
                 catch (Exception ex)
                 {

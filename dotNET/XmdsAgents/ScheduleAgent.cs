@@ -98,7 +98,7 @@ namespace XiboClient.XmdsAgents
                     {
                         Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Woken and Lock Obtained"), LogType.Info.ToString());
 
-                        _clientInfoForm.ScheduleStatus = "Running - Get Data from Xibo Server";
+                        _clientInfoForm.ScheduleStatus = "Running: Get Data from Xibo Server";
 
                         using (xmds.xmds xmds = new xmds.xmds())
                         {
@@ -111,7 +111,7 @@ namespace XiboClient.XmdsAgents
                             // Set the flag to indicate we have a connection to XMDS
                             Settings.Default.XmdsLastConnection = DateTime.Now;
 
-                            _clientInfoForm.ScheduleStatus = "Running - Data Received";
+                            _clientInfoForm.ScheduleStatus = "Running: Data Received";
 
                             // Hash of the result
                             string md5NewSchedule = Hashes.MD5(scheduleXml);
@@ -131,7 +131,7 @@ namespace XiboClient.XmdsAgents
                                 _scheduleManager.RefreshSchedule = true;
                             }
 
-                            _clientInfoForm.ScheduleStatus = "Waiting: Schedule up to date";
+                            _clientInfoForm.ScheduleStatus = "Sleeping";
                         }
                     }
                     catch (Exception ex)

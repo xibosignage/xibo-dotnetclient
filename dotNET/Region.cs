@@ -55,7 +55,6 @@ namespace XiboClient
             _statLog = statLog;
 
             // Store the cache manager
-            // TODO: What happens if the cachemanger changes during the lifecycle of this region?
             _cacheManager = cacheManager;
 
             //default options

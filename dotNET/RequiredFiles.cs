@@ -40,6 +40,25 @@ namespace XiboClient
         private xmds.xmds _report;
 
         /// <summary>
+        /// Files needing download
+        /// </summary>
+        public int FilesToDownload
+        {
+            get
+            {
+                int count = 0;
+
+                foreach (RequiredFile rf in RequiredFileList)
+                {
+                    if (rf.Downloading)
+                        count++;
+                }
+
+                return count;
+            }
+        }
+
+        /// <summary>
         /// The Current CacheManager for this Xibo Client
         /// </summary>
         public CacheManager CurrentCacheManager
@@ -120,6 +139,8 @@ namespace XiboClient
                     {
                         Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "MD5 different for existing file: " + rf.Path), LogType.Info.ToString());
 
+                        // TODO: Resume the file download under certain conditions. Make sure its not bigger than it should be. Make sure it is fairly fresh
+
                         // They are different
                         _cacheManager.Remove(rf.Path);
 
@@ -170,7 +191,7 @@ namespace XiboClient
                     return rf;
             }
 
-            throw new FileNotFoundException("Not required file found with ID: " + id.ToString());
+            throw new FileNotFoundException("No required file found with ID: " + id.ToString());
         }
 
         /// <summary>

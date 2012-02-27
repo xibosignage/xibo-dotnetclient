@@ -41,6 +41,7 @@ namespace XiboClient.Log
             this.scheduleStatusLabel = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.requiredFilesStatus = new System.Windows.Forms.Label();
+            this.requiredFilesTextBox = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
@@ -148,11 +149,20 @@ namespace XiboClient.Log
             this.requiredFilesStatus.TabIndex = 4;
             this.requiredFilesStatus.Text = "Not Started";
             // 
+            // requiredFilesTextBox
+            // 
+            this.requiredFilesTextBox.Location = new System.Drawing.Point(12, 80);
+            this.requiredFilesTextBox.Multiline = true;
+            this.requiredFilesTextBox.Name = "requiredFilesTextBox";
+            this.requiredFilesTextBox.Size = new System.Drawing.Size(786, 249);
+            this.requiredFilesTextBox.TabIndex = 5;
+            // 
             // ClientInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(810, 752);
+            this.Controls.Add(this.requiredFilesTextBox);
             this.Controls.Add(this.requiredFilesStatus);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.scheduleStatusLabel);
@@ -178,5 +188,6 @@ namespace XiboClient.Log
         private System.Windows.Forms.Label scheduleStatusLabel;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label requiredFilesStatus;
+        private System.Windows.Forms.TextBox requiredFilesTextBox;
     }
 }
