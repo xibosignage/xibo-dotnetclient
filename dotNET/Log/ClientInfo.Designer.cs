@@ -33,15 +33,16 @@ namespace XiboClient.Log
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ClientInfo));
             this.logDataGridView = new System.Windows.Forms.DataGridView();
-            this.Date = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Type = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Method = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Message = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label1 = new System.Windows.Forms.Label();
             this.scheduleStatusLabel = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.requiredFilesStatus = new System.Windows.Forms.Label();
             this.requiredFilesTextBox = new System.Windows.Forms.TextBox();
+            this.Thread = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Date = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Type = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Method = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Message = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
@@ -59,6 +60,7 @@ namespace XiboClient.Log
             this.logDataGridView.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.logDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.logDataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Thread,
             this.Date,
             this.Type,
             this.Method,
@@ -84,34 +86,6 @@ namespace XiboClient.Log
             this.logDataGridView.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.logDataGridView.Size = new System.Drawing.Size(786, 391);
             this.logDataGridView.TabIndex = 0;
-            // 
-            // Date
-            // 
-            this.Date.HeaderText = "Date";
-            this.Date.Name = "Date";
-            this.Date.ReadOnly = true;
-            this.Date.Width = 55;
-            // 
-            // Type
-            // 
-            this.Type.HeaderText = "Type";
-            this.Type.Name = "Type";
-            this.Type.ReadOnly = true;
-            this.Type.Width = 56;
-            // 
-            // Method
-            // 
-            this.Method.HeaderText = "Method";
-            this.Method.Name = "Method";
-            this.Method.ReadOnly = true;
-            this.Method.Width = 68;
-            // 
-            // Message
-            // 
-            this.Message.HeaderText = "Message";
-            this.Message.Name = "Message";
-            this.Message.ReadOnly = true;
-            this.Message.Width = 75;
             // 
             // label1
             // 
@@ -154,8 +128,44 @@ namespace XiboClient.Log
             this.requiredFilesTextBox.Location = new System.Drawing.Point(12, 80);
             this.requiredFilesTextBox.Multiline = true;
             this.requiredFilesTextBox.Name = "requiredFilesTextBox";
+            this.requiredFilesTextBox.ReadOnly = true;
             this.requiredFilesTextBox.Size = new System.Drawing.Size(786, 249);
             this.requiredFilesTextBox.TabIndex = 5;
+            // 
+            // Thread
+            // 
+            this.Thread.HeaderText = "Thread";
+            this.Thread.Name = "Thread";
+            this.Thread.ReadOnly = true;
+            this.Thread.Width = 66;
+            // 
+            // Date
+            // 
+            this.Date.HeaderText = "Date";
+            this.Date.Name = "Date";
+            this.Date.ReadOnly = true;
+            this.Date.Width = 55;
+            // 
+            // Type
+            // 
+            this.Type.HeaderText = "Type";
+            this.Type.Name = "Type";
+            this.Type.ReadOnly = true;
+            this.Type.Width = 56;
+            // 
+            // Method
+            // 
+            this.Method.HeaderText = "Method";
+            this.Method.Name = "Method";
+            this.Method.ReadOnly = true;
+            this.Method.Width = 68;
+            // 
+            // Message
+            // 
+            this.Message.HeaderText = "Message";
+            this.Message.Name = "Message";
+            this.Message.ReadOnly = true;
+            this.Message.Width = 75;
             // 
             // ClientInfo
             // 
@@ -180,14 +190,15 @@ namespace XiboClient.Log
         #endregion
 
         private System.Windows.Forms.DataGridView logDataGridView;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Date;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Type;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Method;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Message;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label scheduleStatusLabel;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label requiredFilesStatus;
         private System.Windows.Forms.TextBox requiredFilesTextBox;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Thread;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Date;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Type;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Method;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Message;
     }
 }

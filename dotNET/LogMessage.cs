@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2009 Daniel Garner
+ * Copyright (C) 2009-2012 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -22,11 +22,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using System.Diagnostics;
+using System.Threading;
 
 namespace XiboClient
 {
     public class LogMessage
     {
+        public string _thread;
         public string _method;
         public string _message;
         public int _scheduleId;
@@ -39,6 +41,7 @@ namespace XiboClient
             LogDate = DateTime.Now;
             _method = method;
             _message = message;
+            _thread = Thread.CurrentThread.Name;
         }
 
         public LogMessage(String method, String message, int scheduleId, int layoutId)
@@ -48,6 +51,7 @@ namespace XiboClient
             _message = message;
             _scheduleId = scheduleId;
             _layoutId = layoutId;
+            _thread = Thread.CurrentThread.Name;
         }
 
         public LogMessage(String method, String message, int scheduleId, int layoutId, int mediaId)
@@ -58,6 +62,7 @@ namespace XiboClient
             _scheduleId = scheduleId;
             _layoutId = layoutId;
             _mediaId = mediaId;
+            _thread = Thread.CurrentThread.Name;
         }
 
         /// <summary>
@@ -72,6 +77,7 @@ namespace XiboClient
             LogDate = DateTime.Parse(xml.GetElementsByTagName("logdate").Item(0).InnerText.ToString());
             _message = xml.GetElementsByTagName("message").Item(0).InnerText.ToString();
             _method = xml.GetElementsByTagName("method").Item(0).InnerText.ToString();
+            _thread = xml.GetElementsByTagName("thread").Item(0).InnerText.ToString();
         }
 
         public override string ToString()
@@ -83,6 +89,7 @@ namespace XiboClient
             theMessage = String.Format("<message>{0}</message>", _message);
             theMessage += String.Format("<method>{0}</method>", _method);
             theMessage += String.Format("<logdate>{0}</logdate>", LogDate);
+            theMessage += String.Format("<thread>{0}</thread>", _thread);
 
             if (_scheduleId != 0) theMessage += String.Format("<scheduleid>{0}</scheduleid>", _scheduleId.ToString());
             if (_layoutId != 0) theMessage += String.Format("<layoutid>{0}</layoutid>", _scheduleId.ToString());

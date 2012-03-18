@@ -128,10 +128,11 @@ namespace XiboClient.Log
                 logMessage = new LogMessage("Unknown", message);
             }
 
-            logDataGridView.Rows[newRow].Cells[0].Value = logMessage.LogDate.ToString();
-            logDataGridView.Rows[newRow].Cells[1].Value = logType.ToString();
-            logDataGridView.Rows[newRow].Cells[2].Value = logMessage._method;
-            logDataGridView.Rows[newRow].Cells[3].Value = logMessage._message;
+            logDataGridView.Rows[newRow].Cells[0].Value = logMessage._thread;
+            logDataGridView.Rows[newRow].Cells[1].Value = logMessage.LogDate.ToString();
+            logDataGridView.Rows[newRow].Cells[2].Value = logType.ToString();
+            logDataGridView.Rows[newRow].Cells[3].Value = logMessage._method;
+            logDataGridView.Rows[newRow].Cells[4].Value = logMessage._message;
         }
 
         /// <summary>
@@ -145,7 +146,7 @@ namespace XiboClient.Log
             {
                 foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
                 {
-                    string percentComplete = (requiredFile.Downloading) ? (requiredFile.ChunkOffset / requiredFile.Size).ToString() : "100";
+                    string percentComplete = (!requiredFile.Complete) ? (((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100).ToString() : "100";
                     requiredFilesTextBox = requiredFilesTextBox + requiredFile.FileType + ": " + requiredFile.Path + ". (" + percentComplete + "%)" + Environment.NewLine;
                 }
             }

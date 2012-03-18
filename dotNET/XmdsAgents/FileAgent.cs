@@ -26,7 +26,8 @@ using System.Diagnostics;
 using System.IO;
 
 /// 17/02/12 Dan Created
-/// 21/02/12 Dan Added OnComplete Delegate and event
+/// 21/02/12 Dan Added OnComplete Delegate and Event
+/// 28/02/12 Dan Added OnPartComplete Delegate and Event
 
 namespace XiboClient.XmdsAgents
 {
@@ -40,6 +41,13 @@ namespace XiboClient.XmdsAgents
         /// <param name="fileId"></param>
         public delegate void OnCompleteDelegate(int fileId);
         public event OnCompleteDelegate OnComplete;
+
+        /// <summary>
+        /// OnPartComplete delegate
+        /// </summary>
+        /// <param name="fileId"></param>
+        public delegate void OnPartCompleteDelegate(int fileId);
+        public event OnPartCompleteDelegate OnPartComplete;
 
         /// <summary>
         /// Client Hardware key
@@ -107,10 +115,14 @@ namespace XiboClient.XmdsAgents
         {
             Trace.WriteLine(new LogMessage("FileAgent - Run", "Thread Started"), LogType.Info.ToString());
 
-            _fileDownloadLimit.WaitOne();
-
             // Get the required file id from the list of required files.
             RequiredFile file = _requiredFiles.GetRequiredFile(_requiredFileId);
+
+            // Set downloading to be true
+            file.Downloading = true;
+
+            // Wait for the Semaphore lock to become available
+            _fileDownloadLimit.WaitOne();
 
             try
             {
@@ -118,8 +130,6 @@ namespace XiboClient.XmdsAgents
 
                 while (!file.Complete)
                 {
-                    file.Downloading = true;
-
                     // Call XMDS GetFile
                     byte[] getFileReturn = _xmds.GetFile(Settings.Default.ServerKey, _hardwareKey, file.Path, file.FileType, file.ChunkOffset, file.ChunkSize, Settings.Default.Version);
 
@@ -164,6 +174,9 @@ namespace XiboClient.XmdsAgents
                                 // Get the remaining
                                 file.ChunkSize = remaining;
                             }
+
+                            // Part is complete
+                            OnPartComplete(file.Id);
                         }
                         else
                         {
@@ -193,7 +206,7 @@ namespace XiboClient.XmdsAgents
                     Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5. " + file.Path), LogType.Error.ToString());
                 }
 
-                // TODO: Inform the Player thread that a file has been modified.
+                // Inform the Player thread that a file has been modified.
                 OnComplete(file.Id);
             }
             catch (Exception ex)
@@ -204,6 +217,9 @@ namespace XiboClient.XmdsAgents
                 // Mark as not downloading
                 file.Downloading = false;
             }
+
+            // Release the Semaphore
+            Trace.WriteLine(new LogMessage("FileAgent - Run", "Releasing Lock"), LogType.Error.ToString());
 
             _fileDownloadLimit.Release();
         }

@@ -30,6 +30,7 @@ using System.Xml.Serialization;
 using XiboClient.Properties;
 
 /// 17/02/12 Dan Enriched to also manage currently downloading files
+/// 28/02/12 Dan Changed the way RequiredFiles are updated
 
 namespace XiboClient
 {
@@ -42,7 +43,7 @@ namespace XiboClient
         /// <summary>
         /// Files needing download
         /// </summary>
-        public int FilesToDownload
+        public int FilesDownloading
         {
             get
             {
@@ -110,6 +111,7 @@ namespace XiboClient
                 rf.LastChecked = DateTime.Now;
                 rf.ChunkOffset = 0;
                 rf.ChunkSize = 0;
+                rf.Size = int.Parse(attributes["size"].Value);
 
                 rf.Downloading = false;
                 rf.Complete = false;
@@ -120,13 +122,13 @@ namespace XiboClient
                     string[] filePart = attributes["path"].Value.Split('.');
                     rf.Id = int.Parse(filePart[0]);
                     rf.Path = attributes["path"].Value;
-                    rf.Size = int.Parse(attributes["size"].Value);
                     rf.ChunkSize = 512000;
                 }
                 else if (rf.FileType == "layout")
                 {
                     rf.Id = int.Parse(attributes["path"].Value);
                     rf.Path = attributes["path"].Value + ".xlf";
+                    rf.ChunkSize = rf.Size;
                 }
 
                 Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "Building required file node for " + rf.Id.ToString()), LogType.Audit.ToString());
@@ -201,20 +203,14 @@ namespace XiboClient
         /// <param name="md5"></param>
         public void MarkComplete(int id, string md5)
         {
-            foreach (RequiredFile rf in RequiredFileList)
+            for (int i = 0; i < RequiredFileList.Count; i++)
             {
-                if (rf.Id == id)
+                if (RequiredFileList[i].Id == id)
                 {
-                    RequiredFile newRf = rf;
+                    RequiredFileList[i].Complete = true;
+                    RequiredFileList[i].Md5 = md5;
 
-                    newRf.Complete = true;
-                    newRf.Md5 = md5;
-
-
-                    RequiredFileList.Add(newRf);
-                    RequiredFileList.Remove(rf);
-
-                    return;
+                    break;
                 }
             }
         }
@@ -226,19 +222,14 @@ namespace XiboClient
         /// <param name="md5"></param>
         public void MarkIncomplete(int id, string md5)
         {
-            foreach (RequiredFile rf in RequiredFileList)
+            for (int i = 0; i < RequiredFileList.Count; i++)
             {
-                if (rf.Id == id)
+                if (RequiredFileList[i].Id == id)
                 {
-                    RequiredFile newRf = rf;
+                    RequiredFileList[i].Complete = false;
+                    RequiredFileList[i].Md5 = md5;
 
-                    newRf.Complete = false;
-                    newRf.Md5 = md5;
-
-                    RequiredFileList.Add(newRf);
-                    RequiredFileList.Remove(rf);
-
-                    return;
+                    break;
                 }
             }
         }
@@ -290,7 +281,7 @@ namespace XiboClient
         }
     }
 
-    public struct RequiredFile
+    public class RequiredFile
     {
         public string FileType;
         public int Id;

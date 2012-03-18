@@ -88,7 +88,7 @@ namespace XiboClient.XmdsAgents
         /// </summary>
         public RequiredFilesAgent()
         {
-            _fileDownloadLimit = new Semaphore(Settings.Default.MaxConcurrentDownloads, Settings.Default.MaxConcurrentDownloads);
+            _fileDownloadLimit = new Semaphore(0, Settings.Default.MaxConcurrentDownloads);
             _requiredFiles = new RequiredFiles();
         }
 
@@ -105,19 +105,12 @@ namespace XiboClient.XmdsAgents
                 {
                     try
                     {
-                        bool currentlyDownloading = false;
-
-                        // See if we are downloading anything at the moment
-                        foreach (RequiredFile fileToDownload in _requiredFiles.RequiredFileList)
-                        {
-                            if (fileToDownload.Downloading)
-                                currentlyDownloading = true;
-                        }
+                        int filesToDownload = _requiredFiles.FilesDownloading;
 
                         // If we are currently downloading something, we have to wait
-                        if (currentlyDownloading)
+                        if (filesToDownload > 0)
                         {
-                            _clientInfoForm.RequiredFilesStatus = "Waiting: Active Downloads";
+                            _clientInfoForm.RequiredFilesStatus = string.Format("Waiting: {0} Active Downloads", filesToDownload.ToString());
 
                             Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Currently Downloading Files, skipping collect"), LogType.Info.ToString());
                         }
@@ -168,7 +161,8 @@ namespace XiboClient.XmdsAgents
                                     fileAgent.RequiredFiles = _requiredFiles;
                                     fileAgent.RequiredFileId = fileToDownload.Id;
                                     fileAgent.OnComplete += new FileAgent.OnCompleteDelegate(fileAgent_OnComplete);
-                                                                        
+                                    fileAgent.OnPartComplete += new FileAgent.OnPartCompleteDelegate(fileAgent_OnPartComplete);
+
                                     // Create the thread and add it to the list of threads to start
                                     Thread thread = new Thread(new ThreadStart(fileAgent.Run));
                                     thread.Name = "FileAgent_Id_" + fileToDownload.Id.ToString();
@@ -214,6 +208,15 @@ namespace XiboClient.XmdsAgents
         }
 
         /// <summary>
+        /// FileAgent OnPartComplete
+        /// </summary>
+        /// <param name="fileId"></param>
+        void fileAgent_OnPartComplete(int fileId)
+        {
+            _clientInfoForm.UpdateRequiredFiles();
+        }
+
+        /// <summary>
         /// FileAgent OnComplete
         /// </summary>
         /// <param name="fileId"></param>
@@ -226,10 +229,10 @@ namespace XiboClient.XmdsAgents
             RequiredFile rf = _requiredFiles.GetRequiredFile(fileId);
 
             // Set the status on the client info screen
-            if (_requiredFiles.FilesToDownload == 0)
+            if (_requiredFiles.FilesDownloading == 0)
                 _clientInfoForm.RequiredFilesStatus = "Sleeping";
             else
-                _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", _requiredFiles.FilesToDownload.ToString());
+                _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", _requiredFiles.FilesDownloading.ToString());
 
             _clientInfoForm.UpdateRequiredFiles();
 

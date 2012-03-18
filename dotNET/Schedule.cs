@@ -230,6 +230,9 @@ namespace XiboClient
             if (!Settings.Default.expireModifiedLayouts)
                 return;
 
+            // TODO: Need to hand this off to the UI thread (Synchronization Context?!)
+            return;
+
             // If the layout that got changed is the current layout, move on
             try
             {

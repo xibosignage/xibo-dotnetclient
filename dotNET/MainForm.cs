@@ -33,6 +33,7 @@ using System.Drawing.Imaging;
 using System.Xml.Serialization;
 using System.Diagnostics;
 using XiboClient.Log;
+using System.Threading;
 
 namespace XiboClient
 {
@@ -58,6 +59,8 @@ namespace XiboClient
         public MainForm()
         {
             InitializeComponent();
+
+            Thread.CurrentThread.Name = "UI Thread";
 
             // Override the default size if necessary
             if (Properties.Settings.Default.sizeX != 0)
@@ -268,7 +271,7 @@ namespace XiboClient
                 ShowSplashScreen();
 
                 // In 10 seconds fire the next layout?
-                Timer timer = new Timer();
+                System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
                 timer.Interval = 10000;
                 timer.Tick += new EventHandler(splashScreenTimer_Tick);
 
@@ -286,7 +289,7 @@ namespace XiboClient
         {
             Debug.WriteLine(new LogMessage("timer_Tick", "Loading next layout after splashscreen"));
 
-            Timer timer = (Timer)sender;
+            System.Windows.Forms.Timer timer = (System.Windows.Forms.Timer)sender;
             timer.Stop();
             timer.Dispose();
 
