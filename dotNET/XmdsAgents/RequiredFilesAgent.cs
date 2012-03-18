@@ -88,7 +88,7 @@ namespace XiboClient.XmdsAgents
         /// </summary>
         public RequiredFilesAgent()
         {
-            _fileDownloadLimit = new Semaphore(0, Settings.Default.MaxConcurrentDownloads);
+            _fileDownloadLimit = new Semaphore(Settings.Default.MaxConcurrentDownloads, Settings.Default.MaxConcurrentDownloads);
             _requiredFiles = new RequiredFiles();
         }
 
@@ -160,6 +160,7 @@ namespace XiboClient.XmdsAgents
                                     fileAgent.HardwareKey = _hardwareKey;
                                     fileAgent.RequiredFiles = _requiredFiles;
                                     fileAgent.RequiredFileId = fileToDownload.Id;
+                                    fileAgent.RequiredFileType = fileToDownload.FileType;
                                     fileAgent.OnComplete += new FileAgent.OnCompleteDelegate(fileAgent_OnComplete);
                                     fileAgent.OnPartComplete += new FileAgent.OnPartCompleteDelegate(fileAgent_OnPartComplete);
 
@@ -220,13 +221,13 @@ namespace XiboClient.XmdsAgents
         /// FileAgent OnComplete
         /// </summary>
         /// <param name="fileId"></param>
-        void fileAgent_OnComplete(int fileId)
+        void fileAgent_OnComplete(int fileId, string fileType)
         {
             // Notify the player thread using another event (chained events? bad idea?)
             Trace.WriteLine(new LogMessage("RequiredFilesAgent - fileAgent_OnComplete", "FileId finished downloading" + fileId.ToString()));
 
             // Get the required file associated with this ID
-            RequiredFile rf = _requiredFiles.GetRequiredFile(fileId);
+            RequiredFile rf = _requiredFiles.GetRequiredFile(fileId, fileType);
 
             // Set the status on the client info screen
             if (_requiredFiles.FilesDownloading == 0)

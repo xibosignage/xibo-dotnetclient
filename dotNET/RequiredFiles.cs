@@ -185,15 +185,15 @@ namespace XiboClient
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public RequiredFile GetRequiredFile(int id)
+        public RequiredFile GetRequiredFile(int id, string fileType)
         {
             foreach (RequiredFile rf in RequiredFileList)
             {
-                if (rf.Id == id)
+                if (rf.Id == id && rf.FileType == fileType)
                     return rf;
             }
 
-            throw new FileNotFoundException("No required file found with ID: " + id.ToString());
+            throw new FileNotFoundException("No required file found with ID: " + id.ToString() + " and type" + fileType);
         }
 
         /// <summary>

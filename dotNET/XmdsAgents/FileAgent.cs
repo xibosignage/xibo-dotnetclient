@@ -39,7 +39,7 @@ namespace XiboClient.XmdsAgents
         /// OnComplete delegate
         /// </summary>
         /// <param name="fileId"></param>
-        public delegate void OnCompleteDelegate(int fileId);
+        public delegate void OnCompleteDelegate(int fileId, string fileType);
         public event OnCompleteDelegate OnComplete;
 
         /// <summary>
@@ -86,6 +86,18 @@ namespace XiboClient.XmdsAgents
         private int _requiredFileId;
 
         /// <summary>
+        /// The File Type
+        /// </summary>
+        public string RequiredFileType
+        {
+            set
+            {
+                _requiredFileType = value;
+            }
+        }
+        private string _requiredFileType;
+
+        /// <summary>
         /// File Download Limit Semaphore
         /// </summary>
         public Semaphore FileDownloadLimit
@@ -116,7 +128,7 @@ namespace XiboClient.XmdsAgents
             Trace.WriteLine(new LogMessage("FileAgent - Run", "Thread Started"), LogType.Info.ToString());
 
             // Get the required file id from the list of required files.
-            RequiredFile file = _requiredFiles.GetRequiredFile(_requiredFileId);
+            RequiredFile file = _requiredFiles.GetRequiredFile(_requiredFileId, _requiredFileType);
 
             // Set downloading to be true
             file.Downloading = true;
@@ -207,7 +219,7 @@ namespace XiboClient.XmdsAgents
                 }
 
                 // Inform the Player thread that a file has been modified.
-                OnComplete(file.Id);
+                OnComplete(file.Id, file.FileType);
             }
             catch (Exception ex)
             {
@@ -219,7 +231,7 @@ namespace XiboClient.XmdsAgents
             }
 
             // Release the Semaphore
-            Trace.WriteLine(new LogMessage("FileAgent - Run", "Releasing Lock"), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("FileAgent - Run", "Releasing Lock"), LogType.Info.ToString());
 
             _fileDownloadLimit.Release();
         }
