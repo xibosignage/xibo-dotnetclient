@@ -159,19 +159,29 @@ namespace XiboClient
                     {
                         Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "MD5 different for existing file: " + rf.Path), LogType.Info.ToString());
 
-                        // TODO: Resume the file download under certain conditions. Make sure its not bigger than it should be. Make sure it is fairly fresh
-
                         // They are different
                         _cacheManager.Remove(rf.Path);
 
-                        // TODO: This might be bad! Delete the old file as it is wrong (what if it is currently running?!)
-                        try
+                        // TODO: Resume the file download under certain conditions. Make sure its not bigger than it should be. 
+                        // Make sure it is fairly fresh
+                        FileInfo info = new FileInfo(Settings.Default.LibraryPath + @"\" + rf.Path);
+
+                        if (info.Length < rf.Size && info.LastWriteTime > DateTime.Now.AddDays(-1))
                         {
-                            File.Delete(Properties.Settings.Default.LibraryPath + @"\" + rf.Path);
+                            // Continue the file
+                            rf.ChunkOffset = (int)info.Length;
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            Trace.WriteLine(new LogMessage("CompareAndCollect", "Unable to delete incorrect file because: " + ex.Message));
+                            // Delete the old file as it is wrong
+                            try
+                            {
+                                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + rf.Path);
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLine(new LogMessage("CompareAndCollect", "Unable to delete incorrect file because: " + ex.Message));
+                            }
                         }
                     }
                     else

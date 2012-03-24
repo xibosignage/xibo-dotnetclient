@@ -192,6 +192,9 @@ namespace XiboClient
         {
             // We want to tidy up some stuff as this form closes.
 
+            // Close the client info screen
+            _clientInfoForm.Hide();
+
             // Stop the schedule object
             _schedule.Stop();
 

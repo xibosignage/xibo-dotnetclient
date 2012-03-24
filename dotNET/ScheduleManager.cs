@@ -51,6 +51,9 @@ namespace XiboClient
         public delegate void OnNewScheduleAvailableDelegate();
         public event OnNewScheduleAvailableDelegate OnNewScheduleAvailable;
 
+        public delegate void OnRefreshScheduleDelegate();
+        public event OnRefreshScheduleDelegate OnRefreshSchedule;
+
         // Member Varialbes
         private string _location;
         private Collection<LayoutSchedule> _layoutSchedule;
@@ -135,10 +138,12 @@ namespace XiboClient
 
                         // Work out if there is a new schedule available, if so - raise the event
                         if (IsNewScheduleAvailable())
-                        {
-                            _clientInfoForm.ScheduleManagerStatus = LayoutsInSchedule();
                             OnNewScheduleAvailable();
-                        }
+                        else
+                            OnRefreshSchedule();
+
+                        // Update the client info form
+                        _clientInfoForm.ScheduleManagerStatus = LayoutsInSchedule();
                     }
                     catch (Exception ex)
                     {

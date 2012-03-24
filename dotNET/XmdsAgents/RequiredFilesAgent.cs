@@ -187,7 +187,7 @@ namespace XiboClient.XmdsAgents
                                 else
                                     _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", threadsToStart.Count.ToString());
                                 
-                                _clientInfoForm.UpdateRequiredFiles(requiredFilesString());
+                                _clientInfoForm.UpdateRequiredFiles(RequiredFilesString());
                             }
                         }
                     }
@@ -209,13 +209,13 @@ namespace XiboClient.XmdsAgents
         /// String representation of the required files
         /// </summary>
         /// <returns></returns>
-        private string requiredFilesString()
+        private string RequiredFilesString()
         {
             string requiredFilesTextBox = "";
 
             foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
             {
-                string percentComplete = (!requiredFile.Complete) ? (((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100).ToString() : "100";
+                string percentComplete = (!requiredFile.Complete) ? Math.Round((((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100), 1).ToString() : "100";
                 requiredFilesTextBox = requiredFilesTextBox + requiredFile.FileType + ": " + requiredFile.Path + ". (" + percentComplete + "%)" + Environment.NewLine;
             }
 
@@ -228,7 +228,7 @@ namespace XiboClient.XmdsAgents
         /// <param name="fileId"></param>
         void fileAgent_OnPartComplete(int fileId)
         {
-            _clientInfoForm.UpdateRequiredFiles(requiredFilesString());
+            _clientInfoForm.UpdateRequiredFiles(RequiredFilesString());
         }
 
         /// <summary>
@@ -250,7 +250,7 @@ namespace XiboClient.XmdsAgents
                 _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", _requiredFiles.FilesDownloading.ToString());
 
             // Update the RequiredFiles TextBox
-            _clientInfoForm.UpdateRequiredFiles(requiredFilesString());
+            _clientInfoForm.UpdateRequiredFiles(RequiredFilesString());
 
             if (rf.FileType == "layout")
             {

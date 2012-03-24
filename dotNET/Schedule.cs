@@ -100,6 +100,7 @@ namespace XiboClient
             // Create a schedule manager
             _scheduleManager = new ScheduleManager(_cacheManager, scheduleLocation);
             _scheduleManager.OnNewScheduleAvailable += new ScheduleManager.OnNewScheduleAvailableDelegate(_scheduleManager_OnNewScheduleAvailable);
+            _scheduleManager.OnRefreshSchedule += new ScheduleManager.OnRefreshScheduleDelegate(_scheduleManager_OnRefreshSchedule);
             _scheduleManager.ClientInfoForm = _clientInfoForm;
 
             // Create a schedule manager thread
@@ -156,6 +157,14 @@ namespace XiboClient
 
             // Raise a schedule change event
             ScheduleChangeEvent(_layoutSchedule[0].layoutFile, _layoutSchedule[0].scheduleid, _layoutSchedule[0].id);
+        }
+
+        /// <summary>
+        /// Schedule has been refreshed
+        /// </summary>
+        void _scheduleManager_OnRefreshSchedule()
+        {
+            _layoutSchedule = _scheduleManager.CurrentSchedule;            
         }
 
         /// <summary>
