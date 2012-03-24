@@ -56,6 +56,8 @@ namespace XiboClient
 
         private ClientInfo _clientInfoForm;
 
+        private delegate void ChangeToNextLayoutDelegate(string layoutPath);
+
         public MainForm()
         {
             InitializeComponent();
@@ -255,6 +257,20 @@ namespace XiboClient
                 _statLog.RecordStat(_stat);
             }
 
+            if (InvokeRequired)
+            {
+                BeginInvoke(new ChangeToNextLayoutDelegate(ChangeToNextLayout), layoutPath);
+                return;
+            }
+
+            ChangeToNextLayout(layoutPath);
+        }
+
+        /// <summary>
+        /// Change to the next layout
+        /// </summary>
+        private void ChangeToNextLayout(string layoutPath)
+        {
             try
             {
                 DestroyLayout();

@@ -33,16 +33,18 @@ namespace XiboClient.Log
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ClientInfo));
             this.logDataGridView = new System.Windows.Forms.DataGridView();
-            this.label1 = new System.Windows.Forms.Label();
-            this.scheduleStatusLabel = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.requiredFilesStatus = new System.Windows.Forms.Label();
-            this.requiredFilesTextBox = new System.Windows.Forms.TextBox();
             this.Thread = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Date = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Type = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Method = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Message = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.label1 = new System.Windows.Forms.Label();
+            this.scheduleStatusLabel = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.requiredFilesStatus = new System.Windows.Forms.Label();
+            this.requiredFilesTextBox = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.scheduleManagerStatus = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
@@ -73,7 +75,7 @@ namespace XiboClient.Log
             dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.logDataGridView.DefaultCellStyle = dataGridViewCellStyle2;
-            this.logDataGridView.Location = new System.Drawing.Point(12, 349);
+            this.logDataGridView.Location = new System.Drawing.Point(12, 314);
             this.logDataGridView.Name = "logDataGridView";
             this.logDataGridView.ReadOnly = true;
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
@@ -84,53 +86,8 @@ namespace XiboClient.Log
             dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             this.logDataGridView.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
-            this.logDataGridView.Size = new System.Drawing.Size(786, 391);
+            this.logDataGridView.Size = new System.Drawing.Size(786, 426);
             this.logDataGridView.TabIndex = 0;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 13);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(88, 13);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Schedule Status:";
-            // 
-            // scheduleStatusLabel
-            // 
-            this.scheduleStatusLabel.AutoSize = true;
-            this.scheduleStatusLabel.Location = new System.Drawing.Point(147, 13);
-            this.scheduleStatusLabel.Name = "scheduleStatusLabel";
-            this.scheduleStatusLabel.Size = new System.Drawing.Size(59, 13);
-            this.scheduleStatusLabel.TabIndex = 2;
-            this.scheduleStatusLabel.Text = "Not started";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 35);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(110, 13);
-            this.label2.TabIndex = 3;
-            this.label2.Text = "Required Files Status:";
-            // 
-            // requiredFilesStatus
-            // 
-            this.requiredFilesStatus.AutoSize = true;
-            this.requiredFilesStatus.Location = new System.Drawing.Point(147, 35);
-            this.requiredFilesStatus.Name = "requiredFilesStatus";
-            this.requiredFilesStatus.Size = new System.Drawing.Size(61, 13);
-            this.requiredFilesStatus.TabIndex = 4;
-            this.requiredFilesStatus.Text = "Not Started";
-            // 
-            // requiredFilesTextBox
-            // 
-            this.requiredFilesTextBox.Location = new System.Drawing.Point(12, 80);
-            this.requiredFilesTextBox.Multiline = true;
-            this.requiredFilesTextBox.Name = "requiredFilesTextBox";
-            this.requiredFilesTextBox.ReadOnly = true;
-            this.requiredFilesTextBox.Size = new System.Drawing.Size(786, 249);
-            this.requiredFilesTextBox.TabIndex = 5;
             // 
             // Thread
             // 
@@ -167,11 +124,78 @@ namespace XiboClient.Log
             this.Message.ReadOnly = true;
             this.Message.Width = 75;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(9, 11);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(88, 13);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "Schedule Status:";
+            // 
+            // scheduleStatusLabel
+            // 
+            this.scheduleStatusLabel.AutoSize = true;
+            this.scheduleStatusLabel.Location = new System.Drawing.Point(148, 11);
+            this.scheduleStatusLabel.Name = "scheduleStatusLabel";
+            this.scheduleStatusLabel.Size = new System.Drawing.Size(61, 13);
+            this.scheduleStatusLabel.TabIndex = 2;
+            this.scheduleStatusLabel.Text = "Not Started";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(403, 34);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(110, 13);
+            this.label2.TabIndex = 3;
+            this.label2.Text = "Required Files Status:";
+            // 
+            // requiredFilesStatus
+            // 
+            this.requiredFilesStatus.AutoSize = true;
+            this.requiredFilesStatus.Location = new System.Drawing.Point(528, 34);
+            this.requiredFilesStatus.Name = "requiredFilesStatus";
+            this.requiredFilesStatus.Size = new System.Drawing.Size(61, 13);
+            this.requiredFilesStatus.TabIndex = 4;
+            this.requiredFilesStatus.Text = "Not Started";
+            // 
+            // requiredFilesTextBox
+            // 
+            this.requiredFilesTextBox.Location = new System.Drawing.Point(406, 59);
+            this.requiredFilesTextBox.Multiline = true;
+            this.requiredFilesTextBox.Name = "requiredFilesTextBox";
+            this.requiredFilesTextBox.ReadOnly = true;
+            this.requiredFilesTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.requiredFilesTextBox.Size = new System.Drawing.Size(392, 249);
+            this.requiredFilesTextBox.TabIndex = 5;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(9, 34);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(133, 13);
+            this.label3.TabIndex = 6;
+            this.label3.Text = "Schedule Manager Status:";
+            // 
+            // scheduleManagerStatus
+            // 
+            this.scheduleManagerStatus.Location = new System.Drawing.Point(12, 59);
+            this.scheduleManagerStatus.Multiline = true;
+            this.scheduleManagerStatus.Name = "scheduleManagerStatus";
+            this.scheduleManagerStatus.ReadOnly = true;
+            this.scheduleManagerStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.scheduleManagerStatus.Size = new System.Drawing.Size(387, 249);
+            this.scheduleManagerStatus.TabIndex = 8;
+            // 
             // ClientInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(810, 752);
+            this.Controls.Add(this.scheduleManagerStatus);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.requiredFilesTextBox);
             this.Controls.Add(this.requiredFilesStatus);
             this.Controls.Add(this.label2);
@@ -200,5 +224,7 @@ namespace XiboClient.Log
         private System.Windows.Forms.DataGridViewTextBoxColumn Type;
         private System.Windows.Forms.DataGridViewTextBoxColumn Method;
         private System.Windows.Forms.DataGridViewTextBoxColumn Message;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox scheduleManagerStatus;
     }
 }

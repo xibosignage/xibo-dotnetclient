@@ -141,9 +141,6 @@ namespace XiboClient.XmdsAgents
                                 _requiredFiles.CurrentCacheManager = _cacheManager;
                                 _requiredFiles.RequiredFilesXml = xml;
 
-                                // Pass the new required files to the ClientInfo
-                                _clientInfoForm.RequiredFiles = _requiredFiles;
-
                                 // List of Threads to start
                                 List<Thread> threadsToStart = new List<Thread>();
 
@@ -190,7 +187,7 @@ namespace XiboClient.XmdsAgents
                                 else
                                     _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", threadsToStart.Count.ToString());
                                 
-                                _clientInfoForm.UpdateRequiredFiles();
+                                _clientInfoForm.UpdateRequiredFiles(requiredFilesString());
                             }
                         }
                     }
@@ -209,12 +206,29 @@ namespace XiboClient.XmdsAgents
         }
 
         /// <summary>
+        /// String representation of the required files
+        /// </summary>
+        /// <returns></returns>
+        private string requiredFilesString()
+        {
+            string requiredFilesTextBox = "";
+
+            foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
+            {
+                string percentComplete = (!requiredFile.Complete) ? (((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100).ToString() : "100";
+                requiredFilesTextBox = requiredFilesTextBox + requiredFile.FileType + ": " + requiredFile.Path + ". (" + percentComplete + "%)" + Environment.NewLine;
+            }
+
+            return requiredFilesTextBox;
+        }
+
+        /// <summary>
         /// FileAgent OnPartComplete
         /// </summary>
         /// <param name="fileId"></param>
         void fileAgent_OnPartComplete(int fileId)
         {
-            _clientInfoForm.UpdateRequiredFiles();
+            _clientInfoForm.UpdateRequiredFiles(requiredFilesString());
         }
 
         /// <summary>
@@ -235,7 +249,8 @@ namespace XiboClient.XmdsAgents
             else
                 _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", _requiredFiles.FilesDownloading.ToString());
 
-            _clientInfoForm.UpdateRequiredFiles();
+            // Update the RequiredFiles TextBox
+            _clientInfoForm.UpdateRequiredFiles(requiredFilesString());
 
             if (rf.FileType == "layout")
             {

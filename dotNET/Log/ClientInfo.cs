@@ -52,16 +52,22 @@ namespace XiboClient.Log
         }
 
         /// <summary>
-        /// Required Files Object
+        /// Set the schedule manager status
         /// </summary>
-        public RequiredFiles RequiredFiles
+        public string ScheduleManagerStatus
         {
             set
             {
-                _requiredFiles = value;
+                if (InvokeRequired)
+                {
+                    BeginInvoke(new StatusDelegate(SetScheduleManagerStatus), value);
+                }
+                else
+                {
+                    SetScheduleManagerStatus(value);
+                }
             }
         }
-        private RequiredFiles _requiredFiles;
 
         /// <summary>
         /// Client Info Object
@@ -104,6 +110,15 @@ namespace XiboClient.Log
         }
 
         /// <summary>
+        /// Set the schedule manager status
+        /// </summary>
+        /// <param name="status"></param>
+        public void SetScheduleManagerStatus(string status)
+        {
+            scheduleManagerStatus.Text = status;
+        }
+
+        /// <summary>
         /// Adds a log message
         /// </summary>
         /// <param name="message"></param>
@@ -138,26 +153,15 @@ namespace XiboClient.Log
         /// <summary>
         /// Update the required files text box
         /// </summary>
-        public void UpdateRequiredFiles()
+        public void UpdateRequiredFiles(string requiredFilesString)
         {
-            string requiredFilesTextBox = "";
-
-            if (_requiredFiles != null)
-            {
-                foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
-                {
-                    string percentComplete = (!requiredFile.Complete) ? (((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100).ToString() : "100";
-                    requiredFilesTextBox = requiredFilesTextBox + requiredFile.FileType + ": " + requiredFile.Path + ". (" + percentComplete + "%)" + Environment.NewLine;
-                }
-            }
-
             if (InvokeRequired)
             {
-                BeginInvoke(new StatusDelegate(SetRequiredFilesTextBox), requiredFilesTextBox);
+                BeginInvoke(new StatusDelegate(SetRequiredFilesTextBox), requiredFilesString);
             }
             else
             {
-                SetRequiredFilesTextBox(requiredFilesTextBox);
+                SetRequiredFilesTextBox(requiredFilesString);
             }
         }
 

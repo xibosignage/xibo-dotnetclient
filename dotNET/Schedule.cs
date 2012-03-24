@@ -59,6 +59,7 @@ namespace XiboClient
 
         // Schedule Manager
         private ScheduleManager _scheduleManager;
+        Thread _scheduleManagerThread;
 
         // Schedule Agent
         private ScheduleAgent _scheduleAgent;
@@ -98,6 +99,12 @@ namespace XiboClient
 
             // Create a schedule manager
             _scheduleManager = new ScheduleManager(_cacheManager, scheduleLocation);
+            _scheduleManager.OnNewScheduleAvailable += new ScheduleManager.OnNewScheduleAvailableDelegate(_scheduleManager_OnNewScheduleAvailable);
+            _scheduleManager.ClientInfoForm = _clientInfoForm;
+
+            // Create a schedule manager thread
+            _scheduleManagerThread = new Thread(new ThreadStart(_scheduleManager.Run));
+            _scheduleManagerThread.Name = "ScheduleManagerThread";
 
             // Create a Schedule Agent
             _scheduleAgent = new ScheduleAgent();
@@ -127,54 +134,28 @@ namespace XiboClient
         /// </summary>
         public void InitializeComponents() 
         {
-            // The Timer for the Schedule Polling
-            System.Windows.Forms.Timer scheduleTimer = new System.Windows.Forms.Timer();
-            scheduleTimer.Interval = 10000; // 10 Seconds
-            scheduleTimer.Tick += new EventHandler(scheduleTimer_Tick);
-            scheduleTimer.Start();
-
             // Start the ScheduleAgent thread
             _scheduleAgentThread.Start();
 
             // Start the RequiredFilesAgent thread
             _requiredFilesAgentThread.Start();
 
-            // We must have a schedule by now.
-            UpdateLayoutSchedule(true);
+            // Start the ScheduleManager thread
+            _scheduleManagerThread.Start();
         }
 
         /// <summary>
-        /// Event handler for every schedule update timer tick
+        /// New Schedule Available
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void scheduleTimer_Tick(object sender, EventArgs e)
-        {
-            Debug.WriteLine(string.Format("Schedule Timer Ticked at {0}. There are {1} items in the schedule.", DateTime.Now.ToString(), _layoutSchedule.Count.ToString()));
-
-            // Ask the schedule manager if we need to clear the layoutSchedule collection
-            UpdateLayoutSchedule(_scheduleManager.NewScheduleAvailable);
-        }
-
-        /// <summary>
-        /// Updates the layout schedule
-        /// Forces a new layout to load
-        /// </summary>
-        private void UpdateLayoutSchedule(bool forceChange)
+        private void _scheduleManager_OnNewScheduleAvailable()
         {
             _layoutSchedule = _scheduleManager.CurrentSchedule;
 
-            // Do we need to force a change to the schedule?
-            if (forceChange)
-            {
-                Debug.WriteLine("Forcing a change to the current schedule");
+            // Set the current pointer to 0
+            _currentLayout = 0;
 
-                // Set the current pointer to 0
-                _currentLayout = 0;
-
-                // Raise a schedule change event
-                ScheduleChangeEvent(_layoutSchedule[0].layoutFile, _layoutSchedule[0].scheduleid, _layoutSchedule[0].id);
-            }
+            // Raise a schedule change event
+            ScheduleChangeEvent(_layoutSchedule[0].layoutFile, _layoutSchedule[0].scheduleid, _layoutSchedule[0].id);
         }
 
         /// <summary>
@@ -223,15 +204,12 @@ namespace XiboClient
         /// <param name="layoutPath"></param>
         private void LayoutFileModified(string layoutPath)
         {
-            Debug.WriteLine("Layout file changed");
+            Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "Layout file changed: " + layoutPath), LogType.Info.ToString());
 
             // Are we set to expire modified layouts? If not then just return as if
             // nothing had happened.
             if (!Settings.Default.expireModifiedLayouts)
                 return;
-
-            // TODO: Need to hand this off to the UI thread (Synchronization Context?!)
-            return;
 
             // If the layout that got changed is the current layout, move on
             try
@@ -239,6 +217,7 @@ namespace XiboClient
                 if (_layoutSchedule[_currentLayout].layoutFile == Properties.Settings.Default.LibraryPath + @"\" + layoutPath)
                 {
                     _forceChange = true;
+
                     NextLayout();
                 }
             }
@@ -258,6 +237,9 @@ namespace XiboClient
 
             // Stop the requiredfiles agent
             _requiredFilesAgent.forceStop = true;
+
+            // Stop the Schedule Manager Thread
+            _scheduleManager.forceStop = true;
         }
     }
 }

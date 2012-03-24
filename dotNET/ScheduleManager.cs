@@ -27,10 +27,12 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
 using System.Diagnostics;
+using XiboClient.Log;
+using System.Threading;
 
 /// 17/02/12 Dan Added a static method to get the schedule XML from disk into a string and to write it to the disk
 /// 20/02/12 Dan Tweaked log types on a few trace messages
-/// TODO: Move onto its own thread
+/// 24/03/12 Dan Move onto its own thread
 
 namespace XiboClient
 {
@@ -41,12 +43,32 @@ namespace XiboClient
     {
         #region "Constructor"
 
+        // Thread Logic
+        public object _locker = new object();
+        public bool forceStop = false;
+
+        // Event for new schedule
+        public delegate void OnNewScheduleAvailableDelegate();
+        public event OnNewScheduleAvailableDelegate OnNewScheduleAvailable;
+
         // Member Varialbes
         private string _location;
         private Collection<LayoutSchedule> _layoutSchedule;
         private Collection<LayoutSchedule> _currentSchedule;
         private bool _refreshSchedule;
         private CacheManager _cacheManager;
+
+        /// <summary>
+        /// Client Info Form
+        /// </summary>
+        public ClientInfo ClientInfoForm
+        {
+            set
+            {
+                _clientInfoForm = value;
+            }
+        }
+        private ClientInfo _clientInfoForm;
 
         /// <summary>
         /// Creates a new schedule Manager
@@ -60,25 +82,11 @@ namespace XiboClient
             // Create an empty layout schedule
             _layoutSchedule = new Collection<LayoutSchedule>();
             _currentSchedule = new Collection<LayoutSchedule>();
-
-            // Evaluate the Schedule
-            IsNewScheduleAvailable();
         }
 
         #endregion
 
         #region "Properties"
-
-        /// <summary>
-        /// Is there a new schedule available
-        /// </summary>
-        public bool NewScheduleAvailable
-        {
-            get
-            {
-                return IsNewScheduleAvailable();
-            }
-        }
 
         /// <summary>
         /// Tell the schedule manager to Refresh the Schedule
@@ -111,13 +119,46 @@ namespace XiboClient
         #region "Methods"
 
         /// <summary>
+        /// Runs the Schedule Manager
+        /// </summary>
+        public void Run()
+        {
+            Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Thread Started"), LogType.Info.ToString());
+
+            while (!forceStop)
+            {
+                lock (_locker)
+                {
+                    try
+                    {
+                        Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Schedule Timer Ticked"), LogType.Info.ToString());
+
+                        // Work out if there is a new schedule available, if so - raise the event
+                        if (IsNewScheduleAvailable())
+                        {
+                            _clientInfoForm.ScheduleManagerStatus = LayoutsInSchedule();
+                            OnNewScheduleAvailable();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log this message, but dont abort the thread
+                        Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());
+                        _clientInfoForm.ScheduleStatus = "Error. " + ex.Message;
+                    }
+                }
+
+                // Sleep this thread for 10 seconds
+                Thread.Sleep(10 * 1000);
+            }
+        }
+
+        /// <summary>
         /// Determine if there is a new schedule available
         /// </summary>
         /// <returns></returns>
         private bool IsNewScheduleAvailable()
         {
-            Debug.WriteLine("Checking if a new schedule is available", LogType.Audit.ToString());
-
             // If we dont currently have a cached schedule load one from the scheduleLocation
             // also do this if we have been told to Refresh the schedule
             if (_layoutSchedule.Count == 0 || RefreshSchedule)
@@ -394,7 +435,23 @@ namespace XiboClient
                 sw.Write(scheduleXml);
             }
         }
-    
+
+        /// <summary>
+        /// List of Layouts in the Schedule
+        /// </summary>
+        /// <returns></returns>
+        private string LayoutsInSchedule()
+        {
+            string layoutsInSchedule = "";
+
+            foreach (LayoutSchedule layoutSchedule in CurrentSchedule)
+            {
+                layoutsInSchedule += "LayoutId: " + layoutSchedule.id + ". Runs from " + layoutSchedule.FromDt.ToString() + Environment.NewLine;
+            }
+
+            return layoutsInSchedule;
+        }
+
         #endregion
     }
 

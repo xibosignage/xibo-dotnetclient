@@ -133,6 +133,24 @@ namespace XiboClient
 
                 Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "Building required file node for " + rf.Id.ToString()), LogType.Audit.ToString());
 
+                // Does this file already exist in the RF node? We might receive duplicates.
+                bool found = false;
+
+                foreach (RequiredFile existingRf in RequiredFileList)
+                {
+                    if (existingRf.Id == rf.Id && existingRf.FileType == rf.FileType)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found)
+                {
+                    Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "Duplicate file detected, ignoring. FileId = " + rf.Id), LogType.Audit.ToString());
+                    continue;
+                }
+
                 // Does this file exist?
                 if (File.Exists(Settings.Default.LibraryPath + @"\" + rf.Path))
                 {
