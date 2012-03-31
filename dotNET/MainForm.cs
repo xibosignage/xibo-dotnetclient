@@ -90,35 +90,17 @@ namespace XiboClient
             _clientInfoForm = new ClientInfo();
             _clientInfoForm.Hide();
 
+            // Add a message filter to listen for the i key
+            KeyFilter keyFilter = new KeyFilter();
+            keyFilter.ClientInfoForm = _clientInfoForm;
+
+            Application.AddMessageFilter(keyFilter);
+
             // Trace listener for Client Info
             ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener(_clientInfoForm);
             Trace.Listeners.Add(clientInfoTraceListener);
 
-            // Create a key listener - to show the Info Form.
-            KeyPreview = true;
-            KeyDown += new KeyEventHandler(MainForm_KeyDown);
-
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
-        }
-
-        /// <summary>
-        /// Capture the key down event
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void MainForm_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.I)
-            {
-                // Toggle
-                if (_clientInfoForm.Visible)
-                    _clientInfoForm.Hide();
-                else
-                {
-                    _clientInfoForm.Show();
-                    _clientInfoForm.BringToFront();
-                }
-            }
         }
 
         /// <summary>
@@ -665,6 +647,40 @@ namespace XiboClient
             {
                 System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm - FlushStats", "Unable to Flush Stats"), LogType.Error.ToString());
             }
+        }
+    }
+
+    /// <summary>
+    /// Key Filter to show the Client Information Screen
+    /// </summary>
+    public class KeyFilter : IMessageFilter
+    {
+        public ClientInfo ClientInfoForm;
+
+        public bool PreFilterMessage(ref Message msg)
+        {
+            const int WM_KEYDOWN = 0x100;
+            const int WM_SYSKEYDOWN = 0x104;
+
+            // Only interested in Key Down messages
+            if ((msg.Msg == WM_KEYDOWN) || (msg.Msg == WM_SYSKEYDOWN))
+            {
+                Keys keyCode = (Keys)(int)msg.WParam & Keys.KeyCode;
+
+                if (keyCode == Keys.I)
+                {
+                    // Toggle
+                    if (ClientInfoForm.Visible)
+                        ClientInfoForm.Hide();
+                    else
+                    {
+                        ClientInfoForm.Show();
+                        ClientInfoForm.BringToFront();
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

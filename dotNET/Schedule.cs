@@ -249,6 +249,11 @@ namespace XiboClient
 
             // Stop the Schedule Manager Thread
             _scheduleManager.forceStop = true;
+
+            // Abort the threads
+            _scheduleAgentThread.Abort();
+            _requiredFilesAgentThread.Abort();
+            _scheduleManagerThread.Abort();
         }
     }
 }

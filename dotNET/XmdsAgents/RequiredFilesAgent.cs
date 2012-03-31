@@ -142,6 +142,7 @@ namespace XiboClient.XmdsAgents
                                 _requiredFiles.RequiredFilesXml = xml;
 
                                 // List of Threads to start
+                                // TODO: Track these threads so that we can abort them if the application closes
                                 List<Thread> threadsToStart = new List<Thread>();
 
                                 // Required files now contains a list of files to download (this will be updated by the various worker threads)
