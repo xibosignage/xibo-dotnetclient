@@ -69,6 +69,10 @@ namespace XiboClient
         private RequiredFilesAgent _requiredFilesAgent;
         Thread _requiredFilesAgentThread;
 
+        // Library Agent
+        private LibraryAgent _libraryAgent;
+        Thread _libraryAgentThread;
+
         /// <summary>
         /// Client Info Form
         /// </summary>
@@ -128,6 +132,14 @@ namespace XiboClient
             // Create a thread for the RequiredFiles Agent to run in - but dont start it up yet.
             _requiredFilesAgentThread = new Thread(new ThreadStart(_requiredFilesAgent.Run));
             _requiredFilesAgentThread.Name = "RequiredFilesAgentThread";
+
+            // Library Agent
+            _libraryAgent = new LibraryAgent();
+            _libraryAgent.CurrentCacheManager = _cacheManager;
+            
+            // Create a thread for the Library Agent to run in - but dont start it up yet.
+            _libraryAgentThread = new Thread(new ThreadStart(_libraryAgent.Run));
+            _libraryAgentThread.Name = "LibraryAgent";
         }
 
         /// <summary>
@@ -143,6 +155,9 @@ namespace XiboClient
 
             // Start the ScheduleManager thread
             _scheduleManagerThread.Start();
+
+            // Start the LibraryAgent thread
+            _libraryAgentThread.Start();
         }
 
         /// <summary>
@@ -250,10 +265,14 @@ namespace XiboClient
             // Stop the Schedule Manager Thread
             _scheduleManager.forceStop = true;
 
+            // Stop the LibraryAgent Thread
+            _libraryAgent.forceStop = true;
+
             // Abort the threads
             _scheduleAgentThread.Abort();
             _requiredFilesAgentThread.Abort();
             _scheduleManagerThread.Abort();
+            _libraryAgentThread.Abort();
         }
     }
 }

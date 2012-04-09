@@ -47,7 +47,7 @@ namespace XiboClient
 
                 try
                 {
-                    if (arg.GetLength(0) > 0)
+                    if (arg.GetLength(0) > 0 && arg[0].ToString() == "o")
                     {
                         System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Options Started"), LogType.Info.ToString());
                         formMain = new OptionForm();

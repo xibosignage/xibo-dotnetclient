@@ -226,6 +226,22 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Get Required File using Path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public RequiredFile GetRequiredFile(string path)
+        {
+            foreach (RequiredFile rf in RequiredFileList)
+            {
+                if (rf.Path == path)
+                    return rf;
+            }
+
+            throw new FileNotFoundException("No required file found with Path: " + path);
+        }
+
+        /// <summary>
         /// Mark a RequiredFile as complete
         /// </summary>
         /// <param name="id"></param>
@@ -307,6 +323,20 @@ namespace XiboClient
 
             _report.MediaInventoryAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey,
                 hardwareKey.Key, xml);
+        }
+
+        /// <summary>
+        /// Load Required Files from Disk
+        /// </summary>
+        /// <returns></returns>
+        public static RequiredFiles LoadFromDisk()
+        {
+            using (FileStream fileStream = File.Open(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile, FileMode.Open))
+            {
+                XmlSerializer xmlSerializer = new XmlSerializer(typeof(RequiredFiles));
+
+                return (RequiredFiles)xmlSerializer.Deserialize(fileStream);
+            }
         }
     }
 

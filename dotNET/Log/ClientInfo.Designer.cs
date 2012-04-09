@@ -43,7 +43,6 @@ namespace XiboClient.Log
             this.label2 = new System.Windows.Forms.Label();
             this.requiredFilesStatus = new System.Windows.Forms.Label();
             this.requiredFilesTextBox = new System.Windows.Forms.TextBox();
-            this.label3 = new System.Windows.Forms.Label();
             this.scheduleManagerStatus = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
@@ -145,7 +144,7 @@ namespace XiboClient.Log
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(403, 34);
+            this.label2.Location = new System.Drawing.Point(403, 11);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(110, 13);
             this.label2.TabIndex = 3;
@@ -154,7 +153,7 @@ namespace XiboClient.Log
             // requiredFilesStatus
             // 
             this.requiredFilesStatus.AutoSize = true;
-            this.requiredFilesStatus.Location = new System.Drawing.Point(528, 34);
+            this.requiredFilesStatus.Location = new System.Drawing.Point(519, 11);
             this.requiredFilesStatus.Name = "requiredFilesStatus";
             this.requiredFilesStatus.Size = new System.Drawing.Size(61, 13);
             this.requiredFilesStatus.TabIndex = 4;
@@ -162,31 +161,22 @@ namespace XiboClient.Log
             // 
             // requiredFilesTextBox
             // 
-            this.requiredFilesTextBox.Location = new System.Drawing.Point(406, 59);
+            this.requiredFilesTextBox.Location = new System.Drawing.Point(406, 27);
             this.requiredFilesTextBox.Multiline = true;
             this.requiredFilesTextBox.Name = "requiredFilesTextBox";
             this.requiredFilesTextBox.ReadOnly = true;
             this.requiredFilesTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.requiredFilesTextBox.Size = new System.Drawing.Size(392, 249);
+            this.requiredFilesTextBox.Size = new System.Drawing.Size(392, 281);
             this.requiredFilesTextBox.TabIndex = 5;
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(9, 34);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(133, 13);
-            this.label3.TabIndex = 6;
-            this.label3.Text = "Schedule Manager Status:";
             // 
             // scheduleManagerStatus
             // 
-            this.scheduleManagerStatus.Location = new System.Drawing.Point(12, 59);
+            this.scheduleManagerStatus.Location = new System.Drawing.Point(12, 27);
             this.scheduleManagerStatus.Multiline = true;
             this.scheduleManagerStatus.Name = "scheduleManagerStatus";
             this.scheduleManagerStatus.ReadOnly = true;
             this.scheduleManagerStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.scheduleManagerStatus.Size = new System.Drawing.Size(387, 249);
+            this.scheduleManagerStatus.Size = new System.Drawing.Size(387, 281);
             this.scheduleManagerStatus.TabIndex = 8;
             // 
             // ClientInfo
@@ -195,7 +185,6 @@ namespace XiboClient.Log
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(810, 752);
             this.Controls.Add(this.scheduleManagerStatus);
-            this.Controls.Add(this.label3);
             this.Controls.Add(this.requiredFilesTextBox);
             this.Controls.Add(this.requiredFilesStatus);
             this.Controls.Add(this.label2);
@@ -224,7 +213,6 @@ namespace XiboClient.Log
         private System.Windows.Forms.DataGridViewTextBoxColumn Type;
         private System.Windows.Forms.DataGridViewTextBoxColumn Method;
         private System.Windows.Forms.DataGridViewTextBoxColumn Message;
-        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox scheduleManagerStatus;
     }
 }
