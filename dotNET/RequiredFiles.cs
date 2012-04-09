@@ -31,6 +31,7 @@ using XiboClient.Properties;
 
 /// 17/02/12 Dan Enriched to also manage currently downloading files
 /// 28/02/12 Dan Changed the way RequiredFiles are updated
+/// 09/04/12 Dan Fixed problem with adding an existing file to the cache manager!
 
 namespace XiboClient
 {
@@ -188,7 +189,7 @@ namespace XiboClient
                     {
                         // The MD5 is equal - we already have an up to date version of this file.
                         rf.Complete = true;
-                        _cacheManager.Add(rf.Path + ".xlf", rf.Md5);
+                        _cacheManager.Add(rf.Path, rf.Md5);
                     }
                 }
 
