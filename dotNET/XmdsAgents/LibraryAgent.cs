@@ -66,6 +66,10 @@ namespace XiboClient.XmdsAgents
                 {
                     try
                     {
+                        // Only do something if enabled
+                        if (!Settings.Default.EnableExpiredFileDeletion)
+                            return;
+
                         // Get required files from disk
                         _requiredFiles = RequiredFiles.LoadFromDisk();
 

@@ -439,5 +439,14 @@ namespace XiboClient.Properties {
                 return ((int)(this["LibraryAgentInterval"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool EnableExpiredFileDeletion {
+            get {
+                return ((bool)(this["EnableExpiredFileDeletion"]));
+            }
+        }
     }
 }
