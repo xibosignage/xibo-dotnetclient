@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -22,33 +22,135 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 using XiboClient.Properties;
+using System.Management;
+using System.Diagnostics;
 
 namespace XiboClient
 {
     class Media : Form
     {
+        // Events
+        public delegate void DurationElapsedDelegate();
+        public event DurationElapsedDelegate DurationElapsedEvent;
+
+        /// <summary>
+        /// Gets or Sets the duration of this media. Will be 0 if ""
+        /// </summary>
+        public int Duration
+        {
+            get
+            {
+                return _duration;
+            }
+            set
+            {
+                _duration = value;
+            }
+        }
+        private int _duration;
+
+        // Variables for size and position
+        public int _width;
+        public int _height;
+        public int _top;
+        public int _left;
+
+        /// <summary>
+        /// Has this media exipred?
+        /// </summary>
+        public bool Expired
+        {
+            get
+            {
+                return _hasExpired;
+            }
+            set
+            {
+                _hasExpired = value;
+            }
+        }
+        private bool _hasExpired = false;
+
+        // Private Timer
+        Timer _timer;
+        private bool _timerStarted = false;
+
+        /// <summary>
+        /// Refresh Rate
+        /// </summary>
+        /// <returns></returns>
+        public static int PrimaryScreenRefreshRate
+        {
+            get
+            {
+                if (_refreshRate == 0)
+                {
+
+                    try
+                    {
+                        ManagementObjectSearcher searcher = new ManagementObjectSearcher("select * from win32_videocontroller");
+
+                        foreach (ManagementObject videocontroller in searcher.Get())
+                        {
+                            uint rate = (uint)videocontroller["CurrentRefreshRate"];
+
+                            if (rate != 0)
+                            {
+                                Debug.WriteLine("Screen RefreshRate: " + rate);
+
+                                _refreshRate = (int)rate;
+
+                                if (_refreshRate < 0 || _refreshRate > 500)
+                                {
+                                    Debug.WriteLine("Invalid!");
+                                    _refreshRate = 60;
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _refreshRate = 60;
+                        Debug.WriteLine("Unable to get screen refresh rate: " + ex);
+                    }
+                }
+                return _refreshRate;
+            }
+        }
+        private static int _refreshRate;
+
+        /// <summary>
+        /// Media Object
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="top"></param>
+        /// <param name="left"></param>
         public Media(int width, int height, int top, int left)
         {
             Hide();
 
-            this.width = width;
-            this.height = height;
-            this.top = top;
-            this.left = left;
+            _width = width;
+            _height = height;
+            _top = top;
+            _left = left;
 
             // Form properties
-            this.TopLevel = false;
-            this.FormBorderStyle = FormBorderStyle.None;
-            //this.FormBorderStyle = FormBorderStyle.FixedToolWindow;
-            this.Width = width;
-            this.Height = height;
-            this.Location = new System.Drawing.Point(0, 0);        
+            TopLevel = false;
+            FormBorderStyle = FormBorderStyle.None;
+
+            Width = width;
+            Height = height;
+            Location = new System.Drawing.Point(0, 0);        
 
             // Transparency
-            this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-            this.BackColor = System.Drawing.Color.Transparent;
-            this.TransparencyKey = System.Drawing.Color.White;
+            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = System.Drawing.Color.Transparent;
+            TransparencyKey = System.Drawing.Color.White;
 
+            // Only enable double buffering if set in options
             if (Settings.Default.DoubleBuffering)
             {
                 SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
@@ -56,18 +158,21 @@ namespace XiboClient
             }
         }
 
+        /// <summary>
+        /// Start the Timer for this Media
+        /// </summary>
         protected void StartTimer()
         {
             //start the timer
-            if (!timerStarted && duration != 0)
+            if (!_timerStarted && _duration != 0)
             {
-                timer = new Timer();
-                timer.Interval = (1000 * duration);
-                timer.Start();
+                _timer = new Timer();
+                _timer.Interval = (1000 * _duration);
+                _timer.Start();
 
-                timer.Tick += new EventHandler(timer_Tick);
+                _timer.Tick += new EventHandler(timer_Tick);
 
-                timerStarted = true;
+                _timerStarted = true;
             }
         }
 
@@ -86,7 +191,7 @@ namespace XiboClient
         protected virtual void timer_Tick(object sender, EventArgs e)
         {
             // Once it has expired we might as well stop the timer?
-            timer.Stop();
+            _timer.Stop();
 
             SignalElapsedEvent();
         }
@@ -97,7 +202,7 @@ namespace XiboClient
         /// </summary>
         public void SignalElapsedEvent()
         {
-            this.hasExpired = true;
+            this._hasExpired = true;
 
             System.Diagnostics.Debug.WriteLine("Media Complete", "Media - SignalElapsedEvent");
 
@@ -108,7 +213,7 @@ namespace XiboClient
         {
             try
             {
-                timer.Dispose();
+                _timer.Dispose();
             }
             catch (NullReferenceException ex)
             {
@@ -118,41 +223,5 @@ namespace XiboClient
 
             base.Dispose(disposing);
         }
-
-
-        public delegate void DurationElapsedDelegate();
-        public event DurationElapsedDelegate DurationElapsedEvent;
-
-        #region Properties
-
-        /// <summary>
-        /// Gets or Sets the duration of this media. Will be 0 if ""
-        /// </summary>
-        public int Duration
-        {
-            get
-            {
-                return this.duration;
-            }
-            set
-            {
-                duration = value;
-            }
-        }
-
-        #endregion
-
-        //Variables for size and position
-        public int width;
-        public int height;
-        public int top;
-        public int left;
-
-        public bool hasExpired = false;
-        
-        //timer vars
-        Timer timer;
-        private int duration;
-        bool timerStarted = false;
     }
 }

@@ -47,7 +47,7 @@ namespace XiboClient
                 _pictureBox = new PictureBox();
                 _pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
                 _pictureBox.Image = new Bitmap(_filePath);
-                _pictureBox.Size = new Size(width, height);
+                _pictureBox.Size = new Size(_width, _height);
                 _pictureBox.Location = new Point(0, 0);
                 _pictureBox.BorderStyle = BorderStyle.None;
                 _pictureBox.BackColor = Color.Transparent;

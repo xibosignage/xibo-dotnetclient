@@ -134,7 +134,7 @@ namespace XiboClient
                 {
                     try
                     {
-                        Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Schedule Timer Ticked"), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Schedule Timer Ticked"), LogType.Audit.ToString());
 
                         // Work out if there is a new schedule available, if so - raise the event
                         if (IsNewScheduleAvailable())

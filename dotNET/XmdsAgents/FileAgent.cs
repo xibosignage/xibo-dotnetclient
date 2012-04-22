@@ -28,13 +28,12 @@ using System.IO;
 /// 17/02/12 Dan Created
 /// 21/02/12 Dan Added OnComplete Delegate and Event
 /// 28/02/12 Dan Added OnPartComplete Delegate and Event
+/// 22/04/12 Dan Dispose of XMDS between each request
 
 namespace XiboClient.XmdsAgents
 {
     class FileAgent
     {
-        private xmds.xmds _xmds;
-
         /// <summary>
         /// OnComplete delegate
         /// </summary>
@@ -114,10 +113,7 @@ namespace XiboClient.XmdsAgents
         /// </summary>
         public FileAgent()
         {
-            _xmds = new xmds.xmds();
-            _xmds.Credentials = null;
-            _xmds.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
-            _xmds.UseDefaultCredentials = false;
+            
         }
 
         /// <summary>
@@ -142,8 +138,17 @@ namespace XiboClient.XmdsAgents
 
                 while (!file.Complete)
                 {
+                    byte[] getFileReturn;
+
                     // Call XMDS GetFile
-                    byte[] getFileReturn = _xmds.GetFile(Settings.Default.ServerKey, _hardwareKey, file.Path, file.FileType, file.ChunkOffset, file.ChunkSize, Settings.Default.Version);
+                    using (xmds.xmds xmds = new xmds.xmds())
+                    {
+                        xmds.Credentials = null;
+                        xmds.Url = Settings.Default.XiboClient_xmds_xmds;
+                        xmds.UseDefaultCredentials = false;
+
+                        getFileReturn = xmds.GetFile(Settings.Default.ServerKey, _hardwareKey, file.Path, file.FileType, file.ChunkOffset, file.ChunkSize, Settings.Default.Version);
+                    }
 
                     // Set the flag to indicate we have a connection to XMDS
                     Settings.Default.XmdsLastConnection = DateTime.Now;
@@ -196,6 +201,8 @@ namespace XiboClient.XmdsAgents
                             file.Complete = true;
                         }
                     }
+
+                    getFileReturn = null;
                 }
 
                 // File completed

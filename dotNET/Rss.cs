@@ -346,7 +346,7 @@ function init()
                         }
                         else
                         {
-                            _documentText += string.Format("<div class='XiboRssItem' style='display:block;padding:4px;width:{1}'>{0}</div>", temp, this.width - 10);
+                            _documentText += string.Format("<div class='XiboRssItem' style='display:block;padding:4px;width:{1}'>{0}</div>", temp, this._width - 10);
                         }
                     }
 
@@ -374,7 +374,7 @@ function init()
                         else
                         {
                             // Up and Down
-                            textWrap = String.Format("width: {0}px;", this.width - 50);
+                            textWrap = String.Format("width: {0}px;", this._width - 50);
                         }
 
 
@@ -390,7 +390,7 @@ function init()
                             if (_direction == "right")
                                 startPosition = "right";
 
-                            textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this.width - 10, this.height);
+                            textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this._width - 10, this._height);
                             textRender += string.Format("<div id='innerText' style='position:absolute; {2}: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText, startPosition);
                         }
 

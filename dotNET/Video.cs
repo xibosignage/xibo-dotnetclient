@@ -27,6 +27,14 @@ namespace XiboClient
 {
     class Video : Media
     {
+        string filePath;
+        VideoPlayer videoPlayer;
+        private int duration;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="options"></param>
         public Video(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
@@ -106,9 +114,5 @@ namespace XiboClient
 
             base.Dispose(disposing);
         }
-
-        string filePath;
-        VideoPlayer videoPlayer;
-        private int duration;
     }
 }
