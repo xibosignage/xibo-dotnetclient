@@ -169,8 +169,12 @@ namespace XiboClient
                         media = new DataSetView(options);
                         break;
 
+                    case "shellcommand":
+                        media = new ShellCommand(options);
+                        break;
+
                     default:
-                        //do nothing
+                        // do nothing
                         SetNextMediaNode();
                         return;
                 }

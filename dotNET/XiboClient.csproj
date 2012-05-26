@@ -38,7 +38,7 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <ApplicationIcon>new-icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -176,6 +176,9 @@
     <Compile Include="Schedule.cs" />
     <Compile Include="ScheduleManager.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="ShellCommand.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="StatLog.cs" />
     <Compile Include="TemporaryHtml.cs" />
     <Compile Include="Text.cs">
@@ -297,7 +300,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="favicon.ico" />
+    <Content Include="new-icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

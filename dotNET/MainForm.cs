@@ -34,6 +34,7 @@ using System.Xml.Serialization;
 using System.Diagnostics;
 using XiboClient.Log;
 using System.Threading;
+using XiboClient.Properties;
 
 namespace XiboClient
 {
@@ -530,6 +531,33 @@ namespace XiboClient
         /// </summary>
         private void ShowSplashScreen()
         {
+            if (!string.IsNullOrEmpty(Settings.Default.SplashOverride))
+            {
+                try
+                {
+                    using (Image bgSplash = Image.FromFile(Settings.Default.SplashOverride))
+                    {
+                        Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
+                        BackgroundImage = bmpSplash;
+                    }
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("ShowSplashScreen", "Unable to load user splash screen"), LogType.Error.ToString());
+                    ShowDefaultSplashScreen();
+                }
+            }
+            else
+            {
+                ShowDefaultSplashScreen();
+            }
+        }
+
+        /// <summary>
+        /// Show the Default Splash Screen
+        /// </summary>
+        private void ShowDefaultSplashScreen()
+        {
             // We are running with the Default.xml - meaning the schedule doesnt exist
             System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
             Stream resourceStream = assembly.GetManifestResourceStream("XiboClient.Resources.splash.jpg");
@@ -539,12 +567,11 @@ namespace XiboClient
             // Load into a stream and then into an Image
             try
             {
-                Image bgSplash = Image.FromStream(resourceStream);
-
-                Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
-                this.BackgroundImage = bmpSplash;
-
-                bgSplash.Dispose();
+                using (Image bgSplash = Image.FromStream(resourceStream))
+                {
+                    Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
+                    BackgroundImage = bmpSplash;
+                }
             }
             catch (Exception ex)
             {

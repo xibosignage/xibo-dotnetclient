@@ -96,7 +96,8 @@ namespace XiboClient
             numericUpDownEmptyRegions.Value = Settings.Default.emptyLayoutDuration;
             cbExpireModifiedLayouts.Checked = Settings.Default.expireModifiedLayouts;
             enableMouseCb.Checked = Settings.Default.EnableMouse;
-            doubleBufferingCheckBox.Checked = Settings.Default.DoubleBuffering;            
+            doubleBufferingCheckBox.Checked = Settings.Default.DoubleBuffering;
+            splashOverride.Text = Settings.Default.SplashOverride;
 
             System.Diagnostics.Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
@@ -186,6 +187,7 @@ namespace XiboClient
                 // Advanced settings
                 Settings.Default.expireModifiedLayouts = cbExpireModifiedLayouts.Checked;
                 Settings.Default.emptyLayoutDuration = numericUpDownEmptyRegions.Value;
+                Settings.Default.SplashOverride = splashOverride.Text;
 
                 // Commit these changes back to the user settings
                 Settings.Default.Save();
@@ -211,6 +213,17 @@ namespace XiboClient
             if (folderBrowserLibrary.ShowDialog() == DialogResult.OK)
             {
                 textBoxLibraryPath.Text = folderBrowserLibrary.SelectedPath;
+            }
+        }
+
+        private void splashButtonBrowse_Click(object sender, EventArgs e)
+        {
+            // Set the dialog
+            splashScreenOverride.FileName = splashOverride.Text;
+
+            if (splashScreenOverride.ShowDialog() == DialogResult.OK)
+            {
+                splashOverride.Text = splashScreenOverride.FileName;
             }
         }
 

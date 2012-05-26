@@ -75,6 +75,11 @@ namespace XiboClient
             this.clientHeight = new System.Windows.Forms.NumericUpDown();
             this.clientWidth = new System.Windows.Forms.NumericUpDown();
             this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.splashButtonBrowse = new System.Windows.Forms.Button();
+            this.linkLabel1 = new System.Windows.Forms.LinkLabel();
+            this.label17 = new System.Windows.Forms.Label();
+            this.label16 = new System.Windows.Forms.Label();
+            this.splashOverride = new System.Windows.Forms.TextBox();
             this.doubleBufferingCheckBox = new System.Windows.Forms.CheckBox();
             this.enableMouseCb = new System.Windows.Forms.CheckBox();
             this.cbExpireModifiedLayouts = new System.Windows.Forms.CheckBox();
@@ -88,6 +93,7 @@ namespace XiboClient
             this.onlineHelpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.folderBrowserLibrary = new System.Windows.Forms.FolderBrowserDialog();
             this.xmds1 = new XiboClient.xmds.xmds();
+            this.splashScreenOverride = new System.Windows.Forms.OpenFileDialog();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).BeginInit();
@@ -589,6 +595,11 @@ namespace XiboClient
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.splashButtonBrowse);
+            this.tabPage5.Controls.Add(this.linkLabel1);
+            this.tabPage5.Controls.Add(this.label17);
+            this.tabPage5.Controls.Add(this.label16);
+            this.tabPage5.Controls.Add(this.splashOverride);
             this.tabPage5.Controls.Add(this.doubleBufferingCheckBox);
             this.tabPage5.Controls.Add(this.enableMouseCb);
             this.tabPage5.Controls.Add(this.cbExpireModifiedLayouts);
@@ -601,6 +612,51 @@ namespace XiboClient
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Advanced";
             this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // splashButtonBrowse
+            // 
+            this.splashButtonBrowse.Location = new System.Drawing.Point(324, 177);
+            this.splashButtonBrowse.Name = "splashButtonBrowse";
+            this.splashButtonBrowse.Size = new System.Drawing.Size(81, 20);
+            this.splashButtonBrowse.TabIndex = 9;
+            this.splashButtonBrowse.Text = "Browse";
+            this.splashButtonBrowse.UseVisualStyleBackColor = true;
+            this.splashButtonBrowse.Click += new System.EventHandler(this.splashButtonBrowse_Click);
+            // 
+            // linkLabel1
+            // 
+            this.linkLabel1.AutoSize = true;
+            this.linkLabel1.Location = new System.Drawing.Point(150, 228);
+            this.linkLabel1.Name = "linkLabel1";
+            this.linkLabel1.Size = new System.Drawing.Size(133, 13);
+            this.linkLabel1.TabIndex = 8;
+            this.linkLabel1.TabStop = true;
+            this.linkLabel1.Text = "http://xibo.org.uk/donate/";
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(20, 200);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(352, 13);
+            this.label17.TabIndex = 7;
+            this.label17.Text = "If you override the splash screen please consider donating to the project. ";
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(20, 180);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(119, 13);
+            this.label16.TabIndex = 6;
+            this.label16.Text = "Override Splash Screen";
+            // 
+            // splashOverride
+            // 
+            this.splashOverride.Location = new System.Drawing.Point(176, 177);
+            this.splashOverride.Name = "splashOverride";
+            this.splashOverride.Size = new System.Drawing.Size(141, 20);
+            this.splashOverride.TabIndex = 5;
             // 
             // doubleBufferingCheckBox
             // 
@@ -712,6 +768,10 @@ namespace XiboClient
             this.xmds1.Url = "http://localhost/Xibo/server/xmds.php";
             this.xmds1.UseDefaultCredentials = false;
             // 
+            // splashScreenOverride
+            // 
+            this.splashScreenOverride.FileName = "Splash Screen.jpg";
+            // 
             // OptionForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -812,5 +872,11 @@ namespace XiboClient
         private System.Windows.Forms.CheckBox cbExpireModifiedLayouts;
         private System.Windows.Forms.CheckBox enableMouseCb;
         private System.Windows.Forms.CheckBox doubleBufferingCheckBox;
+        private System.Windows.Forms.OpenFileDialog splashScreenOverride;
+        private System.Windows.Forms.LinkLabel linkLabel1;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.TextBox splashOverride;
+        private System.Windows.Forms.Button splashButtonBrowse;
     }
 }
