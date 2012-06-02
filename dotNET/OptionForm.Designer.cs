@@ -94,6 +94,9 @@ namespace XiboClient
             this.folderBrowserLibrary = new System.Windows.Forms.FolderBrowserDialog();
             this.xmds1 = new XiboClient.xmds.xmds();
             this.splashScreenOverride = new System.Windows.Forms.OpenFileDialog();
+            this.enableShellCommandsCb = new System.Windows.Forms.CheckBox();
+            this.shellCommandAllowList = new System.Windows.Forms.TextBox();
+            this.label18 = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).BeginInit();
@@ -595,6 +598,9 @@ namespace XiboClient
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.label18);
+            this.tabPage5.Controls.Add(this.shellCommandAllowList);
+            this.tabPage5.Controls.Add(this.enableShellCommandsCb);
             this.tabPage5.Controls.Add(this.splashButtonBrowse);
             this.tabPage5.Controls.Add(this.linkLabel1);
             this.tabPage5.Controls.Add(this.label17);
@@ -661,7 +667,7 @@ namespace XiboClient
             // doubleBufferingCheckBox
             // 
             this.doubleBufferingCheckBox.AutoSize = true;
-            this.doubleBufferingCheckBox.Location = new System.Drawing.Point(176, 140);
+            this.doubleBufferingCheckBox.Location = new System.Drawing.Point(176, 95);
             this.doubleBufferingCheckBox.Name = "doubleBufferingCheckBox";
             this.doubleBufferingCheckBox.Size = new System.Drawing.Size(141, 17);
             this.doubleBufferingCheckBox.TabIndex = 4;
@@ -673,7 +679,7 @@ namespace XiboClient
             this.enableMouseCb.AutoSize = true;
             this.enableMouseCb.Checked = true;
             this.enableMouseCb.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.enableMouseCb.Location = new System.Drawing.Point(176, 103);
+            this.enableMouseCb.Location = new System.Drawing.Point(176, 72);
             this.enableMouseCb.Name = "enableMouseCb";
             this.enableMouseCb.Size = new System.Drawing.Size(94, 17);
             this.enableMouseCb.TabIndex = 3;
@@ -685,7 +691,7 @@ namespace XiboClient
             this.cbExpireModifiedLayouts.AutoSize = true;
             this.cbExpireModifiedLayouts.Checked = true;
             this.cbExpireModifiedLayouts.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cbExpireModifiedLayouts.Location = new System.Drawing.Point(176, 66);
+            this.cbExpireModifiedLayouts.Location = new System.Drawing.Point(176, 49);
             this.cbExpireModifiedLayouts.Name = "cbExpireModifiedLayouts";
             this.cbExpireModifiedLayouts.Size = new System.Drawing.Size(243, 17);
             this.cbExpireModifiedLayouts.TabIndex = 2;
@@ -771,6 +777,32 @@ namespace XiboClient
             // splashScreenOverride
             // 
             this.splashScreenOverride.FileName = "Splash Screen.jpg";
+            // 
+            // enableShellCommandsCb
+            // 
+            this.enableShellCommandsCb.AutoSize = true;
+            this.enableShellCommandsCb.Location = new System.Drawing.Point(176, 119);
+            this.enableShellCommandsCb.Name = "enableShellCommandsCb";
+            this.enableShellCommandsCb.Size = new System.Drawing.Size(140, 17);
+            this.enableShellCommandsCb.TabIndex = 10;
+            this.enableShellCommandsCb.Text = "Enable Shell Commands";
+            this.enableShellCommandsCb.UseVisualStyleBackColor = true;
+            // 
+            // shellCommandAllowList
+            // 
+            this.shellCommandAllowList.Location = new System.Drawing.Point(236, 143);
+            this.shellCommandAllowList.Name = "shellCommandAllowList";
+            this.shellCommandAllowList.Size = new System.Drawing.Size(169, 20);
+            this.shellCommandAllowList.TabIndex = 11;
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(20, 146);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(210, 13);
+            this.label18.TabIndex = 12;
+            this.label18.Text = "Comma seperated Shell Command allow list";
             // 
             // OptionForm
             // 
@@ -878,5 +910,8 @@ namespace XiboClient
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.TextBox splashOverride;
         private System.Windows.Forms.Button splashButtonBrowse;
+        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.TextBox shellCommandAllowList;
+        private System.Windows.Forms.CheckBox enableShellCommandsCb;
     }
 }

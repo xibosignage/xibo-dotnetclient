@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
+using XiboClient.Properties;
 
 namespace XiboClient
 {
@@ -36,13 +37,45 @@ namespace XiboClient
 
         public override void RenderMedia()
         {
+            // Is this module enabled?
+            if (Settings.Default.EnableShellCommands)
+            {
+                // Check to see if we have an allow list
+                if (!string.IsNullOrEmpty(Settings.Default.ShellCommandAllowList))
+                {
+                    // Array of allowed commands
+                    string[] allowedCommands = Settings.Default.ShellCommandAllowList.Split(',');
+                    
+                    // Check we are allowed to execute the command
+                    foreach (string allowedCommand in allowedCommands)
+                    {
+                        if (_command.StartsWith(allowedCommand))
+                        {
+                            ExecuteShellCommand();
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    // All commands are allowed
+                    ExecuteShellCommand();
+                }
+            }
+
+            // All shell commands have a duration of 1
+            base.RenderMedia();
+        }
+
+        private void ExecuteShellCommand()
+        {
             // Execute the commend
             if (!string.IsNullOrEmpty(_command))
             {
                 using (Process process = new Process())
                 {
                     ProcessStartInfo startInfo = new ProcessStartInfo();
-                    
+
                     startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                     startInfo.FileName = "cmd.exe";
                     startInfo.Arguments = "/C " + _command;
@@ -51,9 +84,6 @@ namespace XiboClient
                     process.Start();
                 }
             }
-
-            // All shell commands have a duration of 1
-            base.RenderMedia();
         }
     }
 }

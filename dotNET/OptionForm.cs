@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-11 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -98,6 +98,8 @@ namespace XiboClient
             enableMouseCb.Checked = Settings.Default.EnableMouse;
             doubleBufferingCheckBox.Checked = Settings.Default.DoubleBuffering;
             splashOverride.Text = Settings.Default.SplashOverride;
+            enableShellCommandsCb.Checked = Settings.Default.EnableShellCommands;
+            shellCommandAllowList.Text = Settings.Default.ShellCommandAllowList;
 
             System.Diagnostics.Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
@@ -188,6 +190,8 @@ namespace XiboClient
                 Settings.Default.expireModifiedLayouts = cbExpireModifiedLayouts.Checked;
                 Settings.Default.emptyLayoutDuration = numericUpDownEmptyRegions.Value;
                 Settings.Default.SplashOverride = splashOverride.Text;
+                Settings.Default.EnableShellCommands = enableShellCommandsCb.Checked;
+                Settings.Default.ShellCommandAllowList = shellCommandAllowList.Text;
 
                 // Commit these changes back to the user settings
                 Settings.Default.Save();

@@ -460,5 +460,29 @@ namespace XiboClient.Properties {
                 this["SplashOverride"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableShellCommands {
+            get {
+                return ((bool)(this["EnableShellCommands"]));
+            }
+            set {
+                this["EnableShellCommands"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ShellCommandAllowList {
+            get {
+                return ((string)(this["ShellCommandAllowList"]));
+            }
+            set {
+                this["ShellCommandAllowList"] = value;
+            }
+        }
     }
 }
