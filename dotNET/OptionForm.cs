@@ -86,20 +86,22 @@ namespace XiboClient
             maskedTextBoxProxyPass.Text = Settings.Default.ProxyPassword;
             textBoxProxyDomain.Text = Settings.Default.ProxyDomain;
 
-            // Client Tab
+            // Appearance Tab
             clientWidth.Value = Settings.Default.sizeX;
             clientHeight.Value = Settings.Default.sizeY;
             offsetX.Value = Settings.Default.offsetX;
             offsetY.Value = Settings.Default.offsetY;
+            cbExpireModifiedLayouts.Checked = Settings.Default.expireModifiedLayouts;
+            enableMouseCb.Checked = Settings.Default.EnableMouse;
+            splashOverride.Text = Settings.Default.SplashOverride;
 
             // Advanced Tab
             numericUpDownEmptyRegions.Value = Settings.Default.emptyLayoutDuration;
-            cbExpireModifiedLayouts.Checked = Settings.Default.expireModifiedLayouts;
-            enableMouseCb.Checked = Settings.Default.EnableMouse;
             doubleBufferingCheckBox.Checked = Settings.Default.DoubleBuffering;
-            splashOverride.Text = Settings.Default.SplashOverride;
             enableShellCommandsCb.Checked = Settings.Default.EnableShellCommands;
             shellCommandAllowList.Text = Settings.Default.ShellCommandAllowList;
+            logLevel.Text = Settings.Default.LogLevel;
+            maxConcurrentDownloads.Value = Settings.Default.MaxConcurrentDownloads;
 
             System.Diagnostics.Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
@@ -185,13 +187,15 @@ namespace XiboClient
                 Settings.Default.sizeY = clientHeight.Value;
                 Settings.Default.offsetX = offsetX.Value;
                 Settings.Default.offsetY = offsetY.Value;
+                Settings.Default.SplashOverride = splashOverride.Text;
 
                 // Advanced settings
                 Settings.Default.expireModifiedLayouts = cbExpireModifiedLayouts.Checked;
                 Settings.Default.emptyLayoutDuration = numericUpDownEmptyRegions.Value;
-                Settings.Default.SplashOverride = splashOverride.Text;
                 Settings.Default.EnableShellCommands = enableShellCommandsCb.Checked;
                 Settings.Default.ShellCommandAllowList = shellCommandAllowList.Text;
+                Settings.Default.MaxConcurrentDownloads = Convert.ToInt32(maxConcurrentDownloads.Value);
+                Settings.Default.LogLevel = logLevel.Text;
 
                 // Commit these changes back to the user settings
                 Settings.Default.Save();
