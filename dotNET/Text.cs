@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -41,6 +41,7 @@ namespace XiboClient
         private string _backgroundLeft;
         private double _scaleFactor;
         private int _scrollSpeed;
+        private bool _fitText;
 
         private TemporaryHtml _tempHtml;
 
@@ -63,6 +64,7 @@ namespace XiboClient
             _documentText = options.text;
             _scrollSpeed = options.scrollSpeed;
             _headJavaScript = options.javaScript;
+            _fitText = (options.Dictionary.Get("fitText", "0") == "0" ? false : true);
             
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
@@ -91,30 +93,16 @@ namespace XiboClient
         /// </summary>
         private void GenerateBodyHtml()
         {
-            String startPosition = "left";
+            string bodyContent = "";
 
-            if (_direction == "right")
-                startPosition = "right";
-
-            // Generate the Body
-            if (_direction == "none")
-            {
-                // Just use the RAW text that was in the XLF
-                _tempHtml.BodyContent = _documentText;
-            }
-            else
-            {
-                // Format the text in some way
-                String textRender = "";
-                String textWrap = "";
-
-                if (_direction == "left" || _direction == "right") textWrap = "white-space: nowrap";
-
-                textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this._width - 10, this._height);
-                textRender += string.Format("<div id='innerText' style='position:absolute; {3}: 0px; top: 0px; width:{2}px; {0}'>{1}</div></div>", textWrap, _documentText, this._width - 10, startPosition);
-
-                _tempHtml.BodyContent = textRender;
-            }
+            // Generate the body content
+            bodyContent += "<div id=\"contentPane\" style=\"overflow: none; width:" + _width + "px; height:" + _height + "px;\">";
+            bodyContent += "   <div id=\"text\">";
+            bodyContent += "       " + _documentText;
+            bodyContent += "   </div>";
+            bodyContent += "</div>";
+            
+            _tempHtml.BodyContent = bodyContent;
         }
 
         /// <summary>
@@ -123,38 +111,32 @@ namespace XiboClient
         private void GenerateHeadHtml()
         {
             // Handle the background
-            String bodyStyle;
+            string bodyStyle = "";
 
             if (_backgroundImage == null || _backgroundImage == "")
-            {
-                bodyStyle = "background-color:" + _backgroundColor + " ;";
-            }
+                bodyStyle = "<style type='text/css'>body { background-color:" + _backgroundColor + " ; } </style>";
             else
-            {
-                bodyStyle = "background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + ";";
-            }
+                bodyStyle = "<style type='text/css'>body { background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + "; } </style>";
+            
+            string headContent = "<script type='text/javascript'>";
+            headContent += "   function init() { ";
+            headContent += "       $('#text').xiboRender({ ";
+            headContent += "           type: 'text',";
+            headContent += "           direction: '" + _direction + "',";
+            headContent += "           duration: " + Duration + ",";
+            headContent += "           durationIsPerItem: false,";
+            headContent += "           numItems: 0,";
+            headContent += "           width: " + _width + ",";
+            headContent += "           height: " + _height + ",";
+            headContent += "           scrollSpeed: " + _scrollSpeed + ",";
+            headContent += "           fitText: " + ((!_fitText) ? "false" : "true") + ",";
+            headContent += "           scaleText: " + ((_fitText) ? "false" : "true") + ",";
+            headContent += "           scaleFactor: " + _scaleFactor;
+            headContent += "       });";
+            headContent += "   } ";
+            headContent += "</script>";
 
-            // Do we need to include the init function to kick off the text render?
-            String initFunction = "";
-
-            if (_direction != "none")
-            {
-                initFunction = @"
-<script type='text/javascript'>
-function init() 
-{ 
-    tr = new TextRender('text', 'innerText', '" + _direction + @"', " + Properties.Settings.Default.scrollStepAmount.ToString() + @");
-
-    var timer = 0;
-    timer = setInterval('tr.TimerTick()', " + _scrollSpeed.ToString() + @");
-}
-</script>";
-            }
-
-            _headText = _headJavaScript + initFunction + "<style type='text/css'>body {" + bodyStyle + " font-size:" + _scaleFactor.ToString() + "em; }</style>";
-
-            // Store the document text in the temporary HTML space
-            _tempHtml.HeadContent = _headText;
+            _tempHtml.HeadContent = headContent + bodyStyle + _headJavaScript;
         }
 
         /// <summary>

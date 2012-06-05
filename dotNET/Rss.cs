@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -47,6 +47,7 @@ namespace XiboClient
         private int _scrollSpeed;
         private double _scaleFactor;
         private int _duration;
+        private bool _fitText;
 
         private int _numItems;
         private string _takeItemsFrom;
@@ -104,6 +105,7 @@ namespace XiboClient
             _layoutId = options.layoutId;
             _scaleFactor = options.scaleFactor;
             _duration = options.duration;
+            _fitText = (options.Dictionary.Get("fitText", "0") == "0" ? false : true);
 
             // Update interval and scrolling speed
             _updateInterval = options.updateInterval;
@@ -192,60 +194,32 @@ namespace XiboClient
         private void GenerateHeadHtml()
         {
             // Handle the background
-            String bodyStyle;
+            string bodyStyle = "";
 
             if (_backgroundImage == null || _backgroundImage == "")
-            {
-                bodyStyle = "background-color:" + _backgroundColor + " ;";
-            }
+                bodyStyle = "<style type='text/css'>body { background-color:" + _backgroundColor + " ; } </style>";
             else
-            {
-                bodyStyle = "background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + ";";
-            }
+                bodyStyle = "<style type='text/css'>body { background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + "; } </style>";
 
-            // Do we need to include the init function to kick off the text render?
-            String initFunction = "";
+            string headContent = "<script type='text/javascript'>";
+            headContent += "   function init() { ";
+            headContent += "       $('#text').xiboRender({ ";
+            headContent += "           type: 'ticker',";
+            headContent += "           direction: '" + _direction + "',";
+            headContent += "           duration: " + _duration + ",";
+            headContent += "           durationIsPerItem: false,";
+            headContent += "           numItems: 0,";
+            headContent += "           width: " + _width + ",";
+            headContent += "           height: " + _height + ",";
+            headContent += "           scrollSpeed: " + _scrollSpeed + ",";
+            headContent += "           fitText: " + ((!_fitText) ? "false" : "true") + ",";
+            headContent += "           scaleText: " + ((_fitText) ? "false" : "true") + ",";
+            headContent += "           scaleFactor: " + _scaleFactor;
+            headContent += "       });";
+            headContent += "   } ";
+            headContent += "</script>";
 
-            if (_direction == "single")
-            {
-                initFunction = @"
-<script type='text/javascript'>
-function init() 
-{
-    var totalDuration = " + _duration.ToString() + @" * 1000;
-    var itemCount = $('.XiboRssItem').size();
-    var durationIsPerItem = " + _durationIsPerItem.ToString() + @"
-    
-    if (durationIsPerItem == 0)
-        var itemTime = totalDuration / itemCount;
-    else
-        var itemTime = totalDuration;
-
-    if (itemTime < 2000) itemTime = 2000;
-
-   // Try to get the itemTime from an element we expect to be in the HTML 
-   $('#text').cycle({fx: 'fade', timeout:itemTime});
-}
-</script>";
-            }
-            else if (_direction != "none")
-            {
-                initFunction = @"
-<script type='text/javascript'>
-function init() 
-{ 
-    tr = new TextRender('text', 'innerText', '" + _direction + @"', " + Properties.Settings.Default.scrollStepAmount.ToString() + @");
-
-    var timer = 0;
-    timer = setInterval('tr.TimerTick()', " + _scrollSpeed.ToString() + @");
-}
-</script>";
-            }
-
-            _headText = initFunction + "<style type='text/css'>body {" + bodyStyle + " font-size:" + _scaleFactor.ToString() + "em; }</style>";
-
-            // Store the document text in the temporary HTML space
-            _tempHtml.HeadContent = _headText;
+            _tempHtml.HeadContent = headContent + bodyStyle;
         }
 
         /// <summary>
@@ -337,67 +311,31 @@ function init()
                         // Assemble the RSS items based on the direction we are displaying
                         if (_direction == "left" || _direction == "right")
                         {
-                            // Remove all <p></p> from the temp
-                            temp = temp.Replace("<p>", "");
-                            temp = temp.Replace("</p>", "");
-
                             // Sub in the temp to the format string
-                            _documentText += string.Format("<span class='article' style='padding-left:4px;'>{0}</span>", temp);
+                            _documentText += string.Format("<span class='article'>{0}</span>", temp);
                         }
                         else
                         {
-                            _documentText += string.Format("<div class='XiboRssItem' style='display:block;padding:4px;width:{1}'>{0}</div>", temp, this._width - 10);
+                            _documentText += string.Format("<div class='XiboRssItem'>{0}</div>", temp);
                         }
                     }
 
                     // Add the Copyright Notice
                     _documentText += CopyrightNotice;
 
-                    // Decide whether we need a marquee or not
-                    if (_direction == "none")
-                    {
-                        // we dont
-                        // set the body of the webBrowser to the document text (altered by the RSS feed)
-                        _bodyText = _documentText;
-                    }
-                    else
-                    {
+                    if (_direction == "left" || _direction == "right")
+                        _documentText = "<nobr>" + _documentText + "</nobr>";
 
-                        String textRender = "";
-                        String textWrap = "";
-                        if (_direction == "left" || _direction == "right")
-                        {
-                            // Make sure the text does not wrap when going from left to right.
-                            textWrap = "white-space: nowrap";
-                            _documentText = String.Format("<nobr>{0}</nobr>", _documentText);
-                        }
-                        else
-                        {
-                            // Up and Down
-                            textWrap = String.Format("width: {0}px;", this._width - 50);
-                        }
+                    string bodyContent = "";
 
+                    // Generate the body content
+                    bodyContent += "<div id=\"contentPane\" style=\"overflow: none; width:" + _width + "px; height:" + _height + "px;\">";
+                    bodyContent += "   <div id=\"text\">";
+                    bodyContent += "       " + _documentText;
+                    bodyContent += "   </div>";
+                    bodyContent += "</div>";
 
-                        // If we are displaying a single item at a time we do not need to mask out the inner text
-                        if (_direction == "single")
-                        {
-                            textRender += string.Format("<div id='text'>{0}</div>", _documentText);
-                        }
-                        else
-                        {
-                            String startPosition = "left";
-
-                            if (_direction == "right")
-                                startPosition = "right";
-
-                            textRender += string.Format("<div id='text' style='position:relative;overflow:hidden;width:{0}px; height:{1}px;'>", this._width - 10, this._height);
-                            textRender += string.Format("<div id='innerText' style='position:absolute; {2}: 0px; top: 0px; {0}'>{1}</div></div>", textWrap, _documentText, startPosition);
-                        }
-
-                        _bodyText = textRender;
-                    }
-
-                    _tempHtml.BodyContent = _bodyText;
+                    _tempHtml.BodyContent = bodyContent;
                 }
             }
             catch (Exception ex)

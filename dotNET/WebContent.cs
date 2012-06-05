@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -31,6 +31,10 @@ namespace XiboClient
         string mediaId;
         string type;
 
+        string _filePath;
+        WebBrowser webBrowser;
+        int duration;
+
         public WebContent(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
@@ -45,6 +49,10 @@ namespace XiboClient
             webBrowser.Size = this.Size;
             webBrowser.ScrollBarsEnabled = false;
             webBrowser.ScriptErrorsSuppressed = true;
+
+            // Offset?
+            double offsetTop = Convert.ToDouble(options.Dictionary.Get("offsetTop", "0"));
+            double offsetLeft = Convert.ToDouble(options.Dictionary.Get("offsetLeft", "0"));
 
             // Attach event
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
@@ -61,15 +69,16 @@ namespace XiboClient
                     // Try to make a URI out of the file path
                     try
                     {
-                        this.filePath = Uri.UnescapeDataString(options.uri);
+                        this._filePath = Uri.UnescapeDataString(options.uri);
                     }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine(ex.Message, "WebContent");
                     }
 
-                    // Navigate
-                    webBrowser.Navigate(this.filePath);
+                    // Load an IFRAME into the DocumentText
+                    string iframe = "<html><body style='margin:0; border:0;'><iframe style='margin-left:-" + offsetLeft.ToString() + "px; margin-top:-" + offsetTop.ToString() + "px;' scrolling=\"no\" width=\"" + (options.width + offsetLeft).ToString() + "px\" height=\"" + (options.height + offsetTop).ToString() + "px\" src=\"" + _filePath + "\"></body></html>";
+                    webBrowser.DocumentText = iframe;
                 }
                 catch (Exception ex)
                 {
@@ -101,7 +110,7 @@ namespace XiboClient
 
         protected override void Dispose(bool disposing)
         {
-            System.Diagnostics.Debug.WriteLine(String.Format("Disposing {0}", filePath));
+            System.Diagnostics.Debug.WriteLine(String.Format("Disposing {0}", _filePath));
             
             try
             {
@@ -111,16 +120,12 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(String.Format("Unable to dispose {0} because {1}", filePath, ex.Message));
+                System.Diagnostics.Debug.WriteLine(String.Format("Unable to dispose {0} because {1}", _filePath, ex.Message));
             }
 
             base.Dispose(disposing);
 
-            System.Diagnostics.Debug.WriteLine(String.Format("Disposed {0}", filePath));
+            System.Diagnostics.Debug.WriteLine(String.Format("Disposed {0}", _filePath));
         }
-
-        string filePath;
-        WebBrowser webBrowser;
-        int duration;
     }
 }

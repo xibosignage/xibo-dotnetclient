@@ -78,7 +78,12 @@ namespace XiboClient
             foreach (MediaOption option in _options)
             {
                 if (option.Name == name)
+                {
+                    if (string.IsNullOrEmpty(option.Value))
+                        return def;
+
                     return option.Value;
+                }
             }
 
             return def;
