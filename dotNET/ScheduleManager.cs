@@ -234,12 +234,15 @@ namespace XiboClient
                 try
                 {
                     if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                    {
+                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Error.ToString());
                         continue;
+                    }
                 }
                 catch
                 {
-                    // TODO: Ignore this layout.. raise an error?
-                    Trace.WriteLine("Unable to determine if layout is valid or not");
+                    // Ignore this layout.. raise an error?
+                    Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Unable to determine if layout is valid or not"), LogType.Error.ToString());
                     continue;
                 }
 

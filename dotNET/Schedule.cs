@@ -230,6 +230,9 @@ namespace XiboClient
         {
             Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "Layout file changed: " + layoutPath), LogType.Info.ToString());
 
+            // Tell the schedule to refresh
+            _scheduleManager.RefreshSchedule = true;
+
             // Are we set to expire modified layouts? If not then just return as if
             // nothing had happened.
             if (!Settings.Default.expireModifiedLayouts)

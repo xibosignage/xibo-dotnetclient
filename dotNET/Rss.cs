@@ -340,7 +340,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, _scheduleId, _layoutId, _mediaid));
+                Trace.WriteLine(new LogMessage("Rss - LoadRssIntoTempFile", string.Format("Message:{0}. ScheduleID:{1},LayoutID:{2},MediaID:{3}", ex.Message, _scheduleId, _layoutId, _mediaid)), LogType.Error.ToString());
 
                 _bodyText = "<h1>Unable to load feed</h1>";
                 _tempHtml.BodyContent = _bodyText;

@@ -55,7 +55,7 @@ namespace XiboClient
 
                     if (lastWrite > file.cacheDate)
                     {
-                        Debug.WriteLine(new LogMessage("GetMD5", "File has been written to since cache, recalculating"), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("GetMD5", path + " has been written to since cache, recalculating"), LogType.Audit.ToString());
 
                         // Get the MD5 again
                         String md5 = CalcMD5(path);

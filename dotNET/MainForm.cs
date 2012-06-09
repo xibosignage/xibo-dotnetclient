@@ -610,7 +610,7 @@ namespace XiboClient
             // Check the other regions to see if they are also expired.
             foreach (Region temp in _regions)
             {
-                if (!temp.hasExpired)
+                if (!temp._hasExpired)
                 {
                     _isExpired = false;
                 }
@@ -621,7 +621,7 @@ namespace XiboClient
                 // Inform each region that the layout containing it has expired
                 foreach (Region temp in _regions)
                 {
-                    temp.layoutExpired = true;
+                    temp._layoutExpired = true;
                 }
 
                 System.Diagnostics.Debug.WriteLine("Region Expired - Next Region.", "MainForm - DurationElapsedEvent");

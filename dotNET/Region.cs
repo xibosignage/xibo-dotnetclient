@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008,2009,2010,2011 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -27,20 +27,20 @@ using XiboClient.Properties;
 
 namespace XiboClient
 {
-    //<summary>
-    //A screen region control
-    //</summary>
+    /// <summary>
+    /// Layout Region, container for Media
+    /// </summary>
     class Region : Panel
     {
-        private BlackList blackList;
+        private BlackList _blackList;
         public delegate void DurationElapsedDelegate();
         public event DurationElapsedDelegate DurationElapsedEvent;
 
-        private Media media;
-        private RegionOptions options;
-        public bool hasExpired = false;
-        public bool layoutExpired = false;
-        private int currentSequence = -1;
+        private Media _media;
+        private RegionOptions _options;
+        public bool _hasExpired = false;
+        public bool _layoutExpired = false;
+        private int _currentSequence = -1;
 
         // Stat objects
         private StatLog _statLog;
@@ -49,6 +49,11 @@ namespace XiboClient
         // Cache Manager
         private CacheManager _cacheManager;
 
+        /// <summary>
+        /// Creates the Region
+        /// </summary>
+        /// <param name="statLog"></param>
+        /// <param name="cacheManager"></param>
         public Region(ref StatLog statLog, ref CacheManager cacheManager)
         {
             // Store the statLog
@@ -58,14 +63,14 @@ namespace XiboClient
             _cacheManager = cacheManager;
 
             //default options
-            options.width = 1024;
-            options.height = 768;
-            options.left = 0;
-            options.top = 0;
-            options.uri = null;
+            _options.width = 1024;
+            _options.height = 768;
+            _options.left = 0;
+            _options.top = 0;
+            _options.uri = null;
 
-            this.Location = new System.Drawing.Point(options.left, options.top);
-            this.Size = new System.Drawing.Size(options.width, options.height);
+            this.Location = new System.Drawing.Point(_options.left, _options.top);
+            this.Size = new System.Drawing.Size(_options.width, _options.height);
             this.BackColor = System.Drawing.Color.Transparent;
 
             if (Settings.Default.DoubleBuffering)
@@ -75,18 +80,21 @@ namespace XiboClient
             }
 
             // Create a new BlackList for us to use
-            blackList = new BlackList();
+            _blackList = new BlackList();
         }
 
+        /// <summary>
+        /// Options for the region
+        /// </summary>
         public RegionOptions regionOptions
         {
             get 
             { 
-                return this.options; 
+                return this._options; 
             }
             set 
             { 
-                this.options = value;
+                this._options = value;
 
                 EvalOptions();
             }
@@ -97,370 +105,432 @@ namespace XiboClient
         ///</summary>
         private void EvalOptions() 
         {
-            if (currentSequence == -1)
+            // First time
+            bool initialMedia = (_currentSequence == -1);
+
+            if (initialMedia)
             {
-                //evaluate the width, etc
-                this.Location = new System.Drawing.Point(options.left, options.top);
-                this.Size = new System.Drawing.Size(options.width, options.height);
+                // Evaluate the width, etc
+                this.Location = new System.Drawing.Point(_options.left, _options.top);
+                this.Size = new System.Drawing.Size(_options.width, _options.height);
             }
 
-            int temp = currentSequence;
-            
-            //set the next media node for this panel
-            if (!SetNextMediaNode())
-            {
-                // For some reason we cannot set a media node... so we need this region to become invalid
-                hasExpired = true;
-                DurationElapsedEvent();
-                return;
-            }
+            // The idea here is to store the current media, start the new media and then replace
+            Media currentMedia;
+            Media newMedia = _media;
 
-            // If the sequence hasnt been changed, OR the layout has been expired
-            if (currentSequence == temp || layoutExpired)
-            {
-                //there has been no change to the sequence, therefore the media we have already created is still valid
-                //or this media has actually been destroyed and we are working out way out the call stack
-                return;
-            }
+            // Loop around trying to set the next media
+            bool setSuccessful = false;
 
-            System.Diagnostics.Debug.WriteLine(String.Format("Creating new media: {0}, {1}", options.type, options.mediaid), "Region - EvalOptions");
-
-            try
+            while (!setSuccessful)
             {
-                switch (options.type)
+                // Store the current sequence
+                int temp = _currentSequence;
+
+                // Set the next media node for this panel
+                if (!SetNextMediaNodeInOptions())
                 {
-                    case "image":
-                        options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
-                        media = new ImagePosition(options);
-                        break;
-
-                    case "text":
-                        media = new Text(options);
-                        break;
-
-                    case "powerpoint":
-                        options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
-                        media = new WebContent(options);
-                        break;
-
-                    case "video":
-                        options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
-                        media = new Video(options);
-                        break;
-
-                    case "webpage":
-                        media = new WebContent(options);
-                        break;
-
-                    case "flash":
-                        options.uri = Properties.Settings.Default.LibraryPath + @"\" + options.uri;
-                        media = new Flash(options);
-                        break;
-
-                    case "ticker":
-                        media = new Rss(options);
-                        break;
-
-                    case "embedded":
-                        media = new Text(options);
-                        break;
-
-                    case "datasetview":
-                        media = new DataSetView(options);
-                        break;
-
-                    case "shellcommand":
-                        media = new ShellCommand(options);
-                        break;
-
-                    default:
-                        // do nothing
-                        SetNextMediaNode();
-                        return;
+                    // For some reason we cannot set a media node... so we need this region to become invalid
+                    _hasExpired = true;
+                    DurationElapsedEvent();
+                    return;
                 }
 
-                //sets up the timer for this media
-                media.Duration = options.duration;
+                // If the sequence hasnt been changed, OR the layout has been expired
+                if (_currentSequence == temp || _layoutExpired)
+                {
+                    //there has been no change to the sequence, therefore the media we have already created is still valid
+                    //or this media has actually been destroyed and we are working out way out the call stack
+                    return;
+                }
 
-                //add event handler
-                media.DurationElapsedEvent += new Media.DurationElapsedDelegate(media_DurationElapsedEvent);
+                // See if we can start the new media object
+                try
+                {
+                    newMedia = CreateNextMediaNode(_options);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to start new media object: " + ex.Message), LogType.Error.ToString());
+                }
 
-                //any additional media specific render options (and starts the timer)
-                media.RenderMedia();
-
-                Controls.Add(media);
+                // We have set a new media object.
+                setSuccessful = true;
             }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(new LogMessage("EvalOptions", "Unable to start media. " + ex.Message), LogType.Error.ToString());
-                SetNextMediaNode();
-            }
 
-            // This media has started and is being replaced
-            _stat = new Stat();
-            _stat.type = StatType.Media;
-            _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            _stat.scheduleID = options.scheduleId;
-            _stat.layoutID = options.layoutId;
-            _stat.mediaID = options.mediaid;
+            // First thing we do is stop the current stat record
+            if (!initialMedia)
+                CloseCurrentStatRecord();
 
-            System.Diagnostics.Debug.WriteLine("Showing new media", "Region - Eval Options");
+            // Now we have newMedia and current media.
+            currentMedia = _media;
+
+            // Swap the media reference
+            _media = newMedia;
+
+            // Start the new media
+            StartMedia(_media);
+
+            // Remove the old media
+            if (!initialMedia)
+                StopMedia(currentMedia);
+
+            // Open a stat record
+            OpenStatRecordForMedia();
         }
 
         /// <summary>
         /// Sets the next media node. Should be used either from a mediaComplete event, or an options reset from 
         /// the parent.
         /// </summary>
-        private bool SetNextMediaNode()
+        private bool SetNextMediaNodeInOptions()
         {
-            int playingSequence = currentSequence;
+            int playingSequence = _currentSequence;
 
             // What if there are no media nodes?
-            if (options.mediaNodes.Count == 0)
+            if (_options.mediaNodes.Count == 0)
             {
-                System.Diagnostics.Debug.WriteLine("No media nodes to display", "Region - SetNextMediaNode");
-                hasExpired = true;
+                Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", "No media nodes to display"), LogType.Audit.ToString());
+
                 return false;
             }
-            
-            if (options.mediaNodes.Count == 1 && currentSequence != -1)
-            {
-                //dont bother discarding this media, keep all the same details, but still trigger an expired event
-                System.Diagnostics.Debug.WriteLine("Media Expired:" + options.ToString() + " . Nothing else to show", "Region - SetNextMediaNode");
-                hasExpired = true;
 
-                DurationElapsedEvent();
-                return true;
-            }
-
-            // Move the sequence on
-            currentSequence++;
-
-            if (currentSequence >= options.mediaNodes.Count)
-            {
-                currentSequence = 0; //zero it
-                
-                hasExpired = true; //we have expired (want to raise an expired event to the parent)
-
-                System.Diagnostics.Debug.WriteLine("Media Expired:" + options.ToString() + " . Reached the end of the sequence. Starting from the beginning.", "Region - SetNextMediaNode");
-
-                DurationElapsedEvent();
-              
-                // We want to continue on to show the next media (unless the duration elapsed event triggers a region change)
-                if (layoutExpired) return true;
-            }
-
-            //Zero out the options that are persisted
-            options.text = "";
-            options.documentTemplate = "";
-            options.copyrightNotice = "";
-            options.scrollSpeed = 30;
-            options.updateInterval = 6;
-            options.uri = "";
-            options.direction = "none";
-            options.javaScript = "";
-            options.Dictionary = new MediaDictionary();
+            // Zero out the options that are persisted
+            _options.text = "";
+            _options.documentTemplate = "";
+            _options.copyrightNotice = "";
+            _options.scrollSpeed = 30;
+            _options.updateInterval = 6;
+            _options.uri = "";
+            _options.direction = "none";
+            _options.javaScript = "";
+            _options.Dictionary = new MediaDictionary();
 
             // Get a media node
             bool validNode = false;
             int numAttempts = 0;
             
-            while (!validNode)
+            // Loop through all the nodes in order
+            while (numAttempts < _options.mediaNodes.Count)
             {
-                numAttempts++;
+                // Move the sequence on
+                _currentSequence++;
+
+                if (_currentSequence >= _options.mediaNodes.Count)
+                {
+                    // Start from the beginning
+                    _currentSequence = 0;
+
+                    // We have expired (want to raise an expired event to the parent)
+                    _hasExpired = true;
+
+                    Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", "Media Expired:" + _options.ToString() + " . Reached the end of the sequence. Starting from the beginning."), LogType.Audit.ToString());
+
+                    // Region Expired
+                    DurationElapsedEvent();
+
+                    // We want to continue on to show the next media (unless the duration elapsed event triggers a region change)
+                    if (_layoutExpired)
+                        return true;
+                }
 
                 // Get the media node for this sequence
-                XmlNode mediaNode = options.mediaNodes[currentSequence];
-
+                XmlNode mediaNode = _options.mediaNodes[_currentSequence];
                 XmlAttributeCollection nodeAttributes = mediaNode.Attributes;
 
-                if (nodeAttributes["id"].Value != null) options.mediaid = nodeAttributes["id"].Value;
+                // Set the media id
+                if (nodeAttributes["id"].Value != null) 
+                    _options.mediaid = nodeAttributes["id"].Value;
 
                 // Check isnt blacklisted
-                if (blackList.BlackListed(options.mediaid))
+                if (_blackList.BlackListed(_options.mediaid))
                 {
-                    System.Diagnostics.Debug.WriteLine(String.Format("The File [{0}] has been blacklisted", options.mediaid), "Region - SetNextMediaNode");
+                    Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", string.Format("MediaID [{0}] has been blacklisted.", _options.mediaid)), LogType.Error.ToString());
 
-                    // Increment and Loop
-                    currentSequence++;
-
-                    if (currentSequence >= options.mediaNodes.Count)
-                    {
-                        currentSequence = 0; //zero it
-
-                        hasExpired = true; //we have expired (want to raise an expired event to the parent)
-
-                        System.Diagnostics.Debug.WriteLine("Media Expired:" + options.ToString() + " . Reached the end of the sequence. Starting from the beginning.", "Region - SetNextMediaNode");
-
-                        DurationElapsedEvent();
-
-                        // We want to continue on to show the next media (unless the duration elapsed event triggers a region change)
-                        if (layoutExpired) return true;
-                    }
-                }
-                else
-                {
-                    validNode = true;
-
-                    // New version has a different schema - the right way to do it would be to pass the <options> and <raw> nodes to 
-                    // the relevant media class - however I dont feel like engineering such a change so the alternative is to
-                    // parse all the possible media type nodes here.
-
-                    // Type and Duration will always be on the media node
-                    options.type        = nodeAttributes["type"].Value;
-
-                    //TODO: Check the type of node we have, and make sure it is supported.
-                    
-                    if (nodeAttributes["duration"].Value != "")
-                    {
-                        options.duration = int.Parse(nodeAttributes["duration"].Value);
-                    }
-                    else
-                    {
-                        options.duration = 60;
-                        System.Diagnostics.Trace.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
-                    }
-
-                    // We cannot have a 0 duration here... not sure why we would... but
-                    if (options.duration == 0 && options.type != "video")
-                    {
-                        int emptyLayoutDuration = int.Parse(Properties.Settings.Default.emptyLayoutDuration.ToString());
-                        options.duration = (emptyLayoutDuration == 0) ? 10 : emptyLayoutDuration;
-                    }
-
-                    // There will be some stuff on option nodes
-                    XmlNode optionNode = mediaNode.FirstChild;                    
-
-                    
-                    foreach (XmlNode option in optionNode.ChildNodes)
-                    {
-                        if (option.Name == "direction")
-                        {
-                            options.direction = option.InnerText;
-                        }
-                        else if (option.Name == "uri")
-                        {
-                            options.uri = option.InnerText;
-                        }
-                        else if (option.Name == "copyright")
-                        {
-                            options.copyrightNotice = option.InnerText;
-                        }
-                        else if (option.Name == "scrollSpeed")
-                        {
-                            try
-                            {
-                                options.scrollSpeed = int.Parse(option.InnerText);
-                            }
-                            catch
-                            {
-                                System.Diagnostics.Trace.WriteLine("Non integer scrollSpeed in XLF", "Region - SetNextMediaNode");
-                            }
-                        }
-                        else if (option.Name == "updateInterval")
-                        {
-                            try
-                            {
-                                options.updateInterval = int.Parse(option.InnerText);
-                            }
-                            catch
-                            {
-                                System.Diagnostics.Trace.WriteLine("Non integer updateInterval in XLF", "Region - SetNextMediaNode");
-                            }
-                        }
-
-                        // Add this to the options object
-                        options.Dictionary.Add(option.Name, option.InnerText);
-                    }
-
-                    // And some stuff on Raw nodes
-                    XmlNode rawNode = mediaNode.LastChild;
-
-                    foreach (XmlNode raw in rawNode.ChildNodes)
-                    {
-                        if (raw.Name == "text")
-                        {
-                            options.text = raw.InnerText;
-                        }
-                        else if (raw.Name == "template")
-                        {
-                            options.documentTemplate = raw.InnerText;
-                        }
-                        else if (raw.Name == "embedHtml")
-                        {
-                            options.text = raw.InnerText;
-                        }
-                        else if (raw.Name == "embedScript")
-                        {
-                            options.javaScript = raw.InnerText;
-                        }
-                    }
-
-                    // Is this a file based media node?
-                    if (options.type == "video" || options.type == "flash" || options.type == "image" || options.type == "powerpoint")
-                    {
-                        // Use the cache manager to determine if the file is valid
-                        validNode = _cacheManager.IsValidPath(options.uri);
-                    }
+                    // Carry on
+                    continue;
                 }
 
-                if (numAttempts > options.mediaNodes.Count)
+                // Assume we have a valid node at this point
+                validNode = true;
+
+                // Parse the options for this media node
+                ParseOptionsForMediaNode(mediaNode, nodeAttributes);
+
+                // Is this a file based media node?
+                if (_options.type == "video" || _options.type == "flash" || _options.type == "image" || _options.type == "powerpoint")
                 {
-                    // There are no valid nodes in this region, so just signify that the region is ending, and show nothing.
-                    System.Diagnostics.Trace.WriteLine("No Valid media nodes to display", "Region - SetNextMediaNode");
-                    
-                    hasExpired = true;
-                    return false;
+                    // Use the cache manager to determine if the file is valid
+                    validNode = _cacheManager.IsValidPath(_options.uri);
                 }
+
+                // If we have a valid node, break out of the loop
+                if (validNode)
+                    break;
+
+                // Increment the number of attempts and try again
+                numAttempts++;
             }
 
-            System.Diagnostics.Debug.WriteLine("New media detected " + options.type, "Region - SetNextMediaNode");
+            // If we dont have a valid node out of all the nodes in the region, then return false.
+            if (!validNode)
+                return false;
 
-            // Remove the old one if we have found a valid node - otherwise keep it
-            if ((validNode && playingSequence != -1) && playingSequence != currentSequence)
-            {
-                System.Diagnostics.Debug.WriteLine("Trying to dispose of the current media", "Region - SetNextMediaNode");
-                // Dispose of the current media
-                try
-                {
-                    media.Hide();
-                    Application.DoEvents();
-
-                    // Remove the controls
-                    Controls.Remove(media);
-                    
-                    media.Dispose();
-                    media = null;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("No media to remove");
-                    System.Diagnostics.Debug.WriteLine(ex.Message);
-                }
-
-                try
-                {
-                    // Here we say that this media is expired
-                    _stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
-                    // Record this stat event in the statLog object
-                    _statLog.RecordStat(_stat);
-                }
-                catch
-                {
-                    System.Diagnostics.Trace.WriteLine("No Stat record when one was expected", LogType.Error.ToString());
-                }
-            }
+            Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", "New media detected " + _options.type), LogType.Audit.ToString());
 
             return true;
         }
 
         /// <summary>
+        /// Parse options for the media node
+        /// </summary>
+        /// <param name="mediaNode"></param>
+        /// <param name="nodeAttributes"></param>
+        private void ParseOptionsForMediaNode(XmlNode mediaNode, XmlAttributeCollection nodeAttributes)
+        {
+            // New version has a different schema - the right way to do it would be to pass the <options> and <raw> nodes to 
+            // the relevant media class - however I dont feel like engineering such a change so the alternative is to
+            // parse all the possible media type nodes here.
+
+            // Type and Duration will always be on the media node
+            _options.type = nodeAttributes["type"].Value;
+
+            //TODO: Check the type of node we have, and make sure it is supported.
+
+            if (nodeAttributes["duration"].Value != "")
+            {
+                _options.duration = int.Parse(nodeAttributes["duration"].Value);
+            }
+            else
+            {
+                _options.duration = 60;
+                Trace.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
+            }
+
+            // We cannot have a 0 duration here... not sure why we would... but
+            if (_options.duration == 0 && _options.type != "video")
+            {
+                int emptyLayoutDuration = int.Parse(Properties.Settings.Default.emptyLayoutDuration.ToString());
+                _options.duration = (emptyLayoutDuration == 0) ? 10 : emptyLayoutDuration;
+            }
+
+            // There will be some stuff on option nodes
+            XmlNode optionNode = mediaNode.FirstChild;
+
+            // Loop through each option node
+            foreach (XmlNode option in optionNode.ChildNodes)
+            {
+                if (option.Name == "direction")
+                {
+                    _options.direction = option.InnerText;
+                }
+                else if (option.Name == "uri")
+                {
+                    _options.uri = option.InnerText;
+                }
+                else if (option.Name == "copyright")
+                {
+                    _options.copyrightNotice = option.InnerText;
+                }
+                else if (option.Name == "scrollSpeed")
+                {
+                    try
+                    {
+                        _options.scrollSpeed = int.Parse(option.InnerText);
+                    }
+                    catch
+                    {
+                        System.Diagnostics.Trace.WriteLine("Non integer scrollSpeed in XLF", "Region - SetNextMediaNode");
+                    }
+                }
+                else if (option.Name == "updateInterval")
+                {
+                    try
+                    {
+                        _options.updateInterval = int.Parse(option.InnerText);
+                    }
+                    catch
+                    {
+                        System.Diagnostics.Trace.WriteLine("Non integer updateInterval in XLF", "Region - SetNextMediaNode");
+                    }
+                }
+
+                // Add this to the options object
+                _options.Dictionary.Add(option.Name, option.InnerText);
+            }
+
+            // And some stuff on Raw nodes
+            XmlNode rawNode = mediaNode.LastChild;
+
+            foreach (XmlNode raw in rawNode.ChildNodes)
+            {
+                if (raw.Name == "text")
+                {
+                    _options.text = raw.InnerText;
+                }
+                else if (raw.Name == "template")
+                {
+                    _options.documentTemplate = raw.InnerText;
+                }
+                else if (raw.Name == "embedHtml")
+                {
+                    _options.text = raw.InnerText;
+                }
+                else if (raw.Name == "embedScript")
+                {
+                    _options.javaScript = raw.InnerText;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Create the next media node based on the provided options
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        private Media CreateNextMediaNode(RegionOptions options)
+        {
+            Media media;
+
+            Trace.WriteLine(new LogMessage("Region - CreateNextMediaNode", string.Format("Creating new media: {0}, {1}", options.type, options.mediaid)), LogType.Audit.ToString());
+
+            switch (options.type)
+            {
+                case "image":
+                    options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                    media = new ImagePosition(options);
+                    break;
+
+                case "text":
+                    media = new Text(options);
+                    break;
+
+                case "powerpoint":
+                    options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                    media = new WebContent(options);
+                    break;
+
+                case "video":
+                    options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Video(options);
+                    break;
+
+                case "webpage":
+                    media = new WebContent(options);
+                    break;
+
+                case "flash":
+                    options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Flash(options);
+                    break;
+
+                case "ticker":
+                    media = new Rss(options);
+                    break;
+
+                case "embedded":
+                    media = new Text(options);
+                    break;
+
+                case "datasetview":
+                    media = new DataSetView(options);
+                    break;
+
+                case "shellcommand":
+                    media = new ShellCommand(options);
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Not a valid media node type: " + options.type);
+            }
+
+            // Sets up the timer for this media
+            media.Duration = options.duration;
+
+            // Add event handler for when this completes
+            media.DurationElapsedEvent += new Media.DurationElapsedDelegate(media_DurationElapsedEvent);
+
+            return media;
+        }
+
+        /// <summary>
+        /// Start the provided media
+        /// </summary>
+        /// <param name="media"></param>
+        private void StartMedia(Media media)
+        {
+            media.RenderMedia();
+
+            Trace.WriteLine(new LogMessage("Region - StartMedia", "Starting media"), LogType.Audit.ToString());
+
+            Controls.Add(media);
+        }
+
+        /// <summary>
+        /// Stop the provided media
+        /// </summary>
+        private void StopMedia(Media media)
+        {
+            Trace.WriteLine(new LogMessage("Region - Stop Media", "Stopping media"), LogType.Audit.ToString());
+
+            // Hide the media
+            media.Hide();
+
+            // Remove the controls
+            Controls.Remove(media);
+
+            // Dispose of the current media
+            try
+            {
+                // Dispose of the media
+                media.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("No media to remove");
+                Debug.WriteLine(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Opens a stat record for the current media
+        /// </summary>
+        private void OpenStatRecordForMedia()
+        {
+            // This media has started and is being replaced
+            _stat = new Stat();
+            _stat.type = StatType.Media;
+            _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            _stat.scheduleID = _options.scheduleId;
+            _stat.layoutID = _options.layoutId;
+            _stat.mediaID = _options.mediaid;
+        }
+
+        /// <summary>
+        /// Close out the stat record
+        /// </summary>
+        private void CloseCurrentStatRecord()
+        {
+            try
+            {
+                // Here we say that this media is expired
+                _stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                // Record this stat event in the statLog object
+                _statLog.RecordStat(_stat);
+            }
+            catch
+            {
+                Trace.WriteLine(new LogMessage("Region - StopMedia", "No Stat record when one was expected"), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
         /// The media has elapsed
         /// </summary>
-        void media_DurationElapsedEvent()
+        private void media_DurationElapsedEvent()
         {
-            System.Diagnostics.Debug.WriteLine(String.Format("Media Elapsed: {0}", options.uri), "Region - DurationElapsedEvent");
+            Trace.WriteLine(new LogMessage("Region - DurationElapsedEvent", string.Format("Media Elapsed: {0}", _options.uri)), LogType.Audit.ToString());
 
             // make some decisions about what to do next
             EvalOptions();
@@ -474,7 +544,7 @@ namespace XiboClient
             try
             {
                 // What happens if we are disposing this region but we have not yet completed the stat event?
-                if (String.IsNullOrEmpty(_stat.toDate))
+                if (string.IsNullOrEmpty(_stat.toDate))
                 {
                     // Say that this media has ended
                     _stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -498,8 +568,8 @@ namespace XiboClient
             {
                 try
                 {
-                    media.Dispose();
-                    media = null;
+                    _media.Dispose();
+                    _media = null;
 
                     System.Diagnostics.Debug.WriteLine("Media Disposed by Region", "Region - Dispose");
                 }
@@ -510,7 +580,7 @@ namespace XiboClient
                 }
                 finally
                 {
-                    if (media != null) media = null;
+                    if (_media != null) _media = null;
                 }
             }
 
