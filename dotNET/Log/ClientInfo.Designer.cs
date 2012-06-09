@@ -44,6 +44,7 @@ namespace XiboClient.Log
             this.requiredFilesStatus = new System.Windows.Forms.Label();
             this.requiredFilesTextBox = new System.Windows.Forms.TextBox();
             this.scheduleManagerStatus = new System.Windows.Forms.TextBox();
+            this.saveLogToDisk = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
@@ -85,7 +86,7 @@ namespace XiboClient.Log
             dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             this.logDataGridView.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
-            this.logDataGridView.Size = new System.Drawing.Size(786, 426);
+            this.logDataGridView.Size = new System.Drawing.Size(786, 408);
             this.logDataGridView.TabIndex = 0;
             // 
             // Thread
@@ -179,11 +180,22 @@ namespace XiboClient.Log
             this.scheduleManagerStatus.Size = new System.Drawing.Size(387, 281);
             this.scheduleManagerStatus.TabIndex = 8;
             // 
+            // saveLogToDisk
+            // 
+            this.saveLogToDisk.Location = new System.Drawing.Point(13, 729);
+            this.saveLogToDisk.Name = "saveLogToDisk";
+            this.saveLogToDisk.Size = new System.Drawing.Size(75, 23);
+            this.saveLogToDisk.TabIndex = 9;
+            this.saveLogToDisk.Text = "Save Log";
+            this.saveLogToDisk.UseVisualStyleBackColor = true;
+            this.saveLogToDisk.Click += new System.EventHandler(this.saveLogToDisk_Click);
+            // 
             // ClientInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(810, 752);
+            this.ClientSize = new System.Drawing.Size(810, 758);
+            this.Controls.Add(this.saveLogToDisk);
             this.Controls.Add(this.scheduleManagerStatus);
             this.Controls.Add(this.requiredFilesTextBox);
             this.Controls.Add(this.requiredFilesStatus);
@@ -214,5 +226,6 @@ namespace XiboClient.Log
         private System.Windows.Forms.DataGridViewTextBoxColumn Method;
         private System.Windows.Forms.DataGridViewTextBoxColumn Message;
         private System.Windows.Forms.TextBox scheduleManagerStatus;
+        private System.Windows.Forms.Button saveLogToDisk;
     }
 }

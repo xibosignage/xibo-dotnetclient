@@ -102,6 +102,7 @@ namespace XiboClient
             shellCommandAllowList.Text = Settings.Default.ShellCommandAllowList;
             logLevel.Text = Settings.Default.LogLevel;
             maxConcurrentDownloads.Value = Settings.Default.MaxConcurrentDownloads;
+            showInTaskbar.Checked = Settings.Default.ShowInTaskbar;
 
             System.Diagnostics.Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
@@ -196,6 +197,7 @@ namespace XiboClient
                 Settings.Default.ShellCommandAllowList = shellCommandAllowList.Text;
                 Settings.Default.MaxConcurrentDownloads = Convert.ToInt32(maxConcurrentDownloads.Value);
                 Settings.Default.LogLevel = logLevel.Text;
+                Settings.Default.ShowInTaskbar = showInTaskbar.Checked;
 
                 // Commit these changes back to the user settings
                 Settings.Default.Save();

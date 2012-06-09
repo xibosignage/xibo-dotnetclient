@@ -56,6 +56,15 @@ namespace XiboClient
             this.label4 = new System.Windows.Forms.Label();
             this.labelXmdsUrl = new System.Windows.Forms.Label();
             this.textBoxDisplayName = new System.Windows.Forms.TextBox();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.label8 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.textBoxProxyDomain = new System.Windows.Forms.TextBox();
+            this.maskedTextBoxProxyPass = new System.Windows.Forms.MaskedTextBox();
+            this.textBoxProxyUser = new System.Windows.Forms.TextBox();
+            this.labelProxyDomain = new System.Windows.Forms.Label();
+            this.labelProxyPass = new System.Windows.Forms.Label();
+            this.labelProxyUser = new System.Windows.Forms.Label();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.splashButtonBrowse = new System.Windows.Forms.Button();
             this.linkLabel1 = new System.Windows.Forms.LinkLabel();
@@ -83,15 +92,6 @@ namespace XiboClient
             this.doubleBufferingCheckBox = new System.Windows.Forms.CheckBox();
             this.numericUpDownEmptyRegions = new System.Windows.Forms.NumericUpDown();
             this.label15 = new System.Windows.Forms.Label();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
-            this.label8 = new System.Windows.Forms.Label();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.textBoxProxyDomain = new System.Windows.Forms.TextBox();
-            this.maskedTextBoxProxyPass = new System.Windows.Forms.MaskedTextBox();
-            this.textBoxProxyUser = new System.Windows.Forms.TextBox();
-            this.labelProxyDomain = new System.Windows.Forms.Label();
-            this.labelProxyPass = new System.Windows.Forms.Label();
-            this.labelProxyUser = new System.Windows.Forms.Label();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -99,13 +99,16 @@ namespace XiboClient
             this.aboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.onlineHelpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.folderBrowserLibrary = new System.Windows.Forms.FolderBrowserDialog();
-            this.xmds1 = new XiboClient.xmds.xmds();
             this.splashScreenOverride = new System.Windows.Forms.OpenFileDialog();
+            this.xmds1 = new XiboClient.xmds.xmds();
+            this.showInTaskbar = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownCollect)).BeginInit();
             this.tabPage2.SuspendLayout();
+            this.tabPage3.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.tabPage4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.offsetX)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetY)).BeginInit();
@@ -114,8 +117,6 @@ namespace XiboClient
             this.tabPage5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.maxConcurrentDownloads)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownEmptyRegions)).BeginInit();
-            this.tabPage3.SuspendLayout();
-            this.groupBox2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -414,6 +415,91 @@ namespace XiboClient
             this.textBoxDisplayName.TabIndex = 0;
             this.textBoxDisplayName.Text = "COMPUTERNAME";
             // 
+            // tabPage3
+            // 
+            this.tabPage3.Controls.Add(this.label8);
+            this.tabPage3.Controls.Add(this.groupBox2);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(436, 261);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Proxy";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(26, 17);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(278, 13);
+            this.label8.TabIndex = 9;
+            this.label8.Text = "Please set the Proxy Address and Port in Internet Explorer";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.textBoxProxyDomain);
+            this.groupBox2.Controls.Add(this.maskedTextBoxProxyPass);
+            this.groupBox2.Controls.Add(this.textBoxProxyUser);
+            this.groupBox2.Controls.Add(this.labelProxyDomain);
+            this.groupBox2.Controls.Add(this.labelProxyPass);
+            this.groupBox2.Controls.Add(this.labelProxyUser);
+            this.groupBox2.Location = new System.Drawing.Point(29, 48);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(276, 139);
+            this.groupBox2.TabIndex = 7;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Authentication Information";
+            // 
+            // textBoxProxyDomain
+            // 
+            this.textBoxProxyDomain.Location = new System.Drawing.Point(99, 95);
+            this.textBoxProxyDomain.Name = "textBoxProxyDomain";
+            this.textBoxProxyDomain.Size = new System.Drawing.Size(171, 20);
+            this.textBoxProxyDomain.TabIndex = 7;
+            // 
+            // maskedTextBoxProxyPass
+            // 
+            this.maskedTextBoxProxyPass.Location = new System.Drawing.Point(99, 67);
+            this.maskedTextBoxProxyPass.Name = "maskedTextBoxProxyPass";
+            this.maskedTextBoxProxyPass.Size = new System.Drawing.Size(171, 20);
+            this.maskedTextBoxProxyPass.TabIndex = 5;
+            this.maskedTextBoxProxyPass.UseSystemPasswordChar = true;
+            // 
+            // textBoxProxyUser
+            // 
+            this.textBoxProxyUser.Location = new System.Drawing.Point(99, 41);
+            this.textBoxProxyUser.Name = "textBoxProxyUser";
+            this.textBoxProxyUser.Size = new System.Drawing.Size(171, 20);
+            this.textBoxProxyUser.TabIndex = 3;
+            // 
+            // labelProxyDomain
+            // 
+            this.labelProxyDomain.AutoSize = true;
+            this.labelProxyDomain.Location = new System.Drawing.Point(7, 98);
+            this.labelProxyDomain.Name = "labelProxyDomain";
+            this.labelProxyDomain.Size = new System.Drawing.Size(43, 13);
+            this.labelProxyDomain.TabIndex = 2;
+            this.labelProxyDomain.Text = "Domain";
+            // 
+            // labelProxyPass
+            // 
+            this.labelProxyPass.AutoSize = true;
+            this.labelProxyPass.Location = new System.Drawing.Point(7, 70);
+            this.labelProxyPass.Name = "labelProxyPass";
+            this.labelProxyPass.Size = new System.Drawing.Size(53, 13);
+            this.labelProxyPass.TabIndex = 1;
+            this.labelProxyPass.Text = "Password";
+            // 
+            // labelProxyUser
+            // 
+            this.labelProxyUser.AutoSize = true;
+            this.labelProxyUser.Location = new System.Drawing.Point(7, 44);
+            this.labelProxyUser.Name = "labelProxyUser";
+            this.labelProxyUser.Size = new System.Drawing.Size(55, 13);
+            this.labelProxyUser.TabIndex = 0;
+            this.labelProxyUser.Text = "Username";
+            // 
             // tabPage4
             // 
             this.tabPage4.Controls.Add(this.splashButtonBrowse);
@@ -593,6 +679,7 @@ namespace XiboClient
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.showInTaskbar);
             this.tabPage5.Controls.Add(this.label20);
             this.tabPage5.Controls.Add(this.logLevel);
             this.tabPage5.Controls.Add(this.label19);
@@ -715,91 +802,6 @@ namespace XiboClient
             this.label15.TabIndex = 0;
             this.label15.Text = "Duration for Empty Regions";
             // 
-            // tabPage3
-            // 
-            this.tabPage3.Controls.Add(this.label8);
-            this.tabPage3.Controls.Add(this.groupBox2);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(436, 261);
-            this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "Proxy";
-            this.tabPage3.UseVisualStyleBackColor = true;
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(26, 17);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(278, 13);
-            this.label8.TabIndex = 9;
-            this.label8.Text = "Please set the Proxy Address and Port in Internet Explorer";
-            // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.textBoxProxyDomain);
-            this.groupBox2.Controls.Add(this.maskedTextBoxProxyPass);
-            this.groupBox2.Controls.Add(this.textBoxProxyUser);
-            this.groupBox2.Controls.Add(this.labelProxyDomain);
-            this.groupBox2.Controls.Add(this.labelProxyPass);
-            this.groupBox2.Controls.Add(this.labelProxyUser);
-            this.groupBox2.Location = new System.Drawing.Point(29, 48);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(276, 139);
-            this.groupBox2.TabIndex = 7;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Authentication Information";
-            // 
-            // textBoxProxyDomain
-            // 
-            this.textBoxProxyDomain.Location = new System.Drawing.Point(99, 95);
-            this.textBoxProxyDomain.Name = "textBoxProxyDomain";
-            this.textBoxProxyDomain.Size = new System.Drawing.Size(171, 20);
-            this.textBoxProxyDomain.TabIndex = 7;
-            // 
-            // maskedTextBoxProxyPass
-            // 
-            this.maskedTextBoxProxyPass.Location = new System.Drawing.Point(99, 67);
-            this.maskedTextBoxProxyPass.Name = "maskedTextBoxProxyPass";
-            this.maskedTextBoxProxyPass.Size = new System.Drawing.Size(171, 20);
-            this.maskedTextBoxProxyPass.TabIndex = 5;
-            this.maskedTextBoxProxyPass.UseSystemPasswordChar = true;
-            // 
-            // textBoxProxyUser
-            // 
-            this.textBoxProxyUser.Location = new System.Drawing.Point(99, 41);
-            this.textBoxProxyUser.Name = "textBoxProxyUser";
-            this.textBoxProxyUser.Size = new System.Drawing.Size(171, 20);
-            this.textBoxProxyUser.TabIndex = 3;
-            // 
-            // labelProxyDomain
-            // 
-            this.labelProxyDomain.AutoSize = true;
-            this.labelProxyDomain.Location = new System.Drawing.Point(7, 98);
-            this.labelProxyDomain.Name = "labelProxyDomain";
-            this.labelProxyDomain.Size = new System.Drawing.Size(43, 13);
-            this.labelProxyDomain.TabIndex = 2;
-            this.labelProxyDomain.Text = "Domain";
-            // 
-            // labelProxyPass
-            // 
-            this.labelProxyPass.AutoSize = true;
-            this.labelProxyPass.Location = new System.Drawing.Point(7, 70);
-            this.labelProxyPass.Name = "labelProxyPass";
-            this.labelProxyPass.Size = new System.Drawing.Size(53, 13);
-            this.labelProxyPass.TabIndex = 1;
-            this.labelProxyPass.Text = "Password";
-            // 
-            // labelProxyUser
-            // 
-            this.labelProxyUser.AutoSize = true;
-            this.labelProxyUser.Location = new System.Drawing.Point(7, 44);
-            this.labelProxyUser.Name = "labelProxyUser";
-            this.labelProxyUser.Size = new System.Drawing.Size(55, 13);
-            this.labelProxyUser.TabIndex = 0;
-            this.labelProxyUser.Text = "Username";
-            // 
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -849,15 +851,25 @@ namespace XiboClient
             this.onlineHelpToolStripMenuItem.Text = "Online Help";
             this.onlineHelpToolStripMenuItem.Click += new System.EventHandler(this.onlineHelpToolStripMenuItem_Click);
             // 
+            // splashScreenOverride
+            // 
+            this.splashScreenOverride.FileName = "Splash Screen.jpg";
+            // 
             // xmds1
             // 
             this.xmds1.Credentials = null;
             this.xmds1.Url = "http://localhost/Xibo/server/xmds.php";
             this.xmds1.UseDefaultCredentials = false;
             // 
-            // splashScreenOverride
+            // showInTaskbar
             // 
-            this.splashScreenOverride.FileName = "Splash Screen.jpg";
+            this.showInTaskbar.AutoSize = true;
+            this.showInTaskbar.Location = new System.Drawing.Point(176, 176);
+            this.showInTaskbar.Name = "showInTaskbar";
+            this.showInTaskbar.Size = new System.Drawing.Size(130, 17);
+            this.showInTaskbar.TabIndex = 17;
+            this.showInTaskbar.Text = "Show Icon in Taskbar";
+            this.showInTaskbar.UseVisualStyleBackColor = true;
             // 
             // OptionForm
             // 
@@ -878,6 +890,10 @@ namespace XiboClient
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownCollect)).EndInit();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
+            this.tabPage3.ResumeLayout(false);
+            this.tabPage3.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.tabPage4.ResumeLayout(false);
             this.tabPage4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.offsetX)).EndInit();
@@ -888,10 +904,6 @@ namespace XiboClient
             this.tabPage5.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.maxConcurrentDownloads)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownEmptyRegions)).EndInit();
-            this.tabPage3.ResumeLayout(false);
-            this.tabPage3.PerformLayout();
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox2.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -973,5 +985,6 @@ namespace XiboClient
         private System.Windows.Forms.ComboBox logLevel;
         private System.Windows.Forms.Label label19;
         private System.Windows.Forms.NumericUpDown maxConcurrentDownloads;
+        private System.Windows.Forms.CheckBox showInTaskbar;
     }
 }

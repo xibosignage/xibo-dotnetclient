@@ -204,7 +204,7 @@ namespace XiboClient
         {
             this._hasExpired = true;
 
-            System.Diagnostics.Debug.WriteLine("Media Complete", "Media - SignalElapsedEvent");
+            Trace.WriteLine(new LogMessage("Media - SignalElapsedEvent", "Media Complete"), LogType.Audit.ToString());
 
             DurationElapsedEvent();
         }

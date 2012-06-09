@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner 
  *
  * This file is part of Xibo.
  *
@@ -25,16 +25,23 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 
+/// 09/06/12 Dan Changed to raise an event when the video is finished
+
 namespace XiboClient
 {
     public partial class VideoPlayer : Form
     {
+        private bool _finished;
+
+        public delegate void VideoFinished();
+        public event VideoFinished VideoEnd;
+
         public VideoPlayer()
         {
             InitializeComponent();
             this.TopLevel = false;
 
-            finished = false;
+            _finished = false;
         }
 
         public void StartPlayer(string filePath)
@@ -57,7 +64,9 @@ namespace XiboClient
             if (e.newState == 8)
             {
                 // indicate we are stopped
-                finished = true;
+                _finished = true;
+
+                VideoEnd();
             }
         }
 
@@ -68,10 +77,8 @@ namespace XiboClient
         {
             get
             {
-                return this.finished;
+                return _finished;
             }
         }
-
-        private bool finished;
     }
 }

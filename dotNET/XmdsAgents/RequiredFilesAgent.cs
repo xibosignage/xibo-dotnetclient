@@ -253,6 +253,9 @@ namespace XiboClient.XmdsAgents
             // Update the RequiredFiles TextBox
             _clientInfoForm.UpdateRequiredFiles(RequiredFilesString());
 
+            // Write the Cache Manager to Disk
+            _cacheManager.WriteCacheManager();
+
             if (rf.FileType == "layout")
             {
                 // Raise an event to say it is completed

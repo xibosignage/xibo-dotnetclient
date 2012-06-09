@@ -79,6 +79,9 @@ namespace XiboClient
                 _clientSize = SystemInformation.PrimaryMonitorSize;
             }
 
+            // Show in taskbar
+            ShowInTaskbar = Settings.Default.ShowInTaskbar;
+
             // Setup the proxy information
             OptionForm.SetGlobalProxy();
 

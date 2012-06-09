@@ -7,6 +7,8 @@ using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Xml.Serialization;
+using XiboClient.Properties;
+using System.IO;
 
 namespace XiboClient.Log
 {
@@ -80,6 +82,9 @@ namespace XiboClient.Log
             MinimizeBox = false;
 
             FormClosing += new FormClosingEventHandler(ClientInfo_FormClosing);
+
+            // Put the XMDS url on the title window
+            Text = Text + " - " + Settings.Default.serverURI;
         }
 
         /// <summary>
@@ -175,6 +180,30 @@ namespace XiboClient.Log
             // Prevent the form from closing
             e.Cancel = true;
             Hide();
+        }
+
+        /// <summary>
+        /// Saves the log to disk
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void saveLogToDisk_Click(object sender, EventArgs e)
+        {
+            using (StreamWriter wrt = new StreamWriter(Path.GetDirectoryName(Application.ExecutablePath) + "\\XiboLog.log"))
+            {
+                foreach (DataGridViewRow row in logDataGridView.Rows)
+                {
+                    if (row.Cells[0].Value != null)
+                    {
+                        wrt.Write(row.Cells[0].Value.ToString());
+                        for (int i = 1; i < row.Cells.Count; i++)
+                        {
+                            wrt.Write("|" + row.Cells[i].Value.ToString());
+                        }
+                        wrt.WriteLine();
+                    }
+                }
+            }
         }
     }
 }
