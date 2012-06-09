@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner
+ * Copyright (C) 2006-2012 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -25,6 +25,8 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Forms;
+
+/// 17/02/12 Dan Changed to always Log audit if no category is given
 
 namespace XiboClient
 {
@@ -193,12 +195,12 @@ namespace XiboClient
 
         public override void Write(string message)
         {
-            AddToCollection(message, "Audit");
+            AddToCollection(message, LogType.Audit.ToString());
         }
 
         public override void Write(object o)
         {
-            AddToCollection(o.ToString(), "Audit");
+            AddToCollection(o.ToString(), LogType.Audit.ToString());
         }
 
         public override void Write(string message, string category)

@@ -55,7 +55,7 @@ namespace XiboClient
 
                     if (lastWrite > file.cacheDate)
                     {
-                        Debug.WriteLine(new LogMessage("GetMD5", "File has been written to since cache, recalculating"), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("GetMD5", path + " has been written to since cache, recalculating"), LogType.Audit.ToString());
 
                         // Get the MD5 again
                         String md5 = CalcMD5(path);
@@ -192,6 +192,10 @@ namespace XiboClient
 
                     try
                     {
+                        // Check to see if this file has been deleted since the Cache Manager registered it
+                        if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                            return false;
+
                         // Check to see if this file has been modified since the MD5 cache
                         // If it has then we assume invalid, otherwise its valid
                         DateTime lastWrite = File.GetLastWriteTime(Properties.Settings.Default.LibraryPath + @"\" + path);

@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-10 Daniel Garner and James Packer
+ * Copyright (C) 2006-12 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -32,6 +32,9 @@ using System.IO;
 using System.Drawing.Imaging;
 using System.Xml.Serialization;
 using System.Diagnostics;
+using XiboClient.Log;
+using System.Threading;
+using XiboClient.Properties;
 
 namespace XiboClient
 {
@@ -52,9 +55,15 @@ namespace XiboClient
         private Stat _stat;
         private CacheManager _cacheManager;
 
+        private ClientInfo _clientInfoForm;
+
+        private delegate void ChangeToNextLayoutDelegate(string layoutPath);
+
         public MainForm()
         {
             InitializeComponent();
+
+            Thread.CurrentThread.Name = "UI Thread";
 
             // Override the default size if necessary
             if (Properties.Settings.Default.sizeX != 0)
@@ -70,6 +79,9 @@ namespace XiboClient
                 _clientSize = SystemInformation.PrimaryMonitorSize;
             }
 
+            // Show in taskbar
+            ShowInTaskbar = Settings.Default.ShowInTaskbar;
+
             // Setup the proxy information
             OptionForm.SetGlobalProxy();
 
@@ -77,6 +89,22 @@ namespace XiboClient
 
             this.FormClosing += new FormClosingEventHandler(MainForm_FormClosing);
             this.Shown += new EventHandler(MainForm_Shown);
+
+            // Create the info form
+            _clientInfoForm = new ClientInfo();
+            _clientInfoForm.Hide();
+
+            // Add a message filter to listen for the i key
+            KeyFilter keyFilter = new KeyFilter();
+            keyFilter.ClientInfoForm = _clientInfoForm;
+
+            Application.AddMessageFilter(keyFilter);
+
+            // Trace listener for Client Info
+            ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener(_clientInfoForm);
+            Trace.Listeners.Add(clientInfoTraceListener);
+
+            Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
         }
 
         /// <summary>
@@ -95,7 +123,7 @@ namespace XiboClient
             try
             {
                 // Create the Schedule
-                _schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager);
+                _schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager, ref _clientInfoForm);
 
                 // Bind to the schedule change event - notifys of changes to the schedule
                 _schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
@@ -141,9 +169,20 @@ namespace XiboClient
             Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + Application.UserAppDataPath), LogType.Info.ToString());
         }
 
+        /// <summary>
+        /// Called as the Main Form starts to close
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             // We want to tidy up some stuff as this form closes.
+
+            // Close the client info screen
+            _clientInfoForm.Hide();
+
+            // Stop the schedule object
+            _schedule.Stop();
 
             // Flush the stats
             _statLog.Flush();
@@ -193,7 +232,7 @@ namespace XiboClient
         /// <param name="layoutPath"></param>
         void schedule_ScheduleChangeEvent(string layoutPath, int scheduleId, int layoutId)
         {
-            System.Diagnostics.Debug.WriteLine(String.Format("Schedule Changing to {0}", layoutPath), "MainForm - ScheduleChangeEvent");
+            Debug.WriteLine(String.Format("Schedule Changing to {0}", layoutPath), "MainForm - ScheduleChangeEvent");
 
             _scheduleId = scheduleId;
             _layoutId = layoutId;
@@ -207,6 +246,20 @@ namespace XiboClient
                 _statLog.RecordStat(_stat);
             }
 
+            if (InvokeRequired)
+            {
+                BeginInvoke(new ChangeToNextLayoutDelegate(ChangeToNextLayout), layoutPath);
+                return;
+            }
+
+            ChangeToNextLayout(layoutPath);
+        }
+
+        /// <summary>
+        /// Change to the next layout
+        /// </summary>
+        private void ChangeToNextLayout(string layoutPath)
+        {
             try
             {
                 DestroyLayout();
@@ -223,7 +276,7 @@ namespace XiboClient
                 ShowSplashScreen();
 
                 // In 10 seconds fire the next layout?
-                Timer timer = new Timer();
+                System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
                 timer.Interval = 10000;
                 timer.Tick += new EventHandler(splashScreenTimer_Tick);
 
@@ -232,11 +285,16 @@ namespace XiboClient
             }
         }
 
+        /// <summary>
+        /// Expire the Splash Screen
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void splashScreenTimer_Tick(object sender, EventArgs e)
         {
             Debug.WriteLine(new LogMessage("timer_Tick", "Loading next layout after splashscreen"));
 
-            Timer timer = (Timer)sender;
+            System.Windows.Forms.Timer timer = (System.Windows.Forms.Timer)sender;
             timer.Stop();
             timer.Dispose();
 
@@ -268,14 +326,16 @@ namespace XiboClient
                 try
                 {
                     // try to open the layout file
-                    FileStream fs = File.Open(layoutPath, FileMode.Open, FileAccess.Read, FileShare.Write);
+                    using (FileStream fs = File.Open(layoutPath, FileMode.Open, FileAccess.Read, FileShare.Write))
+                    {
+                        using (XmlReader reader = XmlReader.Create(fs))
+                        {
+                            layoutXml.Load(reader);
 
-                    XmlReader reader = XmlReader.Create(fs);
-
-                    layoutXml.Load(reader);
-
-                    reader.Close();
-                    fs.Close();
+                            reader.Close();
+                        }
+                        fs.Close();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -474,6 +534,33 @@ namespace XiboClient
         /// </summary>
         private void ShowSplashScreen()
         {
+            if (!string.IsNullOrEmpty(Settings.Default.SplashOverride))
+            {
+                try
+                {
+                    using (Image bgSplash = Image.FromFile(Settings.Default.SplashOverride))
+                    {
+                        Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
+                        BackgroundImage = bmpSplash;
+                    }
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("ShowSplashScreen", "Unable to load user splash screen"), LogType.Error.ToString());
+                    ShowDefaultSplashScreen();
+                }
+            }
+            else
+            {
+                ShowDefaultSplashScreen();
+            }
+        }
+
+        /// <summary>
+        /// Show the Default Splash Screen
+        /// </summary>
+        private void ShowDefaultSplashScreen()
+        {
             // We are running with the Default.xml - meaning the schedule doesnt exist
             System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
             Stream resourceStream = assembly.GetManifestResourceStream("XiboClient.Resources.splash.jpg");
@@ -483,12 +570,11 @@ namespace XiboClient
             // Load into a stream and then into an Image
             try
             {
-                Image bgSplash = Image.FromStream(resourceStream);
-
-                Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
-                this.BackgroundImage = bmpSplash;
-
-                bgSplash.Dispose();
+                using (Image bgSplash = Image.FromStream(resourceStream))
+                {
+                    Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
+                    BackgroundImage = bmpSplash;
+                }
             }
             catch (Exception ex)
             {
@@ -524,7 +610,7 @@ namespace XiboClient
             // Check the other regions to see if they are also expired.
             foreach (Region temp in _regions)
             {
-                if (!temp.hasExpired)
+                if (!temp._hasExpired)
                 {
                     _isExpired = false;
                 }
@@ -535,7 +621,7 @@ namespace XiboClient
                 // Inform each region that the layout containing it has expired
                 foreach (Region temp in _regions)
                 {
-                    temp.layoutExpired = true;
+                    temp._layoutExpired = true;
                 }
 
                 System.Diagnostics.Debug.WriteLine("Region Expired - Next Region.", "MainForm - DurationElapsedEvent");
@@ -591,6 +677,40 @@ namespace XiboClient
             {
                 System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm - FlushStats", "Unable to Flush Stats"), LogType.Error.ToString());
             }
+        }
+    }
+
+    /// <summary>
+    /// Key Filter to show the Client Information Screen
+    /// </summary>
+    public class KeyFilter : IMessageFilter
+    {
+        public ClientInfo ClientInfoForm;
+
+        public bool PreFilterMessage(ref Message msg)
+        {
+            const int WM_KEYDOWN = 0x100;
+            const int WM_SYSKEYDOWN = 0x104;
+
+            // Only interested in Key Down messages
+            if ((msg.Msg == WM_KEYDOWN) || (msg.Msg == WM_SYSKEYDOWN))
+            {
+                Keys keyCode = (Keys)(int)msg.WParam & Keys.KeyCode;
+
+                if (keyCode == Keys.I)
+                {
+                    // Toggle
+                    if (ClientInfoForm.Visible)
+                        ClientInfoForm.Hide();
+                    else
+                    {
+                        ClientInfoForm.Show();
+                        ClientInfoForm.BringToFront();
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

@@ -50,7 +50,6 @@ namespace XiboClient
             this.Controls.Add(this.axWindowsMediaPlayer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "VideoPlayer";
-            this.Opacity = 0.8;
             this.Text = "VideoPlayer";
             ((System.ComponentModel.ISupportInitialize)(this.axWindowsMediaPlayer1)).EndInit();
             this.ResumeLayout(false);

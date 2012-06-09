@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-11 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -86,17 +86,23 @@ namespace XiboClient
             maskedTextBoxProxyPass.Text = Settings.Default.ProxyPassword;
             textBoxProxyDomain.Text = Settings.Default.ProxyDomain;
 
-            // Client Tab
+            // Appearance Tab
             clientWidth.Value = Settings.Default.sizeX;
             clientHeight.Value = Settings.Default.sizeY;
             offsetX.Value = Settings.Default.offsetX;
             offsetY.Value = Settings.Default.offsetY;
+            cbExpireModifiedLayouts.Checked = Settings.Default.expireModifiedLayouts;
+            enableMouseCb.Checked = Settings.Default.EnableMouse;
+            splashOverride.Text = Settings.Default.SplashOverride;
 
             // Advanced Tab
             numericUpDownEmptyRegions.Value = Settings.Default.emptyLayoutDuration;
-            cbExpireModifiedLayouts.Checked = Settings.Default.expireModifiedLayouts;
-            enableMouseCb.Checked = Settings.Default.EnableMouse;
-            doubleBufferingCheckBox.Checked = Settings.Default.DoubleBuffering;            
+            doubleBufferingCheckBox.Checked = Settings.Default.DoubleBuffering;
+            enableShellCommandsCb.Checked = Settings.Default.EnableShellCommands;
+            shellCommandAllowList.Text = Settings.Default.ShellCommandAllowList;
+            logLevel.Text = Settings.Default.LogLevel;
+            maxConcurrentDownloads.Value = Settings.Default.MaxConcurrentDownloads;
+            showInTaskbar.Checked = Settings.Default.ShowInTaskbar;
 
             System.Diagnostics.Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
@@ -182,10 +188,16 @@ namespace XiboClient
                 Settings.Default.sizeY = clientHeight.Value;
                 Settings.Default.offsetX = offsetX.Value;
                 Settings.Default.offsetY = offsetY.Value;
+                Settings.Default.SplashOverride = splashOverride.Text;
 
                 // Advanced settings
                 Settings.Default.expireModifiedLayouts = cbExpireModifiedLayouts.Checked;
                 Settings.Default.emptyLayoutDuration = numericUpDownEmptyRegions.Value;
+                Settings.Default.EnableShellCommands = enableShellCommandsCb.Checked;
+                Settings.Default.ShellCommandAllowList = shellCommandAllowList.Text;
+                Settings.Default.MaxConcurrentDownloads = Convert.ToInt32(maxConcurrentDownloads.Value);
+                Settings.Default.LogLevel = logLevel.Text;
+                Settings.Default.ShowInTaskbar = showInTaskbar.Checked;
 
                 // Commit these changes back to the user settings
                 Settings.Default.Save();
@@ -211,6 +223,17 @@ namespace XiboClient
             if (folderBrowserLibrary.ShowDialog() == DialogResult.OK)
             {
                 textBoxLibraryPath.Text = folderBrowserLibrary.SelectedPath;
+            }
+        }
+
+        private void splashButtonBrowse_Click(object sender, EventArgs e)
+        {
+            // Set the dialog
+            splashScreenOverride.FileName = splashOverride.Text;
+
+            if (splashScreenOverride.ShowDialog() == DialogResult.OK)
+            {
+                splashOverride.Text = splashScreenOverride.FileName;
             }
         }
 

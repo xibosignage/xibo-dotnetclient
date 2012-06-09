@@ -38,7 +38,7 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <ApplicationIcon>new-icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -98,7 +98,6 @@
     <Compile Include="DataSetView.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="FileCollector.cs" />
     <Compile Include="Flash.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -107,6 +106,13 @@
     <Compile Include="Image.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Log\ClientInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Log\ClientInfo.Designer.cs">
+      <DependentUpon>ClientInfo.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Log\ClientInfoTraceListener.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -170,6 +176,9 @@
     <Compile Include="Schedule.cs" />
     <Compile Include="ScheduleManager.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="ShellCommand.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="StatLog.cs" />
     <Compile Include="TemporaryHtml.cs" />
     <Compile Include="Text.cs">
@@ -195,30 +204,18 @@
     </Compile>
     <Compile Include="WindowAnimator.cs" />
     <Compile Include="XiboTraceListener.cs" />
+    <Compile Include="XmdsAgents\FileAgent.cs" />
+    <Compile Include="XmdsAgents\LibraryAgent.cs" />
+    <Compile Include="XmdsAgents\RequiredFilesAgent.cs" />
+    <Compile Include="XmdsAgents\ScheduleAgent.cs" />
   </ItemGroup>
   <ItemGroup>
-    <COMReference Include="AxShockwaveFlashObjects">
-      <Guid>{D27CDB6B-AE6D-11CF-96B8-444553540000}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>aximp</WrapperTool>
-      <Isolated>False</Isolated>
-    </COMReference>
     <COMReference Include="AxWMPLib">
       <Guid>{6BF52A50-394A-11D3-B153-00C04F79FAA6}</Guid>
       <VersionMajor>1</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>aximp</WrapperTool>
-      <Isolated>False</Isolated>
-    </COMReference>
-    <COMReference Include="ShockwaveFlashObjects">
-      <Guid>{D27CDB6B-AE6D-11CF-96B8-444553540000}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
       <Isolated>False</Isolated>
     </COMReference>
     <COMReference Include="stdole">
@@ -295,11 +292,15 @@
     <EmbeddedResource Include="Resources\HtmlTemplate.htm" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Log\ClientInfo.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ClientInfo.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\splash.jpg">
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="favicon.ico" />
+    <Content Include="new-icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

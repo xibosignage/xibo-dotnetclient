@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -22,68 +22,85 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
+
+/// 09/06/12 Dan Changed to raise an event when the video is finished
 
 namespace XiboClient
 {
     class Video : Media
     {
+        string filePath;
+        VideoPlayer _videoPlayer;
+        private int duration;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="options"></param>
         public Video(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
             this.filePath = options.uri;
             this.duration = options.duration;
 
-            videoPlayer = new VideoPlayer();
-            videoPlayer.Width = options.width;
-            videoPlayer.Height = options.height;
-            videoPlayer.Location = new System.Drawing.Point(0, 0);
+            _videoPlayer = new VideoPlayer();
+            _videoPlayer.Width = options.width;
+            _videoPlayer.Height = options.height;
+            _videoPlayer.Location = new System.Drawing.Point(0, 0);
 
-            this.Controls.Add(videoPlayer);
+            this.Controls.Add(_videoPlayer);
         }
 
         public override void RenderMedia()
         {
+            // Do we need to determine the end time ourselves?
             if (duration == 0)
             {
-                // Determine the end time ourselves
-                base.Duration = 1; //check every second
+                // Use an event for this.
+                _videoPlayer.VideoEnd += new VideoPlayer.VideoFinished(_videoPlayer_VideoEnd);
+
+                // Show the form
+                Show();
             }
-
-            base.RenderMedia();
-
-            videoPlayer.Show();
+            else
+                // Render media as normal (starts the timer, shows the form, etc)
+                base.RenderMedia();
 
             try 
             {
-                videoPlayer.StartPlayer(filePath);
+                _videoPlayer.StartPlayer(filePath);
+
+                Trace.WriteLine(new LogMessage("Video - RenderMedia", "Video Started"), LogType.Audit.ToString());
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.WriteLine(ex.Message);
+                Trace.WriteLine(new LogMessage("Video - RenderMedia", ex.Message), LogType.Error.ToString());
                 
                 // Unable to start video - expire this media immediately
-                base.timer_Tick(null, null);
+                SignalElapsedEvent();
             }
+
+            // Show the player
+            _videoPlayer.Show();
         }
 
-        protected override void timer_Tick(object sender, EventArgs e)
+        /// <summary>
+        /// Video End event
+        /// </summary>
+        void _videoPlayer_VideoEnd()
         {
-            if (duration == 0)
+            // Has the video finished playing
+            if (_videoPlayer.FinishedPlaying)
             {
-                   // Has the video finished playing
-                if (videoPlayer.FinishedPlaying)
-                {
-                    // Raise the expired tick which will clear this media
-                    base.timer_Tick(sender, e);
-                }
-            }
-            else
-            {
-                // Our user defined timer duration has expired - so raise the base timer tick which will clear this media
-                base.timer_Tick(sender, e);
-            }
+                Trace.WriteLine(new LogMessage("Video - timer_Tick", "End of video detected"), LogType.Audit.ToString());
 
-            return;
+                // Immediately hide the player
+                _videoPlayer.Hide();
+
+                // We are expired
+                SignalElapsedEvent();
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -95,9 +112,9 @@ namespace XiboClient
 
             try
             {
-                videoPlayer.Hide();
-                Controls.Remove(videoPlayer);
-                videoPlayer.Dispose();
+                _videoPlayer.Hide();
+                Controls.Remove(_videoPlayer);
+                _videoPlayer.Dispose();
             }
             catch
             {
@@ -106,9 +123,5 @@ namespace XiboClient
 
             base.Dispose(disposing);
         }
-
-        string filePath;
-        VideoPlayer videoPlayer;
-        private int duration;
     }
 }

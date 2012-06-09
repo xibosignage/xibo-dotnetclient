@@ -66,6 +66,13 @@ namespace XiboClient
             this.labelProxyPass = new System.Windows.Forms.Label();
             this.labelProxyUser = new System.Windows.Forms.Label();
             this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.splashButtonBrowse = new System.Windows.Forms.Button();
+            this.linkLabel1 = new System.Windows.Forms.LinkLabel();
+            this.label17 = new System.Windows.Forms.Label();
+            this.label16 = new System.Windows.Forms.Label();
+            this.splashOverride = new System.Windows.Forms.TextBox();
+            this.enableMouseCb = new System.Windows.Forms.CheckBox();
+            this.cbExpireModifiedLayouts = new System.Windows.Forms.CheckBox();
             this.label14 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
@@ -75,9 +82,14 @@ namespace XiboClient
             this.clientHeight = new System.Windows.Forms.NumericUpDown();
             this.clientWidth = new System.Windows.Forms.NumericUpDown();
             this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.label20 = new System.Windows.Forms.Label();
+            this.logLevel = new System.Windows.Forms.ComboBox();
+            this.label19 = new System.Windows.Forms.Label();
+            this.maxConcurrentDownloads = new System.Windows.Forms.NumericUpDown();
+            this.label18 = new System.Windows.Forms.Label();
+            this.shellCommandAllowList = new System.Windows.Forms.TextBox();
+            this.enableShellCommandsCb = new System.Windows.Forms.CheckBox();
             this.doubleBufferingCheckBox = new System.Windows.Forms.CheckBox();
-            this.enableMouseCb = new System.Windows.Forms.CheckBox();
-            this.cbExpireModifiedLayouts = new System.Windows.Forms.CheckBox();
             this.numericUpDownEmptyRegions = new System.Windows.Forms.NumericUpDown();
             this.label15 = new System.Windows.Forms.Label();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -87,7 +99,9 @@ namespace XiboClient
             this.aboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.onlineHelpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.folderBrowserLibrary = new System.Windows.Forms.FolderBrowserDialog();
+            this.splashScreenOverride = new System.Windows.Forms.OpenFileDialog();
             this.xmds1 = new XiboClient.xmds.xmds();
+            this.showInTaskbar = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).BeginInit();
@@ -101,6 +115,7 @@ namespace XiboClient
             ((System.ComponentModel.ISupportInitialize)(this.clientHeight)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).BeginInit();
             this.tabPage5.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.maxConcurrentDownloads)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownEmptyRegions)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -110,18 +125,18 @@ namespace XiboClient
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(6, 14);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(136, 13);
+            this.label1.Size = new System.Drawing.Size(79, 13);
             this.label1.TabIndex = 1;
-            this.label1.Text = "The URI of the Xibo Server";
+            this.label1.Text = "Server Address";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(6, 41);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(172, 13);
+            this.label2.Size = new System.Drawing.Size(59, 13);
             this.label2.TabIndex = 3;
-            this.label2.Text = "The Server Key for the Xibo Server";
+            this.label2.Text = "Server Key";
             // 
             // label3
             // 
@@ -177,7 +192,7 @@ namespace XiboClient
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage1.Size = new System.Drawing.Size(436, 261);
             this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "Xibo Settings";
+            this.tabPage1.Text = "General";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // nupScrollStepAmount
@@ -325,7 +340,7 @@ namespace XiboClient
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage2.Size = new System.Drawing.Size(436, 261);
             this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Register Display";
+            this.tabPage2.Text = "Register";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
             // buttonDisplayAdmin
@@ -349,10 +364,10 @@ namespace XiboClient
             // 
             // textBoxResults
             // 
-            this.textBoxResults.Location = new System.Drawing.Point(9, 124);
+            this.textBoxResults.Location = new System.Drawing.Point(3, 124);
             this.textBoxResults.Multiline = true;
             this.textBoxResults.Name = "textBoxResults";
-            this.textBoxResults.Size = new System.Drawing.Size(397, 96);
+            this.textBoxResults.Size = new System.Drawing.Size(427, 131);
             this.textBoxResults.TabIndex = 5;
             // 
             // label6
@@ -360,9 +375,9 @@ namespace XiboClient
             this.label6.AutoSize = true;
             this.label6.Location = new System.Drawing.Point(6, 10);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(92, 13);
+            this.label6.Size = new System.Drawing.Size(84, 13);
             this.label6.TabIndex = 4;
-            this.label6.Text = "Xibo Service URL";
+            this.label6.Text = "Service Address";
             // 
             // buttonRegister
             // 
@@ -409,7 +424,7 @@ namespace XiboClient
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage3.Size = new System.Drawing.Size(436, 261);
             this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "Proxy Server";
+            this.tabPage3.Text = "Proxy";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
             // label8
@@ -487,6 +502,13 @@ namespace XiboClient
             // 
             // tabPage4
             // 
+            this.tabPage4.Controls.Add(this.splashButtonBrowse);
+            this.tabPage4.Controls.Add(this.linkLabel1);
+            this.tabPage4.Controls.Add(this.label17);
+            this.tabPage4.Controls.Add(this.label16);
+            this.tabPage4.Controls.Add(this.splashOverride);
+            this.tabPage4.Controls.Add(this.enableMouseCb);
+            this.tabPage4.Controls.Add(this.cbExpireModifiedLayouts);
             this.tabPage4.Controls.Add(this.label14);
             this.tabPage4.Controls.Add(this.label13);
             this.tabPage4.Controls.Add(this.label12);
@@ -500,8 +522,76 @@ namespace XiboClient
             this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage4.Size = new System.Drawing.Size(436, 261);
             this.tabPage4.TabIndex = 3;
-            this.tabPage4.Text = "Client Positioning";
+            this.tabPage4.Text = "Appearance";
             this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // splashButtonBrowse
+            // 
+            this.splashButtonBrowse.Location = new System.Drawing.Point(309, 166);
+            this.splashButtonBrowse.Name = "splashButtonBrowse";
+            this.splashButtonBrowse.Size = new System.Drawing.Size(81, 20);
+            this.splashButtonBrowse.TabIndex = 14;
+            this.splashButtonBrowse.Text = "Browse";
+            this.splashButtonBrowse.UseVisualStyleBackColor = true;
+            // 
+            // linkLabel1
+            // 
+            this.linkLabel1.AutoSize = true;
+            this.linkLabel1.Location = new System.Drawing.Point(135, 217);
+            this.linkLabel1.Name = "linkLabel1";
+            this.linkLabel1.Size = new System.Drawing.Size(133, 13);
+            this.linkLabel1.TabIndex = 13;
+            this.linkLabel1.TabStop = true;
+            this.linkLabel1.Text = "http://xibo.org.uk/donate/";
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(5, 189);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(352, 13);
+            this.label17.TabIndex = 12;
+            this.label17.Text = "If you override the splash screen please consider donating to the project. ";
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(5, 169);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(119, 13);
+            this.label16.TabIndex = 11;
+            this.label16.Text = "Override Splash Screen";
+            // 
+            // splashOverride
+            // 
+            this.splashOverride.Location = new System.Drawing.Point(161, 166);
+            this.splashOverride.Name = "splashOverride";
+            this.splashOverride.Size = new System.Drawing.Size(141, 20);
+            this.splashOverride.TabIndex = 10;
+            // 
+            // enableMouseCb
+            // 
+            this.enableMouseCb.AutoSize = true;
+            this.enableMouseCb.Checked = true;
+            this.enableMouseCb.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.enableMouseCb.Location = new System.Drawing.Point(77, 143);
+            this.enableMouseCb.Name = "enableMouseCb";
+            this.enableMouseCb.Size = new System.Drawing.Size(94, 17);
+            this.enableMouseCb.TabIndex = 9;
+            this.enableMouseCb.Text = "Enable Mouse";
+            this.enableMouseCb.UseVisualStyleBackColor = true;
+            // 
+            // cbExpireModifiedLayouts
+            // 
+            this.cbExpireModifiedLayouts.AutoSize = true;
+            this.cbExpireModifiedLayouts.Checked = true;
+            this.cbExpireModifiedLayouts.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbExpireModifiedLayouts.Location = new System.Drawing.Point(77, 120);
+            this.cbExpireModifiedLayouts.Name = "cbExpireModifiedLayouts";
+            this.cbExpireModifiedLayouts.Size = new System.Drawing.Size(243, 17);
+            this.cbExpireModifiedLayouts.TabIndex = 8;
+            this.cbExpireModifiedLayouts.Text = "Expire modified layouts while they are playing?";
+            this.cbExpireModifiedLayouts.UseVisualStyleBackColor = true;
             // 
             // label14
             // 
@@ -589,9 +679,15 @@ namespace XiboClient
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.showInTaskbar);
+            this.tabPage5.Controls.Add(this.label20);
+            this.tabPage5.Controls.Add(this.logLevel);
+            this.tabPage5.Controls.Add(this.label19);
+            this.tabPage5.Controls.Add(this.maxConcurrentDownloads);
+            this.tabPage5.Controls.Add(this.label18);
+            this.tabPage5.Controls.Add(this.shellCommandAllowList);
+            this.tabPage5.Controls.Add(this.enableShellCommandsCb);
             this.tabPage5.Controls.Add(this.doubleBufferingCheckBox);
-            this.tabPage5.Controls.Add(this.enableMouseCb);
-            this.tabPage5.Controls.Add(this.cbExpireModifiedLayouts);
             this.tabPage5.Controls.Add(this.numericUpDownEmptyRegions);
             this.tabPage5.Controls.Add(this.label15);
             this.tabPage5.Location = new System.Drawing.Point(4, 22);
@@ -602,45 +698,94 @@ namespace XiboClient
             this.tabPage5.Text = "Advanced";
             this.tabPage5.UseVisualStyleBackColor = true;
             // 
+            // label20
+            // 
+            this.label20.AutoSize = true;
+            this.label20.Location = new System.Drawing.Point(20, 151);
+            this.label20.Name = "label20";
+            this.label20.Size = new System.Drawing.Size(54, 13);
+            this.label20.TabIndex = 16;
+            this.label20.Text = "Log Level";
+            // 
+            // logLevel
+            // 
+            this.logLevel.FormattingEnabled = true;
+            this.logLevel.Items.AddRange(new object[] {
+            "audit",
+            "info",
+            "error"});
+            this.logLevel.Location = new System.Drawing.Point(176, 148);
+            this.logLevel.Name = "logLevel";
+            this.logLevel.Size = new System.Drawing.Size(121, 21);
+            this.logLevel.TabIndex = 15;
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.Location = new System.Drawing.Point(20, 123);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(138, 13);
+            this.label19.TabIndex = 14;
+            this.label19.Text = "Max Concurrent Downloads";
+            // 
+            // maxConcurrentDownloads
+            // 
+            this.maxConcurrentDownloads.Location = new System.Drawing.Point(176, 121);
+            this.maxConcurrentDownloads.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.maxConcurrentDownloads.Name = "maxConcurrentDownloads";
+            this.maxConcurrentDownloads.Size = new System.Drawing.Size(121, 20);
+            this.maxConcurrentDownloads.TabIndex = 13;
+            this.maxConcurrentDownloads.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(20, 98);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(127, 13);
+            this.label18.TabIndex = 12;
+            this.label18.Text = "Shell Command Allow List";
+            // 
+            // shellCommandAllowList
+            // 
+            this.shellCommandAllowList.Location = new System.Drawing.Point(176, 95);
+            this.shellCommandAllowList.Name = "shellCommandAllowList";
+            this.shellCommandAllowList.Size = new System.Drawing.Size(121, 20);
+            this.shellCommandAllowList.TabIndex = 11;
+            // 
+            // enableShellCommandsCb
+            // 
+            this.enableShellCommandsCb.AutoSize = true;
+            this.enableShellCommandsCb.Location = new System.Drawing.Point(176, 72);
+            this.enableShellCommandsCb.Name = "enableShellCommandsCb";
+            this.enableShellCommandsCb.Size = new System.Drawing.Size(140, 17);
+            this.enableShellCommandsCb.TabIndex = 10;
+            this.enableShellCommandsCb.Text = "Enable Shell Commands";
+            this.enableShellCommandsCb.UseVisualStyleBackColor = true;
+            // 
             // doubleBufferingCheckBox
             // 
             this.doubleBufferingCheckBox.AutoSize = true;
-            this.doubleBufferingCheckBox.Location = new System.Drawing.Point(176, 140);
+            this.doubleBufferingCheckBox.Location = new System.Drawing.Point(176, 49);
             this.doubleBufferingCheckBox.Name = "doubleBufferingCheckBox";
             this.doubleBufferingCheckBox.Size = new System.Drawing.Size(141, 17);
             this.doubleBufferingCheckBox.TabIndex = 4;
             this.doubleBufferingCheckBox.Text = "Enable Double Buffering";
             this.doubleBufferingCheckBox.UseVisualStyleBackColor = true;
             // 
-            // enableMouseCb
-            // 
-            this.enableMouseCb.AutoSize = true;
-            this.enableMouseCb.Checked = true;
-            this.enableMouseCb.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.enableMouseCb.Location = new System.Drawing.Point(176, 103);
-            this.enableMouseCb.Name = "enableMouseCb";
-            this.enableMouseCb.Size = new System.Drawing.Size(94, 17);
-            this.enableMouseCb.TabIndex = 3;
-            this.enableMouseCb.Text = "Enable Mouse";
-            this.enableMouseCb.UseVisualStyleBackColor = true;
-            // 
-            // cbExpireModifiedLayouts
-            // 
-            this.cbExpireModifiedLayouts.AutoSize = true;
-            this.cbExpireModifiedLayouts.Checked = true;
-            this.cbExpireModifiedLayouts.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cbExpireModifiedLayouts.Location = new System.Drawing.Point(176, 66);
-            this.cbExpireModifiedLayouts.Name = "cbExpireModifiedLayouts";
-            this.cbExpireModifiedLayouts.Size = new System.Drawing.Size(243, 17);
-            this.cbExpireModifiedLayouts.TabIndex = 2;
-            this.cbExpireModifiedLayouts.Text = "Expire modified layouts while they are playing?";
-            this.cbExpireModifiedLayouts.UseVisualStyleBackColor = true;
-            // 
             // numericUpDownEmptyRegions
             // 
             this.numericUpDownEmptyRegions.Location = new System.Drawing.Point(176, 23);
             this.numericUpDownEmptyRegions.Name = "numericUpDownEmptyRegions";
-            this.numericUpDownEmptyRegions.Size = new System.Drawing.Size(91, 20);
+            this.numericUpDownEmptyRegions.Size = new System.Drawing.Size(121, 20);
             this.numericUpDownEmptyRegions.TabIndex = 1;
             this.numericUpDownEmptyRegions.Value = new decimal(new int[] {
             10,
@@ -706,11 +851,25 @@ namespace XiboClient
             this.onlineHelpToolStripMenuItem.Text = "Online Help";
             this.onlineHelpToolStripMenuItem.Click += new System.EventHandler(this.onlineHelpToolStripMenuItem_Click);
             // 
+            // splashScreenOverride
+            // 
+            this.splashScreenOverride.FileName = "Splash Screen.jpg";
+            // 
             // xmds1
             // 
             this.xmds1.Credentials = null;
             this.xmds1.Url = "http://localhost/Xibo/server/xmds.php";
             this.xmds1.UseDefaultCredentials = false;
+            // 
+            // showInTaskbar
+            // 
+            this.showInTaskbar.AutoSize = true;
+            this.showInTaskbar.Location = new System.Drawing.Point(176, 176);
+            this.showInTaskbar.Name = "showInTaskbar";
+            this.showInTaskbar.Size = new System.Drawing.Size(130, 17);
+            this.showInTaskbar.TabIndex = 17;
+            this.showInTaskbar.Text = "Show Icon in Taskbar";
+            this.showInTaskbar.UseVisualStyleBackColor = true;
             // 
             // OptionForm
             // 
@@ -743,6 +902,7 @@ namespace XiboClient
             ((System.ComponentModel.ISupportInitialize)(this.clientWidth)).EndInit();
             this.tabPage5.ResumeLayout(false);
             this.tabPage5.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.maxConcurrentDownloads)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownEmptyRegions)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -809,8 +969,22 @@ namespace XiboClient
         private System.Windows.Forms.TabPage tabPage5;
         private System.Windows.Forms.NumericUpDown numericUpDownEmptyRegions;
         private System.Windows.Forms.Label label15;
-        private System.Windows.Forms.CheckBox cbExpireModifiedLayouts;
-        private System.Windows.Forms.CheckBox enableMouseCb;
         private System.Windows.Forms.CheckBox doubleBufferingCheckBox;
+        private System.Windows.Forms.OpenFileDialog splashScreenOverride;
+        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.TextBox shellCommandAllowList;
+        private System.Windows.Forms.CheckBox enableShellCommandsCb;
+        private System.Windows.Forms.Button splashButtonBrowse;
+        private System.Windows.Forms.LinkLabel linkLabel1;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.TextBox splashOverride;
+        private System.Windows.Forms.CheckBox enableMouseCb;
+        private System.Windows.Forms.CheckBox cbExpireModifiedLayouts;
+        private System.Windows.Forms.Label label20;
+        private System.Windows.Forms.ComboBox logLevel;
+        private System.Windows.Forms.Label label19;
+        private System.Windows.Forms.NumericUpDown maxConcurrentDownloads;
+        private System.Windows.Forms.CheckBox showInTaskbar;
     }
 }
