@@ -69,6 +69,8 @@ namespace XiboClient
 
         private void ExecuteShellCommand()
         {
+            Trace.WriteLine(new LogMessage("ShellCommand - ExecuteShellCommand", _command), LogType.Info.ToString());
+
             // Execute the commend
             if (!string.IsNullOrEmpty(_command))
             {
