@@ -415,6 +415,10 @@ namespace XiboClient
                     media = new Video(options);
                     break;
 
+                case "localvideo":
+                    media = new Video(options);
+                    break;
+
                 case "webpage":
                     media = new WebContent(options);
                     break;
