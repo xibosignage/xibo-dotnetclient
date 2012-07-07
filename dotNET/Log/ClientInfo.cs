@@ -72,6 +72,24 @@ namespace XiboClient.Log
         }
 
         /// <summary>
+        /// Current Layout Id
+        /// </summary>
+        public string CurrentLayoutId
+        {
+            set
+            {
+                if (InvokeRequired)
+                {
+                    BeginInvoke(new StatusDelegate(SetCurrentlyPlaying), value);
+                }
+                else
+                {
+                    SetCurrentlyPlaying(value);
+                }
+            }
+        }
+
+        /// <summary>
         /// Client Info Object
         /// </summary>
         public ClientInfo()
@@ -84,7 +102,7 @@ namespace XiboClient.Log
             FormClosing += new FormClosingEventHandler(ClientInfo_FormClosing);
 
             // Put the XMDS url on the title window
-            Text = Text + " - " + Settings.Default.serverURI;
+            Text = "Client Information and Status - " + Settings.Default.serverURI;
         }
 
         /// <summary>
@@ -121,6 +139,15 @@ namespace XiboClient.Log
         public void SetScheduleManagerStatus(string status)
         {
             scheduleManagerStatus.Text = status;
+        }
+
+        /// <summary>
+        /// Sets the currently playing layout name
+        /// </summary>
+        /// <param name="layoutName"></param>
+        public void SetCurrentlyPlaying(string layoutName)
+        {
+            Text = "Client Information and Status - " + Settings.Default.serverURI + " - Currently Showing: " + layoutName;
         }
 
         /// <summary>

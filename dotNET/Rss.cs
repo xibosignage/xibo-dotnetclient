@@ -404,9 +404,9 @@ namespace XiboClient
 
                 try
                 {
-                    using (StreamReader sr = new StreamReader(e.Result, wc.Encoding))
+                    using (StreamReader sr = new StreamReader(e.Result, Encoding.UTF8))
                     {
-                        using (StreamWriter sw = new StreamWriter(File.Open(_rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), wc.Encoding))
+                        using (StreamWriter sw = new StreamWriter(File.Open(_rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8))
                         {
                             Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
 
