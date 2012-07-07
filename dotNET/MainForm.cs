@@ -267,6 +267,8 @@ namespace XiboClient
                 _isExpired = false;
 
                 PrepareLayout(layoutPath);
+
+                _clientInfoForm.CurrentLayoutId = layoutPath;
             }
             catch (Exception ex)
             {

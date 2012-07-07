@@ -58,7 +58,6 @@ namespace XiboClient
             _direction = options.direction;
             _backgroundImage = options.backgroundImage;
             _backgroundColor = options.backgroundColor;
-            _scaleFactor = options.scaleFactor;
             _backgroundTop = options.backgroundTop + "px";
             _backgroundLeft = options.backgroundLeft + "px";
             _documentText = options.text;
@@ -66,6 +65,10 @@ namespace XiboClient
             _headJavaScript = options.javaScript;
             _fitText = (options.Dictionary.Get("fitText", "0") == "0" ? false : true);
             
+            // Adjust the scale factor
+            // Scale factor is always slightly over stated, we need to reduce it.
+            _scaleFactor = options.scaleFactor * 0.85;
+
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
 

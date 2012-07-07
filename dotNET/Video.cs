@@ -30,9 +30,9 @@ namespace XiboClient
 {
     class Video : Media
     {
-        string filePath;
+        string _filePath;
         VideoPlayer _videoPlayer;
-        private int duration;
+        private int _duration;
 
         /// <summary>
         /// Constructor
@@ -41,8 +41,8 @@ namespace XiboClient
         public Video(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
-            this.filePath = options.uri;
-            this.duration = options.duration;
+            _filePath = Uri.UnescapeDataString(options.uri);
+            _duration = options.duration;
 
             _videoPlayer = new VideoPlayer();
             _videoPlayer.Width = options.width;
@@ -55,7 +55,7 @@ namespace XiboClient
         public override void RenderMedia()
         {
             // Do we need to determine the end time ourselves?
-            if (duration == 0)
+            if (_duration == 0)
             {
                 // Use an event for this.
                 _videoPlayer.VideoEnd += new VideoPlayer.VideoFinished(_videoPlayer_VideoEnd);
@@ -69,7 +69,7 @@ namespace XiboClient
 
             try 
             {
-                _videoPlayer.StartPlayer(filePath);
+                _videoPlayer.StartPlayer(_filePath);
 
                 Trace.WriteLine(new LogMessage("Video - RenderMedia", "Video Started"), LogType.Audit.ToString());
             }

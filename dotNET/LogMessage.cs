@@ -74,10 +74,20 @@ namespace XiboClient
             XmlDocument xml = new XmlDocument();
             xml.LoadXml("<xml>" + xmlMessage + "</xml>");
 
-            LogDate = DateTime.Parse(xml.GetElementsByTagName("logdate").Item(0).InnerText.ToString());
-            _message = xml.GetElementsByTagName("message").Item(0).InnerText.ToString();
-            _method = xml.GetElementsByTagName("method").Item(0).InnerText.ToString();
-            _thread = xml.GetElementsByTagName("thread").Item(0).InnerText.ToString();
+            try
+            {
+                LogDate = DateTime.Parse(xml.GetElementsByTagName("logdate").Item(0).InnerText.ToString());
+                _message = xml.GetElementsByTagName("message").Item(0).InnerText.ToString();
+                _method = xml.GetElementsByTagName("method").Item(0).InnerText.ToString();
+                _thread = xml.GetElementsByTagName("thread").Item(0).InnerText.ToString();
+            }
+            catch (NullReferenceException)
+            {
+                LogDate = DateTime.Now;
+                _message = xmlMessage;
+                _method = "Unknown";
+                _thread = Thread.CurrentThread.Name;
+            }
         }
 
         public override string ToString()

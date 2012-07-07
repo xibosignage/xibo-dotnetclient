@@ -103,9 +103,12 @@ namespace XiboClient
             _mediaid = options.mediaid;
             _scheduleId = options.scheduleId;
             _layoutId = options.layoutId;
-            _scaleFactor = options.scaleFactor;
             _duration = options.duration;
             _fitText = (options.Dictionary.Get("fitText", "0") == "0" ? false : true);
+
+            // Adjust the scale factor
+            // Scale factor is always slightly over stated, we need to reduce it.
+            _scaleFactor = options.scaleFactor * 0.85;
 
             // Update interval and scrolling speed
             _updateInterval = options.updateInterval;
@@ -401,9 +404,9 @@ namespace XiboClient
 
                 try
                 {
-                    using (StreamReader sr = new StreamReader(e.Result, wc.Encoding))
+                    using (StreamReader sr = new StreamReader(e.Result, Encoding.UTF8))
                     {
-                        using (StreamWriter sw = new StreamWriter(File.Open(_rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), wc.Encoding))
+                        using (StreamWriter sw = new StreamWriter(File.Open(_rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8))
                         {
                             Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
 
