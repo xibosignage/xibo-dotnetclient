@@ -279,7 +279,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Unable to change layout: " + ex.Message), LogType.Error.ToString());
                 _isExpired = true;
 
                 ShowSplashScreen();

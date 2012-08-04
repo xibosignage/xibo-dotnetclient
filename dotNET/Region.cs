@@ -121,6 +121,7 @@ namespace XiboClient
 
             // Loop around trying to set the next media
             bool setSuccessful = false;
+            int countTries = 0;
 
             while (!setSuccessful)
             {
@@ -148,14 +149,21 @@ namespace XiboClient
                 try
                 {
                     newMedia = CreateNextMediaNode(_options);
+
+                    // We have set a new media object.
+                    setSuccessful = true;
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to start new media object: " + ex.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to start new " + _options.type + "  object: " + ex.Message), LogType.Error.ToString());
                 }
 
-                // We have set a new media object.
-                setSuccessful = true;
+                // Add one to the count of tries
+                countTries++;
+
+                // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
+                if (countTries > _options.mediaNodes.Count)
+                    throw new ArgumentOutOfRangeException("Unable to set a media node");
             }
 
             // First thing we do is stop the current stat record
