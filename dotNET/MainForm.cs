@@ -104,6 +104,13 @@ namespace XiboClient
             ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener(_clientInfoForm);
             Trace.Listeners.Add(clientInfoTraceListener);
 
+            // Log to disk?
+            if (!string.IsNullOrEmpty(Settings.Default.LogToDiskLocation))
+            {
+                TextWriterTraceListener listener = new TextWriterTraceListener(Settings.Default.LogToDiskLocation);
+                Trace.Listeners.Add(listener);
+            }
+
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
         }
 
@@ -191,7 +198,7 @@ namespace XiboClient
             _cacheManager.WriteCacheManager();
 
             // Flush the logs
-            System.Diagnostics.Trace.Flush();
+            Trace.Flush();
         }
 
         /// <summary>

@@ -23,6 +23,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.IO;
 
 /// 09/06/12 Dan Changed to raise an event when the video is finished
 
@@ -54,6 +55,13 @@ namespace XiboClient
 
         public override void RenderMedia()
         {
+            // Check to see if the video exists or not (if it doesnt say we are already expired)
+            if (!File.Exists(_filePath))
+            {
+                SignalElapsedEvent();
+                return;
+            }
+
             // Do we need to determine the end time ourselves?
             if (_duration == 0)
             {

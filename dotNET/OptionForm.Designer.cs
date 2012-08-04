@@ -82,6 +82,7 @@ namespace XiboClient
             this.clientHeight = new System.Windows.Forms.NumericUpDown();
             this.clientWidth = new System.Windows.Forms.NumericUpDown();
             this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.showInTaskbar = new System.Windows.Forms.CheckBox();
             this.label20 = new System.Windows.Forms.Label();
             this.logLevel = new System.Windows.Forms.ComboBox();
             this.label19 = new System.Windows.Forms.Label();
@@ -101,7 +102,8 @@ namespace XiboClient
             this.folderBrowserLibrary = new System.Windows.Forms.FolderBrowserDialog();
             this.splashScreenOverride = new System.Windows.Forms.OpenFileDialog();
             this.xmds1 = new XiboClient.xmds.xmds();
-            this.showInTaskbar = new System.Windows.Forms.CheckBox();
+            this.label21 = new System.Windows.Forms.Label();
+            this.logToDiskLocation = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).BeginInit();
@@ -533,6 +535,7 @@ namespace XiboClient
             this.splashButtonBrowse.TabIndex = 14;
             this.splashButtonBrowse.Text = "Browse";
             this.splashButtonBrowse.UseVisualStyleBackColor = true;
+            this.splashButtonBrowse.Click += new System.EventHandler(this.splashButtonBrowse_Click);
             // 
             // linkLabel1
             // 
@@ -679,6 +682,8 @@ namespace XiboClient
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.logToDiskLocation);
+            this.tabPage5.Controls.Add(this.label21);
             this.tabPage5.Controls.Add(this.showInTaskbar);
             this.tabPage5.Controls.Add(this.label20);
             this.tabPage5.Controls.Add(this.logLevel);
@@ -697,6 +702,16 @@ namespace XiboClient
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Advanced";
             this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // showInTaskbar
+            // 
+            this.showInTaskbar.AutoSize = true;
+            this.showInTaskbar.Location = new System.Drawing.Point(176, 206);
+            this.showInTaskbar.Name = "showInTaskbar";
+            this.showInTaskbar.Size = new System.Drawing.Size(130, 17);
+            this.showInTaskbar.TabIndex = 17;
+            this.showInTaskbar.Text = "Show Icon in Taskbar";
+            this.showInTaskbar.UseVisualStyleBackColor = true;
             // 
             // label20
             // 
@@ -861,15 +876,21 @@ namespace XiboClient
             this.xmds1.Url = "http://localhost/Xibo/server/xmds.php";
             this.xmds1.UseDefaultCredentials = false;
             // 
-            // showInTaskbar
+            // label21
             // 
-            this.showInTaskbar.AutoSize = true;
-            this.showInTaskbar.Location = new System.Drawing.Point(176, 176);
-            this.showInTaskbar.Name = "showInTaskbar";
-            this.showInTaskbar.Size = new System.Drawing.Size(130, 17);
-            this.showInTaskbar.TabIndex = 17;
-            this.showInTaskbar.Text = "Show Icon in Taskbar";
-            this.showInTaskbar.UseVisualStyleBackColor = true;
+            this.label21.AutoSize = true;
+            this.label21.Location = new System.Drawing.Point(20, 179);
+            this.label21.Name = "label21";
+            this.label21.Size = new System.Drawing.Size(105, 13);
+            this.label21.TabIndex = 18;
+            this.label21.Text = "Log to Disk Location";
+            // 
+            // logToDiskLocation
+            // 
+            this.logToDiskLocation.Location = new System.Drawing.Point(176, 176);
+            this.logToDiskLocation.Name = "logToDiskLocation";
+            this.logToDiskLocation.Size = new System.Drawing.Size(121, 20);
+            this.logToDiskLocation.TabIndex = 19;
             // 
             // OptionForm
             // 
@@ -986,5 +1007,7 @@ namespace XiboClient
         private System.Windows.Forms.Label label19;
         private System.Windows.Forms.NumericUpDown maxConcurrentDownloads;
         private System.Windows.Forms.CheckBox showInTaskbar;
+        private System.Windows.Forms.Label label21;
+        private System.Windows.Forms.TextBox logToDiskLocation;
     }
 }
