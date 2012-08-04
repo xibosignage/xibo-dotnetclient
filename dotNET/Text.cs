@@ -23,6 +23,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.IO;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace XiboClient
 {
