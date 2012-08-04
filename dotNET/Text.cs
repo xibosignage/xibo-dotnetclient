@@ -134,7 +134,7 @@ namespace XiboClient
             headContent += "           scrollSpeed: " + _scrollSpeed + ",";
             headContent += "           fitText: " + ((!_fitText) ? "false" : "true") + ",";
             headContent += "           scaleText: " + ((_fitText) ? "false" : "true") + ",";
-            headContent += "           scaleFactor: " + _scaleFactor;
+            headContent += "           scaleFactor: " + _scaleFactor.ToString(CultureInfo.InvariantCulture);
             headContent += "       });";
             headContent += "   } ";
             headContent += "</script>";

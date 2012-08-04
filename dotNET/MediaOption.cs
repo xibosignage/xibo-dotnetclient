@@ -75,18 +75,21 @@ namespace XiboClient
 
         public string Get(string name, string def)
         {
-            foreach (MediaOption option in _options)
+            string value;
+
+            try
             {
-                if (option.Name == name)
-                {
-                    if (string.IsNullOrEmpty(option.Value))
-                        return def;
+                value = Get(name);
 
-                    return option.Value;
-                }
+                if (string.IsNullOrEmpty(value))
+                    return def;
+
+                return value;
             }
-
-            return def;
+            catch
+            {
+                return def;
+            }
         }
     }
 
