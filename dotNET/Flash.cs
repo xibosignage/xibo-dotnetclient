@@ -104,7 +104,6 @@ namespace XiboClient
             // We have navigated to the temporary file.
             Show();
             Controls.Add(_webBrowser);
-            Application.DoEvents();
         }
 
         /// <summary>

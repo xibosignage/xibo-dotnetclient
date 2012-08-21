@@ -104,7 +104,6 @@ namespace XiboClient
 
             // Get ready to show the control
             Show();
-            Application.DoEvents();
             Controls.Add(webBrowser);
         }
 

@@ -102,6 +102,7 @@ namespace XiboClient
 
             // Trace listener for Client Info
             ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener(_clientInfoForm);
+            clientInfoTraceListener.Name = "ClientInfo TraceListener";
             Trace.Listeners.Add(clientInfoTraceListener);
 
             // Log to disk?
@@ -121,9 +122,6 @@ namespace XiboClient
         /// <param name="e"></param>
         void MainForm_Shown(object sender, EventArgs e)
         {
-            // Process any stuff that has happened during the loading process
-            Application.DoEvents();
-
             // Create a cachemanager
             SetCacheManager();
 
@@ -184,6 +182,7 @@ namespace XiboClient
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             // We want to tidy up some stuff as this form closes.
+            Trace.Listeners.Remove("ClientInfo TraceListener");
 
             // Close the client info screen
             _clientInfoForm.Hide();
@@ -450,9 +449,6 @@ namespace XiboClient
                 options.backgroundImage = "";
             }
 
-            // Get it to paint the background now
-            Application.DoEvents();
-
             // Get the regions
             XmlNodeList listRegions = layoutXml.SelectNodes("/layout/region");
             XmlNodeList listMedia = layoutXml.SelectNodes("/layout/region/media");
@@ -529,8 +525,6 @@ namespace XiboClient
                 Controls.Add(temp);
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
-
-                Application.DoEvents();
             }
 
             // Null stuff
@@ -636,8 +630,6 @@ namespace XiboClient
                 System.Diagnostics.Debug.WriteLine("Region Expired - Next Region.", "MainForm - DurationElapsedEvent");
                 _schedule.NextLayout();
             }
-
-            Application.DoEvents();
         }
 
         /// <summary>
@@ -645,9 +637,7 @@ namespace XiboClient
         /// </summary>
         private void DestroyLayout() 
         {
-            System.Diagnostics.Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
-
-            Application.DoEvents();
+            Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
 
             if (_regions == null) return;
 

@@ -384,7 +384,6 @@ namespace XiboClient
             // Show the control
             Show();
             Controls.Add(_webBrowser);
-            Application.DoEvents();
         }
 
         /// <summary>
