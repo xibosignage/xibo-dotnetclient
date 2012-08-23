@@ -160,7 +160,7 @@ namespace XiboClient
                     }
                     catch (Exception ex)
                     {
-                        Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to start new " + _options.type + "  object: " + ex.Message), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to create new " + _options.type + "  object: " + ex.Message), LogType.Error.ToString());
                     }
 
                     // Add one to the count of tries
@@ -180,8 +180,9 @@ namespace XiboClient
                 {
                     StartMedia(newMedia);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to start new " + _options.type + "  object: " + ex.Message), LogType.Error.ToString());
                     startSuccessful = false;
                     continue;
                 }

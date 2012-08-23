@@ -58,7 +58,10 @@ namespace XiboClient
         {
             // Check to see if the video exists or not (if it doesnt say we are already expired)
             if (!File.Exists(_filePath))
+            {
+                Trace.WriteLine(new LogMessage("Video - RenderMedia", "Local Video file " + _filePath + " not found."));
                 throw new FileNotFoundException();
+            }
 
             // Do we need to determine the end time ourselves?
             if (_duration == 0)
