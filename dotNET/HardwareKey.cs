@@ -22,11 +22,14 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Management;
 using System.Text;
+using System.Diagnostics;
 
 namespace XiboClient
 {
     class HardwareKey
     {
+        private static object _locker = new object();
+
         private string _hardwareKey;
         private string _macAddress;
 
@@ -40,7 +43,7 @@ namespace XiboClient
 
         public HardwareKey()
         {
-            System.Diagnostics.Debug.WriteLine("[IN]", "HardwareKey");
+            Debug.WriteLine("[IN]", "HardwareKey");
 
             // Get the key from the Settings
             _hardwareKey = Properties.Settings.Default.hardwareKey;
@@ -65,7 +68,7 @@ namespace XiboClient
             // Get the Mac Address
             _macAddress = GetMACAddress();
 
-            System.Diagnostics.Debug.WriteLine("[OUT]", "HardwareKey");
+            Debug.WriteLine("[OUT]", "HardwareKey");
         }
 
         /// <summary>
@@ -84,12 +87,15 @@ namespace XiboClient
         /// </summary>
         public void Regenerate()
         {
-            // Calculate the Hardware key from the CPUID and Volume Serial
-            _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+            lock (_locker)
+            {
+                // Calculate the Hardware key from the CPUID and Volume Serial
+                _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
 
-            // Store the key
-            Properties.Settings.Default.hardwareKey = _hardwareKey;
-            Properties.Settings.Default.Save();
+                // Store the key
+                Properties.Settings.Default.hardwareKey = _hardwareKey;
+                Properties.Settings.Default.Save();
+            }
         }
 
         /// <summary>
@@ -99,15 +105,18 @@ namespace XiboClient
         /// <returns>[string] VolumeSerialNumber</returns>
         public string GetVolumeSerial(string strDriveLetter)
         {
-            System.Diagnostics.Debug.WriteLine("[IN]", "GetVolumeSerial");
+            lock (_locker)
+            {
+                Debug.WriteLine("[IN]", "GetVolumeSerial");
 
-            if (strDriveLetter == "" || strDriveLetter == null) strDriveLetter = "C";
-            ManagementObject disk = new ManagementObject("win32_logicaldisk.deviceid=\"" + strDriveLetter + ":\"");
-            disk.Get();
+                if (strDriveLetter == "" || strDriveLetter == null) strDriveLetter = "C";
+                ManagementObject disk = new ManagementObject("win32_logicaldisk.deviceid=\"" + strDriveLetter + ":\"");
+                disk.Get();
 
-            System.Diagnostics.Debug.WriteLine("[OUT]", "GetVolumeSerial");
+                System.Diagnostics.Debug.WriteLine("[OUT]", "GetVolumeSerial");
 
-            return disk["VolumeSerialNumber"].ToString();
+                return disk["VolumeSerialNumber"].ToString();
+            }
         }
 
         /// <summary>
@@ -116,20 +125,23 @@ namespace XiboClient
         /// <returns>[string] MAC Address</returns>
         public string GetMACAddress()
         {
-            ManagementClass mc = new ManagementClass("Win32_NetworkAdapterConfiguration");
-            ManagementObjectCollection moc = mc.GetInstances();
-            string MACAddress = String.Empty;
-
-            foreach (ManagementObject mo in moc)
+            lock (_locker)
             {
-                if (MACAddress == String.Empty)  // only return MAC Address from first card
+                ManagementClass mc = new ManagementClass("Win32_NetworkAdapterConfiguration");
+                ManagementObjectCollection moc = mc.GetInstances();
+                string MACAddress = String.Empty;
+
+                foreach (ManagementObject mo in moc)
                 {
-                    if ((bool)mo["IPEnabled"] == true) MACAddress = mo["MacAddress"].ToString();
+                    if (MACAddress == String.Empty)  // only return MAC Address from first card
+                    {
+                        if ((bool)mo["IPEnabled"] == true) MACAddress = mo["MacAddress"].ToString();
+                    }
+                    mo.Dispose();
                 }
-                mo.Dispose();
+
+                return MACAddress;
             }
-            
-            return MACAddress;
         }
 
         /// <summary>
@@ -138,23 +150,26 @@ namespace XiboClient
         /// <returns>[string] ProcessorId</returns>
         public string GetCPUId()
         {
-            System.Diagnostics.Debug.WriteLine("[IN]", "GetCPUId");
-
-            string cpuInfo = String.Empty;
-            string temp = String.Empty;
-            ManagementClass mc = new ManagementClass("Win32_Processor");
-            ManagementObjectCollection moc = mc.GetInstances();
-            foreach (ManagementObject mo in moc)
+            lock (_locker)
             {
-                if (cpuInfo == String.Empty)
-                {   // only return cpuInfo from first CPU
-                    cpuInfo = mo.Properties["ProcessorId"].Value.ToString();
+                Debug.WriteLine("[IN]", "GetCPUId");
+
+                string cpuInfo = String.Empty;
+                string temp = String.Empty;
+                ManagementClass mc = new ManagementClass("Win32_Processor");
+                ManagementObjectCollection moc = mc.GetInstances();
+                foreach (ManagementObject mo in moc)
+                {
+                    if (cpuInfo == String.Empty)
+                    {   // only return cpuInfo from first CPU
+                        cpuInfo = mo.Properties["ProcessorId"].Value.ToString();
+                    }
                 }
+
+                Debug.WriteLine("[OUT]", "GetCPUId");
+
+                return cpuInfo;
             }
-
-            System.Diagnostics.Debug.WriteLine("[OUT]", "GetCPUId");
-
-            return cpuInfo;
         }
     }
 }

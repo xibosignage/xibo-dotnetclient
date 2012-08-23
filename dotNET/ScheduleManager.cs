@@ -44,7 +44,7 @@ namespace XiboClient
         #region "Constructor"
 
         // Thread Logic
-        public object _locker = new object();
+        public static object _locker = new object();
         public bool forceStop = false;
 
         // Event for new schedule
@@ -102,7 +102,8 @@ namespace XiboClient
             }
             set
             {
-                _refreshSchedule = value;
+                lock (_locker)
+                    _refreshSchedule = value;
             }
         }
 
@@ -409,26 +410,29 @@ namespace XiboClient
         /// <returns></returns>
         public static string GetScheduleXmlString(string scheduleLocation)
         {
-            Trace.WriteLine(new LogMessage("ScheduleManager - GetScheduleXmlString", "Getting the Schedule XML"), LogType.Audit.ToString());
-
-            string scheduleXml;
-
-            // Check the schedule file exists
-            try
+            lock (_locker)
             {
-                // Read the schedule file
-                using (StreamReader sr = new StreamReader(File.Open(scheduleLocation, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite)))
+                Trace.WriteLine(new LogMessage("ScheduleManager - GetScheduleXmlString", "Getting the Schedule XML"), LogType.Audit.ToString());
+
+                string scheduleXml;
+
+                // Check the schedule file exists
+                try
                 {
-                    scheduleXml = sr.ReadToEnd();
+                    // Read the schedule file
+                    using (StreamReader sr = new StreamReader(File.Open(scheduleLocation, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite)))
+                    {
+                        scheduleXml = sr.ReadToEnd();
+                    }
                 }
-            }
-            catch(FileNotFoundException)
-            {
-                // Use the default XML
-                scheduleXml = "<schedule></schedule>";
-            }
+                catch (FileNotFoundException)
+                {
+                    // Use the default XML
+                    scheduleXml = "<schedule></schedule>";
+                }
 
-            return scheduleXml;
+                return scheduleXml;
+            }
         }
 
         /// <summary>
@@ -438,9 +442,12 @@ namespace XiboClient
         /// <param name="scheduleXml"></param>
         public static void WriteScheduleXmlToDisk(string scheduleLocation, string scheduleXml)
         {
-            using (StreamWriter sw = new StreamWriter(scheduleLocation, false, Encoding.UTF8))
+            lock (_locker)
             {
-                sw.Write(scheduleXml);
+                using (StreamWriter sw = new StreamWriter(scheduleLocation, false, Encoding.UTF8))
+                {
+                    sw.Write(scheduleXml);
+                }
             }
         }
 

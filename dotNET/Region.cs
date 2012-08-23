@@ -111,80 +111,100 @@ namespace XiboClient
             if (initialMedia)
             {
                 // Evaluate the width, etc
-                this.Location = new System.Drawing.Point(_options.left, _options.top);
-                this.Size = new System.Drawing.Size(_options.width, _options.height);
+                Location = new System.Drawing.Point(_options.left, _options.top);
+                Size = new System.Drawing.Size(_options.width, _options.height);
             }
 
-            // The idea here is to store the current media, start the new media and then replace
-            Media currentMedia;
-            Media newMedia = _media;
+            // Try to populate a new media object for this region
+            Media newMedia = new Media(0, 0, 0, 0);
 
-            // Loop around trying to set the next media
-            bool setSuccessful = false;
-            int countTries = 0;
+            // Loop around trying to start the next media
+            bool startSuccessful = false;
+            int countStarts = 0;
 
-            while (!setSuccessful)
+            while (!startSuccessful)
             {
-                // Store the current sequence
-                int temp = _currentSequence;
+                // Loop around trying to set the next media
+                bool setSuccessful = false;
+                int countTries = 0;
 
-                // Set the next media node for this panel
-                if (!SetNextMediaNodeInOptions())
+                while (!setSuccessful)
                 {
-                    // For some reason we cannot set a media node... so we need this region to become invalid
-                    _hasExpired = true;
-                    DurationElapsedEvent();
-                    return;
+                    // Store the current sequence
+                    int temp = _currentSequence;
+
+                    // Set the next media node for this panel
+                    if (!SetNextMediaNodeInOptions())
+                    {
+                        // For some reason we cannot set a media node... so we need this region to become invalid
+                        _hasExpired = true;
+                        DurationElapsedEvent();
+                        return;
+                    }
+
+                    // If the sequence hasnt been changed, OR the layout has been expired
+                    if (_currentSequence == temp || _layoutExpired)
+                    {
+                        //there has been no change to the sequence, therefore the media we have already created is still valid
+                        //or this media has actually been destroyed and we are working out way out the call stack
+                        return;
+                    }
+
+                    // See if we can start the new media object
+                    try
+                    {
+                        newMedia = CreateNextMediaNode(_options);
+
+                        // We have set a new media object.
+                        setSuccessful = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to start new " + _options.type + "  object: " + ex.Message), LogType.Error.ToString());
+                    }
+
+                    // Add one to the count of tries
+                    countTries++;
+
+                    // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
+                    if (countTries > _options.mediaNodes.Count)
+                        throw new ArgumentOutOfRangeException("Unable to set a media node");
                 }
 
-                // If the sequence hasnt been changed, OR the layout has been expired
-                if (_currentSequence == temp || _layoutExpired)
-                {
-                    //there has been no change to the sequence, therefore the media we have already created is still valid
-                    //or this media has actually been destroyed and we are working out way out the call stack
-                    return;
-                }
+                // First thing we do is stop the current stat record
+                if (!initialMedia)
+                    CloseCurrentStatRecord();
 
-                // See if we can start the new media object
+                // Start the new media
                 try
                 {
-                    newMedia = CreateNextMediaNode(_options);
-
-                    // We have set a new media object.
-                    setSuccessful = true;
+                    StartMedia(newMedia);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to start new " + _options.type + "  object: " + ex.Message), LogType.Error.ToString());
+                    startSuccessful = false;
+                    continue;
                 }
 
-                // Add one to the count of tries
-                countTries++;
+                startSuccessful = true;
+
+                // Remove the old media
+                if (!initialMedia)
+                {
+                    StopMedia(_media);
+                    _media = null;
+                }
+
+                // Change the reference 
+                _media = newMedia;
+
+                // Open a stat record
+                OpenStatRecordForMedia();
 
                 // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
-                if (countTries > _options.mediaNodes.Count)
-                    throw new ArgumentOutOfRangeException("Unable to set a media node");
+                if (countStarts > _options.mediaNodes.Count)
+                    throw new ArgumentOutOfRangeException("Unable to set and start a media node");
             }
-
-            // First thing we do is stop the current stat record
-            if (!initialMedia)
-                CloseCurrentStatRecord();
-
-            // Now we have newMedia and current media.
-            currentMedia = _media;
-
-            // Swap the media reference
-            _media = newMedia;
-
-            // Start the new media
-            StartMedia(_media);
-
-            // Remove the old media
-            if (!initialMedia)
-                StopMedia(currentMedia);
-
-            // Open a stat record
-            OpenStatRecordForMedia();
         }
 
         /// <summary>
@@ -583,16 +603,17 @@ namespace XiboClient
                     _media.Dispose();
                     _media = null;
 
-                    System.Diagnostics.Debug.WriteLine("Media Disposed by Region", "Region - Dispose");
+                    Debug.WriteLine("Media Disposed by Region", "Region - Dispose");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine(ex.Message);
-                    System.Diagnostics.Debug.WriteLine("There was no media to dispose", "Region - Dispose");
+                    Debug.WriteLine(ex.Message);
+                    Debug.WriteLine("There was no media to dispose", "Region - Dispose");
                 }
                 finally
                 {
-                    if (_media != null) _media = null;
+                    if (_media != null) 
+                        _media = null;
                 }
             }
 

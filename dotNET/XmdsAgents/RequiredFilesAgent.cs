@@ -34,7 +34,7 @@ namespace XiboClient.XmdsAgents
 {
     class RequiredFilesAgent
     {
-        private object _locker = new object();
+        private static object _locker = new object();
         public bool forceStop = false;
 
         /// <summary>

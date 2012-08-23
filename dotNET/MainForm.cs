@@ -268,6 +268,8 @@ namespace XiboClient
         {
             try
             {
+                // TODO: Check we are never out of the UI thread at this point
+
                 DestroyLayout();
 
                 _isExpired = false;
@@ -506,7 +508,7 @@ namespace XiboClient
                 options.backgroundLeft = options.left * -1;
                 options.backgroundTop = options.top * -1;
 
-                //Account for scaling
+                // Account for scaling
                 options.left = options.left + (int)leftOverX;
                 options.top = options.top + (int)leftOverY;
 

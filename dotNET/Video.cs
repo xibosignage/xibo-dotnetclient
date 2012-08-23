@@ -34,6 +34,7 @@ namespace XiboClient
         string _filePath;
         VideoPlayer _videoPlayer;
         private int _duration;
+        bool _expired = false;
 
         /// <summary>
         /// Constructor
@@ -50,17 +51,14 @@ namespace XiboClient
             _videoPlayer.Height = options.height;
             _videoPlayer.Location = new System.Drawing.Point(0, 0);
 
-            this.Controls.Add(_videoPlayer);
+            Controls.Add(_videoPlayer);
         }
 
         public override void RenderMedia()
         {
             // Check to see if the video exists or not (if it doesnt say we are already expired)
             if (!File.Exists(_filePath))
-            {
-                SignalElapsedEvent();
-                return;
-            }
+                throw new FileNotFoundException();
 
             // Do we need to determine the end time ourselves?
             if (_duration == 0)
@@ -68,16 +66,20 @@ namespace XiboClient
                 // Use an event for this.
                 _videoPlayer.VideoEnd += new VideoPlayer.VideoFinished(_videoPlayer_VideoEnd);
 
-                // Show the form
-                Show();
+                // Set the duration to 1 second
+                Duration = 1;
             }
-            else
-                // Render media as normal (starts the timer, shows the form, etc)
-                base.RenderMedia();
+                
+            // Render media as normal (starts the timer, shows the form, etc)
+            base.RenderMedia();
 
             try 
             {
+                // Start Player
                 _videoPlayer.StartPlayer(_filePath);
+
+                // Show the player
+                _videoPlayer.Show();
 
                 Trace.WriteLine(new LogMessage("Video - RenderMedia", "Video Started"), LogType.Audit.ToString());
             }
@@ -86,11 +88,8 @@ namespace XiboClient
                 Trace.WriteLine(new LogMessage("Video - RenderMedia", ex.Message), LogType.Error.ToString());
                 
                 // Unable to start video - expire this media immediately
-                SignalElapsedEvent();
+                throw;
             }
-
-            // Show the player
-            _videoPlayer.Show();
         }
 
         /// <summary>
@@ -101,14 +100,24 @@ namespace XiboClient
             // Has the video finished playing
             if (_videoPlayer.FinishedPlaying)
             {
-                Trace.WriteLine(new LogMessage("Video - timer_Tick", "End of video detected"), LogType.Audit.ToString());
+                Trace.WriteLine(new LogMessage("Video - _videoPlayer_VideoEnd", "End of video detected"), LogType.Audit.ToString());
 
                 // Immediately hide the player
                 _videoPlayer.Hide();
 
-                // We are expired
-                SignalElapsedEvent();
+                _expired = true;
             }
+        }
+
+        /// <summary>
+        /// Override the timer tick
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected override void timer_Tick(object sender, EventArgs e)
+        {
+            if (_expired)
+                base.timer_Tick(sender, e);
         }
 
         protected override void Dispose(bool disposing)
