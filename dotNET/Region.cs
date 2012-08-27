@@ -69,9 +69,9 @@ namespace XiboClient
             _options.top = 0;
             _options.uri = null;
 
-            this.Location = new System.Drawing.Point(_options.left, _options.top);
-            this.Size = new System.Drawing.Size(_options.width, _options.height);
-            this.BackColor = System.Drawing.Color.Transparent;
+            Location = new System.Drawing.Point(_options.left, _options.top);
+            Size = new System.Drawing.Size(_options.width, _options.height);
+            BackColor = System.Drawing.Color.Transparent;
 
             if (Settings.Default.DoubleBuffering)
             {
@@ -94,7 +94,7 @@ namespace XiboClient
             }
             set 
             { 
-                this._options = value;
+                _options = value;
 
                 EvalOptions();
             }
@@ -143,12 +143,10 @@ namespace XiboClient
                     }
 
                     // If the sequence hasnt been changed, OR the layout has been expired
+                    // there has been no change to the sequence, therefore the media we have already created is still valid
+                    // or this media has actually been destroyed and we are working out way out the call stack
                     if (_currentSequence == temp || _layoutExpired)
-                    {
-                        //there has been no change to the sequence, therefore the media we have already created is still valid
-                        //or this media has actually been destroyed and we are working out way out the call stack
                         return;
-                    }
 
                     // See if we can start the new media object
                     try
@@ -275,6 +273,9 @@ namespace XiboClient
                 if (_blackList.BlackListed(_options.mediaid))
                 {
                     Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", string.Format("MediaID [{0}] has been blacklisted.", _options.mediaid)), LogType.Error.ToString());
+                    
+                    // Increment the number of attempts and try again
+                    numAttempts++;
 
                     // Carry on
                     continue;

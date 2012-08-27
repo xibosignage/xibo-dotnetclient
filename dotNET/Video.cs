@@ -36,6 +36,10 @@ namespace XiboClient
         private int _duration;
         bool _expired = false;
 
+        // Events to indicate when a file has played
+        public delegate void FilePlayedDelegate();
+        public event FilePlayedDelegate FilePlayed;
+
         /// <summary>
         /// Constructor
         /// </summary>

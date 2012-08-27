@@ -193,6 +193,7 @@ namespace XiboClient
             // Once it has expired we might as well stop the timer?
             _timer.Stop();
 
+            // Signal that this Media Item's duration has elapsed
             SignalElapsedEvent();
         }
 
@@ -202,7 +203,7 @@ namespace XiboClient
         /// </summary>
         public void SignalElapsedEvent()
         {
-            this._hasExpired = true;
+            _hasExpired = true;
 
             Trace.WriteLine(new LogMessage("Media - SignalElapsedEvent", "Media Complete"), LogType.Audit.ToString());
 
@@ -218,7 +219,7 @@ namespace XiboClient
             catch (NullReferenceException ex)
             {
                 // Some things dont have a timer
-                System.Diagnostics.Debug.WriteLine(ex.Message);
+                Debug.WriteLine(ex.Message);
             }
 
             base.Dispose(disposing);
