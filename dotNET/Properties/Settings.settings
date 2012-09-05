@@ -131,5 +131,8 @@
     <Setting Name="LogToDiskLocation" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="VideoRenderingEngine" Type="System.String" Scope="User">
+      <Value Profile="(Default)">WindowsMediaPlayer</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

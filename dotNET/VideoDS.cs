@@ -25,61 +25,48 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.IO;
 
-/// 09/06/12 Dan Changed to raise an event when the video is finished
+/// 05/09/12 Dan Created as a MOCK UP for the DirectShow Player
 
 namespace XiboClient
 {
-    class Video : Media
+    class VideoDS : Media
     {
-        private string _filePath;
         private VideoPlayer _videoPlayer;
-        private int _duration;
+        //private DSVideoPlayer _videoPlayer;
         private bool _expired = false;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="options"></param>
-        public Video(RegionOptions options)
+        public VideoDS(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
-            _filePath = Uri.UnescapeDataString(options.uri);
-            _duration = options.duration;
-
+            _filesPlayed = 0;
             _videoPlayer = new VideoPlayer();
             _videoPlayer.Width = options.width;
             _videoPlayer.Height = options.height;
             _videoPlayer.Location = new System.Drawing.Point(0, 0);
-
+            //_videoPlayer.SetPlaylist(options.mediaNodes, options.CurrentIndex);
+            
             Controls.Add(_videoPlayer);
         }
 
         public override void RenderMedia()
         {
-            // Check to see if the video exists or not (if it doesnt say we are already expired)
-            if (!File.Exists(_filePath))
-            {
-                Trace.WriteLine(new LogMessage("Video - RenderMedia", "Local Video file " + _filePath + " not found."));
-                throw new FileNotFoundException();
-            }
+            // Configure an event for the end of a file
+            // _videoPlayer.VideoEnd += new VideoPlayer.VideoEnd(_videoPlayer_FileEnd);
+            
+            // Use an event for the end of the playlist
+            //_videoPlayer.PlaylistEnd += new VideoPlayer.PlaylistEnd(_videoPlayer_VideoEnd);
 
-            // Do we need to determine the end time ourselves?
-            if (_duration == 0)
-            {
-                // Use an event for this.
-                _videoPlayer.VideoEnd += new VideoPlayer.VideoFinished(_videoPlayer_VideoEnd);
-
-                // Set the duration to 1 second
-                Duration = 1;
-            }
-                
             // Render media as normal (starts the timer, shows the form, etc)
             base.RenderMedia();
 
             try 
             {
                 // Start Player
-                _videoPlayer.StartPlayer(_filePath);
+                //_videoPlayer.StartPlayer();
 
                 // Show the player
                 _videoPlayer.Show();
@@ -95,10 +82,15 @@ namespace XiboClient
             }
         }
 
+        //private void _videoPlayer_FileEnd()
+        //{
+        //  _filesPlayed++;
+        //}
+
         /// <summary>
         /// Video End event
         /// </summary>
-        void _videoPlayer_VideoEnd()
+        private void _videoPlayer_VideoEnd()
         {
             // Has the video finished playing
             if (_videoPlayer.FinishedPlaying)
@@ -125,6 +117,11 @@ namespace XiboClient
 
         protected override void Dispose(bool disposing)
         {
+            if (disposing)
+            {
+               
+            }
+
             try
             {
                 _videoPlayer.Hide();

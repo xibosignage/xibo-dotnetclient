@@ -61,7 +61,8 @@ namespace XiboClient
             if (!Properties.Settings.Default.powerpointEnabled && options.type == "powerpoint")
             {
                 webBrowser.DocumentText = "<html><body><h1>Powerpoint not enabled on this display</h1></body></html>";
-                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Powerpoint is not enabled on this display", scheduleId, layoutId, mediaId));
+                
+                Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Powerpoint is not enabled on this display", scheduleId, layoutId, mediaId));
             }
             else
             {
@@ -74,7 +75,7 @@ namespace XiboClient
                     }
                     catch (Exception ex)
                     {
-                        Trace.WriteLine(new LogMessage("WebContent", "Unable to get a URI with exception: " + ex.Message), LogType.Audit);
+                        Trace.WriteLine(new LogMessage("WebContent", "Unable to get a URI with exception: " + ex.Message), LogType.Audit.ToString());
                     }
 
                     if (offsetLeft == 0 && offsetTop == 0)

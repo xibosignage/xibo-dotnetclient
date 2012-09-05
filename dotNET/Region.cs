@@ -148,6 +148,9 @@ namespace XiboClient
                     if (_currentSequence == temp || _layoutExpired)
                         return;
 
+                    // Store the Current Index
+                    _options.CurrentIndex = _currentSequence;
+
                     // See if we can start the new media object
                     try
                     {
@@ -212,8 +215,6 @@ namespace XiboClient
         /// </summary>
         private bool SetNextMediaNodeInOptions()
         {
-            int playingSequence = _currentSequence;
-
             // What if there are no media nodes?
             if (_options.mediaNodes.Count == 0)
             {
@@ -442,11 +443,22 @@ namespace XiboClient
 
                 case "video":
                     options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
-                    media = new Video(options);
+
+                    // Which video engine are we using?
+                    if (Settings.Default.VideoRenderingEngine == "DirectShow")
+                        media = new VideoDS(options);
+                    else
+                        media = new Video(options);
+
                     break;
 
                 case "localvideo":
-                    media = new Video(options);
+                    // Which video engine are we using?
+                    if (Settings.Default.VideoRenderingEngine == "DirectShow")
+                        media = new VideoDS(options);
+                    else
+                        media = new Video(options);
+
                     break;
 
                 case "webpage":
@@ -562,9 +574,13 @@ namespace XiboClient
         /// <summary>
         /// The media has elapsed
         /// </summary>
-        private void media_DurationElapsedEvent()
+        private void media_DurationElapsedEvent(int filesPlayed)
         {
             Trace.WriteLine(new LogMessage("Region - DurationElapsedEvent", string.Format("Media Elapsed: {0}", _options.uri)), LogType.Audit.ToString());
+
+            if (filesPlayed > 1)
+                // Increment the _current sequence by the number of filesPlayed (minus 1)
+                _currentSequence = _currentSequence + (filesPlayed - 1);
 
             // make some decisions about what to do next
             EvalOptions();
@@ -589,7 +605,7 @@ namespace XiboClient
             }
             catch
             {
-                System.Diagnostics.Trace.WriteLine(new LogMessage("Region - Clear", "Error closing off stat record"), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Region - Clear", "Error closing off stat record"), LogType.Error.ToString());
             }
         }
 
@@ -658,6 +674,7 @@ namespace XiboClient
         public int layoutId;
         public string regionId;
         public int scheduleId;
+        public int CurrentIndex;
        
         //general options
         public string backgroundImage;

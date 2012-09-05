@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2012 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -30,8 +30,9 @@ namespace XiboClient
     class Media : Form
     {
         // Events
-        public delegate void DurationElapsedDelegate();
+        public delegate void DurationElapsedDelegate(int filesPlayed);
         public event DurationElapsedDelegate DurationElapsedEvent;
+        protected int _filesPlayed = 1;
 
         /// <summary>
         /// Gets or Sets the duration of this media. Will be 0 if ""
@@ -72,7 +73,7 @@ namespace XiboClient
         private bool _hasExpired = false;
 
         // Private Timer
-        Timer _timer;
+        protected Timer _timer;
         private bool _timerStarted = false;
 
         /// <summary>
@@ -188,6 +189,11 @@ namespace XiboClient
             Show();
         }
 
+        /// <summary>
+        /// Timer Tick
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         protected virtual void timer_Tick(object sender, EventArgs e)
         {
             // Once it has expired we might as well stop the timer?
@@ -207,16 +213,21 @@ namespace XiboClient
 
             Trace.WriteLine(new LogMessage("Media - SignalElapsedEvent", "Media Complete"), LogType.Audit.ToString());
 
-            DurationElapsedEvent();
+            DurationElapsedEvent(_filesPlayed);
         }
 
+        /// <summary>
+        /// Dispose of this media
+        /// </summary>
+        /// <param name="disposing"></param>
         protected override void Dispose(bool disposing)
         {
             try
             {
-                _timer.Dispose();
+                if (_timer != null)
+                    _timer.Dispose();
             }
-            catch (NullReferenceException ex)
+            catch (Exception ex)
             {
                 // Some things dont have a timer
                 Debug.WriteLine(ex.Message);
