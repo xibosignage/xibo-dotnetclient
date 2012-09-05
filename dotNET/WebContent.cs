@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -69,16 +70,23 @@ namespace XiboClient
                     // Try to make a URI out of the file path
                     try
                     {
-                        this._filePath = Uri.UnescapeDataString(options.uri);
+                        _filePath = Uri.UnescapeDataString(options.uri);
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine(ex.Message, "WebContent");
+                        Trace.WriteLine(new LogMessage("WebContent", "Unable to get a URI with exception: " + ex.Message), LogType.Audit);
                     }
 
-                    // Load an IFRAME into the DocumentText
-                    string iframe = "<html><body style='margin:0; border:0;'><iframe style='margin-left:-" + offsetLeft.ToString() + "px; margin-top:-" + offsetTop.ToString() + "px;' scrolling=\"no\" width=\"" + (options.width + offsetLeft).ToString() + "px\" height=\"" + (options.height + offsetTop).ToString() + "px\" src=\"" + _filePath + "\"></body></html>";
-                    webBrowser.DocumentText = iframe;
+                    if (offsetLeft == 0 && offsetTop == 0)
+                    {
+                        webBrowser.Navigate(_filePath);
+                    }
+                    else
+                    {
+                        // Load an IFRAME into the DocumentText
+                        string iframe = "<html><body style='margin:0; border:0;'><iframe style='margin-left:-" + offsetLeft.ToString() + "px; margin-top:-" + offsetTop.ToString() + "px;' scrolling=\"no\" width=\"" + (options.width + offsetLeft).ToString() + "px\" height=\"" + (options.height + offsetTop).ToString() + "px\" src=\"" + _filePath + "\"></body></html>";
+                        webBrowser.DocumentText = iframe;
+                    }
                 }
                 catch (Exception ex)
                 {
