@@ -24,8 +24,10 @@ using System.Data;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 /// 09/06/12 Dan Changed to raise an event when the video is finished
+/// 04/08/12 Dan Changed to raise an error event if one is raised from the control
 
 namespace XiboClient
 {
@@ -35,6 +37,9 @@ namespace XiboClient
 
         public delegate void VideoFinished();
         public event VideoFinished VideoEnd;
+
+        public delegate void VideoErrored();
+        public event VideoErrored VideoError;
 
         public VideoPlayer()
         {
@@ -57,6 +62,26 @@ namespace XiboClient
             axWindowsMediaPlayer1.windowlessVideo = true;
 
             axWindowsMediaPlayer1.PlayStateChange += new AxWMPLib._WMPOCXEvents_PlayStateChangeEventHandler(axWMP_PlayStateChange);
+            axWindowsMediaPlayer1.ErrorEvent += new EventHandler(axWindowsMediaPlayer1_ErrorEvent);
+        }
+
+        void axWindowsMediaPlayer1_ErrorEvent(object sender, EventArgs e)
+        {
+            // Get the error for logging
+            string error;
+            try 
+            {
+                error = axWindowsMediaPlayer1.Error.get_Item(0).errorDescription;
+            }
+            catch 
+            {
+                error = "Unknown Error";
+            }
+
+            Trace.WriteLine(new LogMessage("VideoPlayer - ErrorEvent", error), LogType.Error.ToString());
+
+            // Raise the event
+            VideoError();
         }
 
         void axWMP_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)

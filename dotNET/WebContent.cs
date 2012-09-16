@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace XiboClient
 {
@@ -60,7 +61,8 @@ namespace XiboClient
             if (!Properties.Settings.Default.powerpointEnabled && options.type == "powerpoint")
             {
                 webBrowser.DocumentText = "<html><body><h1>Powerpoint not enabled on this display</h1></body></html>";
-                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Powerpoint is not enabled on this display", scheduleId, layoutId, mediaId));
+                
+                Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Powerpoint is not enabled on this display", scheduleId, layoutId, mediaId));
             }
             else
             {
@@ -69,16 +71,23 @@ namespace XiboClient
                     // Try to make a URI out of the file path
                     try
                     {
-                        this._filePath = Uri.UnescapeDataString(options.uri);
+                        _filePath = Uri.UnescapeDataString(options.uri);
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine(ex.Message, "WebContent");
+                        Trace.WriteLine(new LogMessage("WebContent", "Unable to get a URI with exception: " + ex.Message), LogType.Audit.ToString());
                     }
 
-                    // Load an IFRAME into the DocumentText
-                    string iframe = "<html><body style='margin:0; border:0;'><iframe style='margin-left:-" + offsetLeft.ToString() + "px; margin-top:-" + offsetTop.ToString() + "px;' scrolling=\"no\" width=\"" + (options.width + offsetLeft).ToString() + "px\" height=\"" + (options.height + offsetTop).ToString() + "px\" src=\"" + _filePath + "\"></body></html>";
-                    webBrowser.DocumentText = iframe;
+                    if (offsetLeft == 0 && offsetTop == 0)
+                    {
+                        webBrowser.Navigate(_filePath);
+                    }
+                    else
+                    {
+                        // Load an IFRAME into the DocumentText
+                        string iframe = "<html><body style='margin:0; border:0;'><iframe style='margin-left:-" + offsetLeft.ToString() + "px; margin-top:-" + offsetTop.ToString() + "px;' scrolling=\"no\" width=\"" + (options.width + offsetLeft).ToString() + "px\" height=\"" + (options.height + offsetTop).ToString() + "px\" src=\"" + _filePath + "\"></body></html>";
+                        webBrowser.DocumentText = iframe;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -104,7 +113,6 @@ namespace XiboClient
 
             // Get ready to show the control
             Show();
-            Application.DoEvents();
             Controls.Add(webBrowser);
         }
 
