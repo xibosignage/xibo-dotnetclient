@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -23,6 +23,9 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 
+// 17/08/2012 Dan Set process priority to RealTime
+// 21/08/2012 Dan Only enable visual styles for Options Form
+
 namespace XiboClient
 {
     static class Program
@@ -37,11 +40,13 @@ namespace XiboClient
          
             if(RunningProcesses.Length <= 1)
             {
-                Application.EnableVisualStyles();
+                // Ensure our process has the highest priority
+                Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
+
                 Application.SetCompatibleTextRenderingDefault(false);
 
-                System.Diagnostics.Trace.Listeners.Add(new XiboTraceListener());
-                System.Diagnostics.Trace.AutoFlush = false;
+                Trace.Listeners.Add(new XiboTraceListener());
+                Trace.AutoFlush = false;
 
                 Form formMain;
 
@@ -49,12 +54,15 @@ namespace XiboClient
                 {
                     if (arg.GetLength(0) > 0 && arg[0].ToString() == "o")
                     {
-                        System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Options Started"), LogType.Info.ToString());
+                        // If we are showing the options form, enable visual styles
+                        Application.EnableVisualStyles();
+
+                        Trace.WriteLine(new LogMessage("Main", "Options Started"), LogType.Info.ToString());
                         formMain = new OptionForm();
                     }
                     else
                     {
-                        System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
                         formMain = new MainForm();
                     }
                     
@@ -70,8 +78,8 @@ namespace XiboClient
                 Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
 
                 // Always flush at the end
-                System.Diagnostics.Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
-                System.Diagnostics.Trace.Flush();
+                Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
+                Trace.Flush();
             }
             else
             {
@@ -97,7 +105,6 @@ namespace XiboClient
             // What happens if we cannot start?
             Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
             Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
-            Environment.Exit(1);
 
             // TODO: Can we just restart the application?
 
@@ -107,20 +114,5 @@ namespace XiboClient
 
         [DllImport("User32.dll")]
         public static extern int ShowWindowAsync(IntPtr hWnd , int swCommand);
-    }
-
-    static class Options
-    {
-        /// <summary>
-        /// The main entry point for the options.
-        /// </summary>
-        [STAThread]
-        static void Main()
-        {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            OptionForm formOptions = new OptionForm();
-            Application.Run(formOptions);
-        }
     }
 }

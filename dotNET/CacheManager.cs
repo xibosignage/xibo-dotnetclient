@@ -31,6 +31,7 @@ namespace XiboClient
 {
     public class CacheManager
     {
+        public static object _locker = new object();
         public Collection<Md5Resource> _files;
 
         public CacheManager()
@@ -107,24 +108,27 @@ namespace XiboClient
         /// <param name="md5"></param>
         public void Add(String path, String md5)
         {
-            // First check to see if this path is in the collection
-            foreach (Md5Resource file in _files)
+            lock (_locker)
             {
-                if (file.path == path)
-                    return;
+                // First check to see if this path is in the collection
+                foreach (Md5Resource file in _files)
+                {
+                    if (file.path == path)
+                        return;
+                }
+
+                // We need to generate the MD5 and store it for later
+                Md5Resource md5Resource = new Md5Resource();
+
+                md5Resource.path = path;
+                md5Resource.md5 = md5;
+                md5Resource.cacheDate = DateTime.Now;
+
+                // Add the resource to the collection
+                _files.Add(md5Resource);
+
+                Debug.WriteLine(new LogMessage("Add", "Adding new MD5 to CacheManager"), LogType.Info.ToString());
             }
-
-            // We need to generate the MD5 and store it for later
-            Md5Resource md5Resource = new Md5Resource();
-
-            md5Resource.path = path;
-            md5Resource.md5 = md5;
-            md5Resource.cacheDate = DateTime.Now;
-
-            // Add the resource to the collection
-            _files.Add(md5Resource);
-
-            System.Diagnostics.Debug.WriteLine(new LogMessage("Add", "Adding new MD5 to CacheManager"), LogType.Info.ToString());
         }
 
         /// <summary>
@@ -133,16 +137,19 @@ namespace XiboClient
         /// <param name="path"></param>
         public void Remove(String path)
         {
-            // Loop through all MD5s and remove any that match the path
-            for (int i = 0; i < _files.Count; i++)
+            lock (_locker)
             {
-                Md5Resource file = _files[i];
-
-                if (file.path == path)
+                // Loop through all MD5s and remove any that match the path
+                for (int i = 0; i < _files.Count; i++)
                 {
-                    _files.Remove(file);
+                    Md5Resource file = _files[i];
 
-                    System.Diagnostics.Debug.WriteLine(new LogMessage("Remove", "Removing stale MD5 from the CacheManager"), LogType.Info.ToString());
+                    if (file.path == path)
+                    {
+                        _files.Remove(file);
+
+                        System.Diagnostics.Debug.WriteLine(new LogMessage("Remove", "Removing stale MD5 from the CacheManager"), LogType.Info.ToString());
+                    }
                 }
             }
         }
@@ -152,20 +159,23 @@ namespace XiboClient
         /// </summary>
         public void WriteCacheManager()
         {
-            Debug.WriteLine(new LogMessage("CacheManager - WriteCacheManager", "About to Write the Cache Manager"), LogType.Info.ToString());
-
-            try
+            lock (_locker)
             {
-                using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile))
+                Debug.WriteLine(new LogMessage("CacheManager - WriteCacheManager", "About to Write the Cache Manager"), LogType.Info.ToString());
+
+                try
                 {
-                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
+                    using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile))
+                    {
+                        XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
 
-                    xmlSerializer.Serialize(streamWriter, this);
+                        xmlSerializer.Serialize(streamWriter, this);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm_FormClosing", "Unable to write CacheManager to disk because: " + ex.Message));
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm_FormClosing", "Unable to write CacheManager to disk because: " + ex.Message));
+                }
             }
         }
 
@@ -176,47 +186,50 @@ namespace XiboClient
         /// <returns>True is it is and false if it isnt</returns>
         public bool IsValidPath(String path)
         {
-            // TODO: what makes a path valid?
-            // Currently a path is valid if it is in the cache
-            if (String.IsNullOrEmpty(path))
-                return false;
-
-            // Search for this path
-            foreach (Md5Resource file in _files)
+            lock (_locker)
             {
-                if (file.path == path)
+                // TODO: what makes a path valid?
+                // Currently a path is valid if it is in the cache
+                if (String.IsNullOrEmpty(path))
+                    return false;
+
+                // Search for this path
+                foreach (Md5Resource file in _files)
                 {
-                    // If we cached it over 2 minutes ago, then check the GetLastWriteTime
-                    if (file.cacheDate > DateTime.Now.AddMinutes(-2))
-                        return true;
-
-                    try
+                    if (file.path == path)
                     {
-                        // Check to see if this file has been deleted since the Cache Manager registered it
-                        if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
-                            return false;
-
-                        // Check to see if this file has been modified since the MD5 cache
-                        // If it has then we assume invalid, otherwise its valid
-                        DateTime lastWrite = File.GetLastWriteTime(Properties.Settings.Default.LibraryPath + @"\" + path);
-
-                        if (lastWrite <= file.cacheDate)
+                        // If we cached it over 2 minutes ago, then check the GetLastWriteTime
+                        if (file.cacheDate > DateTime.Now.AddMinutes(-2))
                             return true;
-                        else
-                            return false;
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine(new LogMessage("IsValid", "Unable to determine if the file is valid. Assuming not valid: " + ex.Message), LogType.Error.ToString());
 
-                        // Assume invalid
-                        return false;
+                        try
+                        {
+                            // Check to see if this file has been deleted since the Cache Manager registered it
+                            if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                                return false;
+
+                            // Check to see if this file has been modified since the MD5 cache
+                            // If it has then we assume invalid, otherwise its valid
+                            DateTime lastWrite = File.GetLastWriteTime(Properties.Settings.Default.LibraryPath + @"\" + path);
+
+                            if (lastWrite <= file.cacheDate)
+                                return true;
+                            else
+                                return false;
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine(new LogMessage("IsValid", "Unable to determine if the file is valid. Assuming not valid: " + ex.Message), LogType.Error.ToString());
+
+                            // Assume invalid
+                            return false;
+                        }
                     }
                 }
-            }
 
-            // Reached the end of the cache and havent found the file.
-            return false;
+                // Reached the end of the cache and havent found the file.
+                return false;
+            }
         }
 
         /// <summary>
@@ -226,44 +239,47 @@ namespace XiboClient
         /// <returns></returns>
         public bool IsValidLayout(string layoutFile)
         {
-            Debug.WriteLine("Checking if Layout " + layoutFile + " is valid");
-
-            if (!IsValidPath(layoutFile))
-                return false;
-
-            // Load the XLF, get all media ID's
-            XmlDocument layoutXml = new XmlDocument();
-            layoutXml.Load(Properties.Settings.Default.LibraryPath + @"\" + layoutFile);
-
-            XmlNodeList mediaNodes = layoutXml.SelectNodes("//media");
-
-            foreach (XmlNode media in mediaNodes)
+            lock (_locker)
             {
-                // Is this a stored media type?
-                switch (media.Attributes["type"].Value)
+                Debug.WriteLine("Checking if Layout " + layoutFile + " is valid");
+
+                if (!IsValidPath(layoutFile))
+                    return false;
+
+                // Load the XLF, get all media ID's
+                XmlDocument layoutXml = new XmlDocument();
+                layoutXml.Load(Properties.Settings.Default.LibraryPath + @"\" + layoutFile);
+
+                XmlNodeList mediaNodes = layoutXml.SelectNodes("//media");
+
+                foreach (XmlNode media in mediaNodes)
                 {
-                    case "video":
-                    case "image":
-                    case "flash":
-                    case "ppt":
+                    // Is this a stored media type?
+                    switch (media.Attributes["type"].Value)
+                    {
+                        case "video":
+                        case "image":
+                        case "flash":
+                        case "ppt":
 
-                        // Get the path and see if its valid
-                        if (!IsValidPath(media.InnerText))
-                        {
-                            Debug.WriteLine("Invalid Media: " + media.Attributes["id"].Value.ToString());
-                            return false;
-                        }
+                            // Get the path and see if its valid
+                            if (!IsValidPath(media.InnerText))
+                            {
+                                Debug.WriteLine("Invalid Media: " + media.Attributes["id"].Value.ToString());
+                                return false;
+                            }
 
-                        break;
+                            break;
 
-                    default:
-                        continue;
+                        default:
+                            continue;
+                    }
                 }
+
+                Debug.WriteLine("Layout " + layoutFile + " is valid");
+
+                return true;
             }
-
-            Debug.WriteLine("Layout " + layoutFile + " is valid");
-
-            return true;
         }
 
         /// <summary>
@@ -271,25 +287,28 @@ namespace XiboClient
         /// </summary>
         public void Regenerate()
         {
-            if (!File.Exists(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile))
-                return;
-
-            // Open the XML file and check each required file that isnt already there
-            XmlDocument xml = new XmlDocument();
-            xml.Load(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile);
-
-            XmlNodeList fileNodes = xml.SelectNodes("//RequiredFile/Path");
-
-            foreach (XmlNode file in fileNodes)
+            lock (_locker)
             {
-                string path = file.InnerText;
+                if (!File.Exists(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile))
+                    return;
 
-                // Does the file exist?
-                if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
-                    continue;
+                // Open the XML file and check each required file that isnt already there
+                XmlDocument xml = new XmlDocument();
+                xml.Load(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile);
 
-                // Add this file to the cache manager
-                Add(path, GetMD5(path));
+                XmlNodeList fileNodes = xml.SelectNodes("//RequiredFile/Path");
+
+                foreach (XmlNode file in fileNodes)
+                {
+                    string path = file.InnerText;
+
+                    // Does the file exist?
+                    if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                        continue;
+
+                    // Add this file to the cache manager
+                    Add(path, GetMD5(path));
+                }
             }
         }
     }

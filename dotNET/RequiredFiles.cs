@@ -37,6 +37,8 @@ namespace XiboClient
 {
     public class RequiredFiles
     {
+        private static object _locker = new object();
+
         private XmlDocument _requiredFilesXml;
         public Collection<RequiredFile> RequiredFileList;
         private xmds.xmds _report;
@@ -48,15 +50,18 @@ namespace XiboClient
         {
             get
             {
-                int count = 0;
-
-                foreach (RequiredFile rf in RequiredFileList)
+                lock (_locker)
                 {
-                    if (rf.Downloading)
-                        count++;
-                }
+                    int count = 0;
 
-                return count;
+                    foreach (RequiredFile rf in RequiredFileList)
+                    {
+                        if (rf.Downloading)
+                            count++;
+                    }
+
+                    return count;
+                }
             }
         }
 
@@ -71,7 +76,8 @@ namespace XiboClient
             }
             set
             {
-                _cacheManager = value;
+                lock (_locker)
+                    _cacheManager = value;
             }
         }
         private CacheManager _cacheManager;
@@ -204,8 +210,11 @@ namespace XiboClient
         {
             set
             {
-                _requiredFilesXml = value;
-                SetRequiredFiles();
+                lock (_locker)
+                {
+                    _requiredFilesXml = value;
+                    SetRequiredFiles();
+                }
             }
         }
 
@@ -216,13 +225,16 @@ namespace XiboClient
         /// <returns></returns>
         public RequiredFile GetRequiredFile(int id, string fileType)
         {
-            foreach (RequiredFile rf in RequiredFileList)
+            lock (_locker)
             {
-                if (rf.Id == id && rf.FileType == fileType)
-                    return rf;
-            }
+                foreach (RequiredFile rf in RequiredFileList)
+                {
+                    if (rf.Id == id && rf.FileType == fileType)
+                        return rf;
+                }
 
-            throw new FileNotFoundException("No required file found with ID: " + id.ToString() + " and type" + fileType);
+                throw new FileNotFoundException("No required file found with ID: " + id.ToString() + " and type" + fileType);
+            }
         }
 
         /// <summary>
@@ -232,13 +244,16 @@ namespace XiboClient
         /// <returns></returns>
         public RequiredFile GetRequiredFile(string path)
         {
-            foreach (RequiredFile rf in RequiredFileList)
+            lock (_locker)
             {
-                if (rf.Path == path)
-                    return rf;
-            }
+                foreach (RequiredFile rf in RequiredFileList)
+                {
+                    if (rf.Path == path)
+                        return rf;
+                }
 
-            throw new FileNotFoundException("No required file found with Path: " + path);
+                throw new FileNotFoundException("No required file found with Path: " + path);
+            }
         }
 
         /// <summary>
@@ -248,14 +263,17 @@ namespace XiboClient
         /// <param name="md5"></param>
         public void MarkComplete(int id, string md5)
         {
-            for (int i = 0; i < RequiredFileList.Count; i++)
+            lock (_locker)
             {
-                if (RequiredFileList[i].Id == id)
+                for (int i = 0; i < RequiredFileList.Count; i++)
                 {
-                    RequiredFileList[i].Complete = true;
-                    RequiredFileList[i].Md5 = md5;
+                    if (RequiredFileList[i].Id == id)
+                    {
+                        RequiredFileList[i].Complete = true;
+                        RequiredFileList[i].Md5 = md5;
 
-                    break;
+                        break;
+                    }
                 }
             }
         }
@@ -267,14 +285,17 @@ namespace XiboClient
         /// <param name="md5"></param>
         public void MarkIncomplete(int id, string md5)
         {
-            for (int i = 0; i < RequiredFileList.Count; i++)
+            lock (_locker)
             {
-                if (RequiredFileList[i].Id == id)
+                for (int i = 0; i < RequiredFileList.Count; i++)
                 {
-                    RequiredFileList[i].Complete = false;
-                    RequiredFileList[i].Md5 = md5;
+                    if (RequiredFileList[i].Id == id)
+                    {
+                        RequiredFileList[i].Complete = false;
+                        RequiredFileList[i].Md5 = md5;
 
-                    break;
+                        break;
+                    }
                 }
             }
         }
@@ -284,20 +305,23 @@ namespace XiboClient
         /// </summary>
         public void WriteRequiredFiles()
         {
-            Debug.WriteLine(new LogMessage("RequiredFiles - WriteRequiredFiles", "About to Write RequiredFiles"), LogType.Info.ToString());
-
-            try
+            lock (_locker)
             {
-                using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile))
+                Debug.WriteLine(new LogMessage("RequiredFiles - WriteRequiredFiles", "About to Write RequiredFiles"), LogType.Info.ToString());
+
+                try
                 {
-                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(RequiredFiles));
+                    using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile))
+                    {
+                        XmlSerializer xmlSerializer = new XmlSerializer(typeof(RequiredFiles));
 
-                    xmlSerializer.Serialize(streamWriter, this);
+                        xmlSerializer.Serialize(streamWriter, this);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.WriteLine(new LogMessage("RequiredFiles - WriteRequiredFiles", "Unable to write RequiredFiles to disk because: " + ex.Message));
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("RequiredFiles - WriteRequiredFiles", "Unable to write RequiredFiles to disk because: " + ex.Message));
+                }
             }
         }
 
@@ -306,23 +330,26 @@ namespace XiboClient
         /// </summary>
         public void ReportInventory()
         {
-            Trace.WriteLine(new LogMessage("RequiredFiles - ReportInventory", "Reporting Inventory"), LogType.Info.ToString());
-
-            HardwareKey hardwareKey = new HardwareKey();
-
-            // Build the XML required by media file
-            string xml = "";
-            
-            foreach (RequiredFile rf in RequiredFileList)
+            lock (_locker)
             {
-                xml += string.Format("<file type=\"{0}\" id=\"{1}\" complete=\"{2}\" lastChecked=\"{3}\" md5=\"{4}\" />", 
-                    rf.FileType, rf.Id.ToString(), (rf.Complete) ? "1" : "0", rf.LastChecked.ToString(), rf.Md5);
+                Trace.WriteLine(new LogMessage("RequiredFiles - ReportInventory", "Reporting Inventory"), LogType.Info.ToString());
+
+                HardwareKey hardwareKey = new HardwareKey();
+
+                // Build the XML required by media file
+                string xml = "";
+
+                foreach (RequiredFile rf in RequiredFileList)
+                {
+                    xml += string.Format("<file type=\"{0}\" id=\"{1}\" complete=\"{2}\" lastChecked=\"{3}\" md5=\"{4}\" />",
+                        rf.FileType, rf.Id.ToString(), (rf.Complete) ? "1" : "0", rf.LastChecked.ToString(), rf.Md5);
+                }
+
+                xml = string.Format("<files macAddress=\"{1}\">{0}</files>", xml, hardwareKey.MacAddress);
+
+                _report.MediaInventoryAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey,
+                    hardwareKey.Key, xml);
             }
-
-            xml = string.Format("<files macAddress=\"{1}\">{0}</files>", xml, hardwareKey.MacAddress);
-
-            _report.MediaInventoryAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey,
-                hardwareKey.Key, xml);
         }
 
         /// <summary>
@@ -331,11 +358,14 @@ namespace XiboClient
         /// <returns></returns>
         public static RequiredFiles LoadFromDisk()
         {
-            using (FileStream fileStream = File.Open(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile, FileMode.Open))
+            lock (_locker)
             {
-                XmlSerializer xmlSerializer = new XmlSerializer(typeof(RequiredFiles));
+                using (FileStream fileStream = File.Open(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile, FileMode.Open))
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(RequiredFiles));
 
-                return (RequiredFiles)xmlSerializer.Deserialize(fileStream);
+                    return (RequiredFiles)xmlSerializer.Deserialize(fileStream);
+                }
             }
         }
     }

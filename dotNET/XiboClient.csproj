@@ -95,6 +95,9 @@
     </Compile>
     <Compile Include="BlackList.cs" />
     <Compile Include="CacheManager.cs" />
+    <Compile Include="VideoDS.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="DataSetView.cs">
       <SubType>Form</SubType>
     </Compile>

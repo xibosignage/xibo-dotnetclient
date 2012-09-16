@@ -32,7 +32,7 @@ namespace XiboClient.XmdsAgents
 {
     class ScheduleAgent
     {
-        public object _locker = new object();
+        public static object _locker = new object();
         public bool forceStop = false;
 
         /// <summary>

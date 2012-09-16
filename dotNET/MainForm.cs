@@ -102,7 +102,15 @@ namespace XiboClient
 
             // Trace listener for Client Info
             ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener(_clientInfoForm);
+            clientInfoTraceListener.Name = "ClientInfo TraceListener";
             Trace.Listeners.Add(clientInfoTraceListener);
+
+            // Log to disk?
+            if (!string.IsNullOrEmpty(Settings.Default.LogToDiskLocation))
+            {
+                TextWriterTraceListener listener = new TextWriterTraceListener(Settings.Default.LogToDiskLocation);
+                Trace.Listeners.Add(listener);
+            }
 
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
         }
@@ -114,9 +122,6 @@ namespace XiboClient
         /// <param name="e"></param>
         void MainForm_Shown(object sender, EventArgs e)
         {
-            // Process any stuff that has happened during the loading process
-            Application.DoEvents();
-
             // Create a cachemanager
             SetCacheManager();
 
@@ -177,6 +182,7 @@ namespace XiboClient
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             // We want to tidy up some stuff as this form closes.
+            Trace.Listeners.Remove("ClientInfo TraceListener");
 
             // Close the client info screen
             _clientInfoForm.Hide();
@@ -191,7 +197,7 @@ namespace XiboClient
             _cacheManager.WriteCacheManager();
 
             // Flush the logs
-            System.Diagnostics.Trace.Flush();
+            Trace.Flush();
         }
 
         /// <summary>
@@ -262,6 +268,8 @@ namespace XiboClient
         {
             try
             {
+                // TODO: Check we are never out of the UI thread at this point
+
                 DestroyLayout();
 
                 _isExpired = false;
@@ -272,7 +280,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Unable to change layout: " + ex.Message), LogType.Error.ToString());
                 _isExpired = true;
 
                 ShowSplashScreen();
@@ -443,9 +451,6 @@ namespace XiboClient
                 options.backgroundImage = "";
             }
 
-            // Get it to paint the background now
-            Application.DoEvents();
-
             // Get the regions
             XmlNodeList listRegions = layoutXml.SelectNodes("/layout/region");
             XmlNodeList listMedia = layoutXml.SelectNodes("/layout/region/media");
@@ -503,7 +508,7 @@ namespace XiboClient
                 options.backgroundLeft = options.left * -1;
                 options.backgroundTop = options.top * -1;
 
-                //Account for scaling
+                // Account for scaling
                 options.left = options.left + (int)leftOverX;
                 options.top = options.top + (int)leftOverY;
 
@@ -522,8 +527,6 @@ namespace XiboClient
                 Controls.Add(temp);
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
-
-                Application.DoEvents();
             }
 
             // Null stuff
@@ -629,8 +632,6 @@ namespace XiboClient
                 System.Diagnostics.Debug.WriteLine("Region Expired - Next Region.", "MainForm - DurationElapsedEvent");
                 _schedule.NextLayout();
             }
-
-            Application.DoEvents();
         }
 
         /// <summary>
@@ -638,9 +639,7 @@ namespace XiboClient
         /// </summary>
         private void DestroyLayout() 
         {
-            System.Diagnostics.Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
-
-            Application.DoEvents();
+            Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
 
             if (_regions == null) return;
 

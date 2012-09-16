@@ -271,7 +271,7 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.3.3")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.4.0rc1")]
         public string ClientVersion {
             get {
                 return ((string)(this["ClientVersion"]));
@@ -494,6 +494,30 @@ namespace XiboClient.Properties {
             }
             set {
                 this["ShowInTaskbar"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LogToDiskLocation {
+            get {
+                return ((string)(this["LogToDiskLocation"]));
+            }
+            set {
+                this["LogToDiskLocation"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("WindowsMediaPlayer")]
+        public string VideoRenderingEngine {
+            get {
+                return ((string)(this["VideoRenderingEngine"]));
+            }
+            set {
+                this["VideoRenderingEngine"] = value;
             }
         }
     }

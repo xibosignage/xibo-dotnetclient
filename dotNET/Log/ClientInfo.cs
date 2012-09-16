@@ -216,7 +216,7 @@ namespace XiboClient.Log
         /// <param name="e"></param>
         private void saveLogToDisk_Click(object sender, EventArgs e)
         {
-            using (StreamWriter wrt = new StreamWriter(Path.GetDirectoryName(Application.ExecutablePath) + "\\XiboLog.log"))
+            using (StreamWriter wrt = new StreamWriter(Path.GetDirectoryName(Application.ExecutablePath) + "\\XiboLog.txt"))
             {
                 foreach (DataGridViewRow row in logDataGridView.Rows)
                 {

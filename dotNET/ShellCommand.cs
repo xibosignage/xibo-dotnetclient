@@ -45,7 +45,7 @@ namespace XiboClient
                 {
                     // Array of allowed commands
                     string[] allowedCommands = Settings.Default.ShellCommandAllowList.Split(',');
-                    
+
                     // Check we are allowed to execute the command
                     foreach (string allowedCommand in allowedCommands)
                     {
@@ -55,12 +55,18 @@ namespace XiboClient
                             break;
                         }
                     }
+
+                    Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands not in allow list: " + Settings.Default.ShellCommandAllowList), LogType.Error.ToString());
                 }
                 else
                 {
                     // All commands are allowed
                     ExecuteShellCommand();
                 }
+            }
+            else
+            {
+                Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands are disabled"), LogType.Error.ToString());
             }
 
             // All shell commands have a duration of 1
