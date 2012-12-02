@@ -26,6 +26,7 @@ using System.Diagnostics;
 using System.IO;
 
 /// 09/06/12 Dan Changed to raise an event when the video is finished
+/// 03/11/12 Dan Fix for non zero duration timers.
 
 namespace XiboClient
 {
@@ -35,6 +36,7 @@ namespace XiboClient
         private VideoPlayer _videoPlayer;
         private int _duration;
         private bool _expired = false;
+        private bool _detectEnd = false;
 
         /// <summary>
         /// Constructor
@@ -71,6 +73,7 @@ namespace XiboClient
 
                 // Set the duration to 1 second
                 Duration = 1;
+                _detectEnd = true;
             }
                 
             // Render media as normal (starts the timer, shows the form, etc)
@@ -119,7 +122,7 @@ namespace XiboClient
         /// <param name="e"></param>
         protected override void timer_Tick(object sender, EventArgs e)
         {
-            if (_expired)
+            if (!_detectEnd || _expired)
                 base.timer_Tick(sender, e);
         }
 

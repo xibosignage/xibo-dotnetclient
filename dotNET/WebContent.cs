@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2012 Daniel Garner and James Packer
+ * Copyright (C) 2006-2012 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -54,6 +54,7 @@ namespace XiboClient
             // Offset?
             double offsetTop = Convert.ToDouble(options.Dictionary.Get("offsetTop", "0"));
             double offsetLeft = Convert.ToDouble(options.Dictionary.Get("offsetLeft", "0"));
+            double scaling = Convert.ToDouble(options.Dictionary.Get("scaling", "100"));
 
             // Attach event
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
@@ -78,14 +79,30 @@ namespace XiboClient
                         Trace.WriteLine(new LogMessage("WebContent", "Unable to get a URI with exception: " + ex.Message), LogType.Audit.ToString());
                     }
 
-                    if (offsetLeft == 0 && offsetTop == 0)
+                    if (offsetLeft == 0 && offsetTop == 0 && scaling == 100)
                     {
                         webBrowser.Navigate(_filePath);
                     }
                     else
                     {
+                        double w = Convert.ToDouble(options.width);
+                        double h = Convert.ToDouble(options.height);
+                        string zoom = "";
+
+                        // Scale?
+                        if (scaling != 100)
+                        {
+                            // Convert from percentage
+                            scaling = scaling / 100;
+
+                            // Alter the width and height
+                            w = w * (1 / scaling);
+                            h = h * (1 / scaling);
+                            zoom = "zoom: " + scaling.ToString() + ";";
+                        }
+
                         // Load an IFRAME into the DocumentText
-                        string iframe = "<html><body style='margin:0; border:0;'><iframe style='margin-left:-" + offsetLeft.ToString() + "px; margin-top:-" + offsetTop.ToString() + "px;' scrolling=\"no\" width=\"" + (options.width + offsetLeft).ToString() + "px\" height=\"" + (options.height + offsetTop).ToString() + "px\" src=\"" + _filePath + "\"></body></html>";
+                        string iframe = "<html><body style='margin:0; border:0;'><iframe style='border:0;margin-left:-" + offsetLeft.ToString() + "px; margin-top:-" + offsetTop.ToString() + "px;" + zoom + "' scrolling=\"no\" width=\"" + (w + offsetLeft).ToString() + "px\" height=\"" + (h + offsetTop).ToString() + "px\" src=\"" + _filePath + "\"></body></html>";
                         webBrowser.DocumentText = iframe;
                     }
                 }
