@@ -43,6 +43,7 @@ namespace XiboClient
         private double _scaleFactor;
         private int _scrollSpeed;
         private bool _fitText;
+        private RegionOptions _options;
 
         private TemporaryHtml _tempHtml;
 
@@ -55,6 +56,7 @@ namespace XiboClient
         {
             // Collect some options from the Region Options passed in
             // and store them in member variables.
+            _options = options;
             _filePath = options.uri;
             _direction = options.direction;
             _backgroundImage = options.backgroundImage;
@@ -66,9 +68,8 @@ namespace XiboClient
             _headJavaScript = options.javaScript;
             _fitText = (options.Dictionary.Get("fitText", "0") == "0" ? false : true);
             
-            // Adjust the scale factor
-            // Scale factor is always slightly over stated, we need to reduce it.
-            _scaleFactor = options.scaleFactor * 0.85;
+            // Scale Factor
+            _scaleFactor = options.scaleFactor;
 
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
@@ -101,7 +102,7 @@ namespace XiboClient
 
             // Generate the body content
             bodyContent += "<div id=\"contentPane\" style=\"overflow: none; width:" + _width + "px; height:" + _height + "px;\">";
-            bodyContent += "   <div id=\"text\">";
+            bodyContent += "   <div id=\"" + _options.type + "\">";
             bodyContent += "       " + _documentText;
             bodyContent += "   </div>";
             bodyContent += "</div>";
@@ -132,6 +133,8 @@ namespace XiboClient
             headContent += "           numItems: 0,";
             headContent += "           width: " + _width + ",";
             headContent += "           height: " + _height + ",";
+            headContent += "           originalWidth: " + _options.originalWidth + ",";
+            headContent += "           originalHeight: " + _options.originalHeight + ",";
             headContent += "           scrollSpeed: " + _scrollSpeed + ",";
             headContent += "           fitText: " + ((!_fitText) ? "false" : "true") + ",";
             headContent += "           scaleText: " + ((_fitText) ? "false" : "true") + ",";

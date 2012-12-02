@@ -25,9 +25,10 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Net;
 using System.Diagnostics;
-using System.ServiceModel.Syndication;
 using System.Globalization;
 using System.Linq;
+using FeedDotNet;
+using FeedDotNet.Common;
 
 namespace XiboClient
 {
@@ -48,6 +49,8 @@ namespace XiboClient
         private double _scaleFactor;
         private int _duration;
         private bool _fitText;
+
+        private RegionOptions _options;
 
         private int _numItems;
         private string _takeItemsFrom;
@@ -76,6 +79,10 @@ namespace XiboClient
         public Rss(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
+            // Store the options
+            _options = options;
+
+            // Get the URI
             if (String.IsNullOrEmpty(options.uri))
             {
                 throw new ArgumentNullException("Uri", "The Uri for the RSS feed can not be empty");
@@ -106,9 +113,8 @@ namespace XiboClient
             _duration = options.duration;
             _fitText = (options.Dictionary.Get("fitText", "0") == "0" ? false : true);
 
-            // Adjust the scale factor
-            // Scale factor is always slightly over stated, we need to reduce it.
-            _scaleFactor = options.scaleFactor * 0.85;
+            // Scale factor
+            _scaleFactor = options.scaleFactor;
 
             // Update interval and scrolling speed
             _updateInterval = options.updateInterval;
@@ -210,10 +216,12 @@ namespace XiboClient
             headContent += "           type: 'ticker',";
             headContent += "           direction: '" + _direction + "',";
             headContent += "           duration: " + _duration + ",";
-            headContent += "           durationIsPerItem: false,";
+            headContent += "           durationIsPerItem: " + ((_durationIsPerItem == 0) ? "true" : "false") + ",";
             headContent += "           numItems: 0,";
             headContent += "           width: " + _width + ",";
             headContent += "           height: " + _height + ",";
+            headContent += "           originalWidth: " + _options.originalWidth + ",";
+            headContent += "           originalHeight: " + _options.originalHeight + ",";
             headContent += "           scrollSpeed: " + _scrollSpeed + ",";
             headContent += "           fitText: " + ((!_fitText) ? "false" : "true") + ",";
             headContent += "           scaleText: " + ((_fitText) ? "false" : "true") + ",";
@@ -258,26 +266,28 @@ namespace XiboClient
             {
                 string localFeedUrl = Properties.Settings.Default.LibraryPath + @"\" + _mediaid + ".xml";
 
-                using (XmlReader reader = XmlReader.Create(localFeedUrl))
+                using (StreamReader sr = new StreamReader(localFeedUrl))
                 {
-                    SyndicationFeed feed = SyndicationFeed.Load(reader);
+                    Feed feed = FeedReader.Read(sr.BaseStream, _filePath, new FeedReaderSettings());
 
-                    int countItems = 0;
-                    int currentItem = 0;
-
-                    foreach (SyndicationItem item in feed.Items)
-                        countItems++;
+                    if (FeedReader.HasErrors || feed == null)
+                    {
+                        throw new Exception("Error reading feed. " + FeedReader.GetErrors()[0]);
+                    }
 
                     // What if the _numItems we want is 0? Take them all.
                     if (_numItems == 0)
-                        _numItems = countItems;
+                        _numItems = feed.Items.Count;
 
                     // Make sure we dont have a count higher than the actual number of items returned
-                    if (_numItems > countItems)
-                        _numItems = countItems;
+                    if (_numItems > feed.Items.Count)
+                        _numItems = feed.Items.Count;
+
+                    // Read items
+                    int currentItem = 0;
 
                     // Go through each item and construct the HTML for the feed
-                    foreach(SyndicationItem item in feed.Items)
+                    foreach (FeedItem item in feed.Items)
                     {
                         currentItem++;
 
@@ -296,20 +306,24 @@ namespace XiboClient
                         // Load the template into a temporary variable
                         string temp = _documentTemplate;
 
-                        temp = temp.Replace("[Title]", item.Title.Text.ToString());
-                        
-                        string description;
+                        // Get some generic items
+                        temp = temp.Replace("[Title]", item.Title);
+                        temp = temp.Replace("[Summary]", item.Summary);
 
-                        if (item.Summary == null)
-                            description = item.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/")[0].ToString();
-                        else
-                            description = item.Summary.Text;
+                        string date = "";
+                        if (item.Published.HasValue)
+                            date = item.Published.Value.ToString("F");
+                        else if (item.Updated.HasValue)
+                            date = item.Updated.Value.ToString("F");
 
-                        temp = temp.Replace("[Description]", description);
-                        temp = temp.Replace("[Date]", item.PublishDate.ToString("F"));
+                        temp = temp.Replace("[Date]", (item.Published.HasValue) ? item.Published.Value.ToString("F") : "");
+                        temp = temp.Replace("[Description]", item.ContentOrSummary);
 
-                        if (item.Links.Count > 0)
-                            temp = temp.Replace("[Link]", item.Links[0].Uri.ToString());                       
+                        string links = "";
+                        foreach (FeedUri uri in item.WebUris)
+                            links += " " + uri.Uri;
+
+                        temp = temp.Replace("[Link]", links);
 
                         // Assemble the RSS items based on the direction we are displaying
                         if (_direction == "left" || _direction == "right")
