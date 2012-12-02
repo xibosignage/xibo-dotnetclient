@@ -104,6 +104,7 @@ namespace XiboClient
             maxConcurrentDownloads.Value = Settings.Default.MaxConcurrentDownloads;
             logToDiskLocation.Text = Settings.Default.LogToDiskLocation;
             showInTaskbar.Checked = Settings.Default.ShowInTaskbar;
+            cursorStartPosition.Text = Settings.Default.CursorStartPosition;
 
             Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
@@ -200,6 +201,7 @@ namespace XiboClient
                 Settings.Default.LogLevel = logLevel.Text;
                 Settings.Default.LogToDiskLocation = logToDiskLocation.Text;
                 Settings.Default.ShowInTaskbar = showInTaskbar.Checked;
+                Settings.Default.CursorStartPosition = cursorStartPosition.Text;
 
                 // Commit these changes back to the user settings
                 Settings.Default.Save();

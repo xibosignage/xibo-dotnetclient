@@ -159,12 +159,15 @@ namespace XiboClient
                 Directory.CreateDirectory(Properties.Settings.Default.LibraryPath + @"\backgrounds");
             }
 
-            // Hide the cursor
-            Cursor.Position = new Point(_clientSize.Width, _clientSize.Height);
-            
+            // Is the mouse enabled?
             if (!Properties.Settings.Default.EnableMouse)
+                // Hide the cursor
                 Cursor.Hide();
 
+            // Move the cursor to the starting place
+            SetCursorStartPosition();
+
+            // Show the splash screen
             ShowSplashScreen();
 
             // Change the default Proxy class
@@ -504,6 +507,10 @@ namespace XiboClient
                 options.top = (int)(double.Parse(nodeAttibutes["top"].Value) * _scaleFactor);
                 options.scaleFactor = _scaleFactor;
 
+                // Store the original width and original height for scaling
+                options.originalWidth = Convert.ToInt32(nodeAttibutes["width"].Value);
+                options.originalHeight = Convert.ToInt32(nodeAttibutes["height"].Value);
+
                 // Set the backgrounds (used for Web content offsets)
                 options.backgroundLeft = options.left * -1;
                 options.backgroundTop = options.top * -1;
@@ -663,6 +670,36 @@ namespace XiboClient
 
             _regions.Clear();
             _regions = null;
+        }
+
+        /// <summary>
+        /// Set the Cursor start position
+        /// </summary>
+        private void SetCursorStartPosition()
+        {
+            Point position;
+
+            switch (Settings.Default.CursorStartPosition)
+            {
+                case "Top Left":
+                    position = new Point(0, 0);
+                    break;
+
+                case "Top Right":
+                    position = new Point(_clientSize.Width, 0);
+                    break;
+
+                case "Bottom Left":
+                    position = new Point(0, _clientSize.Height);
+                    break;
+
+                case "Bottom Right":
+                default:
+                    position = new Point(_clientSize.Width, _clientSize.Height);
+                    break;
+            }
+
+            Cursor.Position = position;
         }
 
         /// <summary>

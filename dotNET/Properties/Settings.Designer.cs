@@ -271,7 +271,7 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.4.0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.4.1")]
         public string ClientVersion {
             get {
                 return ((string)(this["ClientVersion"]));
@@ -518,6 +518,18 @@ namespace XiboClient.Properties {
             }
             set {
                 this["VideoRenderingEngine"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Bottom Right")]
+        public string CursorStartPosition {
+            get {
+                return ((string)(this["CursorStartPosition"]));
+            }
+            set {
+                this["CursorStartPosition"] = value;
             }
         }
     }

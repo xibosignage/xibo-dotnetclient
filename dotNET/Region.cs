@@ -649,6 +649,8 @@ namespace XiboClient
         public int height;
         public int top;
         public int left;
+        public int originalWidth;
+        public int originalHeight;
 
         public int backgroundLeft;
         public int backgroundTop;
