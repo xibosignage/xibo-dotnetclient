@@ -45,7 +45,8 @@ namespace XiboClient
 
         // Thread Logic
         public static object _locker = new object();
-        public bool forceStop = false;
+        private bool _forceStop = false;
+        private ManualResetEvent _manualReset = new ManualResetEvent(false);
 
         // Event for new schedule
         public delegate void OnNewScheduleAvailableDelegate();
@@ -123,18 +124,30 @@ namespace XiboClient
         #region "Methods"
 
         /// <summary>
+        /// Stops the thread
+        /// </summary>
+        public void Stop()
+        {
+            _forceStop = true;
+            _manualReset.Set();
+        }
+
+        /// <summary>
         /// Runs the Schedule Manager
         /// </summary>
         public void Run()
         {
             Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Thread Started"), LogType.Info.ToString());
 
-            while (!forceStop)
+            while (!_forceStop)
             {
                 lock (_locker)
                 {
                     try
                     {
+                        // If we are restarting, reset
+                        _manualReset.Reset();
+
                         Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Schedule Timer Ticked"), LogType.Audit.ToString());
 
                         // Work out if there is a new schedule available, if so - raise the event
@@ -155,8 +168,10 @@ namespace XiboClient
                 }
 
                 // Sleep this thread for 10 seconds
-                Thread.Sleep(10 * 1000);
+                _manualReset.WaitOne(10 * 1000);
             }
+
+            Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Thread Stopped"), LogType.Info.ToString());
         }
 
         /// <summary>

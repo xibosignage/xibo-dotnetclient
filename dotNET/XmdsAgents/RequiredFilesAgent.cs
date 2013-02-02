@@ -35,7 +35,8 @@ namespace XiboClient.XmdsAgents
     class RequiredFilesAgent
     {
         private static object _locker = new object();
-        public bool forceStop = false;
+        private bool _forceStop = false;
+        private ManualResetEvent _manualReset = new ManualResetEvent(false);
 
         /// <summary>
         /// OnComplete delegate
@@ -93,18 +94,30 @@ namespace XiboClient.XmdsAgents
         }
 
         /// <summary>
+        /// Stops the thread
+        /// </summary>
+        public void Stop()
+        {
+            _forceStop = true;
+            _manualReset.Set();
+        }
+
+        /// <summary>
         /// Run Thread
         /// </summary>
         public void Run()
         {
             Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Thread Started"), LogType.Info.ToString());
 
-            while (!forceStop)
+            while (!_forceStop)
             {
                 lock (_locker)
                 {
                     try
                     {
+                        // If we are restarting, reset
+                        _manualReset.Reset();
+
                         int filesToDownload = _requiredFiles.FilesDownloading;
 
                         // If we are currently downloading something, we have to wait
@@ -202,8 +215,10 @@ namespace XiboClient.XmdsAgents
                 }
 
                 // Sleep this thread until the next collection interval
-                Thread.Sleep((int)Settings.Default.collectInterval * 1000);
+                _manualReset.WaitOne((int)Settings.Default.collectInterval * 1000);
             }
+
+            Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Thread Stopped"), LogType.Info.ToString());
         }
 
         /// <summary>

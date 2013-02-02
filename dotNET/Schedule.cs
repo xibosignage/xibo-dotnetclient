@@ -260,22 +260,16 @@ namespace XiboClient
         public void Stop()
         {
             // Stop the schedule agent
-            _scheduleAgent.forceStop = true;
+            _scheduleAgent.Stop();
 
             // Stop the requiredfiles agent
-            _requiredFilesAgent.forceStop = true;
+            _requiredFilesAgent.Stop();
 
             // Stop the Schedule Manager Thread
-            _scheduleManager.forceStop = true;
+            _scheduleManager.Stop();
 
             // Stop the LibraryAgent Thread
-            _libraryAgent.forceStop = true;
-
-            // Abort the threads
-            _scheduleAgentThread.Abort();
-            _requiredFilesAgentThread.Abort();
-            _scheduleManagerThread.Abort();
-            _libraryAgentThread.Abort();
+            _libraryAgent.Stop();
         }
     }
 }
