@@ -76,15 +76,15 @@
   <ItemGroup>
     <Reference Include="FeedDotNet, Version=1.2.1.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\FeedDotNet-master\FeedDotNet\bin\x86\Release\FeedDotNet.dll</HintPath>
+      <HintPath>..\feeddotnet\FeedDotNet.dll</HintPath>
     </Reference>
     <Reference Include="FeedDotNet.Common, Version=1.2.1.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\FeedDotNet-master\FeedDotNet\bin\x86\Release\FeedDotNet.Common.dll</HintPath>
+      <HintPath>..\feeddotnet\FeedDotNet.Common.dll</HintPath>
     </Reference>
     <Reference Include="FeedDotNet.Modules, Version=1.2.1.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\FeedDotNet-master\FeedDotNet\bin\x86\Release\FeedDotNet.Modules.dll</HintPath>
+      <HintPath>..\feeddotnet\FeedDotNet.Modules.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL" />

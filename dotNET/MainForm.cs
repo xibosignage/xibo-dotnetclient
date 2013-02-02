@@ -425,21 +425,7 @@ namespace XiboClient
 
                     // Create a correctly sized background image in the temp folder
                     if (!File.Exists(bgFilePath))
-                    {
-                        Image img = Image.FromFile(Properties.Settings.Default.LibraryPath + @"\" + layoutAttributes["background"].Value);
-
-                        Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight);
-                        EncoderParameters encoderParameters = new EncoderParameters(1);
-                        EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
-                        encoderParameters.Param[0] = qualityParam;
-
-                        ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
-
-                        bmp.Save(bgFilePath, jpegCodec, encoderParameters);
-
-                        img.Dispose();
-                        bmp.Dispose();
-                    }
+                        GenerateBackgroundImage(layoutAttributes, backgroundWidth, backgroundHeight, bgFilePath);
 
                     BackgroundImage = new Bitmap(bgFilePath);
                     options.backgroundImage = bgFilePath;
@@ -539,6 +525,30 @@ namespace XiboClient
             // Null stuff
             listRegions = null;
             listMedia = null;
+        }
+
+        /// <summary>
+        /// Generates a background image and saves it in the library for use later
+        /// </summary>
+        /// <param name="layoutAttributes"></param>
+        /// <param name="backgroundWidth"></param>
+        /// <param name="backgroundHeight"></param>
+        /// <param name="bgFilePath"></param>
+        private static void GenerateBackgroundImage(XmlAttributeCollection layoutAttributes, int backgroundWidth, int backgroundHeight, string bgFilePath)
+        {
+            using (Image img = Image.FromFile(Properties.Settings.Default.LibraryPath + @"\" + layoutAttributes["background"].Value))
+            {
+                using (Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight))
+                {
+                    EncoderParameters encoderParameters = new EncoderParameters(1);
+                    EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
+                    encoderParameters.Param[0] = qualityParam;
+
+                    ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
+
+                    bmp.Save(bgFilePath, jpegCodec, encoderParameters);
+                }
+            }
         }
 
         /// <summary>

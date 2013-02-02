@@ -188,7 +188,6 @@ namespace XiboClient
         {
             lock (_locker)
             {
-                // TODO: what makes a path valid?
                 // Currently a path is valid if it is in the cache
                 if (String.IsNullOrEmpty(path))
                     return false;
@@ -263,6 +262,7 @@ namespace XiboClient
                         case "ppt":
 
                             // Get the path and see if its valid
+                            // TODO: Using media.InnerText is a fluke and will break if we add more options to media/video etc
                             if (!IsValidPath(media.InnerText))
                             {
                                 Debug.WriteLine("Invalid Media: " + media.Attributes["id"].Value.ToString());
@@ -274,6 +274,27 @@ namespace XiboClient
                         default:
                             continue;
                     }
+                }
+
+                // Also check to see if there is a background image that needs to be downloaded
+                try
+                {
+                    XmlNode layoutNode = layoutXml.SelectSingleNode("/layout");
+                    XmlAttributeCollection layoutAttributes = layoutNode.Attributes;
+
+                    if (layoutAttributes["background"] != null && !string.IsNullOrEmpty(layoutAttributes["background"].Value))
+                    {
+                        if (!IsValidPath(layoutAttributes["background"].Value))
+                        {
+                            Debug.WriteLine("Invalid background: " + layoutAttributes["background"].Value);
+                            return false;
+                        }
+                    }
+                }
+                catch
+                {
+                    // We dont want a missing background attribute to stop this process
+                    return true;
                 }
 
                 Debug.WriteLine("Layout " + layoutFile + " is valid");
