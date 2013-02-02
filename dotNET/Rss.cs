@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2012 Daniel Garner and James Packer
+ * Copyright (C) 2006-2013 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -175,7 +175,7 @@ namespace XiboClient
             // We want to check the file exists first
             _rssFilePath = Properties.Settings.Default.LibraryPath + @"\" + _mediaid + ".xml";
 
-            if (!System.IO.File.Exists(_rssFilePath) || _updateInterval == 0)
+            if (!File.Exists(_rssFilePath) || _updateInterval == 0)
             {
                 // File doesnt exist - or we always refresh therefore go get the RSS.
                 RefreshLocalRss();
@@ -289,18 +289,16 @@ namespace XiboClient
                     // Go through each item and construct the HTML for the feed
                     foreach (FeedItem item in feed.Items)
                     {
-                        currentItem++;
-
                         if (_takeItemsFrom == "end")
                         {
-                            if (currentItem < _numItems)
+                            if (currentItem < (feed.Items.Count - _numItems))
                                 continue;
                         }
                         else
                         {
                             // Take items from the start of the feed
-                            if (currentItem > _numItems)
-                                continue;
+                            if (currentItem >= _numItems)
+                                break;
                         }
 
                         // Load the template into a temporary variable
@@ -335,6 +333,15 @@ namespace XiboClient
                         {
                             _documentText += string.Format("<div class='XiboRssItem'>{0}</div>", temp);
                         }
+
+                        // Move onto the next item
+                        currentItem++;
+                    }
+
+                    // TODO: What happens if we have 0 items?
+                    if (currentItem == 0)
+                    {
+
                     }
 
                     // Add the Copyright Notice
