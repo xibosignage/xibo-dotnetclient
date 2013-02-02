@@ -32,7 +32,7 @@ namespace XiboClient
         public ShellCommand(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
-            _command = options.Dictionary.Get("windowsCommand");
+            _command = Uri.UnescapeDataString(options.Dictionary.Get("windowsCommand")).Replace('+', ' ');
         }
 
         public override void RenderMedia()
