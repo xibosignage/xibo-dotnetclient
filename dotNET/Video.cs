@@ -45,7 +45,7 @@ namespace XiboClient
         public Video(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
-            _filePath = Uri.UnescapeDataString(options.uri);
+            _filePath = Uri.UnescapeDataString(options.uri).Replace('+',' ');
             _duration = options.duration;
 
             _videoPlayer = new VideoPlayer();

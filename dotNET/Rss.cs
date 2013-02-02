@@ -91,7 +91,7 @@ namespace XiboClient
             // Try to make a URI out of the file path
             try
             {
-                _filePath = Uri.UnescapeDataString(options.uri);
+                _filePath = Uri.UnescapeDataString(options.uri).Replace('+',' ');
             }
             catch (Exception ex)
             {
