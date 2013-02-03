@@ -284,7 +284,10 @@ namespace XiboClient
                         if (_takeItemsFrom == "end")
                         {
                             if (currentItem < (feed.Items.Count - _numItems))
+                            {
+                                currentItem++;
                                 continue;
+                            }
                         }
                         else
                         {
