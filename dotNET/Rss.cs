@@ -68,7 +68,6 @@ namespace XiboClient
 
         private bool _rssReady;
 
-        private String _headText;
         private String _bodyText;
         private TemporaryHtml _tempHtml;
 
@@ -95,7 +94,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message, "Rss");
+                Debug.WriteLine(ex.Message, "Rss");
 
                 throw new ArgumentNullException("Uri", "The URI is invalid.");
             }
@@ -183,7 +182,7 @@ namespace XiboClient
             else
             {
                 // It exists - therefore we want to get the last time it was updated
-                DateTime lastWriteDate = System.IO.File.GetLastWriteTime(_rssFilePath);
+                DateTime lastWriteDate = File.GetLastWriteTime(_rssFilePath);
 
                 if (DateTime.Now.CompareTo(lastWriteDate.AddHours(_updateInterval * 1.0 / 60.0)) > 0)
                 {
@@ -239,21 +238,14 @@ namespace XiboClient
         /// </summary>
         private void RefreshLocalRss()
         {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("Created at WebClient", "RSS - Refresh local RSS");
+            Debug.WriteLine("Created at WebClient", "RSS - Refresh local RSS");
 
-                _wc = new System.Net.WebClient();
-                _wc.UseDefaultCredentials = true;
-                
-                _wc.OpenReadCompleted += new System.Net.OpenReadCompletedEventHandler(wc_OpenReadCompleted);
-                
-                _wc.OpenReadAsync(new Uri(_filePath));
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, _scheduleId, _layoutId, _mediaid));
-            }
+            _wc = new System.Net.WebClient();
+            _wc.UseDefaultCredentials = true;
+
+            _wc.OpenReadCompleted += new System.Net.OpenReadCompletedEventHandler(wc_OpenReadCompleted);
+
+            _wc.OpenReadAsync(new Uri(_filePath));
         }
 
         /// <summary>
@@ -338,11 +330,9 @@ namespace XiboClient
                         currentItem++;
                     }
 
-                    // TODO: What happens if we have 0 items?
+                    // What happens if we have 0 items?
                     if (currentItem == 0)
-                    {
-
-                    }
+                        throw new Exception("No items in feed");
 
                     // Add the Copyright Notice
                     _documentText += CopyrightNotice;
@@ -368,6 +358,10 @@ namespace XiboClient
 
                 _bodyText = "<h1>Unable to load feed</h1>";
                 _tempHtml.BodyContent = _bodyText;
+
+                // Make sure the duration is 10 (i.e. we don't sit on that page for ages)
+                _duration = 10;
+                Duration = 10;
 
                 // Delete the temporary file we have saved - it is clearly not working.
                 File.Delete(Properties.Settings.Default.LibraryPath + @"\" + _mediaid + ".xml");
@@ -405,6 +399,12 @@ namespace XiboClient
             // Show the control
             Show();
             Controls.Add(_webBrowser);
+
+            // No matter what, start the timer now (passing our calculated duration instead of the provided one)
+            Duration = _duration;
+
+            // Start the timer
+            base.StartTimer();
         }
 
         /// <summary>
@@ -414,16 +414,15 @@ namespace XiboClient
         /// <param name="e"></param>
         private void wc_OpenReadCompleted(object sender, System.Net.OpenReadCompletedEventArgs e)
         {
-            using (WebClient wc = (System.Net.WebClient)sender)
+            try
             {
-                if (e.Error != null)
+                using (WebClient wc = (System.Net.WebClient)sender)
                 {
-                    Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", e.Error, _scheduleId, _layoutId, _mediaid));
-                    return;
-                }
+                    // Throw a coms error
+                    if (e.Error != null)
+                        throw e.Error;
 
-                try
-                {
+                    // Load the feed into a stream and save it to disk
                     using (StreamReader sr = new StreamReader(e.Result, Encoding.UTF8))
                     {
                         using (StreamWriter sw = new StreamWriter(File.Open(_rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8))
@@ -436,26 +435,20 @@ namespace XiboClient
                         _rssReady = true;
                     }
                 }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, _scheduleId, _layoutId, _mediaid));
-                }
-            }
 
-            try
-            {
-                if (_rssReady)
-                {
-                    LoadRssIntoTempFile();
+                // Load RSS
+                LoadRssIntoTempFile();
 
-                    // Navigate to temp file
-                    _webBrowser.Navigate(_tempHtml.Path);
-                }
+                // Navigate to temp file
+                _webBrowser.Navigate(_tempHtml.Path);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
-                // The control might have expired by the time this returns
+                Trace.WriteLine(string.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, _scheduleId, _layoutId, _mediaid));
+
+                // Expire this media in 10 seconds
+                Duration = 10;
+                base.StartTimer();
             }
         }
 
@@ -466,12 +459,7 @@ namespace XiboClient
         /// </summary>
         public override void RenderMedia()
         {
-            // Override the duration if necessary
-            if (_durationIsPerItem == 1)
-                Duration = Duration * _numItems;
-
-            // Start the timer
-            base.StartTimer();
+            // Do nothing in here (we might not have an accurate duration by the time this is called)
         }
 
         protected override void Dispose(bool disposing)
