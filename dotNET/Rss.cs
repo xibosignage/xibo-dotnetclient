@@ -29,6 +29,7 @@ using System.Globalization;
 using System.Linq;
 using FeedDotNet;
 using FeedDotNet.Common;
+using System.Net.Mime;
 
 namespace XiboClient
 {
@@ -244,7 +245,6 @@ namespace XiboClient
             _wc.UseDefaultCredentials = true;
 
             _wc.OpenReadCompleted += new System.Net.OpenReadCompletedEventHandler(wc_OpenReadCompleted);
-
             _wc.OpenReadAsync(new Uri(_filePath));
         }
 
@@ -425,10 +425,23 @@ namespace XiboClient
                     if (e.Error != null)
                         throw e.Error;
 
-                    // Load the feed into a stream and save it to disk
-                    using (StreamReader sr = new StreamReader(e.Result, Encoding.UTF8))
+                    // Get the encoding for the feed.
+                    Encoding encoding;
+                    try
                     {
-                        using (StreamWriter sw = new StreamWriter(File.Open(_rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8))
+                        ContentType contentType = new ContentType(wc.ResponseHeaders[HttpResponseHeader.ContentType]);
+                        encoding = Encoding.GetEncoding(contentType.CharSet);
+                    }
+                    catch
+                    {
+                        // Default to UTF-8
+                        encoding = Encoding.UTF8;
+                    }
+
+                    // Load the feed into a stream and save it to disk
+                    using (StreamReader sr = new StreamReader(e.Result, encoding))
+                    {
+                        using (StreamWriter sw = new StreamWriter(File.Open(_rssFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), encoding))
                         {
                             Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
 
