@@ -433,7 +433,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Unable to set background: " + ex.Message);
+                Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "Unable to set background: " + ex.Message), LogType.Error.ToString());
 
                 // Assume there is no background image
                 this.BackgroundImage = null;
