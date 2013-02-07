@@ -241,11 +241,26 @@ namespace XiboClient
             // If the layout that got changed is the current layout, move on
             try
             {
-                if (_layoutSchedule[_currentLayout].layoutFile == Properties.Settings.Default.LibraryPath + @"\" + layoutPath)
+                if (_layoutSchedule[_currentLayout].layoutFile == Settings.Default.LibraryPath + @"\" + layoutPath)
                 {
-                    _forceChange = true;
+                    // What happens if the action of downloading actually invalidates this layout?
+                    if (!_cacheManager.IsValidLayout(layoutPath))
+                    {
+                        Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "The current layout is now invalid, refreshing the current schedule."), LogType.Audit.ToString());
 
-                    NextLayout();
+                        // We should not force a change and we should tell the schedule manager to run now
+                        _scheduleManager.RunNow();
+                    }
+                    else
+                    {
+                        Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "Forcing the current layout to change: " + layoutPath), LogType.Audit.ToString());
+
+                        // Force a change
+                        _forceChange = true;
+
+                        // Run the next layout
+                        NextLayout();
+                    }
                 }
             }
             catch (Exception ex)

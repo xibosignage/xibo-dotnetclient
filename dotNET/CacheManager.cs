@@ -323,12 +323,18 @@ namespace XiboClient
                 {
                     string path = file.InnerText;
 
-                    // Does the file exist?
-                    if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
-                        continue;
-
-                    // Add this file to the cache manager
-                    Add(path, GetMD5(path));
+                    // Make sure every required file is correctly logged in the cache manager
+                    // Leave the files that are not required in there to be analysed later
+                    if (File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                    {
+                        // Add this file to the cache manager
+                        Add(path, GetMD5(path));
+                    }
+                    else
+                    {
+                        // Remove this file from the cachemanager
+                        Remove(path);
+                    }
                 }
             }
         }

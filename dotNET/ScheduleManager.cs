@@ -133,6 +133,14 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Runs the schedule manager now
+        /// </summary>
+        public void RunNow()
+        {
+            _manualReset.Set();
+        }
+
+        /// <summary>
         /// Runs the Schedule Manager
         /// </summary>
         public void Run()
