@@ -274,7 +274,7 @@ namespace XiboClient
                         case "localvideo":
 
                             // Check that the path they have specified is ok
-                            if (!File.Exists(media.InnerText))
+                            if (!File.Exists(Uri.UnescapeDataString(media.InnerText).Replace('+', ' ')))
                             {
                                 // Local video path does not exist
                                 Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", media.InnerText + " does not exist"), LogType.Error.ToString());
