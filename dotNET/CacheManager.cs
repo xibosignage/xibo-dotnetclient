@@ -271,6 +271,18 @@ namespace XiboClient
 
                             break;
 
+                        case "localvideo":
+
+                            // Check that the path they have specified is ok
+                            if (!File.Exists(media.InnerText))
+                            {
+                                // Local video path does not exist
+                                Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", media.InnerText + " does not exist"), LogType.Error.ToString());
+                                return false;
+                            }
+
+                            break;
+
                         default:
                             continue;
                     }
