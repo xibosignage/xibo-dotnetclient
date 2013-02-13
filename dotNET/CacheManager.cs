@@ -251,6 +251,9 @@ namespace XiboClient
 
                 XmlNodeList mediaNodes = layoutXml.SelectNodes("//media");
 
+                // Store some information about the validity of local video to decide if this layout should be valid or not.
+                int countInvalidLocalVideo = 0;
+
                 foreach (XmlNode media in mediaNodes)
                 {
                     // Is this a stored media type?
@@ -273,12 +276,13 @@ namespace XiboClient
 
                         case "localvideo":
 
+                            // TODO: Only do this if the local video is the only item on the layout.... //
                             // Check that the path they have specified is ok
                             if (!File.Exists(Uri.UnescapeDataString(media.InnerText).Replace('+', ' ')))
                             {
                                 // Local video path does not exist
                                 Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", media.InnerText + " does not exist"), LogType.Error.ToString());
-                                return false;
+                                countInvalidLocalVideo++;
                             }
 
                             break;
@@ -287,6 +291,10 @@ namespace XiboClient
                             continue;
                     }
                 }
+
+                // If the number of invalid local video elements is equal to the number of elements on the layout, the don't show
+                if (countInvalidLocalVideo == mediaNodes.Count)
+                    return false;
 
                 // Also check to see if there is a background image that needs to be downloaded
                 try
