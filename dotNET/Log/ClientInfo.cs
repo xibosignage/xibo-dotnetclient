@@ -231,6 +231,8 @@ namespace XiboClient.Log
                     }
                 }
             }
+
+            MessageBox.Show("Log saved as " + Path.GetDirectoryName(Application.ExecutablePath) + "\\XiboLog.txt", "Log Saved");
         }
     }
 }

@@ -198,6 +198,11 @@ namespace XiboClient
                         _cacheManager.Add(rf.Path, rf.Md5);
                     }
                 }
+                else
+                {
+                    // File does not exist, therefore remove it from the cache manager (on the off chance that it is in there for some reason)
+                    _cacheManager.Remove(rf.Path);
+                }
 
                 RequiredFileList.Add(rf);
             }

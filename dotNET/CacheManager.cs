@@ -188,7 +188,6 @@ namespace XiboClient
         {
             lock (_locker)
             {
-                // TODO: what makes a path valid?
                 // Currently a path is valid if it is in the cache
                 if (String.IsNullOrEmpty(path))
                     return false;
@@ -252,6 +251,9 @@ namespace XiboClient
 
                 XmlNodeList mediaNodes = layoutXml.SelectNodes("//media");
 
+                // Store some information about the validity of local video to decide if this layout should be valid or not.
+                int countInvalidLocalVideo = 0;
+
                 foreach (XmlNode media in mediaNodes)
                 {
                     // Is this a stored media type?
@@ -263,6 +265,7 @@ namespace XiboClient
                         case "ppt":
 
                             // Get the path and see if its valid
+                            // TODO: Using media.InnerText is a fluke and will break if we add more options to media/video etc
                             if (!IsValidPath(media.InnerText))
                             {
                                 Debug.WriteLine("Invalid Media: " + media.Attributes["id"].Value.ToString());
@@ -271,9 +274,47 @@ namespace XiboClient
 
                             break;
 
+                        case "localvideo":
+
+                            // TODO: Only do this if the local video is the only item on the layout.... //
+                            // Check that the path they have specified is ok
+                            if (!File.Exists(Uri.UnescapeDataString(media.InnerText).Replace('+', ' ')))
+                            {
+                                // Local video path does not exist
+                                Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", media.InnerText + " does not exist"), LogType.Error.ToString());
+                                countInvalidLocalVideo++;
+                            }
+
+                            break;
+
                         default:
                             continue;
                     }
+                }
+
+                // If the number of invalid local video elements is equal to the number of elements on the layout, the don't show
+                if (countInvalidLocalVideo == mediaNodes.Count)
+                    return false;
+
+                // Also check to see if there is a background image that needs to be downloaded
+                try
+                {
+                    XmlNode layoutNode = layoutXml.SelectSingleNode("/layout");
+                    XmlAttributeCollection layoutAttributes = layoutNode.Attributes;
+
+                    if (layoutAttributes["background"] != null && !string.IsNullOrEmpty(layoutAttributes["background"].Value))
+                    {
+                        if (!IsValidPath(layoutAttributes["background"].Value))
+                        {
+                            Debug.WriteLine("Invalid background: " + layoutAttributes["background"].Value);
+                            return false;
+                        }
+                    }
+                }
+                catch
+                {
+                    // We dont want a missing background attribute to stop this process
+                    return true;
                 }
 
                 Debug.WriteLine("Layout " + layoutFile + " is valid");
@@ -302,12 +343,18 @@ namespace XiboClient
                 {
                     string path = file.InnerText;
 
-                    // Does the file exist?
-                    if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
-                        continue;
-
-                    // Add this file to the cache manager
-                    Add(path, GetMD5(path));
+                    // Make sure every required file is correctly logged in the cache manager
+                    // Leave the files that are not required in there to be analysed later
+                    if (File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                    {
+                        // Add this file to the cache manager
+                        Add(path, GetMD5(path));
+                    }
+                    else
+                    {
+                        // Remove this file from the cachemanager
+                        Remove(path);
+                    }
                 }
             }
         }

@@ -33,7 +33,10 @@ namespace XiboClient.XmdsAgents
     class ScheduleAgent
     {
         public static object _locker = new object();
-        public bool forceStop = false;
+
+        // Members to stop the thread
+        private bool _forceStop = false;
+        private ManualResetEvent _manualReset = new ManualResetEvent(false);
 
         /// <summary>
         /// Current Schedule Manager for this Xibo Client
@@ -84,18 +87,30 @@ namespace XiboClient.XmdsAgents
         private ClientInfo _clientInfoForm;
 
         /// <summary>
+        /// Stops the thread
+        /// </summary>
+        public void Stop()
+        {
+            _forceStop = true;
+            _manualReset.Set();
+        }
+
+        /// <summary>
         /// Runs the agent
         /// </summary>
         public void Run()
         {
             Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Started"), LogType.Info.ToString());
 
-            while (!forceStop)
+            while (!_forceStop)
             {
                 lock (_locker)
                 {
                     try
                     {
+                        // If we are restarting, reset
+                        _manualReset.Reset();
+
                         Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Woken and Lock Obtained"), LogType.Info.ToString());
 
                         _clientInfoForm.ScheduleStatus = "Running: Get Data from Xibo Server";
@@ -143,8 +158,10 @@ namespace XiboClient.XmdsAgents
                 }
 
                 // Sleep this thread until the next collection interval
-                Thread.Sleep((int)Settings.Default.collectInterval * 1000);
+                _manualReset.WaitOne((int)Settings.Default.collectInterval * 1000);
             }
+
+            Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Stopped"), LogType.Info.ToString());
         }
     }
 }

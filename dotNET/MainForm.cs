@@ -241,7 +241,7 @@ namespace XiboClient
         /// <param name="layoutPath"></param>
         void schedule_ScheduleChangeEvent(string layoutPath, int scheduleId, int layoutId)
         {
-            Debug.WriteLine(String.Format("Schedule Changing to {0}", layoutPath), "MainForm - ScheduleChangeEvent");
+            Trace.WriteLine(new LogMessage("MainForm - ScheduleChangeEvent", string.Format("Schedule Changing to {0}", layoutPath)), LogType.Audit.ToString()); 
 
             _scheduleId = scheduleId;
             _layoutId = layoutId;
@@ -425,21 +425,7 @@ namespace XiboClient
 
                     // Create a correctly sized background image in the temp folder
                     if (!File.Exists(bgFilePath))
-                    {
-                        Image img = Image.FromFile(Properties.Settings.Default.LibraryPath + @"\" + layoutAttributes["background"].Value);
-
-                        Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight);
-                        EncoderParameters encoderParameters = new EncoderParameters(1);
-                        EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
-                        encoderParameters.Param[0] = qualityParam;
-
-                        ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
-
-                        bmp.Save(bgFilePath, jpegCodec, encoderParameters);
-
-                        img.Dispose();
-                        bmp.Dispose();
-                    }
+                        GenerateBackgroundImage(layoutAttributes["background"].Value, backgroundWidth, backgroundHeight, bgFilePath);
 
                     BackgroundImage = new Bitmap(bgFilePath);
                     options.backgroundImage = bgFilePath;
@@ -447,8 +433,8 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Unable to set background: " + ex.Message);
-
+                Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "Unable to set background: " + ex.Message), LogType.Error.ToString());
+                
                 // Assume there is no background image
                 this.BackgroundImage = null;
                 options.backgroundImage = "";
@@ -539,6 +525,32 @@ namespace XiboClient
             // Null stuff
             listRegions = null;
             listMedia = null;
+        }
+
+        /// <summary>
+        /// Generates a background image and saves it in the library for use later
+        /// </summary>
+        /// <param name="layoutAttributes"></param>
+        /// <param name="backgroundWidth"></param>
+        /// <param name="backgroundHeight"></param>
+        /// <param name="bgFilePath"></param>
+        private static void GenerateBackgroundImage(string sourceFile, int backgroundWidth, int backgroundHeight, string bgFilePath)
+        {
+            Trace.WriteLine(new LogMessage("MainForm - GenerateBackgroundImage", "Trying to generate a background image. It will be saved: " + bgFilePath), LogType.Audit.ToString());
+
+            using (Image img = Image.FromFile(Settings.Default.LibraryPath + @"\" + sourceFile))
+            {
+                using (Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight))
+                {
+                    EncoderParameters encoderParameters = new EncoderParameters(1);
+                    EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
+                    encoderParameters.Param[0] = qualityParam;
+
+                    ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
+
+                    bmp.Save(bgFilePath, jpegCodec, encoderParameters);
+                }
+            }
         }
 
         /// <summary>

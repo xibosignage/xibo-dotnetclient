@@ -34,7 +34,8 @@ namespace XiboClient.XmdsAgents
     class LibraryAgent
     {
         private object _locker = new object();
-        public bool forceStop = false;
+        private bool _forceStop = false;
+        private ManualResetEvent _manualReset = new ManualResetEvent(false);
 
         /// <summary>
         /// The Current CacheManager for this Xibo Client
@@ -54,18 +55,30 @@ namespace XiboClient.XmdsAgents
         private RequiredFiles _requiredFiles;
 
         /// <summary>
+        /// Stops the thread
+        /// </summary>
+        public void Stop()
+        {
+            _forceStop = true;
+            _manualReset.Set();
+        }
+
+        /// <summary>
         /// Run Thread
         /// </summary>
         public void Run()
         {
             Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Thread Started"), LogType.Info.ToString());
 
-            while (!forceStop)
+            while (!_forceStop)
             {
                 lock (_locker)
                 {
                     try
                     {
+                        // If we are restarting, reset
+                        _manualReset.Reset();
+
                         // Only do something if enabled
                         if (!Settings.Default.EnableExpiredFileDeletion)
                             return;
@@ -103,8 +116,10 @@ namespace XiboClient.XmdsAgents
                 }
 
                 // Sleep this thread for 5 minutes
-                Thread.Sleep(900 * 1000);
+                _manualReset.WaitOne(900 * 1000);
             }
+
+            Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Thread Stopped"), LogType.Info.ToString());
         }
     }
 }
