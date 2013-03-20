@@ -124,12 +124,20 @@ namespace XiboClient
 
             while (!startSuccessful)
             {
+                // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
+                if (countStarts > _options.mediaNodes.Count)
+                    throw new ArgumentOutOfRangeException("Unable to set and start a media node");
+
                 // Loop around trying to set the next media
                 bool setSuccessful = false;
                 int countTries = 0;
 
                 while (!setSuccessful)
                 {
+                    // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
+                    if (countTries > _options.mediaNodes.Count)
+                        throw new ArgumentOutOfRangeException("Unable to set a media node");
+
                     // Store the current sequence
                     int temp = _currentSequence;
 
@@ -166,10 +174,6 @@ namespace XiboClient
 
                     // Add one to the count of tries
                     countTries++;
-
-                    // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
-                    if (countTries > _options.mediaNodes.Count)
-                        throw new ArgumentOutOfRangeException("Unable to set a media node");
                 }
 
                 // First thing we do is stop the current stat record
@@ -179,6 +183,7 @@ namespace XiboClient
                 // Start the new media
                 try
                 {
+                    countStarts++;
                     StartMedia(newMedia);
                 }
                 catch (Exception ex)
@@ -202,10 +207,6 @@ namespace XiboClient
 
                 // Open a stat record
                 OpenStatRecordForMedia();
-
-                // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
-                if (countStarts > _options.mediaNodes.Count)
-                    throw new ArgumentOutOfRangeException("Unable to set and start a media node");
             }
         }
 
