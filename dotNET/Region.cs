@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2012 Daniel Garner
+ * Copyright (C) 2006-2013 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -584,7 +584,20 @@ namespace XiboClient
                 _currentSequence = _currentSequence + (filesPlayed - 1);
 
             // make some decisions about what to do next
-            EvalOptions();
+            try
+            {
+                EvalOptions();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Region - media_DurationElapsedEvent", e.Message), LogType.Error.ToString());
+
+                // What do we do if there is an exception moving to the next media node?
+                // For some reason we cannot set a media node... so we need this region to become invalid
+                _hasExpired = true;
+                DurationElapsedEvent();
+                return;
+            }
         }
 
         /// <summary>

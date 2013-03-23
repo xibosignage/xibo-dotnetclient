@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2011 Daniel Garner
+ * Copyright (C) 2011-2013 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -99,7 +99,7 @@ namespace XiboClient
             // We want to check the file exists first
             string filePath = Settings.Default.LibraryPath + @"\" + _mediaId + ".htm";
 
-            if (!System.IO.File.Exists(filePath) || _updateInterval == 0)
+            if (!File.Exists(filePath) || _updateInterval == 0)
                 return false;
 
             // It exists - therefore we want to get the last time it was updated
