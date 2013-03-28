@@ -245,56 +245,63 @@ namespace XiboClient
                 if (!IsValidPath(layoutFile))
                     return false;
 
+                
                 // Load the XLF, get all media ID's
                 XmlDocument layoutXml = new XmlDocument();
                 layoutXml.Load(Properties.Settings.Default.LibraryPath + @"\" + layoutFile);
 
-                XmlNodeList mediaNodes = layoutXml.SelectNodes("//media");
-
-                // Store some information about the validity of local video to decide if this layout should be valid or not.
-                int countInvalidLocalVideo = 0;
-
-                foreach (XmlNode media in mediaNodes)
+                try
                 {
-                    // Is this a stored media type?
-                    switch (media.Attributes["type"].Value)
+                    XmlNodeList mediaNodes = layoutXml.SelectNodes("//media");
+
+                    // Store some information about the validity of local video to decide if this layout should be valid or not.
+                    int countInvalidLocalVideo = 0;
+
+                    foreach (XmlNode media in mediaNodes)
                     {
-                        case "video":
-                        case "image":
-                        case "flash":
-                        case "ppt":
+                        // Is this a stored media type?
+                        switch (media.Attributes["type"].Value)
+                        {
+                            case "video":
+                            case "image":
+                            case "flash":
+                            case "ppt":
 
-                            // Get the path and see if its valid
-                            // TODO: Using media.InnerText is a fluke and will break if we add more options to media/video etc
-                            if (!IsValidPath(media.InnerText))
-                            {
-                                Debug.WriteLine("Invalid Media: " + media.Attributes["id"].Value.ToString());
-                                return false;
-                            }
+                                // Get the path and see if its 
+                                if (!IsValidPath(GetUri(media)))
+                                {
+                                    Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", "Invalid Media: " + media.Attributes["id"].Value.ToString()), LogType.Audit.ToString());
+                                    return false;
+                                }
 
-                            break;
+                                break;
 
-                        case "localvideo":
+                            case "localvideo":
 
-                            // TODO: Only do this if the local video is the only item on the layout.... //
-                            // Check that the path they have specified is ok
-                            if (!File.Exists(Uri.UnescapeDataString(media.InnerText).Replace('+', ' ')))
-                            {
-                                // Local video path does not exist
-                                Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", media.InnerText + " does not exist"), LogType.Error.ToString());
-                                countInvalidLocalVideo++;
-                            }
+                                // Check that the path they have specified is ok
+                                if (!File.Exists(Uri.UnescapeDataString(GetUri(media)).Replace('+', ' ')))
+                                {
+                                    // Local video path does not exist
+                                    Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", media.InnerText + " does not exist"), LogType.Error.ToString());
+                                    countInvalidLocalVideo++;
+                                }
 
-                            break;
+                                break;
 
-                        default:
-                            continue;
+                            default:
+                                continue;
+                        }
                     }
-                }
 
-                // If the number of invalid local video elements is equal to the number of elements on the layout, the don't show
-                if (countInvalidLocalVideo == mediaNodes.Count)
+                    // If the number of invalid local video elements is equal to the number of elements on the layout, then don't show
+                    if (countInvalidLocalVideo == mediaNodes.Count)
+                        return false;
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", "Exception checking media. " + ex.Message), LogType.Audit.ToString());
                     return false;
+                }
 
                 // Also check to see if there is a background image that needs to be downloaded
                 try
@@ -321,6 +328,17 @@ namespace XiboClient
 
                 return true;
             }
+        }
+
+        /// <summary>
+        /// Get the URI of this media item
+        /// </summary>
+        /// <param name="media"></param>
+        /// <returns></returns>
+        private string GetUri(XmlNode media)
+        {
+            XmlNode uriNode = media.SelectSingleNode(".//options/uri");
+            return uriNode.InnerText;
         }
 
         /// <summary>

@@ -63,6 +63,7 @@ namespace XiboClient
             _cacheManager = cacheManager;
 
             //default options
+            _options = new RegionOptions();
             _options.width = 1024;
             _options.height = 768;
             _options.left = 0;
@@ -650,57 +651,6 @@ namespace XiboClient
             }
 
             base.Dispose(disposing);
-        }
-    }
-
-    /// <summary>
-    /// The options specific to a region
-    /// </summary>
-    struct RegionOptions
-    {
-        public double scaleFactor;
-        public int width;
-        public int height;
-        public int top;
-        public int left;
-        public int originalWidth;
-        public int originalHeight;
-
-        public int backgroundLeft;
-        public int backgroundTop;
-
-        public string type;
-        public string uri;
-        public int duration;
-
-        //xml
-        public XmlNodeList mediaNodes;
-
-        //rss options
-        public string direction;
-        public string text;
-        public string documentTemplate;
-        public string copyrightNotice;
-        public string javaScript;
-        public int updateInterval;
-        public int scrollSpeed;
-        
-        //The identification for this region
-        public string mediaid;
-        public int layoutId;
-        public string regionId;
-        public int scheduleId;
-        public int CurrentIndex;
-       
-        //general options
-        public string backgroundImage;
-        public string backgroundColor;
-
-        public MediaDictionary Dictionary;
-
-        public override string ToString()
-        {
-            return String.Format("({0},{1},{2},{3},{4},{5})", width, height, top, left, type, uri);
         }
     }
 }
