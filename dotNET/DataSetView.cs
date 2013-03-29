@@ -40,6 +40,10 @@ namespace XiboClient
         private string _backgroundColor;
         private string _backgroundTop;
         private string _backgroundLeft;
+        
+        // File paths
+        private string _filePath;
+        private TemporaryFile _temporaryFile;
 
         private WebBrowser _webBrowser;
 
@@ -68,11 +72,16 @@ namespace XiboClient
             _webBrowser.ScrollBarsEnabled = false;
             _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
 
+            // Construct a sensible file path to store this resource
+            _filePath = Settings.Default.LibraryPath + @"\" + _mediaId + ".htm";
+
             if (HtmlReady())
             {
+                // Write to temporary file
+                SaveToTemporaryFile();
+
                 // Navigate to temp file
-                string filePath = Settings.Default.LibraryPath + @"\" + _mediaId + ".htm";
-                _webBrowser.Navigate(filePath);
+                _webBrowser.Navigate(_temporaryFile.Path);
             }
             else
             {
@@ -89,7 +98,6 @@ namespace XiboClient
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             // Show the control
-            Show();
             Controls.Add(_webBrowser);
         }
 
@@ -111,23 +119,16 @@ namespace XiboClient
                 return true;
         }
 
-        private void RefreshLocalHtml()
+        /// <summary>
+        /// Updates the position of the background and saves to a temporary file
+        /// </summary>
+        private void SaveToTemporaryFile()
         {
-            xmds.xmds xmds = new XiboClient.xmds.xmds();
-            xmds.GetResourceCompleted += new XiboClient.xmds.GetResourceCompletedEventHandler(xmds_GetResourceCompleted);
-
-            xmds.GetResourceAsync(Settings.Default.ServerKey, Settings.Default.hardwareKey, _layoutId, _regionId, _mediaId, Settings.Default.Version);
-        }
-
-        void xmds_GetResourceCompleted(object sender, XiboClient.xmds.GetResourceCompletedEventArgs e)
-        {
-            // Success / Failure
-            if (e.Error != null)
+            // read the contents of the file
+            using (StreamReader reader = new StreamReader(_filePath))
             {
-                Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Error.ToString());
-            }
-            else
-            {
+                string cachedFile = reader.ReadToEnd();
+
                 // Handle the background
                 String bodyStyle;
 
@@ -139,19 +140,82 @@ namespace XiboClient
                 {
                     bodyStyle = "background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + ";";
                 }
-                
-                string html = e.Result.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " font-size:" + _scaleFactor.ToString() + "em; }</style></head>");
 
-                string fullPath = Settings.Default.LibraryPath + @"\" + _mediaId + ".htm";
+                string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " font-size:" + _scaleFactor.ToString() + "em; }</style></head>");
 
-                using (StreamWriter sw = new StreamWriter(File.Open(fullPath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                _temporaryFile = new TemporaryFile();
+                _temporaryFile.FileContent = html;
+            }
+        }
+
+        /// <summary>
+        /// Refresh the Local cache of the DataSetView HTML
+        /// </summary>
+        private void RefreshLocalHtml()
+        {
+            xmds.xmds xmds = new XiboClient.xmds.xmds();
+            xmds.GetResourceCompleted += new XiboClient.xmds.GetResourceCompletedEventHandler(xmds_GetResourceCompleted);
+
+            xmds.GetResourceAsync(Settings.Default.ServerKey, Settings.Default.hardwareKey, _layoutId, _regionId, _mediaId, Settings.Default.Version);
+        }
+
+        /// <summary>
+        /// Refresh Complete
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void xmds_GetResourceCompleted(object sender, XiboClient.xmds.GetResourceCompletedEventArgs e)
+        {
+            // Success / Failure
+            if (e.Error != null)
+            {
+                Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Error.ToString());
+            }
+            else
+            {
+                // Write to the library
+                using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    sw.Write(html);
+                    sw.Write(e.Result);
                     sw.Close();
                 }
 
-                _webBrowser.Navigate(fullPath);
+                // Write to temporary file
+                SaveToTemporaryFile();
+
+                // Handle Navigate in here because we will not have done it during first load
+                _webBrowser.Navigate(_temporaryFile.Path);
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                try
+                {
+                    _webBrowser.Dispose();
+
+                    Debug.WriteLine("Disposed of the Web Browser control", "DataSetView - Dispose");
+                }
+                catch
+                {
+                    Debug.WriteLine("Web browser control already disposed", "DataSetView - Dispose");
+                }
+
+                // Delete the temporary file
+                try
+                {
+                    if (_temporaryFile != null)
+                        _temporaryFile.Dispose();
+                }
+                catch
+                {
+                    Debug.WriteLine("Unable to delete temporary file for dataset", "DataSetView - Dispose");
+                }
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

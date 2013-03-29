@@ -108,6 +108,7 @@
     <Compile Include="BlackList.cs" />
     <Compile Include="CacheManager.cs" />
     <Compile Include="RegionOptions.cs" />
+    <Compile Include="TemporaryFile.cs" />
     <Compile Include="VideoDS.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -161,8 +161,10 @@ namespace XiboClient
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             // We have navigated to the temporary file.
-            Show();
             Controls.Add(_webBrowser);
+
+            // Show the form
+            Show();
         }
 
         #endregion
