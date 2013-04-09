@@ -27,7 +27,7 @@ namespace XiboClient
     /// <summary>
     /// The options specific to a region
     /// </summary>
-    class RegionOptions
+    struct RegionOptions
     {
         public double scaleFactor;
         public int width;
