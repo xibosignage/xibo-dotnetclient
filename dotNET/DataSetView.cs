@@ -166,25 +166,36 @@ namespace XiboClient
         /// <param name="e"></param>
         private void xmds_GetResourceCompleted(object sender, XiboClient.xmds.GetResourceCompletedEventArgs e)
         {
-            // Success / Failure
-            if (e.Error != null)
+            try
             {
-                Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Error.ToString());
-            }
-            else
-            {
-                // Write to the library
-                using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                // Success / Failure
+                if (e.Error != null)
                 {
-                    sw.Write(e.Result);
-                    sw.Close();
+                    Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Error.ToString());
                 }
+                else
+                {
+                    // Write to the library
+                    using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        sw.Write(e.Result);
+                        sw.Close();
+                    }
 
-                // Write to temporary file
-                SaveToTemporaryFile();
+                    // Write to temporary file
+                    SaveToTemporaryFile();
 
-                // Handle Navigate in here because we will not have done it during first load
-                _webBrowser.Navigate(_temporaryFile.Path);
+                    // Handle Navigate in here because we will not have done it during first load
+                    _webBrowser.Navigate(_temporaryFile.Path);
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                Trace.WriteLine(new LogMessage("DataSetView", "Retrived the data set, stored the document but the media has already expired."), LogType.Error.ToString());
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("DataSetView", "Unknown exception " + ex.Message), LogType.Error.ToString());
             }
         }
 
