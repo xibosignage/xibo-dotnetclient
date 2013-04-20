@@ -121,70 +121,59 @@ namespace XiboClient
 
             // Loop around trying to start the next media
             bool startSuccessful = false;
-            int countStarts = 0;
-
+            int countTries = 0;
+            
             while (!startSuccessful)
             {
                 // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
-                if (countStarts > _options.mediaNodes.Count)
+                if (countTries >= _options.mediaNodes.Count)
                     throw new ArgumentOutOfRangeException("Unable to set and start a media node");
 
-                // Loop around trying to set the next media
-                bool setSuccessful = false;
-                int countTries = 0;
+                // Lets try again
+                countTries++;
 
-                while (!setSuccessful)
+                // Store the current sequence
+                int temp = _currentSequence;
+
+                // Set the next media node for this panel
+                if (!SetNextMediaNodeInOptions())
                 {
-                    // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
-                    if (countTries > _options.mediaNodes.Count)
-                        throw new ArgumentOutOfRangeException("Unable to set a media node");
-
-                    // Store the current sequence
-                    int temp = _currentSequence;
-
-                    // Set the next media node for this panel
-                    if (!SetNextMediaNodeInOptions())
-                    {
-                        // For some reason we cannot set a media node... so we need this region to become invalid
-                        _hasExpired = true;
-                        DurationElapsedEvent();
-                        return;
-                    }
-
-                    // If the sequence hasnt been changed, OR the layout has been expired
-                    // there has been no change to the sequence, therefore the media we have already created is still valid
-                    // or this media has actually been destroyed and we are working out way out the call stack
-                    if (_currentSequence == temp || _layoutExpired)
-                        return;
-
-                    // Store the Current Index
-                    _options.CurrentIndex = _currentSequence;
-
-                    // See if we can start the new media object
-                    try
-                    {
-                        newMedia = CreateNextMediaNode(_options);
-
-                        // We have set a new media object.
-                        setSuccessful = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to create new " + _options.type + "  object: " + ex.Message), LogType.Error.ToString());
-                    }
-
-                    // Add one to the count of tries
-                    countTries++;
+                    // For some reason we cannot set a media node... so we need this region to become invalid
+                    _hasExpired = true;
+                    DurationElapsedEvent();
+                    return;
                 }
+
+                // If the sequence hasnt been changed, OR the layout has been expired
+                // there has been no change to the sequence, therefore the media we have already created is still valid
+                // or this media has actually been destroyed and we are working out way out the call stack
+                if (_currentSequence == temp || _layoutExpired)
+                    return;
+
+                // Store the Current Index
+                _options.CurrentIndex = _currentSequence;
+
+                // See if we can start the new media object
+                try
+                {
+                    newMedia = CreateNextMediaNode(_options);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Region - Eval Options", "Unable to create new " + _options.type + "  object: " + ex.Message), LogType.Error.ToString());
+
+                    // Try the next node
+                    startSuccessful = false;
+                    continue;
+                }             
 
                 // First thing we do is stop the current stat record
                 if (!initialMedia)
                     CloseCurrentStatRecord();
-
+                
                 // Start the new media
                 try
                 {
-                    countStarts++;
                     StartMedia(newMedia);
                 }
                 catch (Exception ex)

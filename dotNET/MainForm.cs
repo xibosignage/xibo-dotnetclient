@@ -543,7 +543,7 @@ namespace XiboClient
                 using (Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight))
                 {
                     EncoderParameters encoderParameters = new EncoderParameters(1);
-                    EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
+                    EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 100L);
                     encoderParameters.Param[0] = qualityParam;
 
                     ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
