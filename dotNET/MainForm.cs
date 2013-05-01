@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-12 Daniel Garner and James Packer
+ * Copyright (C) 2006-13 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -283,7 +283,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Unable to change layout: " + ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
                 _isExpired = true;
 
                 ShowSplashScreen();
@@ -413,15 +413,9 @@ namespace XiboClient
             // Get the background
             try
             {
-                if (layoutAttributes["background"] == null)
+                if (layoutAttributes["background"] != null && !string.IsNullOrEmpty(layoutAttributes["background"].Value))
                 {
-                    // Assume there is no background image
-                    BackgroundImage = null;
-                    options.backgroundImage = "";
-                }
-                else
-                {
-                    string bgFilePath = Properties.Settings.Default.LibraryPath + @"\backgrounds\" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value;
+                    string bgFilePath = Settings.Default.LibraryPath + @"\backgrounds\" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value;
 
                     // Create a correctly sized background image in the temp folder
                     if (!File.Exists(bgFilePath))
@@ -429,6 +423,12 @@ namespace XiboClient
 
                     BackgroundImage = new Bitmap(bgFilePath);
                     options.backgroundImage = bgFilePath;
+                }
+                else
+                {
+                    // Assume there is no background image
+                    BackgroundImage = null;
+                    options.backgroundImage = "";
                 }
             }
             catch (Exception ex)
@@ -487,15 +487,15 @@ namespace XiboClient
                 options.scheduleId = _scheduleId;
                 options.layoutId = _layoutId;
                 options.regionId = nodeAttibutes["id"].Value.ToString();
-                options.width = (int)(double.Parse(nodeAttibutes["width"].Value) * _scaleFactor);
-                options.height = (int)(double.Parse(nodeAttibutes["height"].Value) * _scaleFactor);
-                options.left = (int)(double.Parse(nodeAttibutes["left"].Value) * _scaleFactor);
-                options.top = (int)(double.Parse(nodeAttibutes["top"].Value) * _scaleFactor);
+                options.width = (int)(Convert.ToDouble(nodeAttibutes["width"].Value) * _scaleFactor);
+                options.height = (int)(Convert.ToDouble(nodeAttibutes["height"].Value) * _scaleFactor);
+                options.left = (int)(Convert.ToDouble(nodeAttibutes["left"].Value) * _scaleFactor);
+                options.top = (int)(Convert.ToDouble(nodeAttibutes["top"].Value) * _scaleFactor);
                 options.scaleFactor = _scaleFactor;
 
                 // Store the original width and original height for scaling
-                options.originalWidth = Convert.ToInt32(nodeAttibutes["width"].Value);
-                options.originalHeight = Convert.ToInt32(nodeAttibutes["height"].Value);
+                options.originalWidth = (int)Convert.ToDouble(nodeAttibutes["width"].Value);
+                options.originalHeight = (int)Convert.ToDouble(nodeAttibutes["height"].Value);
 
                 // Set the backgrounds (used for Web content offsets)
                 options.backgroundLeft = options.left * -1;
@@ -506,7 +506,7 @@ namespace XiboClient
                 options.top = options.top + (int)leftOverY;
 
                 // All the media nodes for this region / layout combination
-                options.mediaNodes = region.ChildNodes;
+                options.mediaNodes = region.SelectNodes("media");
 
                 Region temp = new Region(ref _statLog, ref _cacheManager);
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(temp_DurationElapsedEvent);
@@ -543,7 +543,7 @@ namespace XiboClient
                 using (Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight))
                 {
                     EncoderParameters encoderParameters = new EncoderParameters(1);
-                    EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
+                    EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 100L);
                     encoderParameters.Param[0] = qualityParam;
 
                     ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
