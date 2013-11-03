@@ -30,6 +30,7 @@ using System.Linq;
 using FeedDotNet;
 using FeedDotNet.Common;
 using System.Net.Mime;
+using XiboClient.Properties;
 
 namespace XiboClient
 {
@@ -71,6 +72,7 @@ namespace XiboClient
 
         private String _bodyText;
         private TemporaryHtml _tempHtml;
+        private TemporaryFile _temporaryFile;
 
         /// <summary>
         /// Creates an RSS position with the RegionOptions parameter
@@ -81,6 +83,49 @@ namespace XiboClient
         {
             // Store the options
             _options = options;
+
+            _layoutId = options.layoutId;
+            _duration = options.duration;
+            _mediaid = options.mediaid;
+
+            // Set up the backgrounds
+            _backgroundTop = options.backgroundTop + "px";
+            _backgroundLeft = options.backgroundLeft + "px";
+            _backgroundImage = options.backgroundImage;
+            _backgroundColor = options.backgroundColor;
+
+            // Update interval
+            _updateInterval = options.updateInterval;
+
+            // Create a webbrowser to take the temp file loc
+            _webBrowser = new WebBrowser();
+            _webBrowser.ScriptErrorsSuppressed = true;
+            _webBrowser.Size = this.Size;
+            _webBrowser.ScrollBarsEnabled = false;
+            _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
+
+            // XMDS feed?
+            if (options.Dictionary.Get("xmds", "0") == "1")
+            {
+                // Set the file path
+                _filePath = Settings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
+
+                // Check to see if the HTML is ready for us.
+                if (HtmlReady())
+                {
+                    // Write to temporary file
+                    SaveToTemporaryFile();
+
+                    // Navigate to temp file
+                    _webBrowser.Navigate(_temporaryFile.Path);
+                }
+                else
+                {
+                    RefreshFromXmds();
+                }
+
+                return;
+            }
 
             // Get the URI
             if (String.IsNullOrEmpty(options.uri))
@@ -104,20 +149,12 @@ namespace XiboClient
 
             // Set the parameters based on the RegionOptions
             _direction = options.direction;
-            _backgroundImage = options.backgroundImage;
-            _backgroundColor = options.backgroundColor;
             _copyrightNotice = options.copyrightNotice;
-            _mediaid = options.mediaid;
             _scheduleId = options.scheduleId;
-            _layoutId = options.layoutId;
-            _duration = options.duration;
             _fitText = (options.Dictionary.Get("fitText", "0") == "0" ? false : true);
 
             // Scale factor
             _scaleFactor = options.scaleFactor;
-
-            // Update interval and scrolling speed
-            _updateInterval = options.updateInterval;
             _scrollSpeed = options.scrollSpeed;
 
             Debug.WriteLine(String.Format("Scrolling Speed: {0}, Update Interval: {1})", _scrollSpeed.ToString(), _updateInterval.ToString()), "Rss - Constructor");
@@ -130,10 +167,6 @@ namespace XiboClient
             // Generate a temporary file to store the rendered object in.
             _tempHtml = new TemporaryHtml();
 
-            // Set up the backgrounds
-            _backgroundTop = options.backgroundTop + "px";
-            _backgroundLeft = options.backgroundLeft + "px";
-
             _documentText = options.text;
             _documentTemplate = options.documentTemplate;
 
@@ -143,13 +176,6 @@ namespace XiboClient
             // Prepare the RSS
             PrepareRSS();
             
-            // Create a webbrowser to take the temp file loc
-            _webBrowser = new WebBrowser();
-            _webBrowser.ScriptErrorsSuppressed = true;
-            _webBrowser.Size = this.Size;
-            _webBrowser.ScrollBarsEnabled = false;
-            _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
-
             // Is the RSS ready to be loaded into the temp location?
             if (_rssReady)
             {
@@ -478,6 +504,105 @@ namespace XiboClient
             // Do nothing in here (we might not have an accurate duration by the time this is called)
         }
 
+        /// <summary>
+        /// Refresh the Local cache of the DataSetView HTML
+        /// </summary>
+        private void RefreshFromXmds()
+        {
+            xmds.xmds xmds = new XiboClient.xmds.xmds();
+            xmds.GetResourceCompleted += new XiboClient.xmds.GetResourceCompletedEventHandler(xmds_GetResourceCompleted);
+
+            xmds.GetResourceAsync(Settings.Default.ServerKey, Settings.Default.hardwareKey, _layoutId, _options.regionId, _options.mediaid, Settings.Default.Version);
+        }
+
+        /// <summary>
+        /// Refresh Complete
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void xmds_GetResourceCompleted(object sender, XiboClient.xmds.GetResourceCompletedEventArgs e)
+        {
+            try
+            {
+                // Success / Failure
+                if (e.Error != null)
+                {
+                    Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Error.ToString());
+
+                    // Start the timer so that we expire
+                    base.RenderMedia();
+                }
+                else
+                {
+                    // Write to the library
+                    using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        sw.Write(e.Result);
+                        sw.Close();
+                    }
+
+                    // Write to temporary file
+                    SaveToTemporaryFile();
+
+                    // Handle Navigate in here because we will not have done it during first load
+                    _webBrowser.Navigate(_temporaryFile.Path);
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                Trace.WriteLine(new LogMessage("Rss", "Retrived the data set, stored the document but the media has already expired."), LogType.Error.ToString());
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("Rss", "Unknown exception " + ex.Message), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Updates the position of the background and saves to a temporary file
+        /// </summary>
+        private void SaveToTemporaryFile()
+        {
+            // read the contents of the file
+            using (StreamReader reader = new StreamReader(_filePath))
+            {
+                string cachedFile = reader.ReadToEnd();
+
+                // Handle the background
+                String bodyStyle;
+
+                if (_backgroundImage == null || _backgroundImage == "")
+                {
+                    bodyStyle = "background-color:" + _backgroundColor + " ;";
+                }
+                else
+                {
+                    bodyStyle = "background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + ";";
+                }
+
+                string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");
+
+                _temporaryFile = new TemporaryFile();
+                _temporaryFile.FileContent = html;
+            }
+        }
+
+        private bool HtmlReady()
+        {
+            // Pull the RSS feed, and put it in a temporary file cache
+            // We want to check the file exists first
+            if (!File.Exists(_filePath) || _updateInterval == 0)
+                return false;
+
+            // It exists - therefore we want to get the last time it was updated
+            DateTime lastWriteDate = System.IO.File.GetLastWriteTime(_filePath);
+
+            if (DateTime.Now.CompareTo(lastWriteDate.AddHours(_updateInterval * 1.0 / 60.0)) > 0)
+                return false;
+            else
+                return true;
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -510,6 +635,17 @@ namespace XiboClient
                 catch (Exception ex)
                 {
                     Trace.WriteLine(new LogMessage("Dispose", String.Format("Unable to dispose TemporaryHtml with exception {0}", ex.Message)));
+                }
+
+                // Delete the temporary file
+                try
+                {
+                    if (_temporaryFile != null)
+                        _temporaryFile.Dispose();
+                }
+                catch
+                {
+                    Debug.WriteLine("Unable to delete temporary file for dataset", "DataSetView - Dispose");
                 }
             }
 

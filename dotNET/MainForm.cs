@@ -328,6 +328,7 @@ namespace XiboClient
 
             // Get this layouts XML
             XmlDocument layoutXml = new XmlDocument();
+            DateTime layoutModifiedTime;
 
             // Default or not
             if (layoutPath == Properties.Settings.Default.LibraryPath + @"\Default.xml" || String.IsNullOrEmpty(layoutPath))
@@ -349,6 +350,8 @@ namespace XiboClient
                         }
                         fs.Close();
                     }
+
+                    layoutModifiedTime = File.GetLastWriteTime(layoutPath);
                 }
                 catch (Exception ex)
                 {
@@ -394,6 +397,7 @@ namespace XiboClient
             // New region and region options objects
             _regions = new Collection<Region>();
             RegionOptions options = new RegionOptions();
+            options.LayoutModifiedDate = layoutModifiedTime;
 
             // Deal with the color
             try

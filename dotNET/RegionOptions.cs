@@ -69,6 +69,8 @@ namespace XiboClient
 
         public MediaDictionary Dictionary;
 
+        public DateTime LayoutModifiedDate { get; set; }
+
         public override string ToString()
         {
             return String.Format("({0},{1},{2},{3},{4},{5})", width, height, top, left, type, uri);
