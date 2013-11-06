@@ -209,7 +209,8 @@ namespace XiboClient.XmdsAgents
                 file.Downloading = false;
 
                 // Check MD5
-                if (file.Md5 == _requiredFiles.CurrentCacheManager.GetMD5(file.Path))
+                string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.Path);
+                if (file.Md5 == md5)
                 {
                     // Mark it as complete
                     _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
@@ -222,7 +223,7 @@ namespace XiboClient.XmdsAgents
                 else
                 {
                     // Just error - we will pick it up again the next time we download
-                    Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5. " + file.Path), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.Path), LogType.Error.ToString());
                 }
 
                 // Inform the Player thread that a file has been modified.

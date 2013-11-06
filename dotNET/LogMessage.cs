@@ -23,6 +23,7 @@ using System.Text;
 using System.Xml;
 using System.Diagnostics;
 using System.Threading;
+using System.Security;
 
 namespace XiboClient
 {
@@ -96,7 +97,7 @@ namespace XiboClient
             // Just do this with a string builder rather than an XML builder.
             String theMessage;
 
-            theMessage = String.Format("<message>{0}</message>", _message);
+            theMessage = String.Format("<message>{0}</message>", SecurityElement.Escape(_message));
             theMessage += String.Format("<method>{0}</method>", _method);
             theMessage += String.Format("<logdate>{0}</logdate>", LogDate);
             theMessage += String.Format("<thread>{0}</thread>", _thread);

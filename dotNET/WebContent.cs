@@ -135,8 +135,6 @@ namespace XiboClient
 
         protected override void Dispose(bool disposing)
         {
-            System.Diagnostics.Debug.WriteLine(String.Format("Disposing {0}", _filePath));
-            
             try
             {
                 Controls.Remove(webBrowser);
@@ -149,8 +147,6 @@ namespace XiboClient
             }
 
             base.Dispose(disposing);
-
-            System.Diagnostics.Debug.WriteLine(String.Format("Disposed {0}", _filePath));
         }
     }
 }

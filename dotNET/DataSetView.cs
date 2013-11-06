@@ -172,6 +172,9 @@ namespace XiboClient
                 if (e.Error != null)
                 {
                     Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Error.ToString());
+
+                    // Start the timer so that we expire
+                    base.RenderMedia();
                 }
                 else
                 {

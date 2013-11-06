@@ -25,6 +25,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Forms;
+using System.Security;
 
 /// 17/02/12 Dan Changed to always Log audit if no category is given
 
@@ -128,6 +129,9 @@ namespace XiboClient
                 foreach (TraceMessage traceMessage in _traceMessages)
                 {
                     String traceMsg = traceMessage.message.ToString();
+
+                    if (!traceMsg.Contains("<message>"))
+                        traceMsg = SecurityElement.Escape(traceMsg);
 
                     log += String.Format("<trace date=\"{0}\" category=\"{1}\">{2}</trace>", traceMessage.dateTime, traceMessage.category, traceMsg);
                 }
