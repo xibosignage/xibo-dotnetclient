@@ -50,7 +50,7 @@ namespace XiboClient
             Debug.WriteLine(_filePath);
 
             // Write it to the file
-            using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8))
+            using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 sw.Write(_fileContent);
                 sw.Close();
