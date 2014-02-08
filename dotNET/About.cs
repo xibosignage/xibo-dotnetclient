@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2014 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -42,7 +42,7 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                System.Diagnostics.Process.Start("http://wiki.xibo.org.uk/wiki/Manual:TOC");
+                System.Diagnostics.Process.Start("http://xibo.org.uk/manual");
             }
             catch
             {

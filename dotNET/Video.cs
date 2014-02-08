@@ -53,6 +53,9 @@ namespace XiboClient
             _videoPlayer.Height = options.height;
             _videoPlayer.Location = new System.Drawing.Point(0, 0);
 
+            // Capture any video errors
+            _videoPlayer.VideoError += new VideoPlayer.VideoErrored(_videoPlayer_VideoError);
+
             Controls.Add(_videoPlayer);
         }
 
@@ -96,6 +99,14 @@ namespace XiboClient
                 // Unable to start video - expire this media immediately
                 throw;
             }
+        }
+
+        void _videoPlayer_VideoError()
+        {
+            // Immediately hide the player
+            _videoPlayer.Hide();
+
+            _expired = true;
         }
 
         /// <summary>
