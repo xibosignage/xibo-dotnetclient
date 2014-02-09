@@ -31,6 +31,7 @@ using FeedDotNet;
 using FeedDotNet.Common;
 using System.Net.Mime;
 using XiboClient.Properties;
+using System.Text.RegularExpressions;
 
 namespace XiboClient
 {
@@ -581,6 +582,22 @@ namespace XiboClient
                 }
 
                 string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");
+
+                // We also want to parse out the duration using a regular expression
+                try
+                {
+                    Match match = Regex.Match(html, "<!-- DURATION=(.*?) -->");
+
+                    if (match.Success)
+                    {
+                        // We have a match, so override our duration.
+                        _duration = Convert.ToInt32(match.Groups[1].Value);
+                    }
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("Rss - SaveToTemporaryFile", "Unable to pull duration using RegEx").ToString());
+                }
 
                 _temporaryFile = new TemporaryFile();
                 _temporaryFile.FileContent = html;
