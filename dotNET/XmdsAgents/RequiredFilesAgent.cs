@@ -177,7 +177,7 @@ namespace XiboClient.XmdsAgents
 
                                     // Create the thread and add it to the list of threads to start
                                     Thread thread = new Thread(new ThreadStart(fileAgent.Run));
-                                    thread.Name = "FileAgent_Id_" + fileToDownload.Id.ToString();
+                                    thread.Name = "FileAgent_" + fileToDownload.FileType + "_Id_" + fileToDownload.Id.ToString();
                                     threadsToStart.Add(thread);
                                 }
 

@@ -135,10 +135,15 @@ namespace XiboClient
                     // Do something special here. Check to see if the resource file already exists otherwise add to RF
                     try
                     {
-                        rf.LayoutId = rf.Id = int.Parse(attributes["layoutid"].Value);
+                        // Set the ID to be some random number
+                        rf.Id = int.Parse(attributes["id"].Value);
+                        rf.LayoutId = int.Parse(attributes["layoutid"].Value);
                         rf.RegionId = attributes["regionid"].Value;
                         rf.MediaId = attributes["mediaid"].Value;
-                        rf.Path = "for layout ID " + rf.Id;
+                        rf.Path = "for layout ID " + rf.LayoutId;
+                        
+                        // Set the size to something arbitary
+                        rf.Size = 10000;
 
                         // Check to see if this has already been downloaded
                         if (File.Exists(Settings.Default.LibraryPath + @"\" + rf.MediaId + ".htm"))
