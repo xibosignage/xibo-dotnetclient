@@ -148,7 +148,7 @@ namespace XiboClient.XmdsAgents
                         string result = xmds.GetResource(Settings.Default.ServerKey, Settings.Default.hardwareKey, file.LayoutId, file.RegionId, file.MediaId, Settings.Default.Version);
 
                         // Write the result to disk
-                        using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.MediaId + ".htm", FileMode.Create, FileAccess.Write, FileShare.Read)))
+                        using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Create, FileAccess.Write, FileShare.Read)))
                         {
                             sw.Write(result);
                             sw.Close();

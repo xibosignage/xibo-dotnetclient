@@ -140,7 +140,7 @@ namespace XiboClient
                         rf.LayoutId = int.Parse(attributes["layoutid"].Value);
                         rf.RegionId = attributes["regionid"].Value;
                         rf.MediaId = attributes["mediaid"].Value;
-                        rf.Path = "for layout ID " + rf.LayoutId;
+                        rf.Path = rf.MediaId + ".htm";
                         
                         // Set the size to something arbitary
                         rf.Size = 10000;
