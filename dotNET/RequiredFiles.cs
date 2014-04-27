@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2011-12 Daniel Garner
+ * Copyright (C) 2011-14 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -32,7 +32,7 @@ using XiboClient.Properties;
 /// 17/02/12 Dan Enriched to also manage currently downloading files
 /// 28/02/12 Dan Changed the way RequiredFiles are updated
 /// 09/04/12 Dan Fixed problem with adding an existing file to the cache manager!
-
+/// 16/FEB/14 Dan Changes to understand the new "resource" file type
 namespace XiboClient
 {
     public class RequiredFiles
@@ -110,19 +110,12 @@ namespace XiboClient
                 XmlAttributeCollection attributes = file.Attributes;
 
                 rf.FileType = attributes["type"].Value;
-
-                if (rf.FileType != "media" && rf.FileType != "layout")
-                    continue;
-
-                rf.Md5 = attributes["md5"].Value;
+                rf.Downloading = false;
+                rf.Complete = false;
                 rf.LastChecked = DateTime.Now;
                 rf.ChunkOffset = 0;
                 rf.ChunkSize = 0;
-                rf.Size = int.Parse(attributes["size"].Value);
 
-                rf.Downloading = false;
-                rf.Complete = false;
-                
                 // Fill in some information that we already know
                 if (rf.FileType == "media")
                 {
@@ -137,6 +130,41 @@ namespace XiboClient
                     rf.Path = attributes["path"].Value + ".xlf";
                     rf.ChunkSize = rf.Size;
                 }
+                else if (rf.FileType == "resource")
+                {
+                    // Do something special here. Check to see if the resource file already exists otherwise add to RF
+                    try
+                    {
+                        // Set the ID to be some random number
+                        rf.Id = int.Parse(attributes["id"].Value);
+                        rf.LayoutId = int.Parse(attributes["layoutid"].Value);
+                        rf.RegionId = attributes["regionid"].Value;
+                        rf.MediaId = attributes["mediaid"].Value;
+                        rf.Path = rf.MediaId + ".htm";
+                        
+                        // Set the size to something arbitary
+                        rf.Size = 10000;
+
+                        // Check to see if this has already been downloaded
+                        if (File.Exists(Settings.Default.LibraryPath + @"\" + rf.MediaId + ".htm"))
+                            rf.Complete = true;
+
+                        // Add to the Rf Node
+                        RequiredFileList.Add(rf);
+                        continue;
+                    }
+                    catch
+                    {
+                        // Forget about this resource
+                        continue;
+                    }
+                }
+                else
+                    continue;
+
+                // This stuff only executes for Layout/Files items
+                rf.Md5 = attributes["md5"].Value;
+                rf.Size = int.Parse(attributes["size"].Value);
 
                 Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "Building required file node for " + rf.Id.ToString()), LogType.Audit.ToString());
 
@@ -350,7 +378,7 @@ namespace XiboClient
                         rf.FileType, rf.Id.ToString(), (rf.Complete) ? "1" : "0", rf.LastChecked.ToString(), rf.Md5);
                 }
 
-                xml = string.Format("<files macAddress=\"{1}\">{0}</files>", xml, hardwareKey.MacAddress);
+                xml = string.Format("<files clientType=\"windows\" clientVersion=\"{2}\" clientCode=\"{3}\" macAddress=\"{1}\">{0}</files>", xml, hardwareKey.MacAddress, Settings.Default.ClientVersion, Settings.Default.ClientCodeVersion.ToString());
 
                 _report.MediaInventoryAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey,
                     hardwareKey.Key, xml);
@@ -390,5 +418,10 @@ namespace XiboClient
         public int ChunkSize;
         public int Size;
         public int Retrys;
+
+        // Resource nodes
+        public int LayoutId;
+        public string RegionId;
+        public string MediaId;
     }
 }

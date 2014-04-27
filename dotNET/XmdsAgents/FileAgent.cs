@@ -136,94 +136,120 @@ namespace XiboClient.XmdsAgents
             {
                 Trace.WriteLine(new LogMessage("FileAgent - Run", "Thread alive and Lock Obtained"), LogType.Info.ToString());
 
-                while (!file.Complete)
+                if (file.FileType == "resource")
                 {
-                    byte[] getFileReturn;
-
-                    // Call XMDS GetFile
+                    // Download using GetResource
                     using (xmds.xmds xmds = new xmds.xmds())
                     {
                         xmds.Credentials = null;
                         xmds.Url = Settings.Default.XiboClient_xmds_xmds;
-                        xmds.UseDefaultCredentials = false;
+                        xmds.UseDefaultCredentials = true;
 
-                        getFileReturn = xmds.GetFile(Settings.Default.ServerKey, _hardwareKey, file.Path, file.FileType, file.ChunkOffset, file.ChunkSize, Settings.Default.Version);
-                    }
+                        string result = xmds.GetResource(Settings.Default.ServerKey, Settings.Default.hardwareKey, file.LayoutId, file.RegionId, file.MediaId, Settings.Default.Version);
 
-                    // Set the flag to indicate we have a connection to XMDS
-                    Settings.Default.XmdsLastConnection = DateTime.Now;
-
-                    if (file.FileType == "layout")
-                    {
-                        // Decode this byte[] into a string and stick it in the file.
-                        string layoutXml = Encoding.UTF8.GetString(getFileReturn);
-
-                        // Full file is downloaded
+                        // Write the result to disk
                         using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Create, FileAccess.Write, FileShare.Read)))
                         {
-                            sw.Write(layoutXml);
+                            sw.Write(result);
                             sw.Close();
                         }
 
+                        // File completed
+                        file.Downloading = false;
                         file.Complete = true;
                     }
-                    else
-                    {
-                        // Media file
-                        // Need to write to the file - in append mode
-                        using (FileStream fs = new FileStream(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Append, FileAccess.Write))
-                        {
-                            fs.Write(getFileReturn, 0, getFileReturn.Length);
-                            fs.Close();
-                        }
-
-                        // Increment the offset by the amount we just asked for
-                        file.ChunkOffset = file.ChunkOffset + file.ChunkSize;
-
-                        // Has the offset reached the total size?
-                        if (file.Size > file.ChunkOffset)
-                        {
-                            int remaining = file.Size - file.ChunkOffset;
-                            
-                            // There is still more to come
-                            if (remaining < file.ChunkSize)
-                            {
-                                // Get the remaining
-                                file.ChunkSize = remaining;
-                            }
-
-                            // Part is complete
-                            OnPartComplete(file.Id);
-                        }
-                        else
-                        {
-                            // File complete
-                            file.Complete = true;
-                        }
-                    }
-
-                    getFileReturn = null;
-                }
-
-                // File completed
-                file.Downloading = false;
-
-                // Check MD5
-                string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.Path);
-                if (file.Md5 == md5)
-                {
-                    // Mark it as complete
-                    _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
-
-                    // Add it to the cache manager
-                    _requiredFiles.CurrentCacheManager.Add(file.Path, file.Md5);
-
-                    Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.Path), LogType.Info.ToString());
                 }
                 else
                 {
-                    // Just error - we will pick it up again the next time we download
-                    Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.Path), LogType.Error.ToString());
+                    while (!file.Complete)
+                    {
+                        byte[] getFileReturn;
+
+                        // Call XMDS GetFile
+                        using (xmds.xmds xmds = new xmds.xmds())
+                        {
+                            xmds.Credentials = null;
+                            xmds.Url = Settings.Default.XiboClient_xmds_xmds;
+                            xmds.UseDefaultCredentials = false;
+
+                            getFileReturn = xmds.GetFile(Settings.Default.ServerKey, _hardwareKey, file.Path, file.FileType, file.ChunkOffset, file.ChunkSize, Settings.Default.Version);
+                        }
+
+                        // Set the flag to indicate we have a connection to XMDS
+                        Settings.Default.XmdsLastConnection = DateTime.Now;
+
+                        if (file.FileType == "layout")
+                        {
+                            // Decode this byte[] into a string and stick it in the file.
+                            string layoutXml = Encoding.UTF8.GetString(getFileReturn);
+
+                            // Full file is downloaded
+                            using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                            {
+                                sw.Write(layoutXml);
+                                sw.Close();
+                            }
+
+                            file.Complete = true;
+                        }
+                        else
+                        {
+                            // Media file
+                            // Need to write to the file - in append mode
+                            using (FileStream fs = new FileStream(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Append, FileAccess.Write))
+                            {
+                                fs.Write(getFileReturn, 0, getFileReturn.Length);
+                                fs.Close();
+                            }
+
+                            // Increment the offset by the amount we just asked for
+                            file.ChunkOffset = file.ChunkOffset + file.ChunkSize;
+
+                            // Has the offset reached the total size?
+                            if (file.Size > file.ChunkOffset)
+                            {
+                                int remaining = file.Size - file.ChunkOffset;
+
+                                // There is still more to come
+                                if (remaining < file.ChunkSize)
+                                {
+                                    // Get the remaining
+                                    file.ChunkSize = remaining;
+                                }
+
+                                // Part is complete
+                                OnPartComplete(file.Id);
+                            }
+                            else
+                            {
+                                // File complete
+                                file.Complete = true;
+                            }
+                        }
+
+                        getFileReturn = null;
+                    }
+
+                    // File completed
+                    file.Downloading = false;
+
+                    // Check MD5
+                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.Path);
+                    if (file.Md5 == md5)
+                    {
+                        // Mark it as complete
+                        _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
+
+                        // Add it to the cache manager
+                        _requiredFiles.CurrentCacheManager.Add(file.Path, file.Md5);
+
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.Path), LogType.Info.ToString());
+                    }
+                    else
+                    {
+                        // Just error - we will pick it up again the next time we download
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.Path), LogType.Error.ToString());
+                    }
                 }
 
                 // Inform the Player thread that a file has been modified.
