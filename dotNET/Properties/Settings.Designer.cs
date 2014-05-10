@@ -541,5 +541,29 @@ namespace XiboClient.Properties {
                 return ((int)(this["ClientCodeVersion"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("I")]
+        public string ClientInformationKeyCode {
+            get {
+                return ((string)(this["ClientInformationKeyCode"]));
+            }
+            set {
+                this["ClientInformationKeyCode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ClientInfomationCtrlKey {
+            get {
+                return ((bool)(this["ClientInfomationCtrlKey"]));
+            }
+            set {
+                this["ClientInfomationCtrlKey"] = value;
+            }
+        }
     }
 }
