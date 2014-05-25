@@ -35,6 +35,7 @@ using System.Diagnostics;
 using XiboClient.Log;
 using System.Threading;
 using XiboClient.Properties;
+using System.Runtime.InteropServices;
 
 namespace XiboClient
 {
@@ -58,6 +59,18 @@ namespace XiboClient
         private ClientInfo _clientInfoForm;
 
         private delegate void ChangeToNextLayoutDelegate(string layoutPath);
+
+        [FlagsAttribute]
+        enum EXECUTION_STATE : uint
+        {
+            ES_AWAYMODE_REQUIRED = 0x00000040,
+            ES_CONTINUOUS = 0x80000000,
+            ES_DISPLAY_REQUIRED = 0x00000002,
+            ES_SYSTEM_REQUIRED = 0x00000001
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
 
         public MainForm()
         {
@@ -304,6 +317,8 @@ namespace XiboClient
         {
             try
             {
+                SetThreadExecutionState(EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS);
+
                 // TODO: Check we are never out of the UI thread at this point
 
                 DestroyLayout();
