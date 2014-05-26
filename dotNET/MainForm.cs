@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-13 Daniel Garner
+ * Copyright (C) 2006-14 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -35,6 +35,7 @@ using System.Diagnostics;
 using XiboClient.Log;
 using System.Threading;
 using XiboClient.Properties;
+using System.Runtime.InteropServices;
 
 namespace XiboClient
 {
@@ -58,6 +59,18 @@ namespace XiboClient
         private ClientInfo _clientInfoForm;
 
         private delegate void ChangeToNextLayoutDelegate(string layoutPath);
+
+        [FlagsAttribute]
+        enum EXECUTION_STATE : uint
+        {
+            ES_AWAYMODE_REQUIRED = 0x00000040,
+            ES_CONTINUOUS = 0x80000000,
+            ES_DISPLAY_REQUIRED = 0x00000002,
+            ES_SYSTEM_REQUIRED = 0x00000001
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
 
         public MainForm()
         {
@@ -95,10 +108,24 @@ namespace XiboClient
             _clientInfoForm.Hide();
 
             // Add a message filter to listen for the i key
-            KeyFilter keyFilter = new KeyFilter();
-            keyFilter.ClientInfoForm = _clientInfoForm;
+            Application.AddMessageFilter(KeyStore.Instance);
 
-            Application.AddMessageFilter(keyFilter);
+            // Define the hotkey
+            Keys key;
+            try
+            {
+                key = (Keys)Enum.Parse(typeof(Keys), Settings.Default.ClientInformationKeyCode.ToUpper());
+            }
+            catch
+            {
+                // Default back to I
+                key = Keys.I;
+            }
+
+            KeyStore.Instance.AddKeyDefinition("ClientInfo", key, ((Settings.Default.ClientInfomationCtrlKey) ? Keys.Control : Keys.None));
+
+            // Register a handler for the key event
+            KeyStore.Instance.KeyPress += Instance_KeyPress;
 
             // Trace listener for Client Info
             ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener(_clientInfoForm);
@@ -113,6 +140,25 @@ namespace XiboClient
             }
 
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
+        }
+
+        /// <summary>
+        /// Handle the Key Event
+        /// </summary>
+        /// <param name="name"></param>
+        void Instance_KeyPress(string name)
+        {
+            if (name != "ClientInfo")
+                return;
+
+            // Toggle
+            if (_clientInfoForm.Visible)
+                _clientInfoForm.Hide();
+            else
+            {
+                _clientInfoForm.Show();
+                _clientInfoForm.BringToFront();
+            }
         }
 
         /// <summary>
@@ -271,6 +317,8 @@ namespace XiboClient
         {
             try
             {
+                SetThreadExecutionState(EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS);
+
                 // TODO: Check we are never out of the UI thread at this point
 
                 DestroyLayout();
@@ -731,40 +779,6 @@ namespace XiboClient
             {
                 System.Diagnostics.Trace.WriteLine(new LogMessage("MainForm - FlushStats", "Unable to Flush Stats"), LogType.Error.ToString());
             }
-        }
-    }
-
-    /// <summary>
-    /// Key Filter to show the Client Information Screen
-    /// </summary>
-    public class KeyFilter : IMessageFilter
-    {
-        public ClientInfo ClientInfoForm;
-
-        public bool PreFilterMessage(ref Message msg)
-        {
-            const int WM_KEYDOWN = 0x100;
-            const int WM_SYSKEYDOWN = 0x104;
-
-            // Only interested in Key Down messages
-            if ((msg.Msg == WM_KEYDOWN) || (msg.Msg == WM_SYSKEYDOWN))
-            {
-                Keys keyCode = (Keys)(int)msg.WParam & Keys.KeyCode;
-
-                if (keyCode == Keys.I)
-                {
-                    // Toggle
-                    if (ClientInfoForm.Visible)
-                        ClientInfoForm.Hide();
-                    else
-                    {
-                        ClientInfoForm.Show();
-                        ClientInfoForm.BringToFront();
-                    }
-                }
-            }
-
-            return false;
         }
     }
 }
