@@ -108,12 +108,13 @@ namespace XiboClient
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, scheduleId, layoutId, mediaId));
-
                     webBrowser.DocumentText = "<html><body><h1>Unable to show this web location - invalid address.</h1></body></html>";
 
-                    System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Unable to show the powerpoint, cannot be located", scheduleId, layoutId, mediaId));
+                    Trace.WriteLine(new LogMessage("WebContent", "Unable to show webpage. Exception: " + ex.Message, scheduleId, layoutId), LogType.Error.ToString());
                 }
+
+                base.Duration = duration;
+                base.RenderMedia();
             }
         }
 
@@ -125,9 +126,6 @@ namespace XiboClient
 
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
-            base.Duration = duration;
-            base.RenderMedia();
-
             // Get ready to show the control
             Show();
             Controls.Add(webBrowser);
