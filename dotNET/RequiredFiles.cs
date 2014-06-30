@@ -149,18 +149,18 @@ namespace XiboClient
                         if (File.Exists(Settings.Default.LibraryPath + @"\" + rf.MediaId + ".htm"))
                         {
                             // Has it expired?
-                            int expirey = 0;
+                            int updated = 0;
 
                             try
                             {
-                                expirey = int.Parse(attributes["updated"].Value);
+                                updated = int.Parse(attributes["updated"].Value);
                             }
                             catch (Exception) {}
 
-                            DateTime expireyDt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                            expireyDt = expireyDt.AddSeconds(expirey);
+                            DateTime updatedDt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                            updatedDt = updatedDt.AddSeconds(updated);
 
-                            if (File.GetLastWriteTimeUtc(Settings.Default.LibraryPath + @"\" + rf.MediaId + ".htm") > expireyDt)
+                            if (File.GetLastWriteTimeUtc(Settings.Default.LibraryPath + @"\" + rf.MediaId + ".htm") > updatedDt)
                                 rf.Complete = true;
                         }
 
