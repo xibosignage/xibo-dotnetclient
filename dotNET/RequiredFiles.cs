@@ -147,7 +147,22 @@ namespace XiboClient
 
                         // Check to see if this has already been downloaded
                         if (File.Exists(Settings.Default.LibraryPath + @"\" + rf.MediaId + ".htm"))
-                            rf.Complete = true;
+                        {
+                            // Has it expired?
+                            int updated = 0;
+
+                            try
+                            {
+                                updated = int.Parse(attributes["updated"].Value);
+                            }
+                            catch (Exception) {}
+
+                            DateTime updatedDt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                            updatedDt = updatedDt.AddSeconds(updated);
+
+                            if (File.GetLastWriteTimeUtc(Settings.Default.LibraryPath + @"\" + rf.MediaId + ".htm") > updatedDt)
+                                rf.Complete = true;
+                        }
 
                         // Add to the Rf Node
                         RequiredFileList.Add(rf);

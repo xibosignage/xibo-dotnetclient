@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace XiboClient
 {
@@ -98,22 +99,23 @@ namespace XiboClient
                             // Alter the width and height
                             w = w * (1 / scaling);
                             h = h * (1 / scaling);
-                            zoom = "zoom: " + scaling.ToString() + ";";
+                            zoom = "zoom: " + scaling.ToString(CultureInfo.InvariantCulture) + ";";
                         }
 
                         // Load an IFRAME into the DocumentText
-                        string iframe = "<html><body style='margin:0; border:0;'><iframe style='border:0;margin-left:-" + offsetLeft.ToString() + "px; margin-top:-" + offsetTop.ToString() + "px;" + zoom + "' scrolling=\"no\" width=\"" + (w + offsetLeft).ToString() + "px\" height=\"" + (h + offsetTop).ToString() + "px\" src=\"" + _filePath + "\"></body></html>";
+                        string iframe = "<html><body style='margin:0; border:0;'><iframe style='border:0;margin-left:-" + offsetLeft.ToString(CultureInfo.InvariantCulture) + "px; margin-top:-" + offsetTop.ToString(CultureInfo.InvariantCulture) + "px;" + zoom + "' scrolling=\"no\" width=\"" + (w + offsetLeft).ToString(CultureInfo.InvariantCulture) + "px\" height=\"" + (h + offsetTop).ToString(CultureInfo.InvariantCulture) + "px\" src=\"" + _filePath + "\"></body></html>";
                         webBrowser.DocumentText = iframe;
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", ex.Message, scheduleId, layoutId, mediaId));
-
                     webBrowser.DocumentText = "<html><body><h1>Unable to show this web location - invalid address.</h1></body></html>";
 
-                    System.Diagnostics.Trace.WriteLine(String.Format("[*]ScheduleID:{1},LayoutID:{2},MediaID:{3},Message:{0}", "Unable to show the powerpoint, cannot be located", scheduleId, layoutId, mediaId));
+                    Trace.WriteLine(new LogMessage("WebContent", "Unable to show webpage. Exception: " + ex.Message, scheduleId, layoutId), LogType.Error.ToString());
                 }
+
+                base.Duration = duration;
+                base.RenderMedia();
             }
         }
 
@@ -125,9 +127,6 @@ namespace XiboClient
 
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
-            base.Duration = duration;
-            base.RenderMedia();
-
             // Get ready to show the control
             Show();
             Controls.Add(webBrowser);

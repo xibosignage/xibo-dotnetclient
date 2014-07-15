@@ -36,6 +36,7 @@ using XiboClient.Log;
 using System.Threading;
 using XiboClient.Properties;
 using System.Runtime.InteropServices;
+using System.Globalization;
 
 namespace XiboClient
 {
@@ -414,8 +415,8 @@ namespace XiboClient
             XmlAttributeCollection layoutAttributes = layoutNode.Attributes;
 
             // Set the background and size of the form
-            _layoutWidth = int.Parse(layoutAttributes["width"].Value);
-            _layoutHeight = int.Parse(layoutAttributes["height"].Value);
+            _layoutWidth = int.Parse(layoutAttributes["width"].Value, CultureInfo.InvariantCulture);
+            _layoutHeight = int.Parse(layoutAttributes["height"].Value, CultureInfo.InvariantCulture);
 
 
             // Scaling factor, will be applied to all regions
@@ -539,15 +540,15 @@ namespace XiboClient
                 options.scheduleId = _scheduleId;
                 options.layoutId = _layoutId;
                 options.regionId = nodeAttibutes["id"].Value.ToString();
-                options.width = (int)(Convert.ToDouble(nodeAttibutes["width"].Value) * _scaleFactor);
-                options.height = (int)(Convert.ToDouble(nodeAttibutes["height"].Value) * _scaleFactor);
-                options.left = (int)(Convert.ToDouble(nodeAttibutes["left"].Value) * _scaleFactor);
-                options.top = (int)(Convert.ToDouble(nodeAttibutes["top"].Value) * _scaleFactor);
+                options.width = (int)(Convert.ToDouble(nodeAttibutes["width"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
+                options.height = (int)(Convert.ToDouble(nodeAttibutes["height"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
+                options.left = (int)(Convert.ToDouble(nodeAttibutes["left"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
+                options.top = (int)(Convert.ToDouble(nodeAttibutes["top"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
                 options.scaleFactor = _scaleFactor;
 
                 // Store the original width and original height for scaling
-                options.originalWidth = (int)Convert.ToDouble(nodeAttibutes["width"].Value);
-                options.originalHeight = (int)Convert.ToDouble(nodeAttibutes["height"].Value);
+                options.originalWidth = (int)Convert.ToDouble(nodeAttibutes["width"].Value, CultureInfo.InvariantCulture);
+                options.originalHeight = (int)Convert.ToDouble(nodeAttibutes["height"].Value, CultureInfo.InvariantCulture);
 
                 // Set the backgrounds (used for Web content offsets)
                 options.backgroundLeft = options.left * -1;
