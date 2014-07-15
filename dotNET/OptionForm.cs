@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2012 Daniel Garner
+ * Copyright (C) 2006-2014 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -105,6 +105,8 @@ namespace XiboClient
             logToDiskLocation.Text = Settings.Default.LogToDiskLocation;
             showInTaskbar.Checked = Settings.Default.ShowInTaskbar;
             cursorStartPosition.Text = Settings.Default.CursorStartPosition;
+            clientInfoHotKeyTextBox.Text = Settings.Default.ClientInformationKeyCode;
+            clientInfoCtrlModifierCheckBox.Checked = Settings.Default.ClientInfomationCtrlKey;
 
             Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
@@ -202,6 +204,8 @@ namespace XiboClient
                 Settings.Default.LogToDiskLocation = logToDiskLocation.Text;
                 Settings.Default.ShowInTaskbar = showInTaskbar.Checked;
                 Settings.Default.CursorStartPosition = cursorStartPosition.Text;
+                Settings.Default.ClientInformationKeyCode = clientInfoHotKeyTextBox.Text;
+                Settings.Default.ClientInfomationCtrlKey = clientInfoCtrlModifierCheckBox.Checked;
 
                 // Commit these changes back to the user settings
                 Settings.Default.Save();

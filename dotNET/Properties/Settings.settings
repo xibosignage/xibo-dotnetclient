@@ -140,5 +140,11 @@
     <Setting Name="ClientCodeVersion" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">83</Value>
     </Setting>
+    <Setting Name="ClientInformationKeyCode" Type="System.String" Scope="User">
+      <Value Profile="(Default)">I</Value>
+    </Setting>
+    <Setting Name="ClientInfomationCtrlKey" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

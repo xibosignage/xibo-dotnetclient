@@ -82,6 +82,8 @@ namespace XiboClient
             this.clientHeight = new System.Windows.Forms.NumericUpDown();
             this.clientWidth = new System.Windows.Forms.NumericUpDown();
             this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.cursorStartPosition = new System.Windows.Forms.ComboBox();
+            this.label22 = new System.Windows.Forms.Label();
             this.logToDiskLocation = new System.Windows.Forms.TextBox();
             this.label21 = new System.Windows.Forms.Label();
             this.showInTaskbar = new System.Windows.Forms.CheckBox();
@@ -104,8 +106,9 @@ namespace XiboClient
             this.folderBrowserLibrary = new System.Windows.Forms.FolderBrowserDialog();
             this.splashScreenOverride = new System.Windows.Forms.OpenFileDialog();
             this.xmds1 = new XiboClient.xmds.xmds();
-            this.label22 = new System.Windows.Forms.Label();
-            this.cursorStartPosition = new System.Windows.Forms.ComboBox();
+            this.label23 = new System.Windows.Forms.Label();
+            this.clientInfoHotKeyTextBox = new System.Windows.Forms.TextBox();
+            this.clientInfoCtrlModifierCheckBox = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nupScrollStepAmount)).BeginInit();
@@ -684,6 +687,9 @@ namespace XiboClient
             // 
             // tabPage5
             // 
+            this.tabPage5.Controls.Add(this.clientInfoCtrlModifierCheckBox);
+            this.tabPage5.Controls.Add(this.clientInfoHotKeyTextBox);
+            this.tabPage5.Controls.Add(this.label23);
             this.tabPage5.Controls.Add(this.cursorStartPosition);
             this.tabPage5.Controls.Add(this.label22);
             this.tabPage5.Controls.Add(this.logToDiskLocation);
@@ -707,17 +713,39 @@ namespace XiboClient
             this.tabPage5.Text = "Advanced";
             this.tabPage5.UseVisualStyleBackColor = true;
             // 
+            // cursorStartPosition
+            // 
+            this.cursorStartPosition.FormattingEnabled = true;
+            this.cursorStartPosition.Items.AddRange(new object[] {
+            "Top Left",
+            "Top Right",
+            "Bottom Left",
+            "Bottom Right"});
+            this.cursorStartPosition.Location = new System.Drawing.Point(161, 128);
+            this.cursorStartPosition.Name = "cursorStartPosition";
+            this.cursorStartPosition.Size = new System.Drawing.Size(263, 21);
+            this.cursorStartPosition.TabIndex = 21;
+            // 
+            // label22
+            // 
+            this.label22.AutoSize = true;
+            this.label22.Location = new System.Drawing.Point(5, 131);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(102, 13);
+            this.label22.TabIndex = 20;
+            this.label22.Text = "Cursor Start Position";
+            // 
             // logToDiskLocation
             // 
-            this.logToDiskLocation.Location = new System.Drawing.Point(176, 176);
+            this.logToDiskLocation.Location = new System.Drawing.Point(161, 99);
             this.logToDiskLocation.Name = "logToDiskLocation";
-            this.logToDiskLocation.Size = new System.Drawing.Size(121, 20);
+            this.logToDiskLocation.Size = new System.Drawing.Size(263, 20);
             this.logToDiskLocation.TabIndex = 19;
             // 
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(20, 179);
+            this.label21.Location = new System.Drawing.Point(5, 102);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(105, 13);
             this.label21.TabIndex = 18;
@@ -726,7 +754,7 @@ namespace XiboClient
             // showInTaskbar
             // 
             this.showInTaskbar.AutoSize = true;
-            this.showInTaskbar.Location = new System.Drawing.Point(176, 238);
+            this.showInTaskbar.Location = new System.Drawing.Point(51, 220);
             this.showInTaskbar.Name = "showInTaskbar";
             this.showInTaskbar.Size = new System.Drawing.Size(130, 17);
             this.showInTaskbar.TabIndex = 17;
@@ -736,7 +764,7 @@ namespace XiboClient
             // label20
             // 
             this.label20.AutoSize = true;
-            this.label20.Location = new System.Drawing.Point(20, 151);
+            this.label20.Location = new System.Drawing.Point(5, 73);
             this.label20.Name = "label20";
             this.label20.Size = new System.Drawing.Size(54, 13);
             this.label20.TabIndex = 16;
@@ -749,15 +777,15 @@ namespace XiboClient
             "audit",
             "info",
             "error"});
-            this.logLevel.Location = new System.Drawing.Point(176, 148);
+            this.logLevel.Location = new System.Drawing.Point(161, 70);
             this.logLevel.Name = "logLevel";
-            this.logLevel.Size = new System.Drawing.Size(121, 21);
+            this.logLevel.Size = new System.Drawing.Size(263, 21);
             this.logLevel.TabIndex = 15;
             // 
             // label19
             // 
             this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(20, 123);
+            this.label19.Location = new System.Drawing.Point(225, 10);
             this.label19.Name = "label19";
             this.label19.Size = new System.Drawing.Size(138, 13);
             this.label19.TabIndex = 14;
@@ -765,14 +793,14 @@ namespace XiboClient
             // 
             // maxConcurrentDownloads
             // 
-            this.maxConcurrentDownloads.Location = new System.Drawing.Point(176, 121);
+            this.maxConcurrentDownloads.Location = new System.Drawing.Point(381, 8);
             this.maxConcurrentDownloads.Minimum = new decimal(new int[] {
             1,
             0,
             0,
             0});
             this.maxConcurrentDownloads.Name = "maxConcurrentDownloads";
-            this.maxConcurrentDownloads.Size = new System.Drawing.Size(121, 20);
+            this.maxConcurrentDownloads.Size = new System.Drawing.Size(43, 20);
             this.maxConcurrentDownloads.TabIndex = 13;
             this.maxConcurrentDownloads.Value = new decimal(new int[] {
             1,
@@ -783,7 +811,7 @@ namespace XiboClient
             // label18
             // 
             this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(20, 98);
+            this.label18.Location = new System.Drawing.Point(5, 43);
             this.label18.Name = "label18";
             this.label18.Size = new System.Drawing.Size(127, 13);
             this.label18.TabIndex = 12;
@@ -791,15 +819,15 @@ namespace XiboClient
             // 
             // shellCommandAllowList
             // 
-            this.shellCommandAllowList.Location = new System.Drawing.Point(176, 95);
+            this.shellCommandAllowList.Location = new System.Drawing.Point(161, 40);
             this.shellCommandAllowList.Name = "shellCommandAllowList";
-            this.shellCommandAllowList.Size = new System.Drawing.Size(121, 20);
+            this.shellCommandAllowList.Size = new System.Drawing.Size(263, 20);
             this.shellCommandAllowList.TabIndex = 11;
             // 
             // enableShellCommandsCb
             // 
             this.enableShellCommandsCb.AutoSize = true;
-            this.enableShellCommandsCb.Location = new System.Drawing.Point(176, 72);
+            this.enableShellCommandsCb.Location = new System.Drawing.Point(247, 220);
             this.enableShellCommandsCb.Name = "enableShellCommandsCb";
             this.enableShellCommandsCb.Size = new System.Drawing.Size(140, 17);
             this.enableShellCommandsCb.TabIndex = 10;
@@ -809,7 +837,7 @@ namespace XiboClient
             // doubleBufferingCheckBox
             // 
             this.doubleBufferingCheckBox.AutoSize = true;
-            this.doubleBufferingCheckBox.Location = new System.Drawing.Point(176, 49);
+            this.doubleBufferingCheckBox.Location = new System.Drawing.Point(247, 197);
             this.doubleBufferingCheckBox.Name = "doubleBufferingCheckBox";
             this.doubleBufferingCheckBox.Size = new System.Drawing.Size(141, 17);
             this.doubleBufferingCheckBox.TabIndex = 4;
@@ -818,9 +846,9 @@ namespace XiboClient
             // 
             // numericUpDownEmptyRegions
             // 
-            this.numericUpDownEmptyRegions.Location = new System.Drawing.Point(176, 23);
+            this.numericUpDownEmptyRegions.Location = new System.Drawing.Point(161, 8);
             this.numericUpDownEmptyRegions.Name = "numericUpDownEmptyRegions";
-            this.numericUpDownEmptyRegions.Size = new System.Drawing.Size(121, 20);
+            this.numericUpDownEmptyRegions.Size = new System.Drawing.Size(44, 20);
             this.numericUpDownEmptyRegions.TabIndex = 1;
             this.numericUpDownEmptyRegions.Value = new decimal(new int[] {
             10,
@@ -831,7 +859,7 @@ namespace XiboClient
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(20, 25);
+            this.label15.Location = new System.Drawing.Point(5, 10);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(136, 13);
             this.label15.TabIndex = 0;
@@ -896,27 +924,31 @@ namespace XiboClient
             this.xmds1.Url = "http://localhost/Xibo/server/xmds.php";
             this.xmds1.UseDefaultCredentials = false;
             // 
-            // label22
+            // label23
             // 
-            this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(23, 206);
-            this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(102, 13);
-            this.label22.TabIndex = 20;
-            this.label22.Text = "Cursor Start Position";
+            this.label23.AutoSize = true;
+            this.label23.Location = new System.Drawing.Point(5, 158);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(92, 13);
+            this.label23.TabIndex = 22;
+            this.label23.Text = "Client Info HotKey";
             // 
-            // cursorStartPosition
+            // clientInfoHotKeyTextBox
             // 
-            this.cursorStartPosition.FormattingEnabled = true;
-            this.cursorStartPosition.Items.AddRange(new object[] {
-            "Top Left",
-            "Top Right",
-            "Bottom Left",
-            "Bottom Right"});
-            this.cursorStartPosition.Location = new System.Drawing.Point(176, 203);
-            this.cursorStartPosition.Name = "cursorStartPosition";
-            this.cursorStartPosition.Size = new System.Drawing.Size(121, 21);
-            this.cursorStartPosition.TabIndex = 21;
+            this.clientInfoHotKeyTextBox.Location = new System.Drawing.Point(161, 158);
+            this.clientInfoHotKeyTextBox.Name = "clientInfoHotKeyTextBox";
+            this.clientInfoHotKeyTextBox.Size = new System.Drawing.Size(263, 20);
+            this.clientInfoHotKeyTextBox.TabIndex = 23;
+            // 
+            // clientInfoCtrlModifierCheckBox
+            // 
+            this.clientInfoCtrlModifierCheckBox.AutoSize = true;
+            this.clientInfoCtrlModifierCheckBox.Location = new System.Drawing.Point(51, 197);
+            this.clientInfoCtrlModifierCheckBox.Name = "clientInfoCtrlModifierCheckBox";
+            this.clientInfoCtrlModifierCheckBox.Size = new System.Drawing.Size(177, 17);
+            this.clientInfoCtrlModifierCheckBox.TabIndex = 24;
+            this.clientInfoCtrlModifierCheckBox.Text = "Client Info CTRL Key Required?";
+            this.clientInfoCtrlModifierCheckBox.UseVisualStyleBackColor = true;
             // 
             // OptionForm
             // 
@@ -1037,5 +1069,8 @@ namespace XiboClient
         private System.Windows.Forms.TextBox logToDiskLocation;
         private System.Windows.Forms.Label label22;
         private System.Windows.Forms.ComboBox cursorStartPosition;
+        private System.Windows.Forms.CheckBox clientInfoCtrlModifierCheckBox;
+        private System.Windows.Forms.TextBox clientInfoHotKeyTextBox;
+        private System.Windows.Forms.Label label23;
     }
 }
