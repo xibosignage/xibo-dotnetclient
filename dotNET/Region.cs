@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2013 Daniel Garner
+ * Copyright (C) 2006-2014 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -317,6 +317,10 @@ namespace XiboClient
             // Type and Duration will always be on the media node
             _options.type = nodeAttributes["type"].Value;
 
+            // Render as
+            if (nodeAttributes["render"] != null)
+                _options.render = nodeAttributes["render"].Value;
+
             //TODO: Check the type of node we have, and make sure it is supported.
 
             if (nodeAttributes["duration"].Value != "")
@@ -416,69 +420,76 @@ namespace XiboClient
 
             Trace.WriteLine(new LogMessage("Region - CreateNextMediaNode", string.Format("Creating new media: {0}, {1}", options.type, options.mediaid)), LogType.Audit.ToString());
 
-            switch (options.type)
+            if (options.render == "html")
             {
-                case "image":
-                    options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
-                    media = new ImagePosition(options);
-                    break;
+                media = new Html(options);
+            }
+            else
+            {
+                switch (options.type)
+                {
+                    case "image":
+                        options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                        media = new ImagePosition(options);
+                        break;
 
-                case "text":
-                    media = new Text(options);
-                    break;
+                    case "text":
+                        media = new Html(options);
+                        break;
 
-                case "powerpoint":
-                    options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
-                    media = new WebContent(options);
-                    break;
+                    case "powerpoint":
+                        options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                        media = new WebContent(options);
+                        break;
 
-                case "video":
-                    options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                    case "video":
+                        options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
 
-                    // Which video engine are we using?
-                    if (Settings.Default.VideoRenderingEngine == "DirectShow")
-                        media = new VideoDS(options);
-                    else
-                        media = new Video(options);
+                        // Which video engine are we using?
+                        if (Settings.Default.VideoRenderingEngine == "DirectShow")
+                            media = new VideoDS(options);
+                        else
+                            media = new Video(options);
 
-                    break;
+                        break;
 
-                case "localvideo":
-                    // Which video engine are we using?
-                    if (Settings.Default.VideoRenderingEngine == "DirectShow")
-                        media = new VideoDS(options);
-                    else
-                        media = new Video(options);
+                    case "localvideo":
+                        // Which video engine are we using?
+                        if (Settings.Default.VideoRenderingEngine == "DirectShow")
+                            media = new VideoDS(options);
+                        else
+                            media = new Video(options);
 
-                    break;
+                        break;
 
-                case "webpage":
-                    media = new WebContent(options);
-                    break;
+                    case "webpage":
+                        media = new WebContent(options);
+                        break;
 
-                case "flash":
-                    options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
-                    media = new Flash(options);
-                    break;
+                    case "flash":
+                        options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                        media = new Flash(options);
+                        break;
 
-                case "ticker":
-                    media = new Rss(options);
-                    break;
+                    case "ticker":
+                        media = new Rss(options);
+                        break;
 
-                case "embedded":
-                    media = new Text(options);
-                    break;
+                    case "embedded":
+                        media = new Html(options);
+                        break;
 
-                case "datasetview":
-                    media = new DataSetView(options);
-                    break;
+                    case "datasetview":
+                        media = new DataSetView(options);
+                        break;
 
-                case "shellcommand":
-                    media = new ShellCommand(options);
-                    break;
+                    case "shellcommand":
+                        media = new ShellCommand(options);
+                        break;
 
-                default:
-                    throw new InvalidOperationException("Not a valid media node type: " + options.type);
+                    default:
+                        throw new InvalidOperationException("Not a valid media node type: " + options.type);
+                }
             }
 
             // Sets up the timer for this media

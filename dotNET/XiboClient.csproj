@@ -116,6 +116,9 @@
     </Compile>
     <Compile Include="BlackList.cs" />
     <Compile Include="CacheManager.cs" />
+    <Compile Include="Html.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="KeyStore.cs" />
     <Compile Include="RegionOptions.cs" />
     <Compile Include="TemporaryFile.cs" />

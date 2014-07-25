@@ -40,6 +40,7 @@ namespace XiboClient
         public int backgroundLeft;
         public int backgroundTop;
 
+        public string render;
         public string type;
         public string uri;
         public int duration;

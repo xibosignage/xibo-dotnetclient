@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-2014 Daniel Garner and James Packer
  *
  * This file is part of Xibo.
  *
@@ -45,7 +45,7 @@ namespace XiboClient
             try
             {
                 _pictureBox = new PictureBox();
-                _pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
+                _pictureBox.SizeMode = (options.Dictionary.Get("scaleType", "stretch") == "stretch") ? PictureBoxSizeMode.StretchImage : PictureBoxSizeMode.Zoom;
                 _pictureBox.Image = new Bitmap(_filePath);
                 _pictureBox.Size = new Size(_width, _height);
                 _pictureBox.Location = new Point(0, 0);
