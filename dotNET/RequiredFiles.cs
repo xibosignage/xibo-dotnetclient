@@ -393,7 +393,7 @@ namespace XiboClient
                         rf.FileType, rf.Id.ToString(), (rf.Complete) ? "1" : "0", rf.LastChecked.ToString(), rf.Md5);
                 }
 
-                xml = string.Format("<files clientType=\"windows\" clientVersion=\"{2}\" clientCode=\"{3}\" macAddress=\"{1}\">{0}</files>", xml, hardwareKey.MacAddress, Settings.Default.ClientVersion, Settings.Default.ClientCodeVersion.ToString());
+                xml = string.Format("<files>{0}</files>", xml);
 
                 _report.MediaInventoryAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey,
                     hardwareKey.Key, xml);
