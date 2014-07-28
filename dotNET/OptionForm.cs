@@ -28,6 +28,8 @@ using System.Net;
 using System.Windows.Forms;
 using XiboClient.Properties;
 using System.Diagnostics;
+using System.Xml;
+using XiboClient.XmdsAgents;
 
 namespace XiboClient
 {
@@ -40,7 +42,7 @@ namespace XiboClient
         {
             InitializeComponent();
 
-            System.Diagnostics.Debug.WriteLine("Initialise Option Form Components", "OptionForm");
+            Debug.WriteLine("Initialise Option Form Components", "OptionForm");
 
             // Get a hardware key here, just in case we havent been able to get one before
             _hardwareKey = new HardwareKey();
@@ -72,14 +74,6 @@ namespace XiboClient
             textBoxServerKey.Text = Settings.Default.ServerKey;
             textBoxLibraryPath.Text = Settings.Default.LibraryPath;
             tbHardwareKey.Text = Settings.Default.hardwareKey;
-            numericUpDownCollect.Value = Settings.Default.collectInterval;
-            checkBoxPowerPoint.Checked = Settings.Default.powerpointEnabled;
-            checkBoxStats.Checked = Settings.Default.statsEnabled;
-            nupScrollStepAmount.Value = Settings.Default.scrollStepAmount;
-
-            // Register Tab
-            labelXmdsUrl.Text = Settings.Default.XiboClient_xmds_xmds;
-            textBoxDisplayName.Text = Settings.Default.displayName;
 
             // Proxy Tab
             textBoxProxyUser.Text = Settings.Default.ProxyUser;
@@ -87,26 +81,7 @@ namespace XiboClient
             textBoxProxyDomain.Text = Settings.Default.ProxyDomain;
 
             // Appearance Tab
-            clientWidth.Value = Settings.Default.sizeX;
-            clientHeight.Value = Settings.Default.sizeY;
-            offsetX.Value = Settings.Default.offsetX;
-            offsetY.Value = Settings.Default.offsetY;
-            cbExpireModifiedLayouts.Checked = Settings.Default.expireModifiedLayouts;
-            enableMouseCb.Checked = Settings.Default.EnableMouse;
             splashOverride.Text = Settings.Default.SplashOverride;
-
-            // Advanced Tab
-            numericUpDownEmptyRegions.Value = Settings.Default.emptyLayoutDuration;
-            doubleBufferingCheckBox.Checked = Settings.Default.DoubleBuffering;
-            enableShellCommandsCb.Checked = Settings.Default.EnableShellCommands;
-            shellCommandAllowList.Text = Settings.Default.ShellCommandAllowList;
-            logLevel.Text = Settings.Default.LogLevel;
-            maxConcurrentDownloads.Value = Settings.Default.MaxConcurrentDownloads;
-            logToDiskLocation.Text = Settings.Default.LogToDiskLocation;
-            showInTaskbar.Checked = Settings.Default.ShowInTaskbar;
-            cursorStartPosition.Text = Settings.Default.CursorStartPosition;
-            clientInfoHotKeyTextBox.Text = Settings.Default.ClientInformationKeyCode;
-            clientInfoCtrlModifierCheckBox.Checked = Settings.Default.ClientInfomationCtrlKey;
 
             Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
@@ -118,39 +93,21 @@ namespace XiboClient
         /// <param name="e"></param>
         void xmds1_RegisterDisplayCompleted(object sender, XiboClient.xmds.RegisterDisplayCompletedEventArgs e)
         {
+            tbStatus.ResetText();
+
             if (e.Error != null)
             {
-                textBoxResults.Text = e.Error.Message;
+                tbStatus.AppendText("Status" + Environment.NewLine);
+                tbStatus.AppendText(e.Error.Message);
 
-                System.Diagnostics.Debug.WriteLine("Error returned from Call to XMDS Register Display.", "xmds1_RegisterDisplayCompleted");
-                System.Diagnostics.Debug.WriteLine(e.Error.Message, "xmds1_RegisterDisplayCompleted");
-                System.Diagnostics.Debug.WriteLine(e.Error.StackTrace, "xmds1_RegisterDisplayCompleted");
+                Debug.WriteLine("Error returned from Call to XMDS Register Display.", "xmds1_RegisterDisplayCompleted");
+                Debug.WriteLine(e.Error.Message, "xmds1_RegisterDisplayCompleted");
+                Debug.WriteLine(e.Error.StackTrace, "xmds1_RegisterDisplayCompleted");
             }
             else
             {
-                textBoxResults.Text = e.Result;
+                tbStatus.AppendText(RegisterAgent.ProcessRegisterXml(e.Result));
             }
-        }
-
-        /// <summary>
-        /// Register display clicked
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void buttonRegister_Click(object sender, EventArgs e)
-        {
-            // Make a new hardware key just in case we have changed it in the form.
-            _hardwareKey = new HardwareKey();
-
-            textBoxResults.Text = "Sending Request";
-
-            Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
-            xmds1.Url = Settings.Default.XiboClient_xmds_xmds;
-
-            Properties.Settings.Default.displayName = textBoxDisplayName.Text;
-            Properties.Settings.Default.Save();
-
-            xmds1.RegisterDisplayAsync(Properties.Settings.Default.ServerKey, _hardwareKey.Key, textBoxDisplayName.Text, Properties.Settings.Default.Version);
         }
 
        /// <summary>
@@ -160,24 +117,22 @@ namespace XiboClient
        /// <param name="e"></param>
         private void buttonSaveSettings_Click(object sender, EventArgs e)
         {
+            tbStatus.ResetText();
             try
             {
+                tbStatus.AppendText("Saving with CMS... Please wait...");
+
+                // Make sure our XMDS location is correct
+                Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
+            
                 // Simple settings
                 Settings.Default.ServerKey = textBoxServerKey.Text;
                 Settings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
                 Settings.Default.serverURI = textBoxXmdsUri.Text;
-                Settings.Default.collectInterval = numericUpDownCollect.Value;
-                Settings.Default.powerpointEnabled = checkBoxPowerPoint.Checked;
-                Settings.Default.statsEnabled = checkBoxStats.Checked;
-                Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
                 Settings.Default.hardwareKey = tbHardwareKey.Text;
-                Settings.Default.scrollStepAmount = nupScrollStepAmount.Value;
-                Settings.Default.EnableMouse = enableMouseCb.Checked;
-                Settings.Default.DoubleBuffering = doubleBufferingCheckBox.Checked;
 
                 // Also tweak the address of the xmds1
                 xmds1.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
-                labelXmdsUrl.Text = Properties.Settings.Default.XiboClient_xmds_xmds;
 
                 // Proxy Settings
                 Settings.Default.ProxyUser = textBoxProxyUser.Text;
@@ -188,31 +143,17 @@ namespace XiboClient
                 OptionForm.SetGlobalProxy();
 
                 // Client settings
-                Settings.Default.sizeX = clientWidth.Value;
-                Settings.Default.sizeY = clientHeight.Value;
-                Settings.Default.offsetX = offsetX.Value;
-                Settings.Default.offsetY = offsetY.Value;
                 Settings.Default.SplashOverride = splashOverride.Text;
-
-                // Advanced settings
-                Settings.Default.expireModifiedLayouts = cbExpireModifiedLayouts.Checked;
-                Settings.Default.emptyLayoutDuration = numericUpDownEmptyRegions.Value;
-                Settings.Default.EnableShellCommands = enableShellCommandsCb.Checked;
-                Settings.Default.ShellCommandAllowList = shellCommandAllowList.Text;
-                Settings.Default.MaxConcurrentDownloads = Convert.ToInt32(maxConcurrentDownloads.Value);
-                Settings.Default.LogLevel = logLevel.Text;
-                Settings.Default.LogToDiskLocation = logToDiskLocation.Text;
-                Settings.Default.ShowInTaskbar = showInTaskbar.Checked;
-                Settings.Default.CursorStartPosition = cursorStartPosition.Text;
-                Settings.Default.ClientInformationKeyCode = clientInfoHotKeyTextBox.Text;
-                Settings.Default.ClientInfomationCtrlKey = clientInfoCtrlModifierCheckBox.Checked;
 
                 // Commit these changes back to the user settings
                 Settings.Default.Save();
+
+                // Call register
+                xmds1.RegisterDisplayAsync(Settings.Default.ServerKey, _hardwareKey.Key, Settings.Default.displayName, "windows", Settings.Default.ClientVersion, Settings.Default.ClientCodeVersion, _hardwareKey.MacAddress, Settings.Default.Version);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                tbStatus.AppendText(ex.Message);
             }
         }
 
@@ -250,7 +191,7 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                System.Diagnostics.Process.Start("http://xibo.org.uk/manual");
+                Process.Start("http://xibo.org.uk/manual");
             }
             catch
             {
@@ -269,7 +210,7 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                System.Diagnostics.Process.Start(Properties.Settings.Default.serverURI + @"/index.php?p=display");
+                System.Diagnostics.Process.Start(Settings.Default.serverURI + @"/index.php?p=display");
             }
             catch
             {
@@ -329,6 +270,17 @@ namespace XiboClient
             Debug.WriteLine("[OUT]", "SetGlobalProxy");
 
             return;
+        }
+
+        private void buttonExit_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Close();
+            Process.Start(Application.ExecutablePath);
         }
     }
 }

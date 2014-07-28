@@ -172,7 +172,7 @@ namespace XiboClient.XmdsAgents
                             xmds.Url = Settings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            getFileReturn = xmds.GetFile(Settings.Default.ServerKey, _hardwareKey, file.Path, file.FileType, file.ChunkOffset, file.ChunkSize, Settings.Default.Version);
+                            getFileReturn = xmds.GetFile(Settings.Default.ServerKey, _hardwareKey, file.Id, file.FileType, file.ChunkOffset, file.ChunkSize, Settings.Default.Version);
                         }
 
                         // Set the flag to indicate we have a connection to XMDS

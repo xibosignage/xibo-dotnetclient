@@ -51,8 +51,14 @@ namespace XiboClient
                 _pictureBox.Location = new Point(0, 0);
                 _pictureBox.BorderStyle = BorderStyle.None;
                 _pictureBox.BackColor = Color.Transparent;
-                
-                this.Controls.Add(this._pictureBox);
+
+                /*if (options.Dictionary.Get("scaleType", "stretch") == "center")
+                {
+                    string align = options.Dictionary.Get("align", "center");
+                    string valign = options.Dictionary.Get("valign", "middle");
+                }*/
+
+                Controls.Add(this._pictureBox);
             }
             catch (Exception ex)
             {

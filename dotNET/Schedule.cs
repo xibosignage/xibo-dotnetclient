@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006 - 2010 Daniel Garner and James Packer
+ * Copyright (C) 2006 - 2014 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -61,6 +61,10 @@ namespace XiboClient
         private ScheduleManager _scheduleManager;
         Thread _scheduleManagerThread;
 
+        // Register Agent
+        private RegisterAgent _registerAgent;
+        Thread _registerAgentThread;
+
         // Schedule Agent
         private ScheduleAgent _scheduleAgent;
         Thread _scheduleAgentThread;
@@ -100,6 +104,11 @@ namespace XiboClient
 
             // Set client info form
             _clientInfoForm = clientInfoForm;
+
+            // Create a Register Agent
+            _registerAgent = new RegisterAgent();
+            _registerAgentThread = new Thread(new ThreadStart(_registerAgent.Run));
+            _registerAgentThread.Name = "RegisterAgentThread";
 
             // Create a schedule manager
             _scheduleManager = new ScheduleManager(_cacheManager, scheduleLocation);
@@ -147,6 +156,9 @@ namespace XiboClient
         /// </summary>
         public void InitializeComponents() 
         {
+            // Start the RegisterAgent thread
+            _registerAgentThread.Start();
+
             // Start the ScheduleAgent thread
             _scheduleAgentThread.Start();
 
@@ -274,6 +286,9 @@ namespace XiboClient
         /// </summary>
         public void Stop()
         {
+            // Stop the register agent
+            _registerAgent.Stop();
+
             // Stop the schedule agent
             _scheduleAgent.Stop();
 

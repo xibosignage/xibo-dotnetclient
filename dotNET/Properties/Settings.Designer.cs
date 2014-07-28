@@ -47,7 +47,7 @@ namespace XiboClient.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/Series%201.3/131-datasets/server/xmds.php")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/xibo/1.7/server-170-alpha/server/xmds.php")]
         public string XiboClient_xmds_xmds {
             get {
                 return ((string)(this["XiboClient_xmds_xmds"]));
@@ -197,7 +197,7 @@ namespace XiboClient.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        [global::System.Configuration.DefaultSettingValueAttribute("4")]
         public string Version {
             get {
                 return ((string)(this["Version"]));
@@ -216,15 +216,12 @@ namespace XiboClient.Properties {
             }
         }
         
-        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("50")]
         public int StatsFlushCount {
             get {
                 return ((int)(this["StatsFlushCount"]));
-            }
-            set {
-                this["StatsFlushCount"] = value;
             }
         }
         
@@ -371,15 +368,12 @@ namespace XiboClient.Properties {
             }
         }
         
-        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("requiredFiles.xml")]
         public string RequiredFilesFile {
             get {
                 return ((string)(this["RequiredFilesFile"]));
-            }
-            set {
-                this["RequiredFilesFile"] = value;
             }
         }
         

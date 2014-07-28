@@ -120,13 +120,13 @@ namespace XiboClient
                 if (rf.FileType == "media")
                 {
                     string[] filePart = attributes["path"].Value.Split('.');
-                    rf.Id = int.Parse(filePart[0]);
+                    rf.Id = int.Parse(attributes["id"].Value);
                     rf.Path = attributes["path"].Value;
                     rf.ChunkSize = 512000;
                 }
                 else if (rf.FileType == "layout")
                 {
-                    rf.Id = int.Parse(attributes["path"].Value);
+                    rf.Id = int.Parse(attributes["id"].Value);
                     rf.Path = attributes["path"].Value + ".xlf";
                     rf.ChunkSize = rf.Size;
                 }
