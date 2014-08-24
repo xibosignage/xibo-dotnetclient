@@ -122,12 +122,15 @@ namespace XiboClient
                     string[] filePart = attributes["path"].Value.Split('.');
                     rf.Id = int.Parse(attributes["id"].Value);
                     rf.Path = attributes["path"].Value;
+                    rf.SaveAs = (string.IsNullOrEmpty(attributes["saveAs"].Value)) ? rf.Path : attributes["saveAs"].Value;
+                    rf.Http = (attributes["download"].Value == "http");
                     rf.ChunkSize = 512000;
                 }
                 else if (rf.FileType == "layout")
                 {
                     rf.Id = int.Parse(attributes["id"].Value);
                     rf.Path = attributes["path"].Value + ".xlf";
+                    rf.SaveAs = rf.Path;
                     rf.ChunkSize = rf.Size;
                 }
                 else if (rf.FileType == "resource")
@@ -141,6 +144,7 @@ namespace XiboClient
                         rf.RegionId = attributes["regionid"].Value;
                         rf.MediaId = attributes["mediaid"].Value;
                         rf.Path = rf.MediaId + ".htm";
+                        rf.SaveAs = rf.Path;
                         
                         // Set the size to something arbitary
                         rf.Size = 10000;
@@ -425,9 +429,11 @@ namespace XiboClient
         public DateTime LastChecked;
         public string Md5;
         public string Path;
+        public string SaveAs;
 
         public bool Downloading;
         public bool Complete;
+        public bool Http;
 
         public int ChunkOffset;
         public int ChunkSize;

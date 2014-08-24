@@ -24,6 +24,8 @@ using System.Threading;
 using XiboClient.Properties;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Mime;
 
 /// 17/02/12 Dan Created
 /// 21/02/12 Dan Added OnComplete Delegate and Event
@@ -138,7 +140,7 @@ namespace XiboClient.XmdsAgents
 
                 if (file.FileType == "resource")
                 {
-                    // Download using GetResource
+                    // Download using XMDS GetResource
                     using (xmds.xmds xmds = new xmds.xmds())
                     {
                         xmds.Credentials = null;
@@ -148,7 +150,7 @@ namespace XiboClient.XmdsAgents
                         string result = xmds.GetResource(Settings.Default.ServerKey, Settings.Default.hardwareKey, file.LayoutId, file.RegionId, file.MediaId, Settings.Default.Version);
 
                         // Write the result to disk
-                        using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                        using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
                         {
                             sw.Write(result);
                             sw.Close();
@@ -159,8 +161,63 @@ namespace XiboClient.XmdsAgents
                         file.Complete = true;
                     }
                 }
+                else if (file.FileType == "media" && file.Http)
+                {
+                    // Download using HTTP and the rf.Path
+                    using (WebClient wc = new WebClient())
+                    {
+                        using (Stream stream = wc.OpenRead(file.Path))
+                        {
+                            // Get the encoding for the feed.
+                            Encoding encoding;
+                            try
+                            {
+                                ContentType contentType = new ContentType(wc.ResponseHeaders[HttpResponseHeader.ContentType]);
+                                encoding = Encoding.GetEncoding(contentType.CharSet);
+                            }
+                            catch
+                            {
+                                // Default to UTF-8
+                                encoding = Encoding.UTF8;
+                            }
+
+                            // Load the feed into a stream and save it to disk
+                            using (StreamReader sr = new StreamReader(stream, encoding))
+                            {
+                                using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read), encoding))
+                                {
+                                    Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
+
+                                    sw.Write(sr.ReadToEnd());
+                                }
+                            }
+                        }
+                    }
+
+                    // File completed
+                    file.Downloading = false;
+
+                    // Check MD5
+                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.SaveAs);
+                    if (file.Md5 == md5)
+                    {
+                        // Mark it as complete
+                        _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
+
+                        // Add it to the cache manager
+                        _requiredFiles.CurrentCacheManager.Add(file.SaveAs, file.Md5);
+
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.SaveAs), LogType.Info.ToString());
+                    }
+                    else
+                    {
+                        // Just error - we will pick it up again the next time we download
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.SaveAs), LogType.Error.ToString());
+                    }
+                }
                 else
                 {
+                    // Download using XMDS GetFile 
                     while (!file.Complete)
                     {
                         byte[] getFileReturn;
@@ -184,7 +241,7 @@ namespace XiboClient.XmdsAgents
                             string layoutXml = Encoding.UTF8.GetString(getFileReturn);
 
                             // Full file is downloaded
-                            using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                            using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
                             {
                                 sw.Write(layoutXml);
                                 sw.Close();
@@ -234,21 +291,21 @@ namespace XiboClient.XmdsAgents
                     file.Downloading = false;
 
                     // Check MD5
-                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.Path);
+                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.SaveAs);
                     if (file.Md5 == md5)
                     {
                         // Mark it as complete
                         _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
 
                         // Add it to the cache manager
-                        _requiredFiles.CurrentCacheManager.Add(file.Path, file.Md5);
+                        _requiredFiles.CurrentCacheManager.Add(file.SaveAs, file.Md5);
 
-                        Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.Path), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.SaveAs), LogType.Info.ToString());
                     }
                     else
                     {
                         // Just error - we will pick it up again the next time we download
-                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.Path), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.SaveAs), LogType.Error.ToString());
                     }
                 }
 
