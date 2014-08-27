@@ -51,37 +51,37 @@ namespace XiboClient
             xmds1.RegisterDisplayCompleted += new XiboClient.xmds.RegisterDisplayCompletedEventHandler(xmds1_RegisterDisplayCompleted);
             
             // Library Path
-            if (Properties.Settings.Default.LibraryPath == "DEFAULT")
+            if (ApplicationSettings.Default.LibraryPath == "DEFAULT")
             {
                 Debug.WriteLine("Getting the Library Path", "OptionForm");
-                Properties.Settings.Default.LibraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\Xibo Library";
-                Properties.Settings.Default.Save();
+                ApplicationSettings.Default.LibraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\Xibo Library";
+                ApplicationSettings.Default.Save();
             }
 
             // Computer name if the display name hasnt been set yet
-            if (Settings.Default.displayName == "COMPUTERNAME")
+            if (ApplicationSettings.Default.DisplayName == "COMPUTERNAME")
             {
                 Debug.WriteLine("Getting the display Name", "OptionForm");
-                Settings.Default.displayName = Environment.MachineName;
-                Settings.Default.Save();
+                ApplicationSettings.Default.DisplayName = Environment.MachineName;
+                ApplicationSettings.Default.Save();
             }
 
             // Set global proxy information
             OptionForm.SetGlobalProxy();
 
             // Settings Tab
-            textBoxXmdsUri.Text = Settings.Default.serverURI;
-            textBoxServerKey.Text = Settings.Default.ServerKey;
-            textBoxLibraryPath.Text = Settings.Default.LibraryPath;
-            tbHardwareKey.Text = Settings.Default.hardwareKey;
+            textBoxXmdsUri.Text = ApplicationSettings.Default.ServerUri;
+            textBoxServerKey.Text = ApplicationSettings.Default.ServerKey;
+            textBoxLibraryPath.Text = ApplicationSettings.Default.LibraryPath;
+            tbHardwareKey.Text = ApplicationSettings.Default.HardwareKey;
 
             // Proxy Tab
-            textBoxProxyUser.Text = Settings.Default.ProxyUser;
-            maskedTextBoxProxyPass.Text = Settings.Default.ProxyPassword;
-            textBoxProxyDomain.Text = Settings.Default.ProxyDomain;
+            textBoxProxyUser.Text = ApplicationSettings.Default.ProxyUser;
+            maskedTextBoxProxyPass.Text = ApplicationSettings.Default.ProxyPassword;
+            textBoxProxyDomain.Text = ApplicationSettings.Default.ProxyDomain;
 
             // Appearance Tab
-            splashOverride.Text = Settings.Default.SplashOverride;
+            splashOverride.Text = ApplicationSettings.Default.SplashOverride;
 
             Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
@@ -123,33 +123,33 @@ namespace XiboClient
                 tbStatus.AppendText("Saving with CMS... Please wait...");
 
                 // Make sure our XMDS location is correct
-                Settings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
+                ApplicationSettings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
             
                 // Simple settings
-                Settings.Default.ServerKey = textBoxServerKey.Text;
-                Settings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
-                Settings.Default.serverURI = textBoxXmdsUri.Text;
-                Settings.Default.hardwareKey = tbHardwareKey.Text;
+                ApplicationSettings.Default.ServerKey = textBoxServerKey.Text;
+                ApplicationSettings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
+                ApplicationSettings.Default.ServerUri = textBoxXmdsUri.Text;
+                ApplicationSettings.Default.HardwareKey = tbHardwareKey.Text;
 
                 // Also tweak the address of the xmds1
-                xmds1.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
+                xmds1.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
 
                 // Proxy Settings
-                Settings.Default.ProxyUser = textBoxProxyUser.Text;
-                Settings.Default.ProxyPassword = maskedTextBoxProxyPass.Text;
-                Settings.Default.ProxyDomain = textBoxProxyDomain.Text;
+                ApplicationSettings.Default.ProxyUser = textBoxProxyUser.Text;
+                ApplicationSettings.Default.ProxyPassword = maskedTextBoxProxyPass.Text;
+                ApplicationSettings.Default.ProxyDomain = textBoxProxyDomain.Text;
 
                 // Change the default Proxy class
                 OptionForm.SetGlobalProxy();
 
                 // Client settings
-                Settings.Default.SplashOverride = splashOverride.Text;
+                ApplicationSettings.Default.SplashOverride = splashOverride.Text;
 
                 // Commit these changes back to the user settings
-                Settings.Default.Save();
+                ApplicationSettings.Default.Save();
 
                 // Call register
-                xmds1.RegisterDisplayAsync(Settings.Default.ServerKey, _hardwareKey.Key, Settings.Default.displayName, "windows", Settings.Default.ClientVersion, Settings.Default.ClientCodeVersion, _hardwareKey.MacAddress, Settings.Default.Version);
+                xmds1.RegisterDisplayAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, ApplicationSettings.Default.DisplayName, "windows", ApplicationSettings.Default.ClientVersion, ApplicationSettings.Default.ClientCodeVersion, _hardwareKey.MacAddress, ApplicationSettings.Default.Version);
             }
             catch (Exception ex)
             {
@@ -210,7 +210,7 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                System.Diagnostics.Process.Start(Settings.Default.serverURI + @"/index.php?p=display");
+                System.Diagnostics.Process.Start(ApplicationSettings.Default.ServerUri + @"/index.php?p=display");
             }
             catch
             {
@@ -227,17 +227,17 @@ namespace XiboClient
 
             Debug.WriteLine("Trying to detect a proxy.", "SetGlobalProxy");
             
-            if (Properties.Settings.Default.ProxyUser != "")
+            if (ApplicationSettings.Default.ProxyUser != "")
             {
                 // disable expect100Continue
                 ServicePointManager.Expect100Continue = false;
 
                 Debug.WriteLine("Creating a network credential using the Proxy User.", "SetGlobalProxy");
 
-                NetworkCredential nc = new NetworkCredential(Settings.Default.ProxyUser, Settings.Default.ProxyPassword);
+                NetworkCredential nc = new NetworkCredential(ApplicationSettings.Default.ProxyUser, ApplicationSettings.Default.ProxyPassword);
 
-                if (Properties.Settings.Default.ProxyDomain != "") 
-                    nc.Domain = Properties.Settings.Default.ProxyDomain;
+                if (ApplicationSettings.Default.ProxyDomain != "") 
+                    nc.Domain = ApplicationSettings.Default.ProxyDomain;
 
                 WebRequest.DefaultWebProxy.Credentials = nc;
             }

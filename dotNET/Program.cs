@@ -34,58 +34,99 @@ namespace XiboClient
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main(string[] arg)
+        static void Main(string[] args)
         {
-            Process[] RunningProcesses = Process.GetProcessesByName("XiboClient");
-         
-            if(RunningProcesses.Length <= 1)
+
+            // Ensure our process has the highest priority
+            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
+
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            Trace.Listeners.Add(new XiboTraceListener());
+            Trace.AutoFlush = false;
+
+            try
             {
-                // Ensure our process has the highest priority
-                Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
-
-                Application.SetCompatibleTextRenderingDefault(false);
-
-                Trace.Listeners.Add(new XiboTraceListener());
-                Trace.AutoFlush = false;
-
-                Form formMain;
-
-                try
+                // Check for any passed arguments
+                if (args.Length > 0)
                 {
-                    if (arg.GetLength(0) > 0 && arg[0].ToString() == "o")
+                    if (args[0].ToString() == "o")
                     {
-                        // If we are showing the options form, enable visual styles
-                        Application.EnableVisualStyles();
-
-                        Trace.WriteLine(new LogMessage("Main", "Options Started"), LogType.Info.ToString());
-                        formMain = new OptionForm();
+                        RunSettings();
                     }
                     else
                     {
-                        Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
-                        formMain = new MainForm();
+                        switch (args[0].ToLower().Trim().Substring(0, 2))
+                        {
+                            // Preview the screen saver
+                            case "/p":
+                                // args[1] is the handle to the preview window
+                                RunClient(new IntPtr(long.Parse(args[1])));
+                                break;
+
+                            // Show the screen saver
+                            case "/s":
+                                RunClient(true);
+                                break;
+
+                            // Configure the screesaver's settings
+                            case "/c":
+                                // Show the settings form
+                                RunSettings();
+                                break;
+
+                            // Show the screen saver
+                            default:
+                                RunClient(true);
+                                break;
+                        }
                     }
-                    
-                    Application.Run(formMain);
                 }
-                catch (Exception ex)
+                else
                 {
-                    HandleUnhandledException(ex);
+                    // No arguments were passed - we run the usual client
+                    RunClient();
                 }
-
-                // Catch unhandled exceptions
-                AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
-                Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
-
-                // Always flush at the end
-                Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
-                Trace.Flush();
             }
-            else
+            catch (Exception ex)
             {
-                ShowWindowAsync(RunningProcesses[0].MainWindowHandle, 6);
-                ShowWindowAsync(RunningProcesses[0].MainWindowHandle, 9);
+                HandleUnhandledException(ex);
             }
+
+            // Catch unhandled exceptions
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+            Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+
+            // Always flush at the end
+            Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
+            Trace.Flush();
+        }       
+
+        private static void RunClient()
+        {
+            Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
+            Application.Run(new MainForm());
+        }
+
+        private static void RunClient(bool screenSaver)
+        {
+            Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
+            Application.Run(new MainForm(screenSaver));
+        }
+
+        private static void RunClient(IntPtr previewWindow)
+        {
+            Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
+            Application.Run(new MainForm(previewWindow));
+        }
+
+        private static void RunSettings()
+        {
+            // If we are showing the options form, enable visual styles
+            Application.EnableVisualStyles();
+
+            Trace.WriteLine(new LogMessage("Main", "Options Started"), LogType.Info.ToString());
+            Application.Run(new OptionForm());
         }
 
         static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)

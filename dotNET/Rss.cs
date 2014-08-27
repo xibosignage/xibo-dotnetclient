@@ -109,7 +109,7 @@ namespace XiboClient
             if (options.Dictionary.Get("xmds", "0") == "1")
             {
                 // Set the file path
-                _filePath = Settings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
+                _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
 
                 // Check to see if the HTML is ready for us.
                 if (HtmlReady())
@@ -200,7 +200,7 @@ namespace XiboClient
 
             // Pull the RSS feed, and put it in a temporary file cache
             // We want to check the file exists first
-            _rssFilePath = Properties.Settings.Default.LibraryPath + @"\" + _mediaid + ".xml";
+            _rssFilePath = ApplicationSettings.Default.LibraryPath + @"\" + _mediaid + ".xml";
 
             if (!File.Exists(_rssFilePath) || _updateInterval == 0)
             {
@@ -283,7 +283,7 @@ namespace XiboClient
         {
             try
             {
-                string localFeedUrl = Properties.Settings.Default.LibraryPath + @"\" + _mediaid + ".xml";
+                string localFeedUrl = ApplicationSettings.Default.LibraryPath + @"\" + _mediaid + ".xml";
 
                 using (StreamReader sr = new StreamReader(localFeedUrl))
                 {
@@ -394,7 +394,7 @@ namespace XiboClient
                 Duration = 10;
 
                 // Delete the temporary file we have saved - it is clearly not working.
-                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + _mediaid + ".xml");
+                File.Delete(ApplicationSettings.Default.LibraryPath + @"\" + _mediaid + ".xml");
             }
         }
 
@@ -513,7 +513,7 @@ namespace XiboClient
             xmds.xmds xmds = new XiboClient.xmds.xmds();
             xmds.GetResourceCompleted += new XiboClient.xmds.GetResourceCompletedEventHandler(xmds_GetResourceCompleted);
 
-            xmds.GetResourceAsync(Settings.Default.ServerKey, Settings.Default.hardwareKey, _layoutId, _options.regionId, _options.mediaid, Settings.Default.Version);
+            xmds.GetResourceAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, _layoutId, _options.regionId, _options.mediaid, ApplicationSettings.Default.Version);
         }
 
         /// <summary>

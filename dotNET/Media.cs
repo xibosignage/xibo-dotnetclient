@@ -152,7 +152,7 @@ namespace XiboClient
             TransparencyKey = System.Drawing.Color.White;
 
             // Only enable double buffering if set in options
-            if (Settings.Default.DoubleBuffering)
+            if (ApplicationSettings.Default.DoubleBuffering)
             {
                 SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
                 SetStyle(ControlStyles.AllPaintingInWmPaint, true);

@@ -58,7 +58,7 @@ namespace XiboClient
         /// <param name="layoutID"></param>
         public void RecordLayout(String fromDT, String toDT, int scheduleID, int layoutID)
         {
-            if (!Properties.Settings.Default.statsEnabled) return;
+            if (!ApplicationSettings.Default.StatsEnabled) return;
 
             Stat stat = new Stat();
 
@@ -82,7 +82,7 @@ namespace XiboClient
         /// <param name="mediaID"></param>
         public void RecordMedia(String fromDT, String toDT, int layoutID, String mediaID)
         {
-            if (!Properties.Settings.Default.statsEnabled) return;
+            if (!ApplicationSettings.Default.StatsEnabled) return;
 
             Stat stat = new Stat();
 
@@ -105,7 +105,7 @@ namespace XiboClient
         /// <param name="tag"></param>
         public void RecordEvent(String fromDT, String toDT, String tag)
         {
-            if (!Properties.Settings.Default.statsEnabled) return;
+            if (!ApplicationSettings.Default.StatsEnabled) return;
 
             Stat stat = new Stat();
 
@@ -125,14 +125,14 @@ namespace XiboClient
         /// <param name="stat"></param>
         public void RecordStat(Stat stat)
         {
-            if (!Properties.Settings.Default.statsEnabled) return;
+            if (!ApplicationSettings.Default.StatsEnabled) return;
 
             System.Diagnostics.Debug.WriteLine(String.Format("Recording a Stat Record. Current Count = {0}", _stats.Count.ToString()), LogType.Audit.ToString());
 
             _stats.Add(stat);
 
             // At some point we will need to flush the stats
-            if (_stats.Count >= Properties.Settings.Default.StatsFlushCount)
+            if (_stats.Count >= ApplicationSettings.Default.StatsFlushCount)
             {
                 Flush();
             }
@@ -150,10 +150,10 @@ namespace XiboClient
             // Determine if there is anything to flush
             if (_stats.Count < 1 || _xmdsProcessing) return;
 
-            int threshold = ((int)Properties.Settings.Default.collectInterval * 5);
+            int threshold = ((int)ApplicationSettings.Default.CollectInterval * 5);
 
             // Determine where we want to log.
-            if (Properties.Settings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now)
+            if (ApplicationSettings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now)
             {
                 FlushToFile();
             }
@@ -176,7 +176,7 @@ namespace XiboClient
             try
             {
                 // Open the Text Writer
-                StreamWriter tw = new StreamWriter(File.Open(Application.UserAppDataPath + "//" + Properties.Settings.Default.StatsLogFile, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+                StreamWriter tw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.StatsLogFile, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
 
                 try
                 {
@@ -245,7 +245,7 @@ namespace XiboClient
             // Submit the string to XMDS
             _xmdsProcessing = true;
 
-            _xmds.SubmitStatsAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey, _hardwareKey.Key, stats);
+            _xmds.SubmitStatsAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey, _hardwareKey.Key, stats);
 
             // Log out
             System.Diagnostics.Debug.WriteLine(new LogMessage("FlushToXmds", String.Format("OUT")), LogType.Audit.ToString());
@@ -274,7 +274,7 @@ namespace XiboClient
                     try
                     {
                         // Open the Text Writer
-                        StreamWriter tw = new StreamWriter(File.Open(Application.UserAppDataPath + "//" + Properties.Settings.Default.StatsLogFile, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
+                        StreamWriter tw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.StatsLogFile, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
 
                         try
                         {

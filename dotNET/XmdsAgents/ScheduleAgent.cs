@@ -118,13 +118,13 @@ namespace XiboClient.XmdsAgents
                         using (xmds.xmds xmds = new xmds.xmds())
                         {
                             xmds.Credentials = null;
-                            xmds.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
+                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            string scheduleXml = xmds.Schedule(Settings.Default.ServerKey, _hardwareKey, Settings.Default.Version);
+                            string scheduleXml = xmds.Schedule(ApplicationSettings.Default.ServerKey, _hardwareKey, ApplicationSettings.Default.Version);
 
                             // Set the flag to indicate we have a connection to XMDS
-                            Settings.Default.XmdsLastConnection = DateTime.Now;
+                            ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
                             _clientInfoForm.ScheduleStatus = "Running: Data Received";
 
@@ -158,7 +158,7 @@ namespace XiboClient.XmdsAgents
                 }
 
                 // Sleep this thread until the next collection interval
-                _manualReset.WaitOne((int)Settings.Default.collectInterval * 1000);
+                _manualReset.WaitOne((int)ApplicationSettings.Default.CollectInterval * 1000);
             }
 
             Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Stopped"), LogType.Info.ToString());

@@ -38,13 +38,13 @@ namespace XiboClient
         public override void RenderMedia()
         {
             // Is this module enabled?
-            if (Settings.Default.EnableShellCommands)
+            if (ApplicationSettings.Default.EnableShellCommands)
             {
                 // Check to see if we have an allow list
-                if (!string.IsNullOrEmpty(Settings.Default.ShellCommandAllowList))
+                if (!string.IsNullOrEmpty(ApplicationSettings.Default.ShellCommandAllowList))
                 {
                     // Array of allowed commands
-                    string[] allowedCommands = Settings.Default.ShellCommandAllowList.Split(',');
+                    string[] allowedCommands = ApplicationSettings.Default.ShellCommandAllowList.Split(',');
 
                     // Check we are allowed to execute the command
                     foreach (string allowedCommand in allowedCommands)
@@ -56,7 +56,7 @@ namespace XiboClient
                         }
                     }
 
-                    Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands not in allow list: " + Settings.Default.ShellCommandAllowList), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands not in allow list: " + ApplicationSettings.Default.ShellCommandAllowList), LogType.Error.ToString());
                 }
                 else
                 {

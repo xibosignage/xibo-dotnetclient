@@ -74,7 +74,7 @@ namespace XiboClient
             _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
 
             // Set the file path
-            _filePath = Settings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
+            _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
 
             // Check to see if the HTML is ready for us.
             if (HtmlReady())
@@ -101,7 +101,7 @@ namespace XiboClient
             xmds.xmds xmds = new XiboClient.xmds.xmds();
             xmds.GetResourceCompleted += new XiboClient.xmds.GetResourceCompletedEventHandler(xmds_GetResourceCompleted);
 
-            xmds.GetResourceAsync(Settings.Default.ServerKey, Settings.Default.hardwareKey, _options.layoutId, _options.regionId, _options.mediaid, Settings.Default.Version);
+            xmds.GetResourceAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, _options.layoutId, _options.regionId, _options.mediaid, ApplicationSettings.Default.Version);
         }
 
         /// <summary>

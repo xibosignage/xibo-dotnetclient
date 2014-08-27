@@ -52,7 +52,7 @@ namespace XiboClient
                 if (file.path == path)
                 {
                     // Check to see if this file has been modified since the MD5 cache
-                    DateTime lastWrite = File.GetLastWriteTime(Properties.Settings.Default.LibraryPath + @"\" + path);
+                    DateTime lastWrite = File.GetLastWriteTime(ApplicationSettings.Default.LibraryPath + @"\" + path);
 
                     if (lastWrite > file.cacheDate)
                     {
@@ -87,7 +87,7 @@ namespace XiboClient
             try
             {
                 // Open the file and get the MD5
-                using (FileStream md5Fs = new FileStream(Properties.Settings.Default.LibraryPath + @"\" + path, FileMode.Open, FileAccess.Read))
+                using (FileStream md5Fs = new FileStream(ApplicationSettings.Default.LibraryPath + @"\" + path, FileMode.Open, FileAccess.Read))
                 {
                     return Hashes.MD5(md5Fs);
                 }
@@ -165,7 +165,7 @@ namespace XiboClient
 
                 try
                 {
-                    using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile))
+                    using (StreamWriter streamWriter = new StreamWriter(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.CacheManagerFile))
                     {
                         XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
 
@@ -204,12 +204,12 @@ namespace XiboClient
                         try
                         {
                             // Check to see if this file has been deleted since the Cache Manager registered it
-                            if (!File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                            if (!File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + path))
                                 return false;
 
                             // Check to see if this file has been modified since the MD5 cache
                             // If it has then we assume invalid, otherwise its valid
-                            DateTime lastWrite = File.GetLastWriteTime(Properties.Settings.Default.LibraryPath + @"\" + path);
+                            DateTime lastWrite = File.GetLastWriteTime(ApplicationSettings.Default.LibraryPath + @"\" + path);
 
                             if (lastWrite <= file.cacheDate)
                                 return true;
@@ -248,7 +248,7 @@ namespace XiboClient
                 
                 // Load the XLF, get all media ID's
                 XmlDocument layoutXml = new XmlDocument();
-                layoutXml.Load(Properties.Settings.Default.LibraryPath + @"\" + layoutFile);
+                layoutXml.Load(ApplicationSettings.Default.LibraryPath + @"\" + layoutFile);
 
                 try
                 {
@@ -348,12 +348,12 @@ namespace XiboClient
         {
             lock (_locker)
             {
-                if (!File.Exists(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile))
+                if (!File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.RequiredFilesFile))
                     return;
 
                 // Open the XML file and check each required file that isnt already there
                 XmlDocument xml = new XmlDocument();
-                xml.Load(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile);
+                xml.Load(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.RequiredFilesFile);
 
                 XmlNodeList fileNodes = xml.SelectNodes("//RequiredFile/Path");
 
@@ -363,7 +363,7 @@ namespace XiboClient
 
                     // Make sure every required file is correctly logged in the cache manager
                     // Leave the files that are not required in there to be analysed later
-                    if (File.Exists(Properties.Settings.Default.LibraryPath + @"\" + path))
+                    if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + path))
                     {
                         // Add this file to the cache manager
                         Add(path, GetMD5(path));

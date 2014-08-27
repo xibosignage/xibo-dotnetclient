@@ -47,6 +47,7 @@ namespace XiboClient
         private bool _isExpired = false;
         private int _scheduleId;
         private int _layoutId;
+        private bool _screenSaver = false;
 
         double _layoutWidth;
         double _layoutHeight;
@@ -73,19 +74,78 @@ namespace XiboClient
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
 
-        public MainForm()
+        // Changes the parent window of the specified child window
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
+
+        // Changes an attribute of the specified window
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        // Retrieves information about the specified window
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        // Retrieves the coordinates of a window's client area
+        [DllImport("user32.dll")]
+        private static extern bool GetClientRect(IntPtr hWnd, out Rectangle lpRect);
+
+        public MainForm(IntPtr previewHandle)
+        {
+            InitializeComponent();
+            
+            // Set the preview window of the screen saver selection 
+            // dialog in Windows as the parent of this form.
+            SetParent(this.Handle, previewHandle);
+
+            // Set this form to a child form, so that when the screen saver selection 
+            // dialog in Windows is closed, this form will also close.
+            SetWindowLong(this.Handle, -16, new IntPtr(GetWindowLong(this.Handle, -16) | 0x40000000));
+
+            // Set the size of the screen saver to the size of the screen saver 
+            // preview window in the screen saver selection dialog in Windows.
+            Rectangle ParentRect;
+            GetClientRect(previewHandle, out ParentRect);
+            
+            ApplicationSettings.Default.SizeX = ParentRect.Size.Width;
+            ApplicationSettings.Default.SizeY = ParentRect.Size.Height;
+            ApplicationSettings.Default.OffsetX = 0;
+            ApplicationSettings.Default.OffsetY = 0;
+
+            InitializeXibo();
+            InitializeScreenSaver(true);
+        }
+
+        public MainForm(bool screenSaver)
         {
             InitializeComponent();
 
+            if (screenSaver)
+                InitializeScreenSaver(false);
+            
+            InitializeXibo();
+        }
+
+        public MainForm()
+        {
+            InitializeComponent();
+            InitializeXibo();
+        }
+
+        private void InitializeXibo()
+        {
             Thread.CurrentThread.Name = "UI Thread";
 
+            // Default the XmdsConnection
+            ApplicationSettings.Default.XmdsLastConnection = DateTime.MinValue;
+
             // Override the default size if necessary
-            if (Properties.Settings.Default.sizeX != 0)
+            if (ApplicationSettings.Default.SizeX != 0)
             {
-                _clientSize = new Size((int)Properties.Settings.Default.sizeX, (int)Properties.Settings.Default.sizeY);
+                _clientSize = new Size((int)ApplicationSettings.Default.SizeX, (int)ApplicationSettings.Default.SizeY);
                 Size = _clientSize;
                 WindowState = FormWindowState.Normal;
-                Location = new Point((int)Properties.Settings.Default.offsetX, (int)Properties.Settings.Default.offsetY);
+                Location = new Point((int)ApplicationSettings.Default.OffsetX, (int)ApplicationSettings.Default.OffsetY);
                 StartPosition = FormStartPosition.Manual;
             }
             else
@@ -94,7 +154,7 @@ namespace XiboClient
             }
 
             // Show in taskbar
-            ShowInTaskbar = Settings.Default.ShowInTaskbar;
+            ShowInTaskbar = ApplicationSettings.Default.ShowInTaskbar;
 
             // Setup the proxy information
             OptionForm.SetGlobalProxy();
@@ -115,7 +175,7 @@ namespace XiboClient
             Keys key;
             try
             {
-                key = (Keys)Enum.Parse(typeof(Keys), Settings.Default.ClientInformationKeyCode.ToUpper());
+                key = (Keys)Enum.Parse(typeof(Keys), ApplicationSettings.Default.ClientInformationKeyCode.ToUpper());
             }
             catch
             {
@@ -123,7 +183,7 @@ namespace XiboClient
                 key = Keys.I;
             }
 
-            KeyStore.Instance.AddKeyDefinition("ClientInfo", key, ((Settings.Default.ClientInfomationCtrlKey) ? Keys.Control : Keys.None));
+            KeyStore.Instance.AddKeyDefinition("ClientInfo", key, ((ApplicationSettings.Default.ClientInfomationCtrlKey) ? Keys.Control : Keys.None));
 
             // Register a handler for the key event
             KeyStore.Instance.KeyPress += Instance_KeyPress;
@@ -134,13 +194,34 @@ namespace XiboClient
             Trace.Listeners.Add(clientInfoTraceListener);
 
             // Log to disk?
-            if (!string.IsNullOrEmpty(Settings.Default.LogToDiskLocation))
+            if (!string.IsNullOrEmpty(ApplicationSettings.Default.LogToDiskLocation))
             {
-                TextWriterTraceListener listener = new TextWriterTraceListener(Settings.Default.LogToDiskLocation);
+                TextWriterTraceListener listener = new TextWriterTraceListener(ApplicationSettings.Default.LogToDiskLocation);
                 Trace.Listeners.Add(listener);
             }
 
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
+        }
+
+        private void InitializeScreenSaver(bool preview)
+        {
+            _screenSaver = true;
+
+            // Load in the user settings
+            
+
+            // Configure some listeners for the mouse (to quit)
+            if (!preview)
+            {
+                MouseMove += ExitScreenSaverEvent;
+                MouseDown += ExitScreenSaverEvent;
+            }
+        }
+
+        void ExitScreenSaverEvent(object sender, MouseEventArgs e)
+        {
+            if (_screenSaver)
+                Application.Exit();
         }
 
         /// <summary>
@@ -175,7 +256,7 @@ namespace XiboClient
             try
             {
                 // Create the Schedule
-                _schedule = new Schedule(Application.UserAppDataPath + "\\" + Properties.Settings.Default.ScheduleFile, ref _cacheManager, ref _clientInfoForm);
+                _schedule = new Schedule(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.ScheduleFile, ref _cacheManager, ref _clientInfoForm);
 
                 // Bind to the schedule change event - notifys of changes to the schedule
                 _schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
@@ -200,14 +281,14 @@ namespace XiboClient
         private void MainForm_Load(object sender, EventArgs e)
         {
             // Check the directories exist
-            if (!Directory.Exists(Properties.Settings.Default.LibraryPath) || !Directory.Exists(Properties.Settings.Default.LibraryPath + @"\backgrounds\"))
+            if (!Directory.Exists(ApplicationSettings.Default.LibraryPath) || !Directory.Exists(ApplicationSettings.Default.LibraryPath + @"\backgrounds\"))
             {
                 // Will handle the create of everything here
-                Directory.CreateDirectory(Properties.Settings.Default.LibraryPath + @"\backgrounds");
+                Directory.CreateDirectory(ApplicationSettings.Default.LibraryPath + @"\backgrounds");
             }
 
             // Is the mouse enabled?
-            if (!Properties.Settings.Default.EnableMouse)
+            if (!ApplicationSettings.Default.EnableMouse)
                 // Hide the cursor
                 Cursor.Hide();
 
@@ -221,7 +302,7 @@ namespace XiboClient
             OptionForm.SetGlobalProxy();
 
             // UserApp data
-            Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + Application.UserAppDataPath), LogType.Info.ToString());
+            Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + ApplicationSettings.Default.LibraryPath), LogType.Info.ToString());
         }
 
         /// <summary>
@@ -257,7 +338,7 @@ namespace XiboClient
         {
             try
             {
-                using (FileStream fileStream = File.Open(Application.UserAppDataPath + "\\" + Properties.Settings.Default.CacheManagerFile, FileMode.Open))
+                using (FileStream fileStream = File.Open(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.CacheManagerFile, FileMode.Open))
                 {
                     XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
 
@@ -380,7 +461,7 @@ namespace XiboClient
             DateTime layoutModifiedTime;
 
             // Default or not
-            if (layoutPath == Properties.Settings.Default.LibraryPath + @"\Default.xml" || String.IsNullOrEmpty(layoutPath))
+            if (layoutPath == ApplicationSettings.Default.LibraryPath + @"\Default.xml" || String.IsNullOrEmpty(layoutPath))
             {
                 throw new Exception("Default layout");
             }
@@ -468,7 +549,7 @@ namespace XiboClient
             {
                 if (layoutAttributes["background"] != null && !string.IsNullOrEmpty(layoutAttributes["background"].Value))
                 {
-                    string bgFilePath = Settings.Default.LibraryPath + @"\backgrounds\" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value;
+                    string bgFilePath = ApplicationSettings.Default.LibraryPath + @"\backgrounds\" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value;
 
                     // Create a correctly sized background image in the temp folder
                     if (!File.Exists(bgFilePath))
@@ -513,12 +594,12 @@ namespace XiboClient
                 else
                 {
                     Trace.WriteLine(new LogMessage("PrepareLayout",
-                        string.Format(string.Format("An empty layout detected, will show for {0} seconds.", Properties.Settings.Default.emptyLayoutDuration.ToString()))), LogType.Info.ToString());
+                        string.Format(string.Format("An empty layout detected, will show for {0} seconds.", ApplicationSettings.Default.EmptyLayoutDuration.ToString()))), LogType.Info.ToString());
 
                     // Put a small dummy region in place, with a small dummy media node - which expires in 10 seconds.
                     XmlDocument dummyXml = new XmlDocument();
                     dummyXml.LoadXml(string.Format("<region id='blah' width='1' height='1' top='1' left='1'><media id='blah' type='text' duration='{0}'><raw><text></text></raw></media></region>",
-                        Properties.Settings.Default.emptyLayoutDuration.ToString()));
+                        ApplicationSettings.Default.EmptyLayoutDuration.ToString()));
 
                     // Replace the list of regions (they mean nothing as they are empty)
                     listRegions = dummyXml.SelectNodes("/region");
@@ -591,7 +672,7 @@ namespace XiboClient
         {
             Trace.WriteLine(new LogMessage("MainForm - GenerateBackgroundImage", "Trying to generate a background image. It will be saved: " + bgFilePath), LogType.Audit.ToString());
 
-            using (Image img = Image.FromFile(Settings.Default.LibraryPath + @"\" + sourceFile))
+            using (Image img = Image.FromFile(ApplicationSettings.Default.LibraryPath + @"\" + sourceFile))
             {
                 using (Bitmap bmp = new Bitmap(img, backgroundWidth, backgroundHeight))
                 {
@@ -611,11 +692,11 @@ namespace XiboClient
         /// </summary>
         private void ShowSplashScreen()
         {
-            if (!string.IsNullOrEmpty(Settings.Default.SplashOverride))
+            if (!string.IsNullOrEmpty(ApplicationSettings.Default.SplashOverride))
             {
                 try
                 {
-                    using (Image bgSplash = Image.FromFile(Settings.Default.SplashOverride))
+                    using (Image bgSplash = Image.FromFile(ApplicationSettings.Default.SplashOverride))
                     {
                         Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
                         BackgroundImage = bmpSplash;
@@ -744,7 +825,7 @@ namespace XiboClient
         {
             Point position;
 
-            switch (Settings.Default.CursorStartPosition)
+            switch (ApplicationSettings.Default.CursorStartPosition)
             {
                 case "Top Left":
                     position = new Point(0, 0);

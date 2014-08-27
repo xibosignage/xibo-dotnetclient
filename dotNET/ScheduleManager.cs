@@ -345,7 +345,7 @@ namespace XiboClient
                 string layoutFile = temp.layoutFile.TrimEnd(replace.ToCharArray());
 
                 // Set these on the temp layoutschedule
-                temp.layoutFile = Properties.Settings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
+                temp.layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
                 temp.id = int.Parse(layoutFile);
 
                 // Get attributes that only exist on the default
@@ -388,7 +388,7 @@ namespace XiboClient
 
             // Schedule up the default
             LayoutSchedule temp = new LayoutSchedule();
-            temp.layoutFile = Properties.Settings.Default.LibraryPath + @"\Default.xml";
+            temp.layoutFile = ApplicationSettings.Default.LibraryPath + @"\Default.xml";
             temp.id = 0;
             temp.scheduleid = 0;
 

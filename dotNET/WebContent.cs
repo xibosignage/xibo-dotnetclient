@@ -60,7 +60,7 @@ namespace XiboClient
             // Attach event
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
 
-            if (!Properties.Settings.Default.powerpointEnabled && options.type == "powerpoint")
+            if (!ApplicationSettings.Default.PowerpointEnabled && options.type == "powerpoint")
             {
                 webBrowser.DocumentText = "<html><body><h1>Powerpoint not enabled on this display</h1></body></html>";
                 

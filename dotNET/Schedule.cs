@@ -88,7 +88,7 @@ namespace XiboClient
         /// <param name="scheduleLocation"></param>
         public Schedule(string scheduleLocation, ref CacheManager cacheManager, ref ClientInfo clientInfoForm)
         {
-            Trace.WriteLine(string.Format("XMDS Location: {0}", Properties.Settings.Default.XiboClient_xmds_xmds));
+            Trace.WriteLine(string.Format("XMDS Location: {0}", ApplicationSettings.Default.XiboClient_xmds_xmds));
 
             // Get the key for this display
             _hardwareKey = new HardwareKey();
@@ -247,13 +247,13 @@ namespace XiboClient
 
             // Are we set to expire modified layouts? If not then just return as if
             // nothing had happened.
-            if (!Settings.Default.expireModifiedLayouts)
+            if (!ApplicationSettings.Default.ExpireModifiedLayouts)
                 return;
 
             // If the layout that got changed is the current layout, move on
             try
             {
-                if (_layoutSchedule[_currentLayout].layoutFile == Settings.Default.LibraryPath + @"\" + layoutPath)
+                if (_layoutSchedule[_currentLayout].layoutFile == ApplicationSettings.Default.LibraryPath + @"\" + layoutPath)
                 {
                     // What happens if the action of downloading actually invalidates this layout?
                     if (!_cacheManager.IsValidLayout(layoutPath))

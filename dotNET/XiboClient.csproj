@@ -121,6 +121,7 @@
     </Compile>
     <Compile Include="KeyStore.cs" />
     <Compile Include="RegionOptions.cs" />
+    <Compile Include="ApplicationSettings.cs" />
     <Compile Include="TemporaryFile.cs" />
     <Compile Include="VideoDS.cs">
       <SubType>Form</SubType>
@@ -180,7 +181,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <None Include="app.config" />
     <BaseApplicationManifest Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -205,7 +205,6 @@
     </Compile>
     <Compile Include="Schedule.cs" />
     <Compile Include="ScheduleManager.cs" />
-    <Compile Include="Settings.cs" />
     <Compile Include="ShellCommand.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -305,6 +304,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="default.config.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="new-icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

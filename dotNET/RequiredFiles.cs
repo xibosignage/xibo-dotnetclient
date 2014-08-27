@@ -91,7 +91,7 @@ namespace XiboClient
 
             // Start up the Xmds Service Object
             _report.Credentials = null;
-            _report.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
+            _report.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
             _report.UseDefaultCredentials = false;
         }
 
@@ -150,7 +150,7 @@ namespace XiboClient
                         rf.Size = 10000;
 
                         // Check to see if this has already been downloaded
-                        if (File.Exists(Settings.Default.LibraryPath + @"\" + rf.MediaId + ".htm"))
+                        if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.MediaId + ".htm"))
                         {
                             // Has it expired?
                             int updated = 0;
@@ -164,7 +164,7 @@ namespace XiboClient
                             DateTime updatedDt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
                             updatedDt = updatedDt.AddSeconds(updated);
 
-                            if (File.GetLastWriteTimeUtc(Settings.Default.LibraryPath + @"\" + rf.MediaId + ".htm") > updatedDt)
+                            if (File.GetLastWriteTimeUtc(ApplicationSettings.Default.LibraryPath + @"\" + rf.MediaId + ".htm") > updatedDt)
                                 rf.Complete = true;
                         }
 
@@ -206,7 +206,7 @@ namespace XiboClient
                 }
 
                 // Does this file exist?
-                if (File.Exists(Settings.Default.LibraryPath + @"\" + rf.Path))
+                if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.Path))
                 {
                     // Compare MD5 of the file we currently have, to what we should have
                     if (rf.Md5 != _cacheManager.GetMD5(rf.Path))
@@ -218,7 +218,7 @@ namespace XiboClient
 
                         // TODO: Resume the file download under certain conditions. Make sure its not bigger than it should be. 
                         // Make sure it is fairly fresh
-                        FileInfo info = new FileInfo(Settings.Default.LibraryPath + @"\" + rf.Path);
+                        FileInfo info = new FileInfo(ApplicationSettings.Default.LibraryPath + @"\" + rf.Path);
 
                         if (info.Length < rf.Size && info.LastWriteTime > DateTime.Now.AddDays(-1))
                         {
@@ -230,7 +230,7 @@ namespace XiboClient
                             // Delete the old file as it is wrong
                             try
                             {
-                                File.Delete(Properties.Settings.Default.LibraryPath + @"\" + rf.Path);
+                                File.Delete(ApplicationSettings.Default.LibraryPath + @"\" + rf.Path);
                             }
                             catch (Exception ex)
                             {
@@ -363,7 +363,7 @@ namespace XiboClient
 
                 try
                 {
-                    using (StreamWriter streamWriter = new StreamWriter(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile))
+                    using (StreamWriter streamWriter = new StreamWriter(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.RequiredFilesFile))
                     {
                         XmlSerializer xmlSerializer = new XmlSerializer(typeof(RequiredFiles));
 
@@ -399,7 +399,7 @@ namespace XiboClient
 
                 xml = string.Format("<files>{0}</files>", xml);
 
-                _report.MediaInventoryAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey,
+                _report.MediaInventoryAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey,
                     hardwareKey.Key, xml);
             }
         }
@@ -412,7 +412,7 @@ namespace XiboClient
         {
             lock (_locker)
             {
-                using (FileStream fileStream = File.Open(Application.UserAppDataPath + "\\" + Properties.Settings.Default.RequiredFilesFile, FileMode.Open))
+                using (FileStream fileStream = File.Open(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.RequiredFilesFile, FileMode.Open))
                 {
                     XmlSerializer xmlSerializer = new XmlSerializer(typeof(RequiredFiles));
 

@@ -55,7 +55,7 @@ namespace XiboClient
         {
             // Make a new collection of TraceMessages
             _traceMessages = new Collection<TraceMessage>();
-            _logPath = Application.UserAppDataPath + @"/" + Properties.Settings.Default.logLocation;
+            _logPath = ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.LogLocation;
 
             _xmdsProcessing = false;
             _xmds = new xmds.xmds();
@@ -152,7 +152,7 @@ namespace XiboClient
             // Submit the string to XMDS
             _xmdsProcessing = true;
 
-            _xmds.SubmitLogAsync(Properties.Settings.Default.Version, Properties.Settings.Default.ServerKey, _hardwareKey.Key, log);
+            _xmds.SubmitLogAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey, _hardwareKey.Key, log);
         }
 
         /// <summary>
@@ -265,10 +265,10 @@ namespace XiboClient
             }
             else
             {
-                int threshold = ((int)Properties.Settings.Default.collectInterval * 5);
+                int threshold = ((int)ApplicationSettings.Default.CollectInterval * 5);
 
                 // Determine where we want to log.
-                if (Properties.Settings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now)
+                if (ApplicationSettings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now)
                 {
                     FlushToFile();
                 }
@@ -284,10 +284,10 @@ namespace XiboClient
             // Determine if there is anything to flush
             if (_traceMessages.Count < 1 || _xmdsProcessing) return;
 
-            int threshold = ((int)Properties.Settings.Default.collectInterval * 5);
+            int threshold = ((int)ApplicationSettings.Default.CollectInterval * 5);
 
             // Determine where we want to log.
-            if (Properties.Settings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now)
+            if (ApplicationSettings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now)
             {
                 FlushToFile();
             }

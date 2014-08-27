@@ -80,14 +80,14 @@ namespace XiboClient.XmdsAgents
                         _manualReset.Reset();
 
                         // Only do something if enabled
-                        if (!Settings.Default.EnableExpiredFileDeletion)
+                        if (!ApplicationSettings.Default.EnableExpiredFileDeletion)
                             return;
 
                         // Get required files from disk
                         _requiredFiles = RequiredFiles.LoadFromDisk();
 
                         // Build a list of files in the library
-                        DirectoryInfo directory = new DirectoryInfo(Settings.Default.LibraryPath);
+                        DirectoryInfo directory = new DirectoryInfo(ApplicationSettings.Default.LibraryPath);
                         
                         // Check each one and see if it is in required files
                         foreach (FileInfo fileInfo in directory.GetFiles())
@@ -100,7 +100,7 @@ namespace XiboClient.XmdsAgents
                             catch
                             {
                                 // Not a required file
-                                if (fileInfo.LastAccessTime < DateTime.Now.AddDays(Settings.Default.LibraryAgentInterval * -1))
+                                if (fileInfo.LastAccessTime < DateTime.Now.AddDays(ApplicationSettings.Default.LibraryAgentInterval * -1))
                                 {
                                     Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Deleting old file: " + fileInfo.Name), LogType.Info.ToString());
                                     File.Delete(fileInfo.FullName);

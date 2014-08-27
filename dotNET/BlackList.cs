@@ -37,7 +37,7 @@ namespace XiboClient
         public BlackList()
         {
             // Check that the black list file is available
-            blackListFile = Application.UserAppDataPath + "//" + Properties.Settings.Default.blackListLocation;
+            blackListFile = ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.BlackListLocation;
 
             // Get the key for this display
             hardwareKey = new HardwareKey();
@@ -64,7 +64,7 @@ namespace XiboClient
             xmds1 = new XiboClient.xmds.xmds();
             xmds1.BlackListCompleted += new XiboClient.xmds.BlackListCompletedEventHandler(xmds1_BlackListCompleted);
 
-            xmds1.BlackListAsync(Properties.Settings.Default.ServerKey, hardwareKey.Key, mediaId, type.ToString(), reason, Properties.Settings.Default.Version);
+            xmds1.BlackListAsync(ApplicationSettings.Default.ServerKey, hardwareKey.Key, mediaId, type.ToString(), reason, ApplicationSettings.Default.Version);
 
             // Add to the local list
             AddLocal(id);
@@ -132,7 +132,7 @@ namespace XiboClient
         {
             try
             {
-                File.Delete(Application.UserAppDataPath + "//" + Properties.Settings.Default.blackListLocation);
+                File.Delete(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.BlackListLocation);
             }
             catch (Exception ex)
             {

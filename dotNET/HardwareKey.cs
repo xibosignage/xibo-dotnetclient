@@ -46,7 +46,7 @@ namespace XiboClient
             Debug.WriteLine("[IN]", "HardwareKey");
 
             // Get the key from the Settings
-            _hardwareKey = Properties.Settings.Default.hardwareKey;
+            _hardwareKey = ApplicationSettings.Default.HardwareKey;
 
             // Is the key empty?
             if (_hardwareKey == "")
@@ -62,7 +62,7 @@ namespace XiboClient
                 }
 
                 // Store the key
-                Properties.Settings.Default.hardwareKey = _hardwareKey;
+                ApplicationSettings.Default.HardwareKey = _hardwareKey;
             }
 
             // Get the Mac Address
@@ -93,8 +93,8 @@ namespace XiboClient
                 _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
 
                 // Store the key
-                Properties.Settings.Default.hardwareKey = _hardwareKey;
-                Properties.Settings.Default.Save();
+                ApplicationSettings.Default.HardwareKey = _hardwareKey;
+                ApplicationSettings.Default.Save();
             }
         }
 

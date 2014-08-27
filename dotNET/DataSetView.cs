@@ -73,7 +73,7 @@ namespace XiboClient
             _webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
 
             // Construct a sensible file path to store this resource
-            _filePath = Settings.Default.LibraryPath + @"\" + _mediaId + ".htm";
+            _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _mediaId + ".htm";
 
             if (HtmlReady())
             {
@@ -105,7 +105,7 @@ namespace XiboClient
         {
             // Pull the RSS feed, and put it in a temporary file cache
             // We want to check the file exists first
-            string filePath = Settings.Default.LibraryPath + @"\" + _mediaId + ".htm";
+            string filePath = ApplicationSettings.Default.LibraryPath + @"\" + _mediaId + ".htm";
 
             if (!File.Exists(filePath) || _updateInterval == 0)
                 return false;
@@ -156,7 +156,7 @@ namespace XiboClient
             xmds.xmds xmds = new XiboClient.xmds.xmds();
             xmds.GetResourceCompleted += new XiboClient.xmds.GetResourceCompletedEventHandler(xmds_GetResourceCompleted);
 
-            xmds.GetResourceAsync(Settings.Default.ServerKey, Settings.Default.hardwareKey, _layoutId, _regionId, _mediaId, Settings.Default.Version);
+            xmds.GetResourceAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, _layoutId, _regionId, _mediaId, ApplicationSettings.Default.Version);
         }
 
         /// <summary>

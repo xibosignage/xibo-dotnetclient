@@ -74,7 +74,7 @@ namespace XiboClient
             Size = new System.Drawing.Size(_options.width, _options.height);
             BackColor = System.Drawing.Color.Transparent;
 
-            if (Settings.Default.DoubleBuffering)
+            if (ApplicationSettings.Default.DoubleBuffering)
             {
                 SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
                 SetStyle(ControlStyles.AllPaintingInWmPaint, true);
@@ -336,7 +336,7 @@ namespace XiboClient
             // We cannot have a 0 duration here... not sure why we would... but
             if (_options.duration == 0 && _options.type != "video" && _options.type != "localvideo")
             {
-                int emptyLayoutDuration = int.Parse(Properties.Settings.Default.emptyLayoutDuration.ToString());
+                int emptyLayoutDuration = int.Parse(ApplicationSettings.Default.EmptyLayoutDuration.ToString());
                 _options.duration = (emptyLayoutDuration == 0) ? 10 : emptyLayoutDuration;
             }
 
@@ -429,7 +429,7 @@ namespace XiboClient
                 switch (options.type)
                 {
                     case "image":
-                        options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                        options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new ImagePosition(options);
                         break;
 
@@ -438,15 +438,15 @@ namespace XiboClient
                         break;
 
                     case "powerpoint":
-                        options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                        options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new WebContent(options);
                         break;
 
                     case "video":
-                        options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                        options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
 
                         // Which video engine are we using?
-                        if (Settings.Default.VideoRenderingEngine == "DirectShow")
+                        if (ApplicationSettings.Default.VideoRenderingEngine == "DirectShow")
                             media = new VideoDS(options);
                         else
                             media = new Video(options);
@@ -455,7 +455,7 @@ namespace XiboClient
 
                     case "localvideo":
                         // Which video engine are we using?
-                        if (Settings.Default.VideoRenderingEngine == "DirectShow")
+                        if (ApplicationSettings.Default.VideoRenderingEngine == "DirectShow")
                             media = new VideoDS(options);
                         else
                             media = new Video(options);
@@ -467,7 +467,7 @@ namespace XiboClient
                         break;
 
                     case "flash":
-                        options.uri = Settings.Default.LibraryPath + @"\" + options.uri;
+                        options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new Flash(options);
                         break;
 

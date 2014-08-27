@@ -34,7 +34,7 @@ namespace XiboClient
             InitializeComponent();
 
             label1.Text = Application.ProductName;
-            label2.Text = Properties.Settings.Default.ClientVersion;
+            label2.Text = ApplicationSettings.Default.ClientVersion;
         }
 
         private void buttonHelp_Click(object sender, EventArgs e)

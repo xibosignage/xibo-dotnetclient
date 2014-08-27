@@ -144,13 +144,13 @@ namespace XiboClient.XmdsAgents
                     using (xmds.xmds xmds = new xmds.xmds())
                     {
                         xmds.Credentials = null;
-                        xmds.Url = Settings.Default.XiboClient_xmds_xmds;
+                        xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                         xmds.UseDefaultCredentials = true;
 
-                        string result = xmds.GetResource(Settings.Default.ServerKey, Settings.Default.hardwareKey, file.LayoutId, file.RegionId, file.MediaId, Settings.Default.Version);
+                        string result = xmds.GetResource(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, file.LayoutId, file.RegionId, file.MediaId, ApplicationSettings.Default.Version);
 
                         // Write the result to disk
-                        using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                        using (StreamWriter sw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
                         {
                             sw.Write(result);
                             sw.Close();
@@ -184,7 +184,7 @@ namespace XiboClient.XmdsAgents
                             // Load the feed into a stream and save it to disk
                             using (StreamReader sr = new StreamReader(stream, encoding))
                             {
-                                using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read), encoding))
+                                using (StreamWriter sw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read), encoding))
                                 {
                                     Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
 
@@ -226,14 +226,14 @@ namespace XiboClient.XmdsAgents
                         using (xmds.xmds xmds = new xmds.xmds())
                         {
                             xmds.Credentials = null;
-                            xmds.Url = Settings.Default.XiboClient_xmds_xmds;
+                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            getFileReturn = xmds.GetFile(Settings.Default.ServerKey, _hardwareKey, file.Id, file.FileType, file.ChunkOffset, file.ChunkSize, Settings.Default.Version);
+                            getFileReturn = xmds.GetFile(ApplicationSettings.Default.ServerKey, _hardwareKey, file.Id, file.FileType, file.ChunkOffset, file.ChunkSize, ApplicationSettings.Default.Version);
                         }
 
                         // Set the flag to indicate we have a connection to XMDS
-                        Settings.Default.XmdsLastConnection = DateTime.Now;
+                        ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
                         if (file.FileType == "layout")
                         {
@@ -241,7 +241,7 @@ namespace XiboClient.XmdsAgents
                             string layoutXml = Encoding.UTF8.GetString(getFileReturn);
 
                             // Full file is downloaded
-                            using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                            using (StreamWriter sw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
                             {
                                 sw.Write(layoutXml);
                                 sw.Close();
@@ -253,7 +253,7 @@ namespace XiboClient.XmdsAgents
                         {
                             // Media file
                             // Need to write to the file - in append mode
-                            using (FileStream fs = new FileStream(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Append, FileAccess.Write))
+                            using (FileStream fs = new FileStream(ApplicationSettings.Default.LibraryPath + @"\" + file.Path, FileMode.Append, FileAccess.Write))
                             {
                                 fs.Write(getFileReturn, 0, getFileReturn.Length);
                                 fs.Close();

@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using XiboClient.Properties;
 using System.Diagnostics;
 using XiboClient.Log;
 using System.Xml;
@@ -68,13 +67,13 @@ namespace XiboClient.XmdsAgents
                         using (xmds.xmds xmds = new xmds.xmds())
                         {
                             xmds.Credentials = null;
-                            xmds.Url = Properties.Settings.Default.XiboClient_xmds_xmds;
+                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(Settings.Default.ServerKey, key.Key, Settings.Default.displayName, "windows", Settings.Default.ClientVersion, Settings.Default.ClientCodeVersion, key.MacAddress, Settings.Default.Version));
+                            RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(ApplicationSettings.Default.ServerKey, key.Key, ApplicationSettings.Default.DisplayName, "windows", ApplicationSettings.Default.ClientVersion, ApplicationSettings.Default.ClientCodeVersion, key.MacAddress, ApplicationSettings.Default.Version));
 
                             // Set the flag to indicate we have a connection to XMDS
-                            Settings.Default.XmdsLastConnection = DateTime.Now;
+                            ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
                         }
                     }
                     catch (Exception ex)
@@ -85,7 +84,7 @@ namespace XiboClient.XmdsAgents
                 }
 
                 // Sleep this thread until the next collection interval
-                _manualReset.WaitOne((int)Settings.Default.collectInterval * 1000);
+                _manualReset.WaitOne((int)ApplicationSettings.Default.CollectInterval * 1000);
             }
 
             Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Thread Stopped"), LogType.Info.ToString());
@@ -136,10 +135,17 @@ namespace XiboClient.XmdsAgents
                         }
 
                         // Match these to settings
-                        Settings.Default[node.Name] = Convert.ChangeType(value, Settings.Default[node.Name].GetType());
+                        try
+                        {
+                            ApplicationSettings.Default[node.Name] = Convert.ChangeType(value, ApplicationSettings.Default[node.Name].GetType());
+                        }
+                        catch
+                        {
+                            message += "Invalid Configuration Option from CMS [" + node.Name + "]" + Environment.NewLine;
+                        }
                     }
 
-                    Settings.Default.Save();
+                    ApplicationSettings.Default.Save();
                 }
                 else
                 {
