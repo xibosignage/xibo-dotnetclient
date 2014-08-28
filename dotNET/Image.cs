@@ -45,7 +45,7 @@ namespace XiboClient
             try
             {
                 _pictureBox = new PictureBox();
-                _pictureBox.SizeMode = (options.Dictionary.Get("scaleType", "stretch") == "stretch") ? PictureBoxSizeMode.StretchImage : PictureBoxSizeMode.Zoom;
+                _pictureBox.SizeMode = (options.Dictionary.Get("scaleType", "center") == "stretch") ? PictureBoxSizeMode.StretchImage : PictureBoxSizeMode.Zoom;
                 _pictureBox.Image = new Bitmap(_filePath);
                 _pictureBox.Size = new Size(_width, _height);
                 _pictureBox.Location = new Point(0, 0);

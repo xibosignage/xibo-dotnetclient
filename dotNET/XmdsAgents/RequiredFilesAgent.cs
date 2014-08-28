@@ -232,7 +232,7 @@ namespace XiboClient.XmdsAgents
             foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
             {
                 string percentComplete = (!requiredFile.Complete) ? Math.Round((((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100), 1).ToString() : "100";
-                requiredFilesTextBox = requiredFilesTextBox + requiredFile.FileType + ": " + requiredFile.Path + ". (" + percentComplete + "%)" + Environment.NewLine;
+                requiredFilesTextBox = requiredFilesTextBox + requiredFile.FileType + ": " + requiredFile.SaveAs + ". (" + percentComplete + "%)" + Environment.NewLine;
             }
 
             return requiredFilesTextBox;

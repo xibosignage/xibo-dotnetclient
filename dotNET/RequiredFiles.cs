@@ -122,7 +122,7 @@ namespace XiboClient
                     string[] filePart = attributes["path"].Value.Split('.');
                     rf.Id = int.Parse(attributes["id"].Value);
                     rf.Path = attributes["path"].Value;
-                    rf.SaveAs = (string.IsNullOrEmpty(attributes["saveAs"].Value)) ? rf.Path : attributes["saveAs"].Value;
+                    rf.SaveAs = (attributes["saveAs"] == null || string.IsNullOrEmpty(attributes["saveAs"].Value)) ? rf.Path : attributes["saveAs"].Value;
                     rf.Http = (attributes["download"].Value == "http");
                     rf.ChunkSize = 512000;
                 }

@@ -166,32 +166,7 @@ namespace XiboClient.XmdsAgents
                     // Download using HTTP and the rf.Path
                     using (WebClient wc = new WebClient())
                     {
-                        using (Stream stream = wc.OpenRead(file.Path))
-                        {
-                            // Get the encoding for the feed.
-                            Encoding encoding;
-                            try
-                            {
-                                ContentType contentType = new ContentType(wc.ResponseHeaders[HttpResponseHeader.ContentType]);
-                                encoding = Encoding.GetEncoding(contentType.CharSet);
-                            }
-                            catch
-                            {
-                                // Default to UTF-8
-                                encoding = Encoding.UTF8;
-                            }
-
-                            // Load the feed into a stream and save it to disk
-                            using (StreamReader sr = new StreamReader(stream, encoding))
-                            {
-                                using (StreamWriter sw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read), encoding))
-                                {
-                                    Debug.WriteLine("Retrieved RSS - about to write it", "RSS - wc_OpenReadCompleted");
-
-                                    sw.Write(sr.ReadToEnd());
-                                }
-                            }
-                        }
+                        wc.DownloadFile(file.Path, ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs);
                     }
 
                     // File completed
