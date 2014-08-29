@@ -51,7 +51,7 @@ namespace XiboClient.xmds {
         
         /// <remarks/>
         public xmds() {
-            this.Url = global::XiboClient.ApplicationSettings.Default.XiboClient_xmds_xmds;
+            this.Url = "http://localhost/xibo/1.7/server-170-alpha/server/xmds.php";
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;

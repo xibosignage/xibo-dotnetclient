@@ -59,6 +59,7 @@ namespace XiboClient
 
             _xmdsProcessing = false;
             _xmds = new xmds.xmds();
+            _xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
 
             // Register a listener for the XMDS stats
             _xmds.SubmitLogCompleted += new XiboClient.xmds.SubmitLogCompletedEventHandler(_xmds_SubmitLogCompleted);

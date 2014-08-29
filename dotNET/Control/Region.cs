@@ -422,7 +422,7 @@ namespace XiboClient
 
             if (options.render == "html")
             {
-                media = new Html(options);
+                media = new WebMedia(options);
             }
             else
             {
@@ -434,7 +434,7 @@ namespace XiboClient
                         break;
 
                     case "text":
-                        media = new Html(options);
+                        media = new WebMedia(options);
                         break;
 
                     case "powerpoint":
@@ -463,7 +463,7 @@ namespace XiboClient
                         break;
 
                     case "webpage":
-                        media = new WebContent(options);
+                        media = new WebMedia(options);
                         break;
 
                     case "flash":
@@ -472,15 +472,15 @@ namespace XiboClient
                         break;
 
                     case "ticker":
-                        media = new Rss(options);
+                        media = new WebMedia(options);
                         break;
 
                     case "embedded":
-                        media = new Html(options);
+                        media = new WebMedia(options);
                         break;
 
                     case "datasetview":
-                        media = new DataSetView(options);
+                        media = new WebMedia(options);
                         break;
 
                     case "shellcommand":

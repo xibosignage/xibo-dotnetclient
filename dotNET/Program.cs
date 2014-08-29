@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Xilium.CefGlue;
 
 // 17/08/2012 Dan Set process priority to RealTime
 // 21/08/2012 Dan Only enable visual styles for Options Form
@@ -34,8 +35,37 @@ namespace XiboClient
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
+            try
+            {
+                CefRuntime.Load();
+            }
+            catch (DllNotFoundException ex)
+            {
+                MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return 1;
+            }
+            catch (CefRuntimeException ex)
+            {
+                MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return 2;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return 3;
+            }
+
+            var settings = new CefSettings();
+            settings.MultiThreadedMessageLoop = CefRuntime.Platform == CefRuntimePlatform.Windows;
+            settings.SingleProcess = false;
+            settings.LogSeverity = CefLogSeverity.Verbose;
+            settings.LogFile = "cef.log";
+            settings.ResourcesDirPath = System.IO.Path.GetDirectoryName(new Uri(System.Reflection.Assembly.GetEntryAssembly().CodeBase).LocalPath);
+            settings.RemoteDebuggingPort = 20480;
+
+            CefRuntime.Initialize(new CefMainArgs(args), settings, null, IntPtr.Zero);
 
             // Ensure our process has the highest priority
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
@@ -43,7 +73,7 @@ namespace XiboClient
             Application.SetCompatibleTextRenderingDefault(false);
 
             Trace.Listeners.Add(new XiboTraceListener());
-            Trace.AutoFlush = false;
+            Trace.AutoFlush = true;
 
             try
             {
@@ -100,6 +130,9 @@ namespace XiboClient
             // Always flush at the end
             Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
             Trace.Flush();
+
+            CefRuntime.Shutdown();
+            return 0;
         }       
 
         private static void RunClient()

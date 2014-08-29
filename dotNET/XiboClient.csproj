@@ -20,7 +20,7 @@
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <PublishUrl>T:\Development\Version 2\Client\</PublishUrl>
@@ -64,6 +64,7 @@
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -77,18 +78,7 @@
     <Reference Include="AxInterop.WMPLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>wmpdll\AxInterop.WMPLib.dll</HintPath>
-    </Reference>
-    <Reference Include="FeedDotNet, Version=1.2.1.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\feeddotnet\FeedDotNet.dll</HintPath>
-    </Reference>
-    <Reference Include="FeedDotNet.Common, Version=1.2.1.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\feeddotnet\FeedDotNet.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="FeedDotNet.Modules, Version=1.2.1.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\feeddotnet\FeedDotNet.Modules.dll</HintPath>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="Interop.WMPLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
@@ -96,45 +86,43 @@
       <HintPath>wmpdll\Interop.WMPLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Management" />
-    <Reference Include="System.ServiceModel.Web, Version=3.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="Xilium.CefGlue">
+      <HintPath>..\cefglue\Xilium.CefGlue.dll</HintPath>
+    </Reference>
+    <Reference Include="Xilium.CefGlue.WindowsForms">
+      <HintPath>..\cefglue\Xilium.CefGlue.WindowsForms.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="About.cs">
+    <Compile Include="Forms\About.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="About.Designer.cs">
+    <Compile Include="Forms\About.Designer.cs">
       <DependentUpon>About.cs</DependentUpon>
     </Compile>
-    <Compile Include="BlackList.cs" />
-    <Compile Include="CacheManager.cs" />
-    <Compile Include="Html.cs">
+    <Compile Include="Logic\BlackList.cs" />
+    <Compile Include="Logic\CacheManager.cs" />
+    <Compile Include="Logic\KeyStore.cs" />
+    <Compile Include="Logic\RegionOptions.cs" />
+    <Compile Include="Logic\ApplicationSettings.cs" />
+    <Compile Include="Media\TemporaryFile.cs" />
+    <Compile Include="Media\VideoDS.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="KeyStore.cs" />
-    <Compile Include="RegionOptions.cs" />
-    <Compile Include="ApplicationSettings.cs" />
-    <Compile Include="TemporaryFile.cs" />
-    <Compile Include="VideoDS.cs">
+    <Compile Include="Media\Flash.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="DataSetView.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Flash.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="HardwareKey.cs" />
-    <Compile Include="Hashes.cs" />
-    <Compile Include="Image.cs">
+    <Compile Include="Logic\HardwareKey.cs" />
+    <Compile Include="Logic\Hashes.cs" />
+    <Compile Include="Media\Image.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Log\ClientInfo.cs">
@@ -150,15 +138,15 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Media.cs">
+    <Compile Include="Media\Media.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MediaOption.cs">
+    <Compile Include="Logic\MediaOption.cs">
     </Compile>
-    <Compile Include="OptionForm.cs">
+    <Compile Include="Forms\OptionForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="OptionForm.Designer.cs">
+    <Compile Include="Forms\OptionForm.Designer.cs">
       <DependentUpon>OptionForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
@@ -167,7 +155,7 @@
       <SubType>Designer</SubType>
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="OptionForm.resx">
+    <EmbeddedResource Include="Forms\OptionForm.resx">
       <SubType>Designer</SubType>
       <DependentUpon>OptionForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -182,6 +170,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <BaseApplicationManifest Include="Properties\app.manifest" />
+    <None Include="app.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -196,31 +185,25 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="Region.cs">
+    <Compile Include="Control\Region.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="RequiredFiles.cs" />
-    <Compile Include="Rss.cs">
+    <Compile Include="Logic\RequiredFiles.cs" />
+    <Compile Include="Logic\Schedule.cs" />
+    <Compile Include="Logic\ScheduleManager.cs" />
+    <Compile Include="Media\ShellCommand.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Schedule.cs" />
-    <Compile Include="ScheduleManager.cs" />
-    <Compile Include="ShellCommand.cs">
+    <Compile Include="Log\StatLog.cs" />
+    <Compile Include="Media\TemporaryHtml.cs" />
+    <Compile Include="Log\LogMessage.cs" />
+    <Compile Include="Media\Video.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="StatLog.cs" />
-    <Compile Include="TemporaryHtml.cs" />
-    <Compile Include="Text.cs">
+    <Compile Include="Media\VideoPlayer.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="LogMessage.cs" />
-    <Compile Include="Video.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="VideoPlayer.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="VideoPlayer.Designer.cs">
+    <Compile Include="Media\VideoPlayer.Designer.cs">
       <DependentUpon>VideoPlayer.cs</DependentUpon>
     </Compile>
     <Compile Include="Web References\xmds\Reference.cs">
@@ -228,11 +211,13 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
-    <Compile Include="WebContent.cs">
+    <Compile Include="Media\WebContent.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="WindowAnimator.cs" />
-    <Compile Include="XiboTraceListener.cs" />
+    <Compile Include="Media\WebMedia.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Log\XiboTraceListener.cs" />
     <Compile Include="XmdsAgents\RegisterAgent.cs" />
     <Compile Include="XmdsAgents\FileAgent.cs" />
     <Compile Include="XmdsAgents\LibraryAgent.cs" />
@@ -271,7 +256,7 @@
   </ItemGroup>
   <ItemGroup>
     <WebReferenceUrl Include="http://localhost/xibo/1.7/server-170-alpha/server/xmds.php%3fwsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
+      <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
       <UpdateFromURL>http://localhost/xibo/1.7/server-170-alpha/server/xmds.php%3fwsdl</UpdateFromURL>
       <ServiceLocationURL>
@@ -283,11 +268,11 @@
     </WebReferenceUrl>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="About.resx">
+    <EmbeddedResource Include="Forms\About.resx">
       <SubType>Designer</SubType>
       <DependentUpon>About.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="VideoPlayer.resx">
+    <EmbeddedResource Include="Media\VideoPlayer.resx">
       <SubType>Designer</SubType>
       <DependentUpon>VideoPlayer.cs</DependentUpon>
     </EmbeddedResource>
@@ -309,6 +294,7 @@
     </Content>
     <Content Include="new-icon.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
