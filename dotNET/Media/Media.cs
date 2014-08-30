@@ -178,6 +178,18 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Reset the timer and start again
+        /// </summary>
+        protected void RestartTimer()
+        {
+            if (_timerStarted)
+            {
+                _timer.Stop();
+                _timer.Start();
+            }
+        }
+
+        /// <summary>
         /// Render Media call
         /// </summary>
         public virtual void RenderMedia() 

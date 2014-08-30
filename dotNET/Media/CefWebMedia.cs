@@ -40,6 +40,19 @@ namespace XiboClient
             _webView.LoadEnd += _webView_LoadEnd;
             _webView.Size = Size;
 
+            // We need to come up with a way of setting this control to Visible = false here and still kicking
+            // off the webbrowser.
+            // I think we can do this by hacking some bits into the Cef.WinForms dll.
+            // Currently if we set this to false a browser isn't initialised by the library because it initializes it in OnHandleCreated
+            // We also need a way to protect against the web browser never being created for some reason.
+            // If it isn't then the control will never exipre (we might need to start the timer and then reset it).
+            // Maybe:
+            // Start the timer and then base.RestartTimer() in _webview_LoadEnd
+            //base.StartTimer();
+            
+            //_webView.Visible = false;
+
+            
             Controls.Add(_webView);
 
             // Show the control
@@ -70,6 +83,8 @@ namespace XiboClient
         {
             if (_disposed)
                 return;
+
+            _webView.Visible = true;
 
             // Start the timer
             base.StartTimer();

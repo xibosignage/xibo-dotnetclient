@@ -39,6 +39,7 @@ namespace XiboClient
             _webBrowser.Size = Size;
             _webBrowser.ScrollBarsEnabled = false;
             _webBrowser.ScriptErrorsSuppressed = true;
+            _webBrowser.Visible = false;
 
             // Check to see if the HTML is ready for us.
             if (HtmlReady())
@@ -67,6 +68,8 @@ namespace XiboClient
 
             if (_disposed)
                 return;
+
+            _webBrowser.Visible = true;
         }
 
         public override void RenderMedia()
