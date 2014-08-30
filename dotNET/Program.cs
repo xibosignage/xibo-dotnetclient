@@ -58,9 +58,9 @@ namespace XiboClient
             }
 
             var settings = new CefSettings();
-            settings.MultiThreadedMessageLoop = CefRuntime.Platform == CefRuntimePlatform.Windows;
+            settings.MultiThreadedMessageLoop = true;
             settings.SingleProcess = false;
-            settings.LogSeverity = CefLogSeverity.Verbose;
+            settings.LogSeverity = CefLogSeverity.Disable;
             settings.LogFile = "cef.log";
             settings.ResourcesDirPath = System.IO.Path.GetDirectoryName(new Uri(System.Reflection.Assembly.GetEntryAssembly().CodeBase).LocalPath);
             settings.RemoteDebuggingPort = 20480;
@@ -183,6 +183,7 @@ namespace XiboClient
             // TODO: Can we just restart the application?
 
             // Shutdown the application
+            CefRuntime.Shutdown();
             Environment.Exit(1);
         }
 

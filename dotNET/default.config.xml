@@ -44,4 +44,5 @@
   <ShowInTaskbar>true</ShowInTaskbar>
   <ClientInfomationCtrlKey>false</ClientInfomationCtrlKey>
   <XmdsLastConnection>0001-01-01T00:00:00</XmdsLastConnection>
+  <UseCefWebBrowser>true</UseCefWebBrowser>
 </ApplicationSettings>

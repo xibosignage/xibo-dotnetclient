@@ -153,6 +153,8 @@ namespace XiboClient
             else
             {
                 _clientSize = SystemInformation.PrimaryMonitorSize;
+                ApplicationSettings.Default.SizeX = _clientSize.Width;
+                ApplicationSettings.Default.SizeY = _clientSize.Height;
             }
 
             // Show in taskbar

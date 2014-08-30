@@ -206,19 +206,19 @@ namespace XiboClient
                 }
 
                 // Does this file exist?
-                if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.Path))
+                if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs))
                 {
                     // Compare MD5 of the file we currently have, to what we should have
-                    if (rf.Md5 != _cacheManager.GetMD5(rf.Path))
+                    if (rf.Md5 != _cacheManager.GetMD5(rf.SaveAs))
                     {
-                        Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "MD5 different for existing file: " + rf.Path), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "MD5 different for existing file: " + rf.SaveAs), LogType.Info.ToString());
 
                         // They are different
-                        _cacheManager.Remove(rf.Path);
+                        _cacheManager.Remove(rf.SaveAs);
 
                         // TODO: Resume the file download under certain conditions. Make sure its not bigger than it should be. 
                         // Make sure it is fairly fresh
-                        FileInfo info = new FileInfo(ApplicationSettings.Default.LibraryPath + @"\" + rf.Path);
+                        FileInfo info = new FileInfo(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs);
 
                         if (info.Length < rf.Size && info.LastWriteTime > DateTime.Now.AddDays(-1))
                         {
@@ -230,7 +230,7 @@ namespace XiboClient
                             // Delete the old file as it is wrong
                             try
                             {
-                                File.Delete(ApplicationSettings.Default.LibraryPath + @"\" + rf.Path);
+                                File.Delete(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs);
                             }
                             catch (Exception ex)
                             {
@@ -242,13 +242,13 @@ namespace XiboClient
                     {
                         // The MD5 is equal - we already have an up to date version of this file.
                         rf.Complete = true;
-                        _cacheManager.Add(rf.Path, rf.Md5);
+                        _cacheManager.Add(rf.SaveAs, rf.Md5);
                     }
                 }
                 else
                 {
                     // File does not exist, therefore remove it from the cache manager (on the off chance that it is in there for some reason)
-                    _cacheManager.Remove(rf.Path);
+                    _cacheManager.Remove(rf.SaveAs);
                 }
 
                 RequiredFileList.Add(rf);

@@ -419,10 +419,15 @@ namespace XiboClient
             Media media;
 
             Trace.WriteLine(new LogMessage("Region - CreateNextMediaNode", string.Format("Creating new media: {0}, {1}", options.type, options.mediaid)), LogType.Audit.ToString());
+            
+            bool useCef = ApplicationSettings.Default.UseCefWebBrowser;
 
             if (options.render == "html")
             {
-                media = new WebMedia(options);
+                if (useCef)
+                    media = new CefWebMedia(options);
+                else
+                    media = new IeWebMedia(options);
             }
             else
             {
@@ -431,10 +436,6 @@ namespace XiboClient
                     case "image":
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new ImagePosition(options);
-                        break;
-
-                    case "text":
-                        media = new WebMedia(options);
                         break;
 
                     case "powerpoint":
@@ -462,25 +463,21 @@ namespace XiboClient
 
                         break;
 
+                    case "datasetview":
+                    case "embedded":
+                    case "ticker":
+                    case "text":
                     case "webpage":
-                        media = new WebMedia(options);
+                        if (useCef)
+                            media = new CefWebMedia(options);
+                        else
+                            media = new IeWebMedia(options);
+
                         break;
 
                     case "flash":
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new Flash(options);
-                        break;
-
-                    case "ticker":
-                        media = new WebMedia(options);
-                        break;
-
-                    case "embedded":
-                        media = new WebMedia(options);
-                        break;
-
-                    case "datasetview":
-                        media = new WebMedia(options);
                         break;
 
                     case "shellcommand":
