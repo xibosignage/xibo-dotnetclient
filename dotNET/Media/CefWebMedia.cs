@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using XiboClient.Control;
 using Xilium.CefGlue;
 using Xilium.CefGlue.WindowsForms;
 
@@ -15,6 +16,7 @@ namespace XiboClient
     class CefWebMedia : Media
     {
         private bool _disposed = false;
+        private bool _startWhenReady = false;
         private string _filePath;
         private RegionOptions _options;
         private TemporaryFile _temporaryFile;
@@ -33,12 +35,31 @@ namespace XiboClient
             // We will need a temporary file to store this HTML
             _temporaryFile = new TemporaryFile();
 
+            Color backgroundColor = ColorTranslator.FromHtml(_options.backgroundColor);
+
+            CefBrowserSettings settings = new CefBrowserSettings();
+            settings.BackgroundColor = new CefColor(backgroundColor.A, backgroundColor.R, backgroundColor.G, backgroundColor.B);
+
             // Create the web view we will use
             _webView = new CefWebBrowser();
+            _webView.BrowserSettings = settings;
             _webView.Dock = DockStyle.Fill;
             _webView.BrowserCreated += _webView_BrowserCreated;
             _webView.LoadEnd += _webView_LoadEnd;
             _webView.Size = Size;
+
+            // Check to see if the HTML is ready for us.
+            if (HtmlReady())
+            {
+                // Write to temporary file
+                SaveToTemporaryFile();
+
+                _startWhenReady = true;
+            }
+            else
+            {
+                RefreshFromXmds();
+            }
 
             // We need to come up with a way of setting this control to Visible = false here and still kicking
             // off the webbrowser.
@@ -52,7 +73,6 @@ namespace XiboClient
             
             //_webView.Visible = false;
 
-            
             Controls.Add(_webView);
 
             // Show the control
@@ -64,27 +84,15 @@ namespace XiboClient
             if (_disposed)
                 return;
 
-            // Check to see if the HTML is ready for us.
-            if (HtmlReady())
-            {                
-                // Write to temporary file
-                SaveToTemporaryFile();
-
+            if (_startWhenReady)
                 // Navigate to temp file
                 _webView.Browser.GetMainFrame().LoadUrl(_temporaryFile.Path);
-            }
-            else
-            {
-                RefreshFromXmds();
-            }
         }
 
         void _webView_LoadEnd(object sender, LoadEndEventArgs e)
         {
             if (_disposed)
                 return;
-
-            _webView.Visible = true;
 
             // Start the timer
             base.StartTimer();

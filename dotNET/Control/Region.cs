@@ -440,7 +440,7 @@ namespace XiboClient
 
                     case "powerpoint":
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
-                        media = new WebContent(options);
+                        media = new PowerPoint(options);
                         break;
 
                     case "video":

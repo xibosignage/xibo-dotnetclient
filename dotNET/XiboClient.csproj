@@ -102,6 +102,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Control\XiboCefWebBrowser.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Forms\About.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -114,6 +117,9 @@
     <Compile Include="Logic\RegionOptions.cs" />
     <Compile Include="Logic\ApplicationSettings.cs" />
     <Compile Include="Media\IeWebMedia.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Media\PowerPoint.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Media\TemporaryFile.cs" />
@@ -213,9 +219,6 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
-    </Compile>
-    <Compile Include="Media\WebContent.cs">
-      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Media\CefWebMedia.cs">
       <SubType>Form</SubType>
