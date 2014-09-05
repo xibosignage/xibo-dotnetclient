@@ -58,9 +58,12 @@ namespace XiboClient
                 {
                     XmlSerializer serial = new XmlSerializer(typeof(ApplicationSettings));
 
-                    path = Path.GetDirectoryName(Application.ExecutablePath);
+                    path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                     fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath) + '.' + _fileSuffix;
-                    string defaultConfigFile = path + Path.DirectorySeparatorChar + _default + "." + _fileSuffix;
+
+                    // The default config file is stored in the application executable path (install folder)
+                    // with the default.config.xml suffix
+                    string defaultConfigFile = Path.GetDirectoryName(Application.ExecutablePath) + Path.DirectorySeparatorChar + _default + "." + _fileSuffix;
 
                     if (!File.Exists(path + Path.DirectorySeparatorChar + fileName))
                     {
