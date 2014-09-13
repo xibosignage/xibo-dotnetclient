@@ -439,6 +439,16 @@ namespace XiboClient
                 PrepareLayout(layoutPath);
 
                 _clientInfoForm.CurrentLayoutId = layoutPath;
+
+                // Do we need to notify?
+                if (ApplicationSettings.Default.SendCurrentLayoutAsStatusUpdate)
+                {
+                    using (xmds.xmds statusXmds = new xmds.xmds())
+                    {
+                        statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                        statusXmds.NotifyStatusAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"currentLayoutId\":" + _layoutId + "}");
+                    }
+                }
             }
             catch (Exception ex)
             {

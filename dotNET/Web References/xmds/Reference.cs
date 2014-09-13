@@ -47,11 +47,13 @@ namespace XiboClient.xmds {
         
         private System.Threading.SendOrPostCallback GetResourceOperationCompleted;
         
+        private System.Threading.SendOrPostCallback NotifyStatusOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
         public xmds() {
-            this.Url = "http://localhost/xibo/1.7/server-170-alpha/server/xmds.php";
+            this.Url = "http://172.28.128.4/xmds.php";
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;
@@ -111,6 +113,9 @@ namespace XiboClient.xmds {
         
         /// <remarks/>
         public event GetResourceCompletedEventHandler GetResourceCompleted;
+        
+        /// <remarks/>
+        public event NotifyStatusCompletedEventHandler NotifyStatusCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#RegisterDisplay", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
@@ -455,6 +460,42 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#NotifyStatus", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [return: System.Xml.Serialization.SoapElementAttribute("success")]
+        public bool NotifyStatus(string version, string serverKey, string hardwareKey, string status) {
+            object[] results = this.Invoke("NotifyStatus", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        status});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void NotifyStatusAsync(string version, string serverKey, string hardwareKey, string status) {
+            this.NotifyStatusAsync(version, serverKey, hardwareKey, status, null);
+        }
+        
+        /// <remarks/>
+        public void NotifyStatusAsync(string version, string serverKey, string hardwareKey, string status, object userState) {
+            if ((this.NotifyStatusOperationCompleted == null)) {
+                this.NotifyStatusOperationCompleted = new System.Threading.SendOrPostCallback(this.OnNotifyStatusOperationCompleted);
+            }
+            this.InvokeAsync("NotifyStatus", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        status}, this.NotifyStatusOperationCompleted, userState);
+        }
+        
+        private void OnNotifyStatusOperationCompleted(object arg) {
+            if ((this.NotifyStatusCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.NotifyStatusCompleted(this, new NotifyStatusCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -703,6 +744,32 @@ namespace XiboClient.xmds {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((string)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.0.30319.18408")]
+    public delegate void NotifyStatusCompletedEventHandler(object sender, NotifyStatusCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.0.30319.18408")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class NotifyStatusCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal NotifyStatusCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
             }
         }
     }

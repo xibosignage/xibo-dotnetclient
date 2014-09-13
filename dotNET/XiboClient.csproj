@@ -261,10 +261,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://localhost/xibo/1.7/server-170-alpha/server/xmds.php%3fwsdl">
+    <WebReferenceUrl Include="http://172.28.128.4/xmds.php%3fWSDL">
       <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>http://localhost/xibo/1.7/server-170-alpha/server/xmds.php%3fwsdl</UpdateFromURL>
+      <UpdateFromURL>http://172.28.128.4/xmds.php%3fWSDL</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>

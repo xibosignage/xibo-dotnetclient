@@ -95,7 +95,7 @@ namespace XiboClient
 
             XmlSerializer serial = new XmlSerializer(typeof(ApplicationSettings));
             string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath) + '.' + _fileSuffix;
-            string path = Path.GetDirectoryName(Application.ExecutablePath);
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
             using (StreamWriter sr = new StreamWriter(path + Path.DirectorySeparatorChar + fileName))
             {
@@ -168,6 +168,7 @@ namespace XiboClient
         public bool ShowInTaskbar { get; set; }
         public bool ClientInfomationCtrlKey { get; set; }
         public bool UseCefWebBrowser { get; set; }
+        public bool SendCurrentLayoutAsStatusUpdate { get; set; }
 
         public DateTime XmdsLastConnection { get; set; }
     }
