@@ -105,6 +105,15 @@
   <wsdl:message name="NotifyStatusResponse">
     <wsdl:part name="success" type="xsd:boolean" />
   </wsdl:message>
+  <wsdl:message name="SubmitScreenShotRequest">
+    <wsdl:part name="version" type="xsd:string" />
+    <wsdl:part name="serverKey" type="xsd:string" />
+    <wsdl:part name="hardwareKey" type="xsd:string" />
+    <wsdl:part name="screenShot" type="xsd:base64Binary" />
+  </wsdl:message>
+  <wsdl:message name="SubmitScreenShotResponse">
+    <wsdl:part name="success" type="xsd:boolean" />
+  </wsdl:message>
   <wsdl:portType name="xmdsPortType">
     <wsdl:operation name="RegisterDisplay">
       <documentation>Register the Display with the CMS</documentation>
@@ -155,6 +164,11 @@
       <documentation>Report back the current status</documentation>
       <wsdl:input message="tns:NotifyStatusRequest" />
       <wsdl:output message="tns:NotifyStatusResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SubmitScreenShot">
+      <documentation>Submit a screen shot for a display</documentation>
+      <wsdl:input message="tns:SubmitScreenShotRequest" />
+      <wsdl:output message="tns:SubmitScreenShotResponse" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="xmdsBinding" type="tns:xmdsPortType">
@@ -242,6 +256,15 @@
     </wsdl:operation>
     <wsdl:operation name="NotifyStatus">
       <soap:operation soapAction="urn:xmds#NotifyStatus" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitScreenShot">
+      <soap:operation soapAction="urn:xmds#SubmitScreenShot" style="rpc" />
       <wsdl:input>
         <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
       </wsdl:input>

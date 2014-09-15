@@ -158,6 +158,7 @@ namespace XiboClient
         public int StatsFlushCount { get; set; }
         public int CollectInterval { get; set; }
         public int MaxConcurrentDownloads { get; set; }
+        public int ScreenShotRequestInterval { get; set; }
 
         public bool PowerpointEnabled { get; set; }
         public bool StatsEnabled { get; set; }

@@ -49,6 +49,8 @@ namespace XiboClient.xmds {
         
         private System.Threading.SendOrPostCallback NotifyStatusOperationCompleted;
         
+        private System.Threading.SendOrPostCallback SubmitScreenShotOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
@@ -116,6 +118,9 @@ namespace XiboClient.xmds {
         
         /// <remarks/>
         public event NotifyStatusCompletedEventHandler NotifyStatusCompleted;
+        
+        /// <remarks/>
+        public event SubmitScreenShotCompletedEventHandler SubmitScreenShotCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#RegisterDisplay", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
@@ -496,6 +501,42 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#SubmitScreenShot", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [return: System.Xml.Serialization.SoapElementAttribute("success")]
+        public bool SubmitScreenShot(string version, string serverKey, string hardwareKey, [System.Xml.Serialization.SoapElementAttribute(DataType="base64Binary")] byte[] screenShot) {
+            object[] results = this.Invoke("SubmitScreenShot", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        screenShot});
+            return ((bool)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void SubmitScreenShotAsync(string version, string serverKey, string hardwareKey, byte[] screenShot) {
+            this.SubmitScreenShotAsync(version, serverKey, hardwareKey, screenShot, null);
+        }
+        
+        /// <remarks/>
+        public void SubmitScreenShotAsync(string version, string serverKey, string hardwareKey, byte[] screenShot, object userState) {
+            if ((this.SubmitScreenShotOperationCompleted == null)) {
+                this.SubmitScreenShotOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSubmitScreenShotOperationCompleted);
+            }
+            this.InvokeAsync("SubmitScreenShot", new object[] {
+                        version,
+                        serverKey,
+                        hardwareKey,
+                        screenShot}, this.SubmitScreenShotOperationCompleted, userState);
+        }
+        
+        private void OnSubmitScreenShotOperationCompleted(object arg) {
+            if ((this.SubmitScreenShotCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.SubmitScreenShotCompleted(this, new SubmitScreenShotCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -761,6 +802,32 @@ namespace XiboClient.xmds {
         private object[] results;
         
         internal NotifyStatusCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public bool Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.0.30319.18408")]
+    public delegate void SubmitScreenShotCompletedEventHandler(object sender, SubmitScreenShotCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.0.30319.18408")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class SubmitScreenShotCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal SubmitScreenShotCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
                 base(exception, cancelled, userState) {
             this.results = results;
         }

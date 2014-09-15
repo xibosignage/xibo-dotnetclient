@@ -116,6 +116,7 @@
     <Compile Include="Logic\KeyStore.cs" />
     <Compile Include="Logic\RegionOptions.cs" />
     <Compile Include="Logic\ApplicationSettings.cs" />
+    <Compile Include="Logic\ScreenShot.cs" />
     <Compile Include="Media\IeWebMedia.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2012 Daniel Garner
+ * Copyright (C) 2006-2014 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -29,6 +29,7 @@ using System.Xml.Serialization;
 using System.Diagnostics;
 using XiboClient.Log;
 using System.Threading;
+using XiboClient.Logic;
 
 /// 17/02/12 Dan Added a static method to get the schedule XML from disk into a string and to write it to the disk
 /// 20/02/12 Dan Tweaked log types on a few trace messages
@@ -61,6 +62,7 @@ namespace XiboClient
         private Collection<LayoutSchedule> _currentSchedule;
         private bool _refreshSchedule;
         private CacheManager _cacheManager;
+        private DateTime _lastScreenShotDate;
 
         /// <summary>
         /// Client Info Form
@@ -86,6 +88,8 @@ namespace XiboClient
             // Create an empty layout schedule
             _layoutSchedule = new Collection<LayoutSchedule>();
             _currentSchedule = new Collection<LayoutSchedule>();
+
+            _lastScreenShotDate = DateTime.MinValue;
         }
 
         #endregion
@@ -166,6 +170,16 @@ namespace XiboClient
 
                         // Update the client info form
                         _clientInfoForm.ScheduleManagerStatus = LayoutsInSchedule();
+
+                        // Do we need to take a screenshot?
+                        if (ApplicationSettings.Default.ScreenShotRequestInterval > 0 && DateTime.Now > _lastScreenShotDate.AddMinutes(ApplicationSettings.Default.ScreenShotRequestInterval))
+                        {
+                            // Take a screen shot and send it
+                            ScreenShot.Take();
+
+                            // Store the date
+                            _lastScreenShotDate = DateTime.Now;
+                        }
                     }
                     catch (Exception ex)
                     {
