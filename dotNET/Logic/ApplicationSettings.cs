@@ -170,6 +170,7 @@ namespace XiboClient
         public bool ClientInfomationCtrlKey { get; set; }
         public bool UseCefWebBrowser { get; set; }
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
+        public bool ScreenShotRequested { get; set; }
 
         public DateTime XmdsLastConnection { get; set; }
     }

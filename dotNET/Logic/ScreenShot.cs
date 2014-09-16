@@ -12,7 +12,7 @@ namespace XiboClient.Logic
 {
     class ScreenShot
     {
-        public static void Take()
+        public static void TakeAndSend()
         {
             Rectangle bounds = Screen.GetBounds(Point.Empty);
             using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))

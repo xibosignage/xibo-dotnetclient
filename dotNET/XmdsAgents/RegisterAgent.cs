@@ -24,6 +24,7 @@ using System.Threading;
 using System.Diagnostics;
 using XiboClient.Log;
 using System.Xml;
+using XiboClient.Logic;
 
 namespace XiboClient.XmdsAgents
 {
@@ -74,6 +75,10 @@ namespace XiboClient.XmdsAgents
 
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
+
+                            // Do we need to send a screenshot?
+                            if (ApplicationSettings.Default.ScreenShotRequested)
+                                ScreenShot.TakeAndSend();
                         }
                     }
                     catch (Exception ex)

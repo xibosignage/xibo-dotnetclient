@@ -175,7 +175,7 @@ namespace XiboClient
                         if (ApplicationSettings.Default.ScreenShotRequestInterval > 0 && DateTime.Now > _lastScreenShotDate.AddMinutes(ApplicationSettings.Default.ScreenShotRequestInterval))
                         {
                             // Take a screen shot and send it
-                            ScreenShot.Take();
+                            ScreenShot.TakeAndSend();
 
                             // Store the date
                             _lastScreenShotDate = DateTime.Now;
