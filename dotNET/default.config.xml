@@ -45,4 +45,7 @@
   <ClientInfomationCtrlKey>false</ClientInfomationCtrlKey>
   <XmdsLastConnection>0001-01-01T00:00:00</XmdsLastConnection>
   <UseCefWebBrowser>true</UseCefWebBrowser>
+  <SendCurrentLayoutAsStatusUpdate>false</SendCurrentLayoutAsStatusUpdate>
+  <ScreenShotRequested>false</ScreenShotRequested>
+  <ScreenShotRequestInterval>0</ScreenShotRequestInterval>
 </ApplicationSettings>

@@ -73,7 +73,6 @@ namespace XiboClient
             Application.SetCompatibleTextRenderingDefault(false);
 
             Trace.Listeners.Add(new XiboTraceListener());
-            Trace.AutoFlush = true;
 
             try
             {

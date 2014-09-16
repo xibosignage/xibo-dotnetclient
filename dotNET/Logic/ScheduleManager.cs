@@ -180,6 +180,9 @@ namespace XiboClient
                             // Store the date
                             _lastScreenShotDate = DateTime.Now;
                         }
+
+                        // Write a flag to the status.xml file
+                        File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
                     }
                     catch (Exception ex)
                     {
