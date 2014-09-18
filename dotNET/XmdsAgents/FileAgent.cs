@@ -24,6 +24,8 @@ using System.Threading;
 using XiboClient.Properties;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Mime;
 
 /// 17/02/12 Dan Created
 /// 21/02/12 Dan Added OnComplete Delegate and Event
@@ -138,17 +140,17 @@ namespace XiboClient.XmdsAgents
 
                 if (file.FileType == "resource")
                 {
-                    // Download using GetResource
+                    // Download using XMDS GetResource
                     using (xmds.xmds xmds = new xmds.xmds())
                     {
                         xmds.Credentials = null;
-                        xmds.Url = Settings.Default.XiboClient_xmds_xmds;
+                        xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                         xmds.UseDefaultCredentials = true;
 
-                        string result = xmds.GetResource(Settings.Default.ServerKey, Settings.Default.hardwareKey, file.LayoutId, file.RegionId, file.MediaId, Settings.Default.Version);
+                        string result = xmds.GetResource(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, file.LayoutId, file.RegionId, file.MediaId, ApplicationSettings.Default.Version);
 
                         // Write the result to disk
-                        using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                        using (StreamWriter sw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
                         {
                             sw.Write(result);
                             sw.Close();
@@ -159,8 +161,38 @@ namespace XiboClient.XmdsAgents
                         file.Complete = true;
                     }
                 }
+                else if (file.FileType == "media" && file.Http)
+                {
+                    // Download using HTTP and the rf.Path
+                    using (WebClient wc = new WebClient())
+                    {
+                        wc.DownloadFile(file.Path, ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs);
+                    }
+
+                    // File completed
+                    file.Downloading = false;
+
+                    // Check MD5
+                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.SaveAs);
+                    if (file.Md5 == md5)
+                    {
+                        // Mark it as complete
+                        _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
+
+                        // Add it to the cache manager
+                        _requiredFiles.CurrentCacheManager.Add(file.SaveAs, file.Md5);
+
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.SaveAs), LogType.Info.ToString());
+                    }
+                    else
+                    {
+                        // Just error - we will pick it up again the next time we download
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.SaveAs), LogType.Error.ToString());
+                    }
+                }
                 else
                 {
+                    // Download using XMDS GetFile 
                     while (!file.Complete)
                     {
                         byte[] getFileReturn;
@@ -169,14 +201,14 @@ namespace XiboClient.XmdsAgents
                         using (xmds.xmds xmds = new xmds.xmds())
                         {
                             xmds.Credentials = null;
-                            xmds.Url = Settings.Default.XiboClient_xmds_xmds;
+                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            getFileReturn = xmds.GetFile(Settings.Default.ServerKey, _hardwareKey, file.Path, file.FileType, file.ChunkOffset, file.ChunkSize, Settings.Default.Version);
+                            getFileReturn = xmds.GetFile(ApplicationSettings.Default.ServerKey, _hardwareKey, file.Id, file.FileType, file.ChunkOffset, file.ChunkSize, ApplicationSettings.Default.Version);
                         }
 
                         // Set the flag to indicate we have a connection to XMDS
-                        Settings.Default.XmdsLastConnection = DateTime.Now;
+                        ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
                         if (file.FileType == "layout")
                         {
@@ -184,7 +216,7 @@ namespace XiboClient.XmdsAgents
                             string layoutXml = Encoding.UTF8.GetString(getFileReturn);
 
                             // Full file is downloaded
-                            using (StreamWriter sw = new StreamWriter(File.Open(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                            using (StreamWriter sw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
                             {
                                 sw.Write(layoutXml);
                                 sw.Close();
@@ -196,7 +228,7 @@ namespace XiboClient.XmdsAgents
                         {
                             // Media file
                             // Need to write to the file - in append mode
-                            using (FileStream fs = new FileStream(Settings.Default.LibraryPath + @"\" + file.Path, FileMode.Append, FileAccess.Write))
+                            using (FileStream fs = new FileStream(ApplicationSettings.Default.LibraryPath + @"\" + file.Path, FileMode.Append, FileAccess.Write))
                             {
                                 fs.Write(getFileReturn, 0, getFileReturn.Length);
                                 fs.Close();
@@ -234,21 +266,21 @@ namespace XiboClient.XmdsAgents
                     file.Downloading = false;
 
                     // Check MD5
-                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.Path);
+                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.SaveAs);
                     if (file.Md5 == md5)
                     {
                         // Mark it as complete
                         _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
 
                         // Add it to the cache manager
-                        _requiredFiles.CurrentCacheManager.Add(file.Path, file.Md5);
+                        _requiredFiles.CurrentCacheManager.Add(file.SaveAs, file.Md5);
 
-                        Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.Path), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.SaveAs), LogType.Info.ToString());
                     }
                     else
                     {
                         // Just error - we will pick it up again the next time we download
-                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.Path), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.SaveAs), LogType.Error.ToString());
                     }
                 }
 

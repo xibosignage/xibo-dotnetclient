@@ -39,7 +39,7 @@ namespace XiboClient.Log
         #region overrides
         public override void Write(string message)
         {
-            if (Settings.Default.LogLevel != "audit")
+            if (ApplicationSettings.Default.LogLevel != "audit")
                 return;
 
             _clientInfo.AddToLogGrid(message, LogType.Audit);
@@ -47,7 +47,7 @@ namespace XiboClient.Log
 
         public override void Write(object o)
         {
-            if (Settings.Default.LogLevel != "audit")
+            if (ApplicationSettings.Default.LogLevel != "audit")
                 return;
 
             _clientInfo.AddToLogGrid(o.ToString(), LogType.Audit);
@@ -58,10 +58,10 @@ namespace XiboClient.Log
             LogType logtype = GetLogTypeFromString(category);
 
             // Determine if we should log this or not.
-            if (Settings.Default.LogLevel == "error" && logtype != LogType.Error)
+            if (ApplicationSettings.Default.LogLevel == "error" && logtype != LogType.Error)
                 return;
 
-            if (Settings.Default.LogLevel == "info" && (logtype != LogType.Error && logtype != LogType.Info))
+            if (ApplicationSettings.Default.LogLevel == "info" && (logtype != LogType.Error && logtype != LogType.Info))
                 return;
 
             _clientInfo.AddToLogGrid(message, logtype);
@@ -72,10 +72,10 @@ namespace XiboClient.Log
             LogType logtype = GetLogTypeFromString(category);
 
             // Determine if we should log this or not.
-            if (Settings.Default.LogLevel == "error" && logtype != LogType.Error)
+            if (ApplicationSettings.Default.LogLevel == "error" && logtype != LogType.Error)
                 return;
 
-            if (Settings.Default.LogLevel == "info" && (logtype != LogType.Error && logtype != LogType.Info))
+            if (ApplicationSettings.Default.LogLevel == "info" && (logtype != LogType.Error && logtype != LogType.Info))
                 return;
 
             _clientInfo.AddToLogGrid(o.ToString(), logtype);

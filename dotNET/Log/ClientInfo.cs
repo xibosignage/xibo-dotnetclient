@@ -102,7 +102,7 @@ namespace XiboClient.Log
             FormClosing += new FormClosingEventHandler(ClientInfo_FormClosing);
 
             // Put the XMDS url on the title window
-            Text = "Client Information and Status - " + Settings.Default.serverURI;
+            Text = "Client Information and Status - " + ApplicationSettings.Default.ServerUri;
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace XiboClient.Log
         /// <param name="layoutName"></param>
         public void SetCurrentlyPlaying(string layoutName)
         {
-            Text = "Client Information and Status - " + Settings.Default.serverURI + " - Currently Showing: " + layoutName;
+            Text = "Client Information and Status - " + ApplicationSettings.Default.ServerUri + " - Currently Showing: " + layoutName;
         }
 
         /// <summary>

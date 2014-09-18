@@ -39,7 +39,7 @@ namespace XiboClient
             this.BackColor = System.Drawing.Color.Black;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.ClientSize = new System.Drawing.Size(1024, 768);
-            this.DoubleBuffered = global::XiboClient.Properties.Settings.Default.DoubleBuffering;
+            this.DoubleBuffered = global::XiboClient.ApplicationSettings.Default.DoubleBuffering;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
