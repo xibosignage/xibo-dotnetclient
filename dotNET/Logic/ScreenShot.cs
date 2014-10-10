@@ -30,6 +30,7 @@ namespace XiboClient.Logic
                     
                     using (xmds.xmds screenShotXmds = new xmds.xmds())
                     {
+                        screenShotXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                         screenShotXmds.SubmitScreenShotCompleted += screenShotXmds_SubmitScreenShotCompleted;
                         screenShotXmds.SubmitScreenShotAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, bytes);
                     }

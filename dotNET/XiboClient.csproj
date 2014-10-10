@@ -124,7 +124,6 @@
     <Compile Include="Media\PowerPoint.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Media\TemporaryFile.cs" />
     <Compile Include="Media\VideoDS.cs">
       <SubType>Form</SubType>
     </Compile>
