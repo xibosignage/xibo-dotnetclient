@@ -240,7 +240,7 @@ namespace XiboClient.XmdsAgents
                             // Has the offset reached the total size?
                             if (file.Size > file.ChunkOffset)
                             {
-                                int remaining = file.Size - file.ChunkOffset;
+                                double remaining = file.Size - file.ChunkOffset;
 
                                 // There is still more to come
                                 if (remaining < file.ChunkSize)

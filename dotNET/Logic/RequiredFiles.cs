@@ -435,9 +435,9 @@ namespace XiboClient
         public bool Complete;
         public bool Http;
 
-        public int ChunkOffset;
-        public int ChunkSize;
-        public int Size;
+        public double ChunkOffset;
+        public double ChunkSize;
+        public double Size;
         public int Retrys;
 
         // Resource nodes

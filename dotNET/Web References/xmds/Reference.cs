@@ -55,7 +55,7 @@ namespace XiboClient.xmds {
         
         /// <remarks/>
         public xmds() {
-            this.Url = "http://172.28.128.4/xmds.php";
+            this.Url = "http://172.28.128.3/xmds.php";
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;
@@ -203,7 +203,7 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#GetFile", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("file", DataType="base64Binary")]
-        public byte[] GetFile(string serverKey, string hardwareKey, int fileId, string fileType, int chunkOffset, int chuckSize, string version) {
+        public byte[] GetFile(string serverKey, string hardwareKey, int fileId, string fileType, double chunkOffset, double chuckSize, string version) {
             object[] results = this.Invoke("GetFile", new object[] {
                         serverKey,
                         hardwareKey,
@@ -216,12 +216,12 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
-        public void GetFileAsync(string serverKey, string hardwareKey, int fileId, string fileType, int chunkOffset, int chuckSize, string version) {
+        public void GetFileAsync(string serverKey, string hardwareKey, int fileId, string fileType, double chunkOffset, double chuckSize, string version) {
             this.GetFileAsync(serverKey, hardwareKey, fileId, fileType, chunkOffset, chuckSize, version, null);
         }
         
         /// <remarks/>
-        public void GetFileAsync(string serverKey, string hardwareKey, int fileId, string fileType, int chunkOffset, int chuckSize, string version, object userState) {
+        public void GetFileAsync(string serverKey, string hardwareKey, int fileId, string fileType, double chunkOffset, double chuckSize, string version, object userState) {
             if ((this.GetFileOperationCompleted == null)) {
                 this.GetFileOperationCompleted = new System.Threading.SendOrPostCallback(this.OnGetFileOperationCompleted);
             }
