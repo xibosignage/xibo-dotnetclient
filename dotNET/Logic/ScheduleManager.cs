@@ -30,6 +30,7 @@ using System.Diagnostics;
 using XiboClient.Log;
 using System.Threading;
 using XiboClient.Logic;
+using System.Globalization;
 
 /// 17/02/12 Dan Added a static method to get the schedule XML from disk into a string and to write it to the disk
 /// 20/02/12 Dan Tweaked log types on a few trace messages
@@ -378,8 +379,8 @@ namespace XiboClient
                         temp.Priority = (attributes["priority"].Value == "1") ? true : false;
 
                         // Get the fromdt,todt
-                        temp.FromDt = DateTime.Parse(attributes["fromdt"].Value);
-                        temp.ToDt = DateTime.Parse(attributes["todt"].Value);
+                        temp.FromDt = DateTime.Parse(attributes["fromdt"].Value, CultureInfo.InvariantCulture);
+                        temp.ToDt = DateTime.Parse(attributes["todt"].Value, CultureInfo.InvariantCulture);
 
                         // Pull out the scheduleid if there is one
                         string scheduleId = "";
