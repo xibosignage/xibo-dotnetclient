@@ -13,6 +13,7 @@
     <wsdl:part name="clientType" type="xsd:string" />
     <wsdl:part name="clientVersion" type="xsd:string" />
     <wsdl:part name="clientCode" type="xsd:int" />
+    <wsdl:part name="operatingSystem" type="xsd:string" />
     <wsdl:part name="macAddress" type="xsd:string" />
     <wsdl:part name="version" type="xsd:string" />
   </wsdl:message>

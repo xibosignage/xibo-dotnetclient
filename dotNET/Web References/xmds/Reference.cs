@@ -125,7 +125,7 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#RegisterDisplay", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("ActivationMessage")]
-        public string RegisterDisplay(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string macAddress, string version) {
+        public string RegisterDisplay(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string version) {
             object[] results = this.Invoke("RegisterDisplay", new object[] {
                         serverKey,
                         hardwareKey,
@@ -133,18 +133,19 @@ namespace XiboClient.xmds {
                         clientType,
                         clientVersion,
                         clientCode,
+                        operatingSystem,
                         macAddress,
                         version});
             return ((string)(results[0]));
         }
         
         /// <remarks/>
-        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string macAddress, string version) {
-            this.RegisterDisplayAsync(serverKey, hardwareKey, displayName, clientType, clientVersion, clientCode, macAddress, version, null);
+        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string version) {
+            this.RegisterDisplayAsync(serverKey, hardwareKey, displayName, clientType, clientVersion, clientCode, operatingSystem, macAddress, version, null);
         }
         
         /// <remarks/>
-        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string macAddress, string version, object userState) {
+        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string version, object userState) {
             if ((this.RegisterDisplayOperationCompleted == null)) {
                 this.RegisterDisplayOperationCompleted = new System.Threading.SendOrPostCallback(this.OnRegisterDisplayOperationCompleted);
             }
@@ -155,6 +156,7 @@ namespace XiboClient.xmds {
                         clientType,
                         clientVersion,
                         clientCode,
+                        operatingSystem,
                         macAddress,
                         version}, this.RegisterDisplayOperationCompleted, userState);
         }

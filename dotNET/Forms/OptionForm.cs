@@ -149,7 +149,7 @@ namespace XiboClient
                 ApplicationSettings.Default.Save();
 
                 // Call register
-                xmds1.RegisterDisplayAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, ApplicationSettings.Default.DisplayName, "windows", ApplicationSettings.Default.ClientVersion, ApplicationSettings.Default.ClientCodeVersion, _hardwareKey.MacAddress, ApplicationSettings.Default.Version);
+                xmds1.RegisterDisplayAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, ApplicationSettings.Default.DisplayName, "windows", ApplicationSettings.Default.ClientVersion, ApplicationSettings.Default.ClientCodeVersion, Environment.OSVersion.ToString(), _hardwareKey.MacAddress, ApplicationSettings.Default.Version);
             }
             catch (Exception ex)
             {
