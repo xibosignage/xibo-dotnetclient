@@ -13,6 +13,7 @@
     <wsdl:part name="clientType" type="xsd:string" />
     <wsdl:part name="clientVersion" type="xsd:string" />
     <wsdl:part name="clientCode" type="xsd:int" />
+    <wsdl:part name="operatingSystem" type="xsd:string" />
     <wsdl:part name="macAddress" type="xsd:string" />
     <wsdl:part name="version" type="xsd:string" />
   </wsdl:message>
@@ -32,8 +33,8 @@
     <wsdl:part name="hardwareKey" type="xsd:string" />
     <wsdl:part name="fileId" type="xsd:int" />
     <wsdl:part name="fileType" type="xsd:string" />
-    <wsdl:part name="chunkOffset" type="xsd:int" />
-    <wsdl:part name="chuckSize" type="xsd:int" />
+    <wsdl:part name="chunkOffset" type="xsd:double" />
+    <wsdl:part name="chuckSize" type="xsd:double" />
     <wsdl:part name="version" type="xsd:string" />
   </wsdl:message>
   <wsdl:message name="GetFileResponse">
@@ -275,7 +276,7 @@
   </wsdl:binding>
   <wsdl:service name="xmds">
     <wsdl:port name="xmdsPort" binding="tns:xmdsBinding">
-      <soap:address location="http://172.28.128.4/xmds.php" />
+      <soap:address location="http://172.28.128.3/xmds.php" />
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

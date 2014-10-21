@@ -19,7 +19,6 @@ namespace XiboClient
         private bool _startWhenReady = false;
         private string _filePath;
         private RegionOptions _options;
-        private TemporaryFile _temporaryFile;
         private CefWebBrowser _webView;
 
         public CefWebMedia(RegionOptions options)
@@ -31,10 +30,7 @@ namespace XiboClient
 
             // Set the file path
             _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
-
-            // We will need a temporary file to store this HTML
-            _temporaryFile = new TemporaryFile();
-
+            
             Color backgroundColor = ColorTranslator.FromHtml(_options.backgroundColor);
 
             CefBrowserSettings settings = new CefBrowserSettings();
@@ -52,7 +48,7 @@ namespace XiboClient
             if (HtmlReady())
             {
                 // Write to temporary file
-                SaveToTemporaryFile();
+                ReadControlMeta();
 
                 _startWhenReady = true;
             }
@@ -86,7 +82,7 @@ namespace XiboClient
 
             if (_startWhenReady)
                 // Navigate to temp file
-                _webView.Browser.GetMainFrame().LoadUrl(_temporaryFile.Path);
+                _webView.Browser.GetMainFrame().LoadUrl(_filePath);
         }
 
         void _webView_LoadEnd(object sender, LoadEndEventArgs e)
@@ -116,32 +112,21 @@ namespace XiboClient
             if (_options.LayoutModifiedDate.CompareTo(lastWriteDate) > 0 || DateTime.Now.CompareTo(lastWriteDate.AddHours(_options.updateInterval * 1.0 / 60.0)) > 0)
                 return false;
             else
+            {
+                UpdateCacheIfNecessary();
                 return true;
+            }
         }
 
         /// <summary>
         /// Updates the position of the background and saves to a temporary file
         /// </summary>
-        private void SaveToTemporaryFile()
+        private void ReadControlMeta()
         {
             // read the contents of the file
             using (StreamReader reader = new StreamReader(_filePath))
             {
-                string cachedFile = reader.ReadToEnd();
-
-                // Handle the background
-                String bodyStyle;
-
-                if (_options.backgroundImage == null || _options.backgroundImage == "")
-                {
-                    bodyStyle = "background-color:" + _options.backgroundColor + " ;";
-                }
-                else
-                {
-                    bodyStyle = "background-image: url('" + _options.backgroundImage.Replace('\\', '/') + "'); background-attachment:fixed; background-color:" + _options.backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
-                }
-
-                string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");
+                string html = reader.ReadToEnd();
 
                 // We also want to parse out the duration using a regular expression
                 try
@@ -158,8 +143,6 @@ namespace XiboClient
                 {
                     Trace.WriteLine(new LogMessage("Html - SaveToTemporaryFile", "Unable to pull duration using RegEx").ToString());
                 }
-
-                _temporaryFile.FileContent = html;
             }
         }
 
@@ -194,18 +177,36 @@ namespace XiboClient
                 }
                 else
                 {
+                    // Ammend the resource file so that we can open it directly from the library (this is better than using a tempoary file)
+                    string cachedFile = e.Result;
+
+                    // Handle the background
+                    String bodyStyle;
+
+                    if (_options.backgroundImage == null || _options.backgroundImage == "")
+                    {
+                        bodyStyle = "background-color:" + _options.backgroundColor + " ;";
+                    }
+                    else
+                    {
+                        bodyStyle = "background-image: url('" + _options.backgroundImage.Replace('\\', '/') + "'); background-attachment:fixed; background-color:" + _options.backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
+                    }
+
+                    string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");
+                    html = html.Replace("[[ViewPortWidth]]", _width.ToString());
+
                     // Write to the library
                     using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        sw.Write(e.Result);
+                        sw.Write(html);
                         sw.Close();
                     }
 
-                    // Write to temporary file
-                    SaveToTemporaryFile();
+                    // Read the control meta back out
+                    ReadControlMeta();
 
                     // Handle Navigate in here because we will not have done it during first load
-                    _webView.Browser.GetMainFrame().LoadUrl(_temporaryFile.Path);
+                    _webView.Browser.GetMainFrame().LoadUrl(_filePath);
                 }
             }
             catch (ObjectDisposedException)
@@ -219,6 +220,45 @@ namespace XiboClient
                 // This should exipre the media
                 Duration = 5;
                 base.RenderMedia();
+            }
+        }
+
+        /// <summary>
+        /// Updates the Cache File with the necessary client side injected items
+        /// </summary>
+        private void UpdateCacheIfNecessary()
+        {
+            // Ammend the resource file so that we can open it directly from the library (this is better than using a tempoary file)
+            string cachedFile = "";
+
+            using (StreamReader reader = new StreamReader(File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                cachedFile = reader.ReadToEnd();
+            }
+
+            if (cachedFile.Contains("[[ViewPortWidth]]"))
+            {
+                // Handle the background
+                String bodyStyle;
+
+                if (_options.backgroundImage == null || _options.backgroundImage == "")
+                {
+                    bodyStyle = "background-color:" + _options.backgroundColor + " ;";
+                }
+                else
+                {
+                    bodyStyle = "background-image: url('" + _options.backgroundImage.Replace('\\', '/') + "'); background-attachment:fixed; background-color:" + _options.backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
+                }
+
+                string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");
+                html = html.Replace("[[ViewPortWidth]]", _width.ToString());
+
+                // Write to the library
+                using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    sw.Write(html);
+                    sw.Close();
+                }
             }
         }
 
@@ -241,17 +281,6 @@ namespace XiboClient
                 catch
                 {
                     Trace.WriteLine(new LogMessage("WebBrowser still in use.", String.Format("Dispose")));
-                }
-
-                // Delete the temporary file
-                try
-                {
-                    if (_temporaryFile != null)
-                        _temporaryFile.Dispose();
-                }
-                catch
-                {
-                    Debug.WriteLine("Unable to delete temporary file", "CefWebMedia - Dispose");
                 }
             }
 

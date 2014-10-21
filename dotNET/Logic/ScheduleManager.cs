@@ -30,6 +30,7 @@ using System.Diagnostics;
 using XiboClient.Log;
 using System.Threading;
 using XiboClient.Logic;
+using System.Globalization;
 
 /// 17/02/12 Dan Added a static method to get the schedule XML from disk into a string and to write it to the disk
 /// 20/02/12 Dan Tweaked log types on a few trace messages
@@ -351,39 +352,46 @@ namespace XiboClient
                 // Node name
                 temp.NodeName = node.Name;
 
-                // Pull attributes from layout nodes
-                XmlAttributeCollection attributes = node.Attributes;
-
-                // All nodes have file properties
-                temp.layoutFile = attributes["file"].Value;
-                
-                // Replace the .xml extension with nothing
-                string replace = ".xml";
-                string layoutFile = temp.layoutFile.TrimEnd(replace.ToCharArray());
-
-                // Set these on the temp layoutschedule
-                temp.layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
-                temp.id = int.Parse(layoutFile);
-
-                // Get attributes that only exist on the default
-                if (temp.NodeName != "default")
+                if (temp.NodeName == "dependants")
                 {
-                    // Priority flag
-                    temp.Priority = (attributes["priority"].Value == "1") ? true : false;
-
-                    // Get the fromdt,todt
-                    temp.FromDt = DateTime.Parse(attributes["fromdt"].Value);
-                    temp.ToDt = DateTime.Parse(attributes["todt"].Value);
-
-                    // Pull out the scheduleid if there is one
-                    string scheduleId = "";
-                    if (attributes["scheduleid"] != null) scheduleId = attributes["scheduleid"].Value;
-
-                    // Add it to the layout schedule
-                    if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
+                    // Do nothing for now
                 }
+                else
+                {
+                    // Pull attributes from layout nodes
+                    XmlAttributeCollection attributes = node.Attributes;
 
-                _layoutSchedule.Add(temp);
+                    // All nodes have file properties
+                    temp.layoutFile = attributes["file"].Value;
+
+                    // Replace the .xml extension with nothing
+                    string replace = ".xml";
+                    string layoutFile = temp.layoutFile.TrimEnd(replace.ToCharArray());
+
+                    // Set these on the temp layoutschedule
+                    temp.layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
+                    temp.id = int.Parse(layoutFile);
+
+                    // Get attributes that only exist on the default
+                    if (temp.NodeName != "default")
+                    {
+                        // Priority flag
+                        temp.Priority = (attributes["priority"].Value == "1") ? true : false;
+
+                        // Get the fromdt,todt
+                        temp.FromDt = DateTime.Parse(attributes["fromdt"].Value, CultureInfo.InvariantCulture);
+                        temp.ToDt = DateTime.Parse(attributes["todt"].Value, CultureInfo.InvariantCulture);
+
+                        // Pull out the scheduleid if there is one
+                        string scheduleId = "";
+                        if (attributes["scheduleid"] != null) scheduleId = attributes["scheduleid"].Value;
+
+                        // Add it to the layout schedule
+                        if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
+                    }
+
+                    _layoutSchedule.Add(temp);
+                }
             }
 
             // Clean up

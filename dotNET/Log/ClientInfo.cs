@@ -216,7 +216,13 @@ namespace XiboClient.Log
         /// <param name="e"></param>
         private void saveLogToDisk_Click(object sender, EventArgs e)
         {
-            using (StreamWriter wrt = new StreamWriter(Path.GetDirectoryName(Application.ExecutablePath) + "\\XiboLog.txt"))
+            saveFileDialog.InitialDirectory = ApplicationSettings.Default.LibraryPath;
+            saveFileDialog.ShowDialog();
+        }
+
+        private void saveFileDialog_FileOk(object sender, CancelEventArgs e)
+        {
+            using (StreamWriter wrt = new StreamWriter(saveFileDialog.FileName))
             {
                 foreach (DataGridViewRow row in logDataGridView.Rows)
                 {
@@ -232,7 +238,7 @@ namespace XiboClient.Log
                 }
             }
 
-            MessageBox.Show("Log saved as " + Path.GetDirectoryName(Application.ExecutablePath) + "\\XiboLog.txt", "Log Saved");
+            MessageBox.Show("Log saved as " + saveFileDialog.FileName, "Log Saved");
         }
     }
 }

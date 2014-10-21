@@ -32,7 +32,7 @@
   <CursorStartPosition>Bottom Right</CursorStartPosition>
   <ClientInformationKeyCode>I</ClientInformationKeyCode>
   <Licensed>0</Licensed>
-  <StatsFlushCount>50</StatsFlushCount>
+  <StatsFlushCount>10</StatsFlushCount>
   <CollectInterval>900</CollectInterval>
   <MaxConcurrentDownloads>5</MaxConcurrentDownloads>
   <PowerpointEnabled>false</PowerpointEnabled>
