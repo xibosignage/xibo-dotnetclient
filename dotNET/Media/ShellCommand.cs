@@ -47,16 +47,20 @@ namespace XiboClient
                     string[] allowedCommands = ApplicationSettings.Default.ShellCommandAllowList.Split(',');
 
                     // Check we are allowed to execute the command
+                    bool found = false;
+
                     foreach (string allowedCommand in allowedCommands)
                     {
                         if (_command.StartsWith(allowedCommand))
                         {
+                            found = true;
                             ExecuteShellCommand();
                             break;
                         }
                     }
 
-                    Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands not in allow list: " + ApplicationSettings.Default.ShellCommandAllowList), LogType.Error.ToString());
+                    if (!found)
+                        Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands not in allow list: " + ApplicationSettings.Default.ShellCommandAllowList), LogType.Error.ToString());
                 }
                 else
                 {
