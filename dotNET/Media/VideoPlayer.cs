@@ -65,6 +65,11 @@ namespace XiboClient
             axWindowsMediaPlayer1.ErrorEvent += new EventHandler(axWindowsMediaPlayer1_ErrorEvent);
         }
 
+        public void SetLooping(bool looping)
+        {
+            axWindowsMediaPlayer1.settings.setMode("loop", looping);
+        }
+
         void axWindowsMediaPlayer1_ErrorEvent(object sender, EventArgs e)
         {
             // Get the error for logging

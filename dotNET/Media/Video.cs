@@ -53,6 +53,10 @@ namespace XiboClient
             _videoPlayer.Height = options.height;
             _videoPlayer.Location = new System.Drawing.Point(0, 0);
 
+            // Should we loop?
+            if (options.Dictionary.Get("loop", "0") == "1" && _duration == 0)
+                _videoPlayer.SetLooping(true);
+
             // Capture any video errors
             _videoPlayer.VideoError += new VideoPlayer.VideoErrored(_videoPlayer_VideoError);
 
