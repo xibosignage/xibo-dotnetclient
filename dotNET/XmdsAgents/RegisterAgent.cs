@@ -71,7 +71,7 @@ namespace XiboClient.XmdsAgents
                             xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(ApplicationSettings.Default.ServerKey, key.Key, ApplicationSettings.Default.DisplayName, "windows", ApplicationSettings.Default.ClientVersion, ApplicationSettings.Default.ClientCodeVersion, Environment.OSVersion.ToString(), key.MacAddress, ApplicationSettings.Default.Version));
+                            RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(ApplicationSettings.Default.ServerKey, key.Key, ApplicationSettings.Default.DisplayName, "windows", ApplicationSettings.Default.ClientVersion, ApplicationSettings.Default.ClientCodeVersion, Environment.OSVersion.ToString(), key.MacAddress));
 
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;

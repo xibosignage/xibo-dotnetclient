@@ -377,7 +377,10 @@ namespace XiboClient
                     }
                     catch
                     {
-                        System.Diagnostics.Trace.WriteLine("Non integer updateInterval in XLF", "Region - SetNextMediaNode");
+                        // Update interval not defined, so assume a high value
+                        _options.updateInterval = 3600;
+
+                        Trace.WriteLine("Non integer updateInterval in XLF", "Region - SetNextMediaNode");
                     }
                 }
 

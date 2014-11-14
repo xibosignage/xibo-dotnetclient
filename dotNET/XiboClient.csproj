@@ -262,10 +262,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://172.28.128.3/xmds.php%3fWSDL">
+    <WebReferenceUrl Include="http://172.28.128.3/xmds.php%3fv=4&amp;WSDL">
       <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>http://172.28.128.3/xmds.php%3fWSDL</UpdateFromURL>
+      <UpdateFromURL>http://172.28.128.3/xmds.php%3fv=4&amp;WSDL</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>

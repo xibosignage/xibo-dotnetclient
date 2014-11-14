@@ -166,7 +166,7 @@ namespace XiboClient
 
                     try
                     {
-                        logtoXmds.SubmitLog(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey, _hardwareKey.Key, builder.ToString());
+                        logtoXmds.SubmitLog(ApplicationSettings.Default.ServerKey, _hardwareKey.Key, builder.ToString());
 
                         // Delete the file we are on
                         File.Delete(fileName);

@@ -32,7 +32,7 @@ namespace XiboClient.Logic
                     {
                         screenShotXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                         screenShotXmds.SubmitScreenShotCompleted += screenShotXmds_SubmitScreenShotCompleted;
-                        screenShotXmds.SubmitScreenShotAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, bytes);
+                        screenShotXmds.SubmitScreenShotAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, bytes);
                     }
                 }
             }

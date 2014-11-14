@@ -121,7 +121,7 @@ namespace XiboClient.XmdsAgents
                             xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            string scheduleXml = xmds.Schedule(ApplicationSettings.Default.ServerKey, _hardwareKey, ApplicationSettings.Default.Version);
+                            string scheduleXml = xmds.Schedule(ApplicationSettings.Default.ServerKey, _hardwareKey);
 
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;

@@ -55,7 +55,7 @@ namespace XiboClient.xmds {
         
         /// <remarks/>
         public xmds() {
-            this.Url = "http://172.28.128.3/xmds.php";
+            this.Url = "http://172.28.128.3/xmds.php?v=4";
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;
@@ -125,7 +125,7 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#RegisterDisplay", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("ActivationMessage")]
-        public string RegisterDisplay(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string version) {
+        public string RegisterDisplay(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress) {
             object[] results = this.Invoke("RegisterDisplay", new object[] {
                         serverKey,
                         hardwareKey,
@@ -134,18 +134,17 @@ namespace XiboClient.xmds {
                         clientVersion,
                         clientCode,
                         operatingSystem,
-                        macAddress,
-                        version});
+                        macAddress});
             return ((string)(results[0]));
         }
         
         /// <remarks/>
-        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string version) {
-            this.RegisterDisplayAsync(serverKey, hardwareKey, displayName, clientType, clientVersion, clientCode, operatingSystem, macAddress, version, null);
+        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress) {
+            this.RegisterDisplayAsync(serverKey, hardwareKey, displayName, clientType, clientVersion, clientCode, operatingSystem, macAddress, null);
         }
         
         /// <remarks/>
-        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string version, object userState) {
+        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, object userState) {
             if ((this.RegisterDisplayOperationCompleted == null)) {
                 this.RegisterDisplayOperationCompleted = new System.Threading.SendOrPostCallback(this.OnRegisterDisplayOperationCompleted);
             }
@@ -157,8 +156,7 @@ namespace XiboClient.xmds {
                         clientVersion,
                         clientCode,
                         operatingSystem,
-                        macAddress,
-                        version}, this.RegisterDisplayOperationCompleted, userState);
+                        macAddress}, this.RegisterDisplayOperationCompleted, userState);
         }
         
         private void OnRegisterDisplayOperationCompleted(object arg) {
@@ -171,28 +169,26 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#RequiredFiles", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("RequiredFilesXml")]
-        public string RequiredFiles(string serverKey, string hardwareKey, string version) {
+        public string RequiredFiles(string serverKey, string hardwareKey) {
             object[] results = this.Invoke("RequiredFiles", new object[] {
                         serverKey,
-                        hardwareKey,
-                        version});
+                        hardwareKey});
             return ((string)(results[0]));
         }
         
         /// <remarks/>
-        public void RequiredFilesAsync(string serverKey, string hardwareKey, string version) {
-            this.RequiredFilesAsync(serverKey, hardwareKey, version, null);
+        public void RequiredFilesAsync(string serverKey, string hardwareKey) {
+            this.RequiredFilesAsync(serverKey, hardwareKey, null);
         }
         
         /// <remarks/>
-        public void RequiredFilesAsync(string serverKey, string hardwareKey, string version, object userState) {
+        public void RequiredFilesAsync(string serverKey, string hardwareKey, object userState) {
             if ((this.RequiredFilesOperationCompleted == null)) {
                 this.RequiredFilesOperationCompleted = new System.Threading.SendOrPostCallback(this.OnRequiredFilesOperationCompleted);
             }
             this.InvokeAsync("RequiredFiles", new object[] {
                         serverKey,
-                        hardwareKey,
-                        version}, this.RequiredFilesOperationCompleted, userState);
+                        hardwareKey}, this.RequiredFilesOperationCompleted, userState);
         }
         
         private void OnRequiredFilesOperationCompleted(object arg) {
@@ -205,25 +201,24 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#GetFile", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("file", DataType="base64Binary")]
-        public byte[] GetFile(string serverKey, string hardwareKey, int fileId, string fileType, double chunkOffset, double chuckSize, string version) {
+        public byte[] GetFile(string serverKey, string hardwareKey, int fileId, string fileType, double chunkOffset, double chuckSize) {
             object[] results = this.Invoke("GetFile", new object[] {
                         serverKey,
                         hardwareKey,
                         fileId,
                         fileType,
                         chunkOffset,
-                        chuckSize,
-                        version});
+                        chuckSize});
             return ((byte[])(results[0]));
         }
         
         /// <remarks/>
-        public void GetFileAsync(string serverKey, string hardwareKey, int fileId, string fileType, double chunkOffset, double chuckSize, string version) {
-            this.GetFileAsync(serverKey, hardwareKey, fileId, fileType, chunkOffset, chuckSize, version, null);
+        public void GetFileAsync(string serverKey, string hardwareKey, int fileId, string fileType, double chunkOffset, double chuckSize) {
+            this.GetFileAsync(serverKey, hardwareKey, fileId, fileType, chunkOffset, chuckSize, null);
         }
         
         /// <remarks/>
-        public void GetFileAsync(string serverKey, string hardwareKey, int fileId, string fileType, double chunkOffset, double chuckSize, string version, object userState) {
+        public void GetFileAsync(string serverKey, string hardwareKey, int fileId, string fileType, double chunkOffset, double chuckSize, object userState) {
             if ((this.GetFileOperationCompleted == null)) {
                 this.GetFileOperationCompleted = new System.Threading.SendOrPostCallback(this.OnGetFileOperationCompleted);
             }
@@ -233,8 +228,7 @@ namespace XiboClient.xmds {
                         fileId,
                         fileType,
                         chunkOffset,
-                        chuckSize,
-                        version}, this.GetFileOperationCompleted, userState);
+                        chuckSize}, this.GetFileOperationCompleted, userState);
         }
         
         private void OnGetFileOperationCompleted(object arg) {
@@ -247,28 +241,26 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#Schedule", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("ScheduleXml")]
-        public string Schedule(string serverKey, string hardwareKey, string version) {
+        public string Schedule(string serverKey, string hardwareKey) {
             object[] results = this.Invoke("Schedule", new object[] {
                         serverKey,
-                        hardwareKey,
-                        version});
+                        hardwareKey});
             return ((string)(results[0]));
         }
         
         /// <remarks/>
-        public void ScheduleAsync(string serverKey, string hardwareKey, string version) {
-            this.ScheduleAsync(serverKey, hardwareKey, version, null);
+        public void ScheduleAsync(string serverKey, string hardwareKey) {
+            this.ScheduleAsync(serverKey, hardwareKey, null);
         }
         
         /// <remarks/>
-        public void ScheduleAsync(string serverKey, string hardwareKey, string version, object userState) {
+        public void ScheduleAsync(string serverKey, string hardwareKey, object userState) {
             if ((this.ScheduleOperationCompleted == null)) {
                 this.ScheduleOperationCompleted = new System.Threading.SendOrPostCallback(this.OnScheduleOperationCompleted);
             }
             this.InvokeAsync("Schedule", new object[] {
                         serverKey,
-                        hardwareKey,
-                        version}, this.ScheduleOperationCompleted, userState);
+                        hardwareKey}, this.ScheduleOperationCompleted, userState);
         }
         
         private void OnScheduleOperationCompleted(object arg) {
@@ -281,24 +273,23 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#BlackList", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("success")]
-        public bool BlackList(string serverKey, string hardwareKey, int mediaId, string type, string reason, string version) {
+        public bool BlackList(string serverKey, string hardwareKey, int mediaId, string type, string reason) {
             object[] results = this.Invoke("BlackList", new object[] {
                         serverKey,
                         hardwareKey,
                         mediaId,
                         type,
-                        reason,
-                        version});
+                        reason});
             return ((bool)(results[0]));
         }
         
         /// <remarks/>
-        public void BlackListAsync(string serverKey, string hardwareKey, int mediaId, string type, string reason, string version) {
-            this.BlackListAsync(serverKey, hardwareKey, mediaId, type, reason, version, null);
+        public void BlackListAsync(string serverKey, string hardwareKey, int mediaId, string type, string reason) {
+            this.BlackListAsync(serverKey, hardwareKey, mediaId, type, reason, null);
         }
         
         /// <remarks/>
-        public void BlackListAsync(string serverKey, string hardwareKey, int mediaId, string type, string reason, string version, object userState) {
+        public void BlackListAsync(string serverKey, string hardwareKey, int mediaId, string type, string reason, object userState) {
             if ((this.BlackListOperationCompleted == null)) {
                 this.BlackListOperationCompleted = new System.Threading.SendOrPostCallback(this.OnBlackListOperationCompleted);
             }
@@ -307,8 +298,7 @@ namespace XiboClient.xmds {
                         hardwareKey,
                         mediaId,
                         type,
-                        reason,
-                        version}, this.BlackListOperationCompleted, userState);
+                        reason}, this.BlackListOperationCompleted, userState);
         }
         
         private void OnBlackListOperationCompleted(object arg) {
@@ -321,9 +311,8 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#SubmitLog", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("success")]
-        public bool SubmitLog(string version, string serverKey, string hardwareKey, string logXml) {
+        public bool SubmitLog(string serverKey, string hardwareKey, string logXml) {
             object[] results = this.Invoke("SubmitLog", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         logXml});
@@ -331,17 +320,16 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
-        public void SubmitLogAsync(string version, string serverKey, string hardwareKey, string logXml) {
-            this.SubmitLogAsync(version, serverKey, hardwareKey, logXml, null);
+        public void SubmitLogAsync(string serverKey, string hardwareKey, string logXml) {
+            this.SubmitLogAsync(serverKey, hardwareKey, logXml, null);
         }
         
         /// <remarks/>
-        public void SubmitLogAsync(string version, string serverKey, string hardwareKey, string logXml, object userState) {
+        public void SubmitLogAsync(string serverKey, string hardwareKey, string logXml, object userState) {
             if ((this.SubmitLogOperationCompleted == null)) {
                 this.SubmitLogOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSubmitLogOperationCompleted);
             }
             this.InvokeAsync("SubmitLog", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         logXml}, this.SubmitLogOperationCompleted, userState);
@@ -357,9 +345,8 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#SubmitLog", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("success")]
-        public bool SubmitStats(string version, string serverKey, string hardwareKey, string statXml) {
+        public bool SubmitStats(string serverKey, string hardwareKey, string statXml) {
             object[] results = this.Invoke("SubmitStats", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         statXml});
@@ -367,17 +354,16 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
-        public void SubmitStatsAsync(string version, string serverKey, string hardwareKey, string statXml) {
-            this.SubmitStatsAsync(version, serverKey, hardwareKey, statXml, null);
+        public void SubmitStatsAsync(string serverKey, string hardwareKey, string statXml) {
+            this.SubmitStatsAsync(serverKey, hardwareKey, statXml, null);
         }
         
         /// <remarks/>
-        public void SubmitStatsAsync(string version, string serverKey, string hardwareKey, string statXml, object userState) {
+        public void SubmitStatsAsync(string serverKey, string hardwareKey, string statXml, object userState) {
             if ((this.SubmitStatsOperationCompleted == null)) {
                 this.SubmitStatsOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSubmitStatsOperationCompleted);
             }
             this.InvokeAsync("SubmitStats", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         statXml}, this.SubmitStatsOperationCompleted, userState);
@@ -393,9 +379,8 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#MediaInventory", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("success")]
-        public bool MediaInventory(string version, string serverKey, string hardwareKey, [System.Xml.Serialization.SoapElementAttribute("mediaInventory")] string mediaInventory1) {
+        public bool MediaInventory(string serverKey, string hardwareKey, [System.Xml.Serialization.SoapElementAttribute("mediaInventory")] string mediaInventory1) {
             object[] results = this.Invoke("MediaInventory", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         mediaInventory1});
@@ -403,17 +388,16 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
-        public void MediaInventoryAsync(string version, string serverKey, string hardwareKey, string mediaInventory1) {
-            this.MediaInventoryAsync(version, serverKey, hardwareKey, mediaInventory1, null);
+        public void MediaInventoryAsync(string serverKey, string hardwareKey, string mediaInventory1) {
+            this.MediaInventoryAsync(serverKey, hardwareKey, mediaInventory1, null);
         }
         
         /// <remarks/>
-        public void MediaInventoryAsync(string version, string serverKey, string hardwareKey, string mediaInventory1, object userState) {
+        public void MediaInventoryAsync(string serverKey, string hardwareKey, string mediaInventory1, object userState) {
             if ((this.MediaInventoryOperationCompleted == null)) {
                 this.MediaInventoryOperationCompleted = new System.Threading.SendOrPostCallback(this.OnMediaInventoryOperationCompleted);
             }
             this.InvokeAsync("MediaInventory", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         mediaInventory1}, this.MediaInventoryOperationCompleted, userState);
@@ -429,24 +413,23 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#GetResource", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("resource")]
-        public string GetResource(string serverKey, string hardwareKey, int layoutId, string regionId, string mediaId, string version) {
+        public string GetResource(string serverKey, string hardwareKey, int layoutId, string regionId, string mediaId) {
             object[] results = this.Invoke("GetResource", new object[] {
                         serverKey,
                         hardwareKey,
                         layoutId,
                         regionId,
-                        mediaId,
-                        version});
+                        mediaId});
             return ((string)(results[0]));
         }
         
         /// <remarks/>
-        public void GetResourceAsync(string serverKey, string hardwareKey, int layoutId, string regionId, string mediaId, string version) {
-            this.GetResourceAsync(serverKey, hardwareKey, layoutId, regionId, mediaId, version, null);
+        public void GetResourceAsync(string serverKey, string hardwareKey, int layoutId, string regionId, string mediaId) {
+            this.GetResourceAsync(serverKey, hardwareKey, layoutId, regionId, mediaId, null);
         }
         
         /// <remarks/>
-        public void GetResourceAsync(string serverKey, string hardwareKey, int layoutId, string regionId, string mediaId, string version, object userState) {
+        public void GetResourceAsync(string serverKey, string hardwareKey, int layoutId, string regionId, string mediaId, object userState) {
             if ((this.GetResourceOperationCompleted == null)) {
                 this.GetResourceOperationCompleted = new System.Threading.SendOrPostCallback(this.OnGetResourceOperationCompleted);
             }
@@ -455,8 +438,7 @@ namespace XiboClient.xmds {
                         hardwareKey,
                         layoutId,
                         regionId,
-                        mediaId,
-                        version}, this.GetResourceOperationCompleted, userState);
+                        mediaId}, this.GetResourceOperationCompleted, userState);
         }
         
         private void OnGetResourceOperationCompleted(object arg) {
@@ -469,9 +451,8 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#NotifyStatus", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("success")]
-        public bool NotifyStatus(string version, string serverKey, string hardwareKey, string status) {
+        public bool NotifyStatus(string serverKey, string hardwareKey, string status) {
             object[] results = this.Invoke("NotifyStatus", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         status});
@@ -479,17 +460,16 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
-        public void NotifyStatusAsync(string version, string serverKey, string hardwareKey, string status) {
-            this.NotifyStatusAsync(version, serverKey, hardwareKey, status, null);
+        public void NotifyStatusAsync(string serverKey, string hardwareKey, string status) {
+            this.NotifyStatusAsync(serverKey, hardwareKey, status, null);
         }
         
         /// <remarks/>
-        public void NotifyStatusAsync(string version, string serverKey, string hardwareKey, string status, object userState) {
+        public void NotifyStatusAsync(string serverKey, string hardwareKey, string status, object userState) {
             if ((this.NotifyStatusOperationCompleted == null)) {
                 this.NotifyStatusOperationCompleted = new System.Threading.SendOrPostCallback(this.OnNotifyStatusOperationCompleted);
             }
             this.InvokeAsync("NotifyStatus", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         status}, this.NotifyStatusOperationCompleted, userState);
@@ -505,9 +485,8 @@ namespace XiboClient.xmds {
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#SubmitScreenShot", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("success")]
-        public bool SubmitScreenShot(string version, string serverKey, string hardwareKey, [System.Xml.Serialization.SoapElementAttribute(DataType="base64Binary")] byte[] screenShot) {
+        public bool SubmitScreenShot(string serverKey, string hardwareKey, [System.Xml.Serialization.SoapElementAttribute(DataType="base64Binary")] byte[] screenShot) {
             object[] results = this.Invoke("SubmitScreenShot", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         screenShot});
@@ -515,17 +494,16 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
-        public void SubmitScreenShotAsync(string version, string serverKey, string hardwareKey, byte[] screenShot) {
-            this.SubmitScreenShotAsync(version, serverKey, hardwareKey, screenShot, null);
+        public void SubmitScreenShotAsync(string serverKey, string hardwareKey, byte[] screenShot) {
+            this.SubmitScreenShotAsync(serverKey, hardwareKey, screenShot, null);
         }
         
         /// <remarks/>
-        public void SubmitScreenShotAsync(string version, string serverKey, string hardwareKey, byte[] screenShot, object userState) {
+        public void SubmitScreenShotAsync(string serverKey, string hardwareKey, byte[] screenShot, object userState) {
             if ((this.SubmitScreenShotOperationCompleted == null)) {
                 this.SubmitScreenShotOperationCompleted = new System.Threading.SendOrPostCallback(this.OnSubmitScreenShotOperationCompleted);
             }
             this.InvokeAsync("SubmitScreenShot", new object[] {
-                        version,
                         serverKey,
                         hardwareKey,
                         screenShot}, this.SubmitScreenShotOperationCompleted, userState);
