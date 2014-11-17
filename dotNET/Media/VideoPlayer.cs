@@ -70,6 +70,14 @@ namespace XiboClient
             axWindowsMediaPlayer1.settings.setMode("loop", looping);
         }
 
+        public void SetMute(bool mute)
+        {
+            if (mute)
+                axWindowsMediaPlayer1.settings.mute = true;
+            else
+                axWindowsMediaPlayer1.settings.volume = 100;
+        }
+
         void axWindowsMediaPlayer1_ErrorEvent(object sender, EventArgs e)
         {
             // Get the error for logging
