@@ -53,11 +53,6 @@ namespace XiboClient
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
             webBrowser.Visible = false;
 
-            // Offset?
-            double offsetTop = Convert.ToDouble(options.Dictionary.Get("offsetTop", "0"));
-            double offsetLeft = Convert.ToDouble(options.Dictionary.Get("offsetLeft", "0"));
-            double scaling = Convert.ToDouble(options.Dictionary.Get("scaling", "100"));
-
             if (!ApplicationSettings.Default.PowerpointEnabled)
             {
                 webBrowser.DocumentText = "<html><body><h1>Powerpoint not enabled on this display</h1></body></html>";
@@ -90,12 +85,6 @@ namespace XiboClient
 
             Controls.Add(webBrowser);
             Show();
-        }
-
-        public override void RenderMedia()
-        {
-            // do nothing
-            return;
         }
 
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)

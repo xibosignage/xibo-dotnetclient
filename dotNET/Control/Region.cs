@@ -147,7 +147,7 @@ namespace XiboClient
                 // If the sequence hasnt been changed, OR the layout has been expired
                 // there has been no change to the sequence, therefore the media we have already created is still valid
                 // or this media has actually been destroyed and we are working out way out the call stack
-                if (_currentSequence == temp || _layoutExpired)
+                if (_layoutExpired || (_currentSequence == temp))
                     return;
 
                 // Store the Current Index
@@ -492,8 +492,9 @@ namespace XiboClient
                 }
             }
 
-            // Sets up the timer for this media
-            media.Duration = options.duration;
+            // Sets up the timer for this media, if it hasn't already been set
+            if (media.Duration == 0)
+                media.Duration = options.duration;
 
             // Add event handler for when this completes
             media.DurationElapsedEvent += new Media.DurationElapsedDelegate(media_DurationElapsedEvent);
