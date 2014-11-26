@@ -123,7 +123,7 @@ namespace XiboClient
                 tbStatus.AppendText("Saving with CMS... Please wait...");
 
                 // Make sure our XMDS location is correct
-                ApplicationSettings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php";
+                ApplicationSettings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php?v=" + ApplicationSettings.Default.Version;
             
                 // Simple settings
                 ApplicationSettings.Default.ServerKey = textBoxServerKey.Text;

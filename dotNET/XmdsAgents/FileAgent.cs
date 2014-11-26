@@ -147,7 +147,7 @@ namespace XiboClient.XmdsAgents
                         xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                         xmds.UseDefaultCredentials = true;
 
-                        string result = xmds.GetResource(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, file.LayoutId, file.RegionId, file.MediaId, ApplicationSettings.Default.Version);
+                        string result = xmds.GetResource(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, file.LayoutId, file.RegionId, file.MediaId);
 
                         // Write the result to disk
                         using (StreamWriter sw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
@@ -204,7 +204,7 @@ namespace XiboClient.XmdsAgents
                             xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            getFileReturn = xmds.GetFile(ApplicationSettings.Default.ServerKey, _hardwareKey, file.Id, file.FileType, file.ChunkOffset, file.ChunkSize, ApplicationSettings.Default.Version);
+                            getFileReturn = xmds.GetFile(ApplicationSettings.Default.ServerKey, _hardwareKey, file.Id, file.FileType, file.ChunkOffset, file.ChunkSize);
                         }
 
                         // Set the flag to indicate we have a connection to XMDS

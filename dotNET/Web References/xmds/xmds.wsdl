@@ -15,7 +15,6 @@
     <wsdl:part name="clientCode" type="xsd:int" />
     <wsdl:part name="operatingSystem" type="xsd:string" />
     <wsdl:part name="macAddress" type="xsd:string" />
-    <wsdl:part name="version" type="xsd:string" />
   </wsdl:message>
   <wsdl:message name="RegisterDisplayResponse">
     <wsdl:part name="ActivationMessage" type="xsd:string" />
@@ -23,7 +22,6 @@
   <wsdl:message name="RequiredFilesRequest">
     <wsdl:part name="serverKey" type="xsd:string" />
     <wsdl:part name="hardwareKey" type="xsd:string" />
-    <wsdl:part name="version" type="xsd:string" />
   </wsdl:message>
   <wsdl:message name="RequiredFilesResponse">
     <wsdl:part name="RequiredFilesXml" type="xsd:string" />
@@ -35,7 +33,6 @@
     <wsdl:part name="fileType" type="xsd:string" />
     <wsdl:part name="chunkOffset" type="xsd:double" />
     <wsdl:part name="chuckSize" type="xsd:double" />
-    <wsdl:part name="version" type="xsd:string" />
   </wsdl:message>
   <wsdl:message name="GetFileResponse">
     <wsdl:part name="file" type="xsd:base64Binary" />
@@ -43,7 +40,6 @@
   <wsdl:message name="ScheduleRequest">
     <wsdl:part name="serverKey" type="xsd:string" />
     <wsdl:part name="hardwareKey" type="xsd:string" />
-    <wsdl:part name="version" type="xsd:string" />
   </wsdl:message>
   <wsdl:message name="ScheduleResponse">
     <wsdl:part name="ScheduleXml" type="xsd:string" />
@@ -54,13 +50,11 @@
     <wsdl:part name="mediaId" type="xsd:int" />
     <wsdl:part name="type" type="xsd:string" />
     <wsdl:part name="reason" type="xsd:string" />
-    <wsdl:part name="version" type="xsd:string" />
   </wsdl:message>
   <wsdl:message name="BlackListResponse">
     <wsdl:part name="success" type="xsd:boolean" />
   </wsdl:message>
   <wsdl:message name="SubmitLogRequest">
-    <wsdl:part name="version" type="xsd:string" />
     <wsdl:part name="serverKey" type="xsd:string" />
     <wsdl:part name="hardwareKey" type="xsd:string" />
     <wsdl:part name="logXml" type="xsd:string" />
@@ -69,7 +63,6 @@
     <wsdl:part name="success" type="xsd:boolean" />
   </wsdl:message>
   <wsdl:message name="SubmitStatsRequest">
-    <wsdl:part name="version" type="xsd:string" />
     <wsdl:part name="serverKey" type="xsd:string" />
     <wsdl:part name="hardwareKey" type="xsd:string" />
     <wsdl:part name="statXml" type="xsd:string" />
@@ -78,7 +71,6 @@
     <wsdl:part name="success" type="xsd:boolean" />
   </wsdl:message>
   <wsdl:message name="MediaInventoryRequest">
-    <wsdl:part name="version" type="xsd:string" />
     <wsdl:part name="serverKey" type="xsd:string" />
     <wsdl:part name="hardwareKey" type="xsd:string" />
     <wsdl:part name="mediaInventory" type="xsd:string" />
@@ -92,13 +84,11 @@
     <wsdl:part name="layoutId" type="xsd:int" />
     <wsdl:part name="regionId" type="xsd:string" />
     <wsdl:part name="mediaId" type="xsd:string" />
-    <wsdl:part name="version" type="xsd:string" />
   </wsdl:message>
   <wsdl:message name="GetResourceResponse">
     <wsdl:part name="resource" type="xsd:string" />
   </wsdl:message>
   <wsdl:message name="NotifyStatusRequest">
-    <wsdl:part name="version" type="xsd:string" />
     <wsdl:part name="serverKey" type="xsd:string" />
     <wsdl:part name="hardwareKey" type="xsd:string" />
     <wsdl:part name="status" type="xsd:string" />
@@ -107,7 +97,6 @@
     <wsdl:part name="success" type="xsd:boolean" />
   </wsdl:message>
   <wsdl:message name="SubmitScreenShotRequest">
-    <wsdl:part name="version" type="xsd:string" />
     <wsdl:part name="serverKey" type="xsd:string" />
     <wsdl:part name="hardwareKey" type="xsd:string" />
     <wsdl:part name="screenShot" type="xsd:base64Binary" />
@@ -276,7 +265,7 @@
   </wsdl:binding>
   <wsdl:service name="xmds">
     <wsdl:port name="xmdsPort" binding="tns:xmdsBinding">
-      <soap:address location="http://172.28.128.3/xmds.php" />
+      <soap:address location="http://172.28.128.3/xmds.php?v=4" />
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

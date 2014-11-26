@@ -138,7 +138,7 @@ namespace XiboClient.XmdsAgents
                                 xmds.UseDefaultCredentials = false;
 
                                 // Get required files from XMDS
-                                string requiredFilesXml = xmds.RequiredFiles(ApplicationSettings.Default.ServerKey, _hardwareKey, ApplicationSettings.Default.Version);
+                                string requiredFilesXml = xmds.RequiredFiles(ApplicationSettings.Default.ServerKey, _hardwareKey);
 
                                 // Set the flag to indicate we have a connection to XMDS
                                 ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
