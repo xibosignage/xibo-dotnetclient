@@ -90,7 +90,7 @@ namespace XiboClient
         void webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             // Get ready to show the control
-            webBrowser.Visible = false;
+            webBrowser.Visible = true;
         }
 
         protected override void Dispose(bool disposing)
@@ -99,7 +99,6 @@ namespace XiboClient
             {
                 Controls.Remove(webBrowser);
                 webBrowser.Dispose();
-                GC.Collect();
             }
             catch (Exception ex)
             {
