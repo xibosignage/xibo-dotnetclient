@@ -1,7 +1,6 @@
-Xibo - Digitial Signage - http://www.xibo.org.uk
-Copyright (C) 2006-2015 Daniel Garner
-
-This file is part of Xibo.
+# Introduction
+Xibo - Digital Signage - http://www.xibo.org.uk
+Copyright (C) 2006-2015 Daniel Garner, James Packer and Alex Harrington
 
 Xibo is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -16,6 +15,8 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with Xibo.  If not, see <http://www.gnu.org/licenses/>. 
 
+# Repository
+This is the repository for the Xibo for Windows .NET Player.
 
-This is Xibo Client v1.7.0-rc1 for Win32.
-The source code for this application is available at https://github.com/xibosignage/xibo-dotnetclient
+# Issues
+Please submit issues to the central repository for the Xibo Project: https://github.com/xibosignage/xibo/issues
