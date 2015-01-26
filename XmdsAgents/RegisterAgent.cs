@@ -111,12 +111,20 @@ namespace XiboClient.XmdsAgents
         {
             string message = "";
 
+            // Work out if we need to do anything (have the settings changed since the last time)
+            string md5 = Hashes.MD5(xml);
+
             try
             {
                 // Load the result into an XML document
                 XmlDocument result = new XmlDocument();
                 result.LoadXml(xml);
+                
+                // If the XML we received has not changed, then go no further.
+                if (ApplicationSettings.Default.Hash == md5)
+                    return result.DocumentElement.Attributes["message"].Value;
 
+                // Test the XML
                 if (result.DocumentElement.Attributes["code"].Value == "READY")
                 {
                     // Get the config element
@@ -162,6 +170,8 @@ namespace XiboClient.XmdsAgents
                         }
                     }
 
+                    // Store the MD5 hash and the save
+                    ApplicationSettings.Default.Hash = md5;
                     ApplicationSettings.Default.Save();
                 }
                 else
