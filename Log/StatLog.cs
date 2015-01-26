@@ -26,15 +26,14 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Diagnostics;
 using System.Threading;
+using System.Net;
 
 namespace XiboClient
 {
     class StatLog
     {
         private Collection<Stat> _stats;
-        private String _lastSubmit;
         private HardwareKey _hardwareKey;
-        private Boolean _xmdsProcessing;
 
         public StatLog()
         {
@@ -42,8 +41,6 @@ namespace XiboClient
             
             // Get the key for this display
             _hardwareKey = new HardwareKey();
-
-            _xmdsProcessing = false;
         }
 
         /// <summary>
@@ -199,14 +196,10 @@ namespace XiboClient
         {
             Debug.WriteLine(new LogMessage("FlushToXmds", String.Format("IN")), LogType.Audit.ToString());
 
-            int threshold = ((int)ApplicationSettings.Default.CollectInterval * 5);
-
-            // Determine where we want to log.
-            if (ApplicationSettings.Default.XmdsLastConnection.AddSeconds(threshold) < DateTime.Now && true)
-            {
+            // If we haven't had a successful connection recently, then don't log
+            if (ApplicationSettings.Default.XmdsLastConnection.AddSeconds((int)ApplicationSettings.Default.CollectInterval) < DateTime.Now)
                 return;
-            }
-
+            
             // Get a list of all the log files waiting to be sent to XMDS.
             string[] logFiles = Directory.GetFiles(ApplicationSettings.Default.LibraryPath, "*" + ApplicationSettings.Default.StatsLogFile + "*");
 
@@ -233,6 +226,17 @@ namespace XiboClient
                         // Delete the file we are on
                         File.Delete(fileName);
                     }
+                    catch (WebException webEx)
+                    {
+                        // Increment the quantity of XMDS failures and bail out
+                        ApplicationSettings.Default.IncrementXmdsErrorCount();
+
+                        // Log this message, but dont abort the thread
+                        Trace.WriteLine(new LogMessage("ProcessQueueToXmds", "WebException: " + webEx.Message), LogType.Error.ToString());
+
+                        // Drop out the loop
+                        break;
+                    }
                     catch (Exception e)
                     {
                         Trace.WriteLine(new LogMessage("FlushToXmds", string.Format("Exception when submitting to XMDS: {0}", e.Message)), LogType.Error.ToString());
@@ -241,7 +245,7 @@ namespace XiboClient
             }
 
             // Log out
-            System.Diagnostics.Debug.WriteLine(new LogMessage("FlushToXmds", String.Format("OUT")), LogType.Audit.ToString());
+            Debug.WriteLine(new LogMessage("FlushToXmds", String.Format("OUT")), LogType.Audit.ToString());
         }
     }
 

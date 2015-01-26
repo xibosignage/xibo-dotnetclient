@@ -27,6 +27,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Forms;
 using System.Security;
 using System.Threading;
+using System.Net;
 
 /// 17/02/12 Dan Changed to always Log audit if no category is given
 
@@ -145,6 +146,10 @@ namespace XiboClient
         /// </summary>
         public void ProcessQueueToXmds()
         {
+            // If we haven't had a successful connection recently, then don't log
+            if (ApplicationSettings.Default.XmdsLastConnection.AddSeconds((int)ApplicationSettings.Default.CollectInterval) < DateTime.Now)
+                return;
+
             // Get a list of all the log files waiting to be sent to XMDS.
             string[] logFiles = Directory.GetFiles(ApplicationSettings.Default.LibraryPath, "*" + ApplicationSettings.Default.LogLocation + "*");
 
@@ -171,9 +176,20 @@ namespace XiboClient
                         // Delete the file we are on
                         File.Delete(fileName);
                     }
+                    catch (WebException webEx)
+                    {
+                        // Increment the quantity of XMDS failures and bail out
+                        ApplicationSettings.Default.IncrementXmdsErrorCount();
+
+                        // Log this message, but dont abort the thread
+                        Trace.WriteLine(new LogMessage("ProcessQueueToXmds", "WebException: " + webEx.Message), LogType.Error.ToString());
+
+                        // Drop out the loop
+                        break;
+                    }
                     catch (Exception e)
                     {
-                        Trace.WriteLine(new LogMessage("FlushToXmds", string.Format("Exception when submitting to XMDS: {0}", e.Message)), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("ProcessQueueToXmds", string.Format("Exception when submitting to XMDS: {0}", e.Message)), LogType.Error.ToString());
                     }
                 }
             }

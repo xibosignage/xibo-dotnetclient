@@ -24,6 +24,7 @@ using System.Threading;
 using XiboClient.Properties;
 using System.Diagnostics;
 using XiboClient.Log;
+using System.Net;
 
 /// 17/02/12 Dan Created
 /// 20/02/12 Dan Added ClientInfo
@@ -149,6 +150,16 @@ namespace XiboClient.XmdsAgents
                             _clientInfoForm.ScheduleStatus = "Sleeping";
                         }
                     }
+                    catch (WebException webEx)
+                    {
+                        // Increment the quantity of XMDS failures and bail out
+                        ApplicationSettings.Default.IncrementXmdsErrorCount();
+
+                        // Log this message, but dont abort the thread
+                        Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "WebException in Run: " + webEx.Message), LogType.Error.ToString());
+
+                        _clientInfoForm.ScheduleStatus = "Error: " + webEx.Message;
+                    }
                     catch (Exception ex)
                     {
                         // Log this message, but dont abort the thread
@@ -158,7 +169,7 @@ namespace XiboClient.XmdsAgents
                 }
 
                 // Sleep this thread until the next collection interval
-                _manualReset.WaitOne((int)ApplicationSettings.Default.CollectInterval * 1000);
+                _manualReset.WaitOne((int)(ApplicationSettings.Default.CollectInterval * ApplicationSettings.Default.XmdsCollectionIntervalFactor() * 1000));
             }
 
             Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Stopped"), LogType.Info.ToString());

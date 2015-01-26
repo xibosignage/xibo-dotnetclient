@@ -172,6 +172,23 @@ namespace XiboClient
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
         public bool ScreenShotRequested { get; set; }
 
-        public DateTime XmdsLastConnection { get; set; }
+        // XMDS Status Flags
+        private DateTime _xmdsLastConnection;
+        public DateTime XmdsLastConnection { get { return _xmdsLastConnection; } set { _xmdsErrorCountSinceSuccessful = 0; _xmdsLastConnection = value; } }
+        private int _xmdsErrorCountSinceSuccessful = 0;
+        public int XmdsErrorCountSinceSuccessful { get { return _xmdsErrorCountSinceSuccessful; } }
+
+        public decimal XmdsCollectionIntervalFactor()
+        {
+            return (XmdsErrorCountSinceSuccessful > 10) ? 5 : XmdsErrorCountSinceSuccessful / 2;
+        }
+
+        public void IncrementXmdsErrorCount()
+        {
+            lock (this)
+            {
+                _xmdsErrorCountSinceSuccessful++;
+            };
+        }
     }
 }

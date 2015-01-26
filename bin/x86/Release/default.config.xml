@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ApplicationSettings>
+  <XmdsResetTimeout>900</XmdsResetTimeout>
+  <SizeX>0</SizeX>
+  <SizeY>0</SizeY>
+  <OffsetX>0</OffsetX>
+  <OffsetY>0</OffsetY>
+  <EmptyLayoutDuration>10</EmptyLayoutDuration>
+  <EnableExpiredFileDeletion>true</EnableExpiredFileDeletion>
+  <LibraryAgentInterval>2</LibraryAgentInterval>
+  <ScheduleFile>schedule.xml</ScheduleFile>
+  <LogLocation>log.xml</LogLocation>
+  <StatsLogFile>stats.xml</StatsLogFile>
+  <CacheManagerFile>cacheManager.xml</CacheManagerFile>
+  <RequiredFilesFile>requiredFiles.xml</RequiredFilesFile>
+  <VideoRenderingEngine>WindowsMediaPlayer</VideoRenderingEngine>
+  <LibraryPath>DEFAULT</LibraryPath>
+  <XiboClient_xmds_xmds>http://localhost/xibo/1.7/server-170-alpha/server/xmds.php</XiboClient_xmds_xmds>
+  <ServerKey>yourserverkey</ServerKey>
+  <DisplayName>COMPUTERNAME</DisplayName>
+  <ServerUri>http://localhost/xibo</ServerUri>
+  <ProxyUser></ProxyUser>
+  <ProxyPassword></ProxyPassword>
+  <ProxyDomain></ProxyDomain>
+  <ProxyPort></ProxyPort>
+  <BlackListLocation>blacklist.xml</BlackListLocation>
+  <HardwareKey></HardwareKey>
+  <LogLevel>error</LogLevel>
+  <SplashOverride></SplashOverride>
+  <ShellCommandAllowList></ShellCommandAllowList>
+  <LogToDiskLocation></LogToDiskLocation>
+  <CursorStartPosition>Bottom Right</CursorStartPosition>
+  <ClientInformationKeyCode>I</ClientInformationKeyCode>
+  <Licensed>0</Licensed>
+  <StatsFlushCount>10</StatsFlushCount>
+  <CollectInterval>900</CollectInterval>
+  <MaxConcurrentDownloads>5</MaxConcurrentDownloads>
+  <PowerpointEnabled>false</PowerpointEnabled>
+  <StatsEnabled>true</StatsEnabled>
+  <ExpireModifiedLayouts>true</ExpireModifiedLayouts>
+  <EnableMouse>false</EnableMouse>
+  <DoubleBuffering>true</DoubleBuffering>
+  <EnableShellCommands>false</EnableShellCommands>
+  <ShowInTaskbar>true</ShowInTaskbar>
+  <ClientInfomationCtrlKey>false</ClientInfomationCtrlKey>
+  <XmdsLastConnection>0001-01-01T00:00:00</XmdsLastConnection>
+  <UseCefWebBrowser>true</UseCefWebBrowser>
+  <SendCurrentLayoutAsStatusUpdate>false</SendCurrentLayoutAsStatusUpdate>
+  <ScreenShotRequested>false</ScreenShotRequested>
+  <ScreenShotRequestInterval>0</ScreenShotRequestInterval>
+</ApplicationSettings>

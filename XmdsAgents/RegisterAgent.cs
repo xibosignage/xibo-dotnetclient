@@ -25,6 +25,7 @@ using System.Diagnostics;
 using XiboClient.Log;
 using System.Xml;
 using XiboClient.Logic;
+using System.Net;
 
 namespace XiboClient.XmdsAgents
 {
@@ -78,8 +79,19 @@ namespace XiboClient.XmdsAgents
 
                             // Do we need to send a screenshot?
                             if (ApplicationSettings.Default.ScreenShotRequested)
+                            {
+                                ApplicationSettings.Default.ScreenShotRequested = false;
                                 ScreenShot.TakeAndSend();
+                            }
                         }
+                    }
+                    catch (WebException webEx)
+                    {
+                        // Increment the quantity of XMDS failures and bail out
+                        ApplicationSettings.Default.IncrementXmdsErrorCount();
+
+                        // Log this message, but dont abort the thread
+                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "WebException in Run: " + webEx.Message), LogType.Error.ToString());
                     }
                     catch (Exception ex)
                     {
@@ -89,7 +101,7 @@ namespace XiboClient.XmdsAgents
                 }
 
                 // Sleep this thread until the next collection interval
-                _manualReset.WaitOne((int)ApplicationSettings.Default.CollectInterval * 1000);
+                _manualReset.WaitOne((int)(ApplicationSettings.Default.CollectInterval * ApplicationSettings.Default.XmdsCollectionIntervalFactor() * 1000));
             }
 
             Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Thread Stopped"), LogType.Info.ToString());

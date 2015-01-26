@@ -96,10 +96,10 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Xilium.CefGlue">
-      <HintPath>..\cefglue\Xilium.CefGlue.dll</HintPath>
+      <HintPath>bin\x86\Release\cefglue\Xilium.CefGlue.dll</HintPath>
     </Reference>
     <Reference Include="Xilium.CefGlue.WindowsForms">
-      <HintPath>..\cefglue\Xilium.CefGlue.WindowsForms.dll</HintPath>
+      <HintPath>bin\x86\Release\cefglue\Xilium.CefGlue.WindowsForms.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
