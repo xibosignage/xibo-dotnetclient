@@ -180,6 +180,9 @@ namespace XiboClient
 
         public decimal XmdsCollectionIntervalFactor()
         {
+            if (XmdsErrorCountSinceSuccessful == 0)
+                return 1;
+
             return (XmdsErrorCountSinceSuccessful > 10) ? 5 : XmdsErrorCountSinceSuccessful / 2;
         }
 
@@ -190,5 +193,8 @@ namespace XiboClient
                 _xmdsErrorCountSinceSuccessful++;
             };
         }
+
+        // Settings HASH
+        public string Hash { get; set; }
     }
 }
