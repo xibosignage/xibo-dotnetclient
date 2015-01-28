@@ -399,8 +399,7 @@ namespace XiboClient
 
                 xml = string.Format("<files>{0}</files>", xml);
 
-                _report.MediaInventoryAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey,
-                    hardwareKey.Key, xml);
+                _report.MediaInventoryAsync(ApplicationSettings.Default.ServerKey, hardwareKey.Key, xml);
             }
         }
 
