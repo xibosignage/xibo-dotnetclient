@@ -410,6 +410,12 @@ namespace XiboClient
                     _options.javaScript = raw.InnerText;
                 }
             }
+
+            // Media Types without an update interval should be set to something rather high
+            if (_options.type == "text")
+            {
+                _options.updateInterval = int.MaxValue;
+            }
         }
 
         /// <summary>
