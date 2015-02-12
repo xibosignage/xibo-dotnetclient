@@ -37,6 +37,8 @@ namespace XiboClient.XmdsAgents
         private bool _forceStop = false;
         private ManualResetEvent _manualReset = new ManualResetEvent(false);
 
+        private List<string> _persistentFiles = new List<string>();
+
         /// <summary>
         /// The Current CacheManager for this Xibo Client
         /// </summary>
@@ -53,6 +55,14 @@ namespace XiboClient.XmdsAgents
         /// Required Files Object
         /// </summary>
         private RequiredFiles _requiredFiles;
+
+        public LibraryAgent()
+        {
+            _persistentFiles.Add("cacheManager.xml");
+            _persistentFiles.Add("requiredFiles.xml");
+            _persistentFiles.Add("schedule.xml");
+            _persistentFiles.Add("status.json");
+        }
 
         /// <summary>
         /// Stops the thread
@@ -92,6 +102,10 @@ namespace XiboClient.XmdsAgents
                         // Check each one and see if it is in required files
                         foreach (FileInfo fileInfo in directory.GetFiles())
                         {
+                            // Never delete certain system files
+                            if (_persistentFiles.Contains(fileInfo.Name))
+                                continue;
+
                             // Delete files that were accessed over N days ago
                             try
                             {
