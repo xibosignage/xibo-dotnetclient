@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2014 Daniel Garner
+ * Copyright (C) 2006-2015 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -343,6 +343,9 @@ namespace XiboClient
             // There will be some stuff on option nodes
             XmlNode optionNode = mediaNode.FirstChild;
 
+            // Track if an update interval has been provided in the XLF
+            bool updateIntervalProvided = false;
+
             // Loop through each option node
             foreach (XmlNode option in optionNode.ChildNodes)
             {
@@ -371,6 +374,8 @@ namespace XiboClient
                 }
                 else if (option.Name == "updateInterval")
                 {
+                    updateIntervalProvided = true;
+
                     try
                     {
                         _options.updateInterval = int.Parse(option.InnerText);
@@ -412,10 +417,8 @@ namespace XiboClient
             }
 
             // Media Types without an update interval should be set to something rather high
-            if (_options.type == "text")
-            {
+            if (!updateIntervalProvided)
                 _options.updateInterval = int.MaxValue;
-            }
         }
 
         /// <summary>
