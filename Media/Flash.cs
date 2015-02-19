@@ -34,7 +34,8 @@ namespace XiboClient
         private string _backgroundColor;
         private string _backgroundTop;
         private string _backgroundLeft;
-
+        private bool _disposed = false;
+        
         public Flash (RegionOptions options)
             : base(options.width, options.height, options.top, options.left) 
         {
@@ -71,6 +72,10 @@ namespace XiboClient
 
             // Navigate to temp file
             _webBrowser.Navigate(_tempHtml.Path);
+            Controls.Add(_webBrowser);
+
+            // Show the control
+            Show();
         }
 
         /// <summary>
@@ -101,9 +106,12 @@ namespace XiboClient
         /// <param name="e"></param>
         void _webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
-            // We have navigated to the temporary file.
-            Show();
-            Controls.Add(_webBrowser);
+            base.StartTimer();
+
+            if (_disposed)
+                return;
+
+            _webBrowser.Visible = true;
         }
 
         /// <summary>
@@ -112,6 +120,7 @@ namespace XiboClient
         /// <param name="disposing"></param>
         protected override void Dispose(bool disposing)
         {
+            _disposed = true;
             if (disposing)
             {
                 // Remove the webbrowser control
