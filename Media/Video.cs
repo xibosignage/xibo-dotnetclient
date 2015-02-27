@@ -148,12 +148,18 @@ namespace XiboClient
         {
             try
             {
+                // Stop and Clear
+                _videoPlayer.StopAndClear();
+
+                // Remove the control
                 Controls.Remove(_videoPlayer);
+
+                // Dispose of the Control
                 _videoPlayer.Dispose();
             }
-            catch
+            catch (Exception e)
             {
-
+                Trace.WriteLine(new LogMessage("Video - Dispose", "Problem disposing of the Video Player. Ex = " + e.Message), LogType.Audit.ToString());
             }
 
             base.Dispose(disposing);

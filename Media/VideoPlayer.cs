@@ -61,7 +61,7 @@ namespace XiboClient
             axWindowsMediaPlayer1.uiMode = "none";
             axWindowsMediaPlayer1.URL = filePath;
             axWindowsMediaPlayer1.stretchToFit = true;
-            axWindowsMediaPlayer1.windowlessVideo = true;
+            axWindowsMediaPlayer1.windowlessVideo = false;
 
             axWindowsMediaPlayer1.PlayStateChange += new AxWMPLib._WMPOCXEvents_PlayStateChangeEventHandler(axWMP_PlayStateChange);
             axWindowsMediaPlayer1.ErrorEvent += new EventHandler(axWindowsMediaPlayer1_ErrorEvent);
@@ -81,6 +81,24 @@ namespace XiboClient
                 axWindowsMediaPlayer1.settings.volume = 100;
         }
 
+        public void StopAndClear()
+        {
+            try
+            {
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+
+                if (axWindowsMediaPlayer1 != null)
+                {
+                    axWindowsMediaPlayer1.close();
+                }
+            }
+            catch (AccessViolationException)
+            {
+
+            }
+        }
+
         void axWindowsMediaPlayer1_ErrorEvent(object sender, EventArgs e)
         {
             // Get the error for logging
@@ -94,7 +112,7 @@ namespace XiboClient
                 error = "Unknown Error";
             }
 
-            Trace.WriteLine(new LogMessage("VideoPlayer - ErrorEvent", error), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("VideoPlayer - ErrorEvent", axWindowsMediaPlayer1.URL + ". Ex = " + error), LogType.Error.ToString());
 
             // Raise the event
             if (VideoError == null)
