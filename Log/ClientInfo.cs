@@ -162,6 +162,10 @@ namespace XiboClient.Log
                 return;
             }
 
+            // Prevent the log grid getting too large (clear at 500 messages)
+            if (logDataGridView.RowCount > 500)
+                logDataGridView.Rows.Clear();
+
             int newRow = logDataGridView.Rows.Add();
 
             LogMessage logMessage;

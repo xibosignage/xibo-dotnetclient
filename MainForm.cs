@@ -45,6 +45,7 @@ namespace XiboClient
     {
         private Schedule _schedule;
         private Collection<Region> _regions;
+        private bool _changingLayout = false;
         private bool _isExpired = false;
         private int _scheduleId;
         private int _layoutId;
@@ -398,7 +399,10 @@ namespace XiboClient
         /// <param name="layoutPath"></param>
         void schedule_ScheduleChangeEvent(string layoutPath, int scheduleId, int layoutId)
         {
-            Trace.WriteLine(new LogMessage("MainForm - ScheduleChangeEvent", string.Format("Schedule Changing to {0}", layoutPath)), LogType.Audit.ToString()); 
+            Trace.WriteLine(new LogMessage("MainForm - ScheduleChangeEvent", string.Format("Schedule Changing to {0}", layoutPath)), LogType.Audit.ToString());
+
+            // We are changing the layout
+            _changingLayout = true;
 
             _scheduleId = scheduleId;
             _layoutId = layoutId;
@@ -429,25 +433,62 @@ namespace XiboClient
             try
             {
                 SetThreadExecutionState(EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS);
+            }
+            catch
+            {
+                Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Unable to set Thread Execution state"), LogType.Info.ToString());
+            }
 
-                // TODO: Check we are never out of the UI thread at this point
+            try
+            {
+                // Destroy the Current Layout
+                try
+                {
+                    DestroyLayout();
+                }
+                catch (Exception e)
+                {
+                    // Force collect all controls
+                    foreach (System.Windows.Forms.Control control in Controls)
+                    {
+                        control.Dispose();
+                        Controls.Remove(control);
+                    }
 
-                DestroyLayout();
+                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
+                    throw e;
+                }
 
-                _isExpired = false;
+                // Prepare the next layout
+                try
+                {
+                    PrepareLayout(layoutPath);
+                    _clientInfoForm.CurrentLayoutId = layoutPath;
 
-                PrepareLayout(layoutPath);
-
-                _clientInfoForm.CurrentLayoutId = layoutPath;
+                }
+                catch (Exception e)
+                {
+                    DestroyLayout();
+                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Prepare Layout Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
+                    throw e;
+                }
 
                 // Do we need to notify?
-                if (ApplicationSettings.Default.SendCurrentLayoutAsStatusUpdate)
+                try
                 {
-                    using (xmds.xmds statusXmds = new xmds.xmds())
+                    if (ApplicationSettings.Default.SendCurrentLayoutAsStatusUpdate)
                     {
-                        statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
-                        statusXmds.NotifyStatusAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"currentLayoutId\":" + _layoutId + "}");
+                        using (xmds.xmds statusXmds = new xmds.xmds())
+                        {
+                            statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                            statusXmds.NotifyStatusAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"currentLayoutId\":" + _layoutId + "}");
+                        }
                     }
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Notify Status Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
+                    throw e;
                 }
             }
             catch (Exception ex)
@@ -465,6 +506,9 @@ namespace XiboClient
                 // Start the timer
                 timer.Start();
             }
+
+            // We have finished changing the layout
+            _changingLayout = false;
         }
 
         /// <summary>
@@ -800,7 +844,14 @@ namespace XiboClient
         /// </summary>
         void temp_DurationElapsedEvent()
         {
-            Debug.WriteLine("Region Elapsed", "MainForm - DurationElapsedEvent");
+            Trace.WriteLine(new LogMessage("MainForm - DurationElapsedEvent", "Region Elapsed"), LogType.Audit.ToString());
+
+            // Are we already changing the layout?
+            if (_changingLayout)
+            {
+                Trace.WriteLine(new LogMessage("MainForm - DurationElapsedEvent", "Already Changing Layout"), LogType.Audit.ToString());
+                return;
+            }
 
             _isExpired = true;
             
@@ -821,7 +872,12 @@ namespace XiboClient
                     temp._layoutExpired = true;
                 }
 
-                System.Diagnostics.Debug.WriteLine("Region Expired - Next Region.", "MainForm - DurationElapsedEvent");
+                Trace.WriteLine(new LogMessage("MainForm - DurationElapsedEvent", "All Regions have expired. Raising a Next layout event."), LogType.Audit.ToString());
+
+                // We are changing the layout
+                _changingLayout = true;
+                
+                // Yield and restart
                 _schedule.NextLayout();
             }
         }
@@ -833,27 +889,34 @@ namespace XiboClient
         {
             Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
 
-            if (_regions == null) return;
+            if (_regions == null) 
+                return;
 
-            foreach (Region region in _regions)
+            lock (_regions)
             {
-                region.Clear();
-
-                this.Controls.Remove(region);
-
-                try
+                foreach (Region region in _regions)
                 {
-                    System.Diagnostics.Debug.WriteLine("Calling Dispose Region", "MainForm - DestoryLayout");
-                    region.Dispose();
+                    try
+                    {
+                        // Remove the region from the list of controls
+                        Controls.Remove(region);
+
+                        // Clear the region
+                        region.Clear();
+                        
+                        Trace.WriteLine(new LogMessage("MainForm - DestoryLayout", "Calling Dispose on Region " + region.regionOptions.regionId), LogType.Audit.ToString());
+                        region.Dispose();
+                    }
+                    catch (Exception e)
+                    {
+                        // If we can't dispose we should log to understand why
+                        Trace.WriteLine(new LogMessage("MainForm - DestoryLayout", e.Message), LogType.Info.ToString());
+                    }
                 }
-                catch (Exception e)
-                {
-                    //do nothing (perhaps write to some error xml somewhere?)
-                    System.Diagnostics.Debug.WriteLine(e.Message);
-                }
+
+                _regions.Clear();
             }
 
-            _regions.Clear();
             _regions = null;
         }
 

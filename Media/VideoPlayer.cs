@@ -41,6 +41,8 @@ namespace XiboClient
         public delegate void VideoErrored();
         public event VideoErrored VideoError;
 
+        private bool _looping = false;
+
         public VideoPlayer()
         {
             InitializeComponent();
@@ -68,6 +70,7 @@ namespace XiboClient
         public void SetLooping(bool looping)
         {
             axWindowsMediaPlayer1.settings.setMode("loop", looping);
+            _looping = looping;
         }
 
         public void SetMute(bool mute)
@@ -94,17 +97,38 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("VideoPlayer - ErrorEvent", error), LogType.Error.ToString());
 
             // Raise the event
-            VideoError();
+            if (VideoError == null)
+            {
+                // The parent form has been ditached and disposed
+                // We need to Clear up our own components
+                axWindowsMediaPlayer1.Dispose();
+                axWindowsMediaPlayer1 = null;
+            }
+            else
+            {
+                VideoError();
+            }
         }
 
         void axWMP_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
         {
-            if (e.newState == 8)
+            if (e.newState == 8 && !_looping)
             {
                 // indicate we are stopped
                 _finished = true;
 
-                VideoEnd();
+                // Raise the event
+                if (VideoEnd == null)
+                {
+                    // The parent form has been ditached and disposed
+                    // We need to Clear up our own components
+                    axWindowsMediaPlayer1.Dispose();
+                    axWindowsMediaPlayer1 = null;
+                }
+                else
+                {
+                    VideoEnd();
+                }
             }
         }
 

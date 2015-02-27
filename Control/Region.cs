@@ -517,10 +517,9 @@ namespace XiboClient
         /// <param name="media"></param>
         private void StartMedia(Media media)
         {
-            media.RenderMedia();
-
             Trace.WriteLine(new LogMessage("Region - StartMedia", "Starting media"), LogType.Audit.ToString());
 
+            media.RenderMedia();
             Controls.Add(media);
         }
 
@@ -545,8 +544,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("No media to remove");
-                Debug.WriteLine(ex.Message);
+                Trace.WriteLine(new LogMessage("Region - Stop Media", "Unable to dispose. Ex = " + ex.Message), LogType.Audit.ToString());
             }
         }
 
@@ -650,8 +648,7 @@ namespace XiboClient
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(ex.Message);
-                    Debug.WriteLine("There was no media to dispose", "Region - Dispose");
+                    Trace.WriteLine(new LogMessage("Region - Dispose", "Unable to dispose media. Ex = " + ex.Message), LogType.Audit.ToString());
                 }
                 finally
                 {

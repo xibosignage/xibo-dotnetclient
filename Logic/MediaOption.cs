@@ -70,7 +70,7 @@ namespace XiboClient
                     return option.Value;
             }
 
-            throw new IndexOutOfRangeException("No such option");
+            return string.Empty;
         }
 
         public string Get(string name, string def)

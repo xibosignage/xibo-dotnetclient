@@ -54,8 +54,7 @@ namespace XiboClient
             _videoPlayer.Location = new System.Drawing.Point(0, 0);
 
             // Should we loop?
-            if (options.Dictionary.Get("loop", "0") == "1" && _duration == 0)
-                _videoPlayer.SetLooping(true);
+            _videoPlayer.SetLooping((options.Dictionary.Get("loop", "0") == "1" && _duration != 0));
 
             // Should we mute?
             _videoPlayer.SetMute((options.Dictionary.Get("mute", "0") == "1"));
@@ -129,6 +128,7 @@ namespace XiboClient
                 // Immediately hide the player
                 _videoPlayer.Hide();
 
+                // Set to expired
                 _expired = true;
             }
         }
@@ -148,7 +148,6 @@ namespace XiboClient
         {
             try
             {
-                _videoPlayer.Hide();
                 Controls.Remove(_videoPlayer);
                 _videoPlayer.Dispose();
             }
