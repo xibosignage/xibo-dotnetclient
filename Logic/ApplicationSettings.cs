@@ -1,6 +1,6 @@
 ﻿/*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-14 Spring Signage Ltd
+ * Copyright (C) 2006-15 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -159,6 +159,9 @@ namespace XiboClient
         public int CollectInterval { get; set; }
         public int MaxConcurrentDownloads { get; set; }
         public int ScreenShotRequestInterval { get; set; }
+
+        private int _maxLogFileUploads;
+        public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 3 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }
 
         public bool PowerpointEnabled { get; set; }
         public bool StatsEnabled { get; set; }

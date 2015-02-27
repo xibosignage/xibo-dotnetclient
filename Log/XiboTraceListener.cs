@@ -158,8 +158,16 @@ namespace XiboClient
                     // Get a list of all the log files waiting to be sent to XMDS.
                     string[] logFiles = Directory.GetFiles(ApplicationSettings.Default.LibraryPath, "*" + ApplicationSettings.Default.LogLocation + "*");
 
+                    // Track processed files
+                    int filesProcessed = 0;
+
+                    // Loop through each file
                     foreach (string fileName in logFiles)
                     {
+                        // Only process as many files in one go as configured
+                        if (filesProcessed >= ApplicationSettings.Default.MaxLogFileUploads)
+                            break;
+
                         // If we have some, create an XMDS object
                         using (xmds.xmds logtoXmds = new xmds.xmds())
                         {
@@ -196,6 +204,8 @@ namespace XiboClient
                             {
                                 Trace.WriteLine(new LogMessage("ProcessQueueToXmds", string.Format("Exception when submitting to XMDS: {0}", e.Message)), LogType.Error.ToString());
                             }
+
+                            filesProcessed++;
                         }
                     }
                 }
