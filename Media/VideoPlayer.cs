@@ -88,6 +88,9 @@ namespace XiboClient
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
 
+                axWindowsMediaPlayer1.PlayStateChange -= axWMP_PlayStateChange;
+                axWindowsMediaPlayer1.ErrorEvent -= axWindowsMediaPlayer1_ErrorEvent;
+
                 if (axWindowsMediaPlayer1 != null)
                 {
                     axWindowsMediaPlayer1.close();
