@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2014 Daniel Garner
+ * Copyright (C) 2006-2015 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -38,8 +38,8 @@ namespace XiboClient
 
         private Media _media;
         private RegionOptions _options;
-        public bool _hasExpired = false;
-        public bool _layoutExpired = false;
+        private bool _hasExpired = false;
+        private bool _layoutExpired = false;
         private int _currentSequence = -1;
 
         // Stat objects
@@ -99,6 +99,23 @@ namespace XiboClient
 
                 EvalOptions();
             }
+        }
+
+        /// <summary>
+        /// Inform the region that the layout has expired
+        /// </summary>
+        public void setLayoutExpired()
+        {
+            _layoutExpired = true;
+        }
+
+        /// <summary>
+        /// Has this region expired
+        /// </summary>
+        /// <returns></returns>
+        public bool hasExpired()
+        {
+            return _hasExpired;
         }
 
         ///<summary>
@@ -343,6 +360,9 @@ namespace XiboClient
             // There will be some stuff on option nodes
             XmlNode optionNode = mediaNode.FirstChild;
 
+            // Track if an update interval has been provided in the XLF
+            bool updateIntervalProvided = false;
+
             // Loop through each option node
             foreach (XmlNode option in optionNode.ChildNodes)
             {
@@ -371,6 +391,8 @@ namespace XiboClient
                 }
                 else if (option.Name == "updateInterval")
                 {
+                    updateIntervalProvided = true;
+
                     try
                     {
                         _options.updateInterval = int.Parse(option.InnerText);
@@ -410,6 +432,10 @@ namespace XiboClient
                     _options.javaScript = raw.InnerText;
                 }
             }
+
+            // Media Types without an update interval should be set to something rather high
+            if (!updateIntervalProvided)
+                _options.updateInterval = int.MaxValue;
         }
 
         /// <summary>
@@ -508,10 +534,9 @@ namespace XiboClient
         /// <param name="media"></param>
         private void StartMedia(Media media)
         {
-            media.RenderMedia();
-
             Trace.WriteLine(new LogMessage("Region - StartMedia", "Starting media"), LogType.Audit.ToString());
 
+            media.RenderMedia();
             Controls.Add(media);
         }
 
@@ -536,8 +561,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("No media to remove");
-                Debug.WriteLine(ex.Message);
+                Trace.WriteLine(new LogMessage("Region - Stop Media", "Unable to dispose. Ex = " + ex.Message), LogType.Audit.ToString());
             }
         }
 
@@ -584,6 +608,10 @@ namespace XiboClient
             if (filesPlayed > 1)
                 // Increment the _current sequence by the number of filesPlayed (minus 1)
                 _currentSequence = _currentSequence + (filesPlayed - 1);
+
+            // If this layout has been expired we know that everything will soon be torn down, so do nothing
+            if (_layoutExpired)
+                return;
 
             // make some decisions about what to do next
             try
@@ -641,8 +669,7 @@ namespace XiboClient
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(ex.Message);
-                    Debug.WriteLine("There was no media to dispose", "Region - Dispose");
+                    Trace.WriteLine(new LogMessage("Region - Dispose", "Unable to dispose media. Ex = " + ex.Message), LogType.Audit.ToString());
                 }
                 finally
                 {

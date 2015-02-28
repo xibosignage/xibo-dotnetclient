@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2012 Daniel Garner and James Packer
+ * Copyright (C) 2006-2015 Daniel Garner and the Xibo Developers
  *
  * This file is part of Xibo.
  *
@@ -24,9 +24,6 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Xilium.CefGlue;
 
-// 17/08/2012 Dan Set process priority to RealTime
-// 21/08/2012 Dan Only enable visual styles for Options Form
-
 namespace XiboClient
 {
     static class Program
@@ -37,35 +34,39 @@ namespace XiboClient
         [STAThread]
         static int Main(string[] args)
         {
-            try
+            // Do we need to initialise CEF?
+            if (ApplicationSettings.Default.UseCefWebBrowser)
             {
-                CefRuntime.Load();
-            }
-            catch (DllNotFoundException ex)
-            {
-                MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return 1;
-            }
-            catch (CefRuntimeException ex)
-            {
-                MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return 2;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString(), "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return 3;
-            }
+                try
+                {
+                    CefRuntime.Load();
+                }
+                catch (DllNotFoundException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return 1;
+                }
+                catch (CefRuntimeException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return 2;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString(), "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return 3;
+                }
 
-            var settings = new CefSettings();
-            settings.MultiThreadedMessageLoop = true;
-            settings.SingleProcess = false;
-            settings.LogSeverity = CefLogSeverity.Disable;
-            settings.LogFile = "cef.log";
-            settings.ResourcesDirPath = System.IO.Path.GetDirectoryName(new Uri(System.Reflection.Assembly.GetEntryAssembly().CodeBase).LocalPath);
-            settings.RemoteDebuggingPort = 20480;
+                var settings = new CefSettings();
+                settings.MultiThreadedMessageLoop = true;
+                settings.SingleProcess = false;
+                settings.LogSeverity = CefLogSeverity.Disable;
+                settings.LogFile = "cef.log";
+                settings.ResourcesDirPath = System.IO.Path.GetDirectoryName(new Uri(System.Reflection.Assembly.GetEntryAssembly().CodeBase).LocalPath);
+                settings.RemoteDebuggingPort = 20480;
 
-            CefRuntime.Initialize(new CefMainArgs(args), settings, null, IntPtr.Zero);
+                CefRuntime.Initialize(new CefMainArgs(args), settings, null, IntPtr.Zero);
+            }
 
             // Ensure our process has the highest priority
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
@@ -130,7 +131,9 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
             Trace.Flush();
 
-            CefRuntime.Shutdown();
+            if (ApplicationSettings.Default.UseCefWebBrowser)
+                CefRuntime.Shutdown();
+
             return 0;
         }       
 
@@ -182,7 +185,9 @@ namespace XiboClient
             // TODO: Can we just restart the application?
 
             // Shutdown the application
-            CefRuntime.Shutdown();
+            if (ApplicationSettings.Default.UseCefWebBrowser)
+                CefRuntime.Shutdown();
+
             Environment.Exit(1);
         }
 

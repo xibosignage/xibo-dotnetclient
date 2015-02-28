@@ -25,6 +25,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 /// 09/06/12 Dan Changed to raise an event when the video is finished
 /// 04/08/12 Dan Changed to raise an error event if one is raised from the control
@@ -40,6 +41,8 @@ namespace XiboClient
 
         public delegate void VideoErrored();
         public event VideoErrored VideoError;
+
+        private bool _looping = false;
 
         public VideoPlayer()
         {
@@ -59,7 +62,7 @@ namespace XiboClient
             axWindowsMediaPlayer1.uiMode = "none";
             axWindowsMediaPlayer1.URL = filePath;
             axWindowsMediaPlayer1.stretchToFit = true;
-            axWindowsMediaPlayer1.windowlessVideo = true;
+            axWindowsMediaPlayer1.windowlessVideo = false;
 
             axWindowsMediaPlayer1.PlayStateChange += new AxWMPLib._WMPOCXEvents_PlayStateChangeEventHandler(axWMP_PlayStateChange);
             axWindowsMediaPlayer1.ErrorEvent += new EventHandler(axWindowsMediaPlayer1_ErrorEvent);
@@ -68,6 +71,7 @@ namespace XiboClient
         public void SetLooping(bool looping)
         {
             axWindowsMediaPlayer1.settings.setMode("loop", looping);
+            _looping = looping;
         }
 
         public void SetMute(bool mute)
@@ -76,6 +80,40 @@ namespace XiboClient
                 axWindowsMediaPlayer1.settings.mute = true;
             else
                 axWindowsMediaPlayer1.settings.volume = 100;
+        }
+
+        public void StopAndClear()
+        {
+            try
+            {
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+
+                if (axWindowsMediaPlayer1 != null)
+                {
+                    // Unbind events
+                    axWindowsMediaPlayer1.PlayStateChange -= axWMP_PlayStateChange;
+                    axWindowsMediaPlayer1.ErrorEvent -= axWindowsMediaPlayer1_ErrorEvent;
+
+                    // Release resources
+                    Marshal.FinalReleaseComObject(axWindowsMediaPlayer1.currentMedia);
+                    axWindowsMediaPlayer1.URL = null;
+                    axWindowsMediaPlayer1.close();
+
+                    // Remove the WMP control
+                    Controls.Remove(axWindowsMediaPlayer1);
+
+                    // Close this form
+                    Close();
+
+                    //axWindowsMediaPlayer1.Dispose();
+                    axWindowsMediaPlayer1 = null;
+                }
+            }
+            catch (AccessViolationException)
+            {
+
+            }
         }
 
         void axWindowsMediaPlayer1_ErrorEvent(object sender, EventArgs e)
@@ -91,20 +129,37 @@ namespace XiboClient
                 error = "Unknown Error";
             }
 
-            Trace.WriteLine(new LogMessage("VideoPlayer - ErrorEvent", error), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("VideoPlayer - ErrorEvent", axWindowsMediaPlayer1.URL + ". Ex = " + error), LogType.Error.ToString());
 
             // Raise the event
-            VideoError();
+            if (VideoError == null)
+            {
+                // The parent form has been ditached and disposed
+                StopAndClear();
+            }
+            else
+            {
+                VideoError();
+            }
         }
 
         void axWMP_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
         {
-            if (e.newState == 8)
+            if (e.newState == 8 && !_looping)
             {
                 // indicate we are stopped
                 _finished = true;
 
-                VideoEnd();
+                // Raise the event
+                if (VideoEnd == null)
+                {
+                    // The parent form has been ditached and disposed
+                    StopAndClear();
+                }
+                else
+                {
+                    VideoEnd();
+                }
             }
         }
 
