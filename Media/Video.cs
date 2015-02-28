@@ -54,8 +54,7 @@ namespace XiboClient
             _videoPlayer.Location = new System.Drawing.Point(0, 0);
 
             // Should we loop?
-            if (options.Dictionary.Get("loop", "0") == "1" && _duration == 0)
-                _videoPlayer.SetLooping(true);
+            _videoPlayer.SetLooping((options.Dictionary.Get("loop", "0") == "1" && _duration != 0));
 
             // Should we mute?
             _videoPlayer.SetMute((options.Dictionary.Get("mute", "0") == "1"));
@@ -129,6 +128,7 @@ namespace XiboClient
                 // Immediately hide the player
                 _videoPlayer.Hide();
 
+                // Set to expired
                 _expired = true;
             }
         }
@@ -148,13 +148,18 @@ namespace XiboClient
         {
             try
             {
-                _videoPlayer.Hide();
+                // Stop and Clear
+                _videoPlayer.StopAndClear();
+
+                // Remove the control
                 Controls.Remove(_videoPlayer);
+
+                // Dispose of the Control
                 _videoPlayer.Dispose();
             }
-            catch
+            catch (Exception e)
             {
-
+                Trace.WriteLine(new LogMessage("Video - Dispose", "Problem disposing of the Video Player. Ex = " + e.Message), LogType.Audit.ToString());
             }
 
             base.Dispose(disposing);

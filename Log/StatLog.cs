@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2009-2014 Spring Signage Ltd
+ * Copyright (C) 2009-2015 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -32,6 +32,7 @@ namespace XiboClient
 {
     class StatLog
     {
+        public static object _locker = new object();
         private Collection<Stat> _stats;
         private HardwareKey _hardwareKey;
 
@@ -194,58 +195,73 @@ namespace XiboClient
         /// </summary>
         private void ProcessQueueToXmds()
         {
-            Debug.WriteLine(new LogMessage("FlushToXmds", String.Format("IN")), LogType.Audit.ToString());
-
-            // If we haven't had a successful connection recently, then don't log
-            if (ApplicationSettings.Default.XmdsLastConnection.AddSeconds((int)ApplicationSettings.Default.CollectInterval) < DateTime.Now)
-                return;
-            
-            // Get a list of all the log files waiting to be sent to XMDS.
-            string[] logFiles = Directory.GetFiles(ApplicationSettings.Default.LibraryPath, "*" + ApplicationSettings.Default.StatsLogFile + "*");
-
-            foreach (string fileName in logFiles)
+            try
             {
-                // If we have some, create an XMDS object
-                using (xmds.xmds logtoXmds = new xmds.xmds())
+                // If we haven't had a successful connection recently, then don't log
+                if (ApplicationSettings.Default.XmdsLastConnection.AddSeconds((int)ApplicationSettings.Default.CollectInterval) < DateTime.Now)
+                    return;
+
+                lock (_locker)
                 {
-                    logtoXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                    // Get a list of all the log files waiting to be sent to XMDS.
+                    string[] logFiles = Directory.GetFiles(ApplicationSettings.Default.LibraryPath, "*" + ApplicationSettings.Default.StatsLogFile + "*");
 
-                    // construct the log message
-                    StringBuilder builder = new StringBuilder();
-                    builder.Append("<log>");
+                    // Track processed files
+                    int filesProcessed = 0;
 
-                    foreach (string entry in File.ReadAllLines(fileName))
-                        builder.Append(entry);
-
-                    builder.Append("</log>");
-
-                    try
+                    // Loop through each file
+                    foreach (string fileName in logFiles)
                     {
-                        logtoXmds.SubmitStats(ApplicationSettings.Default.ServerKey, _hardwareKey.Key, builder.ToString());
+                        // Only process as many files in one go as configured
+                        if (filesProcessed >= ApplicationSettings.Default.MaxLogFileUploads)
+                            break;
 
-                        // Delete the file we are on
-                        File.Delete(fileName);
-                    }
-                    catch (WebException webEx)
-                    {
-                        // Increment the quantity of XMDS failures and bail out
-                        ApplicationSettings.Default.IncrementXmdsErrorCount();
+                        // If we have some, create an XMDS object
+                        using (xmds.xmds logtoXmds = new xmds.xmds())
+                        {
+                            logtoXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
 
-                        // Log this message, but dont abort the thread
-                        Trace.WriteLine(new LogMessage("ProcessQueueToXmds", "WebException: " + webEx.Message), LogType.Error.ToString());
+                            // construct the log message
+                            StringBuilder builder = new StringBuilder();
+                            builder.Append("<log>");
 
-                        // Drop out the loop
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        Trace.WriteLine(new LogMessage("FlushToXmds", string.Format("Exception when submitting to XMDS: {0}", e.Message)), LogType.Error.ToString());
+                            foreach (string entry in File.ReadAllLines(fileName))
+                                builder.Append(entry);
+
+                            builder.Append("</log>");
+
+                            try
+                            {
+                                logtoXmds.SubmitStats(ApplicationSettings.Default.ServerKey, _hardwareKey.Key, builder.ToString());
+
+                                // Delete the file we are on
+                                File.Delete(fileName);
+                            }
+                            catch (WebException webEx)
+                            {
+                                // Increment the quantity of XMDS failures and bail out
+                                ApplicationSettings.Default.IncrementXmdsErrorCount();
+
+                                // Log this message, but dont abort the thread
+                                Trace.WriteLine(new LogMessage("ProcessQueueToXmds", "WebException: " + webEx.Message), LogType.Error.ToString());
+
+                                // Drop out the loop
+                                break;
+                            }
+                            catch (Exception e)
+                            {
+                                Trace.WriteLine(new LogMessage("FlushToXmds", string.Format("Exception when submitting to XMDS: {0}", e.Message)), LogType.Error.ToString());
+                            }
+
+                            filesProcessed++;
+                        }
                     }
                 }
             }
-
-            // Log out
-            Debug.WriteLine(new LogMessage("FlushToXmds", String.Format("OUT")), LogType.Audit.ToString());
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("FlushToXmds", string.Format("Unknown Exception: {0}", e.Message)), LogType.Error.ToString());
+            }
         }
     }
 

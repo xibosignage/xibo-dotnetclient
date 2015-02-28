@@ -59,5 +59,6 @@ namespace XiboClient
         #endregion
 
         private AxWMPLib.AxWindowsMediaPlayer axWindowsMediaPlayer1;
+
     }
 }
