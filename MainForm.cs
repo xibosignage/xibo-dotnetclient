@@ -46,7 +46,6 @@ namespace XiboClient
         private Schedule _schedule;
         private Collection<Region> _regions;
         private bool _changingLayout = false;
-        private bool _isExpired = false;
         private int _scheduleId;
         private int _layoutId;
         private bool _screenSaver = false;
@@ -494,8 +493,7 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
-                _isExpired = true;
-
+                
                 ShowSplashScreen();
 
                 // In 10 seconds fire the next layout?
@@ -853,23 +851,25 @@ namespace XiboClient
                 return;
             }
 
-            _isExpired = true;
+            bool isExpired = true;
             
             // Check the other regions to see if they are also expired.
             foreach (Region temp in _regions)
             {
-                if (!temp._hasExpired)
+                if (!temp.hasExpired())
                 {
-                    _isExpired = false;
+                    isExpired = false;
+                    break;
                 }
             }
 
-            if (_isExpired)
+            // If we are sure we have expired after checking all regions, then set the layout expired flag on them all
+            if (isExpired)
             {
                 // Inform each region that the layout containing it has expired
                 foreach (Region temp in _regions)
                 {
-                    temp._layoutExpired = true;
+                    temp.setLayoutExpired();
                 }
 
                 Trace.WriteLine(new LogMessage("MainForm - DurationElapsedEvent", "All Regions have expired. Raising a Next layout event."), LogType.Audit.ToString());

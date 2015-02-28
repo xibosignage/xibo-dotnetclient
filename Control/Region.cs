@@ -38,8 +38,8 @@ namespace XiboClient
 
         private Media _media;
         private RegionOptions _options;
-        public bool _hasExpired = false;
-        public bool _layoutExpired = false;
+        private bool _hasExpired = false;
+        private bool _layoutExpired = false;
         private int _currentSequence = -1;
 
         // Stat objects
@@ -99,6 +99,23 @@ namespace XiboClient
 
                 EvalOptions();
             }
+        }
+
+        /// <summary>
+        /// Inform the region that the layout has expired
+        /// </summary>
+        public void setLayoutExpired()
+        {
+            _layoutExpired = true;
+        }
+
+        /// <summary>
+        /// Has this region expired
+        /// </summary>
+        /// <returns></returns>
+        public bool hasExpired()
+        {
+            return _hasExpired;
         }
 
         ///<summary>
@@ -591,6 +608,10 @@ namespace XiboClient
             if (filesPlayed > 1)
                 // Increment the _current sequence by the number of filesPlayed (minus 1)
                 _currentSequence = _currentSequence + (filesPlayed - 1);
+
+            // If this layout has been expired we know that everything will soon be torn down, so do nothing
+            if (_layoutExpired)
+                return;
 
             // make some decisions about what to do next
             try

@@ -25,6 +25,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 /// 09/06/12 Dan Changed to raise an event when the video is finished
 /// 04/08/12 Dan Changed to raise an error event if one is raised from the control
@@ -88,12 +89,25 @@ namespace XiboClient
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
 
-                axWindowsMediaPlayer1.PlayStateChange -= axWMP_PlayStateChange;
-                axWindowsMediaPlayer1.ErrorEvent -= axWindowsMediaPlayer1_ErrorEvent;
-
                 if (axWindowsMediaPlayer1 != null)
                 {
+                    // Unbind events
+                    axWindowsMediaPlayer1.PlayStateChange -= axWMP_PlayStateChange;
+                    axWindowsMediaPlayer1.ErrorEvent -= axWindowsMediaPlayer1_ErrorEvent;
+
+                    // Release resources
+                    Marshal.FinalReleaseComObject(axWindowsMediaPlayer1.currentMedia);
+                    axWindowsMediaPlayer1.URL = null;
                     axWindowsMediaPlayer1.close();
+
+                    // Remove the WMP control
+                    Controls.Remove(axWindowsMediaPlayer1);
+
+                    // Close this form
+                    Close();
+
+                    //axWindowsMediaPlayer1.Dispose();
+                    axWindowsMediaPlayer1 = null;
                 }
             }
             catch (AccessViolationException)
@@ -121,9 +135,7 @@ namespace XiboClient
             if (VideoError == null)
             {
                 // The parent form has been ditached and disposed
-                // We need to Clear up our own components
-                axWindowsMediaPlayer1.Dispose();
-                axWindowsMediaPlayer1 = null;
+                StopAndClear();
             }
             else
             {
@@ -142,9 +154,7 @@ namespace XiboClient
                 if (VideoEnd == null)
                 {
                     // The parent form has been ditached and disposed
-                    // We need to Clear up our own components
-                    axWindowsMediaPlayer1.Dispose();
-                    axWindowsMediaPlayer1 = null;
+                    StopAndClear();
                 }
                 else
                 {

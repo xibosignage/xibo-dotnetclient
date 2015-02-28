@@ -236,6 +236,7 @@ namespace XiboClient
         {
             try
             {
+                // Dispose of the Timer
                 if (_timer != null)
                     _timer.Dispose();
             }
