@@ -268,6 +268,14 @@ namespace XiboClient
                 // Remove the webbrowser control
                 try
                 {
+                    // Remove the web browser control
+                    Controls.Remove(_webBrowser);
+
+                    // Workaround to remove COM object
+                    PerformLayout();
+
+                    // Detatch event and remove
+                    _webBrowser.DocumentCompleted -= _webBrowser_DocumentCompleted;
                     _webBrowser.Dispose();
                 }
                 catch

@@ -662,6 +662,7 @@ namespace XiboClient
             {
                 try
                 {
+                    _media.DurationElapsedEvent -= media_DurationElapsedEvent;
                     _media.Dispose();
                     _media = null;
 
