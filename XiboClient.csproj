@@ -225,6 +225,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Log\XiboTraceListener.cs" />
+    <Compile Include="XmdsAgents\LogAgent.cs" />
     <Compile Include="XmdsAgents\RegisterAgent.cs" />
     <Compile Include="XmdsAgents\FileAgent.cs" />
     <Compile Include="XmdsAgents\LibraryAgent.cs" />

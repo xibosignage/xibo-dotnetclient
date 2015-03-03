@@ -142,81 +142,6 @@ namespace XiboClient
             }
         }
 
-        /// <summary>
-        /// Flush the log to XMDS
-        /// </summary>
-        public void ProcessQueueToXmds()
-        {
-            try
-            {
-                // If we haven't had a successful connection recently, then don't log
-                if (ApplicationSettings.Default.XmdsLastConnection.AddSeconds((int)ApplicationSettings.Default.CollectInterval) < DateTime.Now)
-                    return;
-
-                lock (_locker)
-                {
-                    // Get a list of all the log files waiting to be sent to XMDS.
-                    string[] logFiles = Directory.GetFiles(ApplicationSettings.Default.LibraryPath, "*" + ApplicationSettings.Default.LogLocation + "*");
-
-                    // Track processed files
-                    int filesProcessed = 0;
-
-                    // Loop through each file
-                    foreach (string fileName in logFiles)
-                    {
-                        // Only process as many files in one go as configured
-                        if (filesProcessed >= ApplicationSettings.Default.MaxLogFileUploads)
-                            break;
-
-                        // If we have some, create an XMDS object
-                        using (xmds.xmds logtoXmds = new xmds.xmds())
-                        {
-                            logtoXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
-
-                            // construct the log message
-                            StringBuilder builder = new StringBuilder();
-                            builder.Append("<log>");
-
-                            foreach (string entry in File.ReadAllLines(fileName))
-                                builder.Append(entry);
-
-                            builder.Append("</log>");
-
-                            try
-                            {
-                                logtoXmds.SubmitLog(ApplicationSettings.Default.ServerKey, _hardwareKey.Key, builder.ToString());
-
-                                // Delete the file we are on
-                                File.Delete(fileName);
-                            }
-                            catch (WebException webEx)
-                            {
-                                // Increment the quantity of XMDS failures and bail out
-                                ApplicationSettings.Default.IncrementXmdsErrorCount();
-
-                                // Log this message, but dont abort the thread
-                                Trace.WriteLine(new LogMessage("ProcessQueueToXmds", "WebException: " + webEx.Message), LogType.Error.ToString());
-
-                                // Drop out the loop
-                                break;
-                            }
-                            catch (Exception e)
-                            {
-                                Trace.WriteLine(new LogMessage("ProcessQueueToXmds", string.Format("Exception when submitting to XMDS: {0}", e.Message)), LogType.Error.ToString());
-                            }
-
-                            filesProcessed++;
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                // Do nothing - we just have an unknown exception in logging
-                Trace.WriteLine(new LogMessage("ProcessQueueToXmds", string.Format("Unknown Exception: {0}", e.Message)), LogType.Error.ToString());
-            }
-        }
-
         public override void Write(string message)
         {
             AddToCollection(message, LogType.Audit.ToString());
@@ -296,10 +221,6 @@ namespace XiboClient
                 return;
 
             FlushToFile();
-
-            // See if there are any records to flush to XMDS
-            Thread logSubmit = new Thread(new ThreadStart(ProcessQueueToXmds));
-            logSubmit.Start();
         }
     }
 

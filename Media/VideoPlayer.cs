@@ -93,11 +93,10 @@ namespace XiboClient
                     axWindowsMediaPlayer1.ErrorEvent -= axWindowsMediaPlayer1_ErrorEvent;
 
                     // Release resources
+                    Marshal.FinalReleaseComObject(axWindowsMediaPlayer1.currentMedia);
                     axWindowsMediaPlayer1.close();
                     axWindowsMediaPlayer1.URL = null;
                     axWindowsMediaPlayer1.Dispose();
-
-                    Marshal.FinalReleaseComObject(axWindowsMediaPlayer1.currentMedia);
 
                     // Remove the WMP control
                     Controls.Remove(axWindowsMediaPlayer1);
