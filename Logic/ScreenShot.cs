@@ -14,7 +14,7 @@ namespace XiboClient.Logic
     {
         public static void TakeAndSend()
         {
-            Rectangle bounds = Screen.GetBounds(Point.Empty);
+            Form bounds = Form.ActiveForm;
             using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))
             {
                 using (Graphics g = Graphics.FromImage(bitmap))
