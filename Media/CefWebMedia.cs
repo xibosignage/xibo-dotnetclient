@@ -111,7 +111,7 @@ namespace XiboClient
 
             // Compare the last time it was updated to the layout modified time (always refresh when the layout has been modified)
             // Also compare to the update interval (refresh if it has not been updated for longer than the update interval)
-            if (_options.LayoutModifiedDate.CompareTo(lastWriteDate) > 0 || DateTime.Now.CompareTo(lastWriteDate.AddHours(_options.updateInterval * 1.0 / 60.0)) > 0)
+            if (_options.LayoutModifiedDate.CompareTo(lastWriteDate) > 0 || DateTime.Now.CompareTo(lastWriteDate.AddMinutes(_options.updateInterval)) > 0)
             {
                 return false;
             }
