@@ -31,6 +31,9 @@ namespace XiboClient
         private bool _shift = false;
         private bool _control = false;
 
+        // The screensaver setting
+        public bool ScreenSaver { get; set; }
+
         // The definitions
         private Dictionary<Keys, string> _definitions;
 
@@ -101,6 +104,11 @@ namespace XiboClient
             {
                 OnKeyPress(name);
 
+                handled = true;
+            }
+            else if (ScreenSaver)
+            {
+                OnKeyPress("ScreenSaver");
                 handled = true;
             }
             return handled;
