@@ -112,7 +112,7 @@ namespace XiboClient.XmdsAgents
             string message = "";
 
             // Work out if we need to do anything (have the settings changed since the last time)
-            string md5 = Hashes.MD5(xml);
+            string md5 = Hashes.MD5(xml + ApplicationSettings.Default.ScreenShotRequested);
 
             try
             {
