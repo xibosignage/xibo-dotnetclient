@@ -136,10 +136,14 @@ namespace XiboClient
         public string RequiredFilesFile { get; set; }
         public string VideoRenderingEngine { get; set; }
 
-        public string LibraryPath { get; set; }
+        private string _libraryPath;
+        public string LibraryPath { get { return (_libraryPath == "DEFAULT") ? (Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + Application.ProductName + " Library") : _libraryPath; } set { _libraryPath = value; } }
         public string XiboClient_xmds_xmds { get; set; }
         public string ServerKey { get; set; }
-        public string DisplayName { get; set; }
+
+        private string _displayName;
+        public string DisplayName { get { return (_displayName == "COMPUTERNAME") ? Environment.MachineName : _displayName; } set { _displayName = value; } }
+
         public string ServerUri { get; set; }
         public string ProxyUser { get; set; }
         public string ProxyPassword { get; set; }
