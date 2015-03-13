@@ -258,7 +258,6 @@ namespace XiboClient
         /// <param name="name"></param>
         void Instance_KeyPress(string name)
         {
-            Trace.WriteLine(new LogMessage("MainForm - Instance_KeyPress", "Key Press: " + name), LogType.Error.ToString());
             if (name == "ClientInfo")
             {
                 // Toggle
@@ -272,7 +271,6 @@ namespace XiboClient
             }
             else if (name == "ScreenSaver")
             {
-                Trace.WriteLine(new LogMessage("MainForm - Instance_KeyPress", "Exiting " + _screenSaver), LogType.Error.ToString());
                 if (!_screenSaver)
                     return;
 

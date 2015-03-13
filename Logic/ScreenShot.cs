@@ -31,7 +31,7 @@ namespace XiboClient.Logic
                 using (Graphics g = Graphics.FromImage(bitmap))
                 {
                     Point p = new Point(bounds.X, bounds.Y);
-                    g.CopyFromScreen(p, p, bounds.Size);
+                    g.CopyFromScreen(bounds.X, bounds.Y, 0, 0, bounds.Size, CopyPixelOperation.SourceCopy);
                 }
 
                 using (MemoryStream stream = new MemoryStream())

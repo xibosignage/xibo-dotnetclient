@@ -110,9 +110,10 @@ namespace XiboClient.XmdsAgents
         public static string ProcessRegisterXml(string xml)
         {
             string message = "";
+            bool error = false;
 
             // Work out if we need to do anything (have the settings changed since the last time)
-            string md5 = Hashes.MD5(xml + ApplicationSettings.Default.ScreenShotRequested);
+            string md5 = Hashes.MD5(xml);
 
             try
             {
@@ -166,12 +167,13 @@ namespace XiboClient.XmdsAgents
                         }
                         catch
                         {
+                            error = true;
                             message += "Invalid Configuration Option from CMS [" + node.Name + "]" + Environment.NewLine;
                         }
                     }
 
                     // Store the MD5 hash and the save
-                    ApplicationSettings.Default.Hash = md5;
+                    ApplicationSettings.Default.Hash = (error) ? "0" : md5;
                     ApplicationSettings.Default.Save();
                 }
                 else
