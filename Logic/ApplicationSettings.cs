@@ -19,6 +19,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -43,6 +44,8 @@ namespace XiboClient
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
         public int ClientCodeVersion { get { return _clientCodeVersion; } }
+
+        private static readonly DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public static ApplicationSettings Default
         {
@@ -136,10 +139,14 @@ namespace XiboClient
         public string RequiredFilesFile { get; set; }
         public string VideoRenderingEngine { get; set; }
 
-        public string LibraryPath { get; set; }
+        private string _libraryPath;
+        public string LibraryPath { get { return (_libraryPath == "DEFAULT") ? (Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + Application.ProductName + " Library") : _libraryPath; } set { _libraryPath = value; } }
         public string XiboClient_xmds_xmds { get; set; }
         public string ServerKey { get; set; }
-        public string DisplayName { get; set; }
+
+        private string _displayName;
+        public string DisplayName { get { return (_displayName == "COMPUTERNAME") ? Environment.MachineName : _displayName; } set { _displayName = value; } }
+
         public string ServerUri { get; set; }
         public string ProxyUser { get; set; }
         public string ProxyPassword { get; set; }
@@ -153,6 +160,56 @@ namespace XiboClient
         public string LogToDiskLocation { get; set; }
         public string CursorStartPosition { get; set; }
         public string ClientInformationKeyCode { get; set; }
+
+        // Download window
+        
+        public long DownloadStartWindow { get; set; }
+        public long DownloadEndWindow { get; set; }
+
+        public DateTime DownloadStartWindowTime
+        {
+            get
+            {
+                DateTime now = DateTime.Now;
+                DateTime start = unixEpoch.AddMilliseconds(DownloadStartWindow);
+                
+                // Reset to today
+                return new DateTime(now.Year, now.Month, now.Day, start.Hour, start.Minute, start.Second);
+            }
+        }
+
+        public DateTime DownloadEndWindowTime
+        {
+            get
+            {
+                DateTime now = DateTime.Now;
+                DateTime end = unixEpoch.AddMilliseconds(DownloadEndWindow);
+
+                // Reset to today
+                return new DateTime(now.Year, now.Month, now.Day, end.Hour, end.Minute, end.Second);
+            }
+        }
+
+        /// <summary>
+        /// Is the player in the download window
+        /// </summary>
+        public bool InDownloadWindow
+        {
+            get
+            {
+                try
+                {
+                    if (DownloadStartWindow == 0 && DownloadEndWindow == 0)
+                        return true;
+
+                    return (DownloadStartWindowTime <= DateTime.Now && DownloadEndWindowTime >= DateTime.Now);
+                }
+                catch
+                {
+                    return true;
+                }
+            }
+        }
 
         public int Licensed { get; set; }
         public int StatsFlushCount { get; set; }
@@ -173,7 +230,21 @@ namespace XiboClient
         public bool ClientInfomationCtrlKey { get; set; }
         public bool UseCefWebBrowser { get; set; }
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
-        public bool ScreenShotRequested { get; set; }
+
+        private bool _screenShotRequested = false;
+        public bool ScreenShotRequested 
+        {
+            get
+            {
+                return _screenShotRequested;
+            }
+            set
+            {
+                _screenShotRequested = value;
+                // Reset the Hash so that the next update is taken into account.
+                Hash = "0";
+            }
+        }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;

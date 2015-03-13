@@ -433,9 +433,22 @@ namespace XiboClient
                 }
             }
 
-            // Media Types without an update interval should be set to something rather high
+            // Media Types without an update interval should have a sensible default (xibosignage/xibo#404)
+            // This means that items which do not provide an update interval will still refresh.
             if (!updateIntervalProvided)
-                _options.updateInterval = int.MaxValue;
+            {
+                // Special handling for text/webpages because we know they should never have a default update interval applied
+                if (_options.type == "webpage" || _options.type == "text")
+                {
+                    // Very high (will expire eventually, but shouldn't cause a routine request for a new resource
+                    _options.updateInterval = int.MaxValue;
+                }
+                else
+                {
+                    // Default to 5 minutes for those items that do not provide an update interval
+                    _options.updateInterval = 5;
+                }
+            }
         }
 
         /// <summary>
@@ -662,6 +675,7 @@ namespace XiboClient
             {
                 try
                 {
+                    _media.DurationElapsedEvent -= media_DurationElapsedEvent;
                     _media.Dispose();
                     _media = null;
 

@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2012 Daniel Garner 
+ * Copyright (C) 2006-2015 Daniel Garner 
  *
  * This file is part of Xibo.
  *
@@ -86,9 +86,6 @@ namespace XiboClient
         {
             try
             {
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-
                 if (axWindowsMediaPlayer1 != null)
                 {
                     // Unbind events
@@ -97,18 +94,24 @@ namespace XiboClient
 
                     // Release resources
                     Marshal.FinalReleaseComObject(axWindowsMediaPlayer1.currentMedia);
-                    axWindowsMediaPlayer1.URL = null;
                     axWindowsMediaPlayer1.close();
+                    axWindowsMediaPlayer1.URL = null;
+                    axWindowsMediaPlayer1.Dispose();
 
                     // Remove the WMP control
                     Controls.Remove(axWindowsMediaPlayer1);
 
+                    // Workaround to remove the event handlers from the cachedLayoutEventArgs
+                    PerformLayout();
+
                     // Close this form
                     Close();
 
-                    //axWindowsMediaPlayer1.Dispose();
                     axWindowsMediaPlayer1 = null;
                 }
+
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
             }
             catch (AccessViolationException)
             {
@@ -134,8 +137,7 @@ namespace XiboClient
             // Raise the event
             if (VideoError == null)
             {
-                // The parent form has been ditached and disposed
-                StopAndClear();
+                Trace.WriteLine(new LogMessage("VideoPlayer - ErrorEvent", "Error event handler is null"), LogType.Audit.ToString());
             }
             else
             {
@@ -153,8 +155,7 @@ namespace XiboClient
                 // Raise the event
                 if (VideoEnd == null)
                 {
-                    // The parent form has been ditached and disposed
-                    StopAndClear();
+                    Trace.WriteLine(new LogMessage("VideoPlayer - Playstate Complete", "Video end handler is null"), LogType.Audit.ToString());
                 }
                 else
                 {

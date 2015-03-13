@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-14 Daniel Garner
+ * Copyright (C) 2006-15 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -95,6 +95,7 @@ namespace XiboClient
         public MainForm(IntPtr previewHandle)
         {
             InitializeComponent();
+            InitializeCommon();
             
             // Set the preview window of the screen saver selection 
             // dialog in Windows as the parent of this form.
@@ -121,6 +122,7 @@ namespace XiboClient
         public MainForm(bool screenSaver)
         {
             InitializeComponent();
+            InitializeCommon();
 
             if (screenSaver)
                 InitializeScreenSaver(false);
@@ -131,7 +133,14 @@ namespace XiboClient
         public MainForm()
         {
             InitializeComponent();
+            InitializeCommon();
             InitializeXibo();
+        }
+
+        private void InitializeCommon()
+        {
+            // Add a message filter
+            Application.AddMessageFilter(KeyStore.Instance);
         }
 
         private void InitializeXibo()
@@ -171,9 +180,6 @@ namespace XiboClient
             // Create the info form
             _clientInfoForm = new ClientInfo();
             _clientInfoForm.Hide();
-
-            // Add a message filter to listen for the i key
-            Application.AddMessageFilter(KeyStore.Instance);
 
             // Define the hotkey
             Keys key;
@@ -216,7 +222,8 @@ namespace XiboClient
             {
                 MouseMove += ScreenSaverForm_MouseMove;
                 MouseDown += ScreenSaverForm_MouseClick;
-                KeyDown += ScreenSaverForm_KeyPress;
+
+                KeyStore.Instance.ScreenSaver = true;
             }
         }
 
@@ -242,15 +249,7 @@ namespace XiboClient
             if (!_screenSaver)
                 return;
 
-            Application.Exit();
-        }
-
-        private void ScreenSaverForm_KeyPress(object sender, KeyEventArgs e)
-        {
-            if (!_screenSaver)
-                return;
-
-            Application.Exit();
+            Close();
         }
 
         /// <summary>
@@ -259,16 +258,23 @@ namespace XiboClient
         /// <param name="name"></param>
         void Instance_KeyPress(string name)
         {
-            if (name != "ClientInfo")
-                return;
-
-            // Toggle
-            if (_clientInfoForm.Visible)
-                _clientInfoForm.Hide();
-            else
+            if (name == "ClientInfo")
             {
-                _clientInfoForm.Show();
-                _clientInfoForm.BringToFront();
+                // Toggle
+                if (_clientInfoForm.Visible)
+                    _clientInfoForm.Hide();
+                else
+                {
+                    _clientInfoForm.Show();
+                    _clientInfoForm.BringToFront();
+                }
+            }
+            else if (name == "ScreenSaver")
+            {
+                if (!_screenSaver)
+                    return;
+
+                Close();
             }
         }
 
