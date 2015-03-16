@@ -23,6 +23,7 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Xilium.CefGlue;
+using XiboClient.Logic;
 
 namespace XiboClient
 {
@@ -91,12 +92,20 @@ namespace XiboClient
                             // Preview the screen saver
                             case "/p":
                                 // args[1] is the handle to the preview window
+                                KeyInterceptor.SetHook();
+                                MouseInterceptor.SetHook();
                                 RunClient(new IntPtr(long.Parse(args[1])));
+                                KeyInterceptor.UnsetHook();
+                                MouseInterceptor.UnsetHook();
                                 break;
 
                             // Show the screen saver
                             case "/s":
+                                KeyInterceptor.SetHook();
+                                MouseInterceptor.SetHook();
                                 RunClient(true);
+                                KeyInterceptor.UnsetHook();
+                                MouseInterceptor.UnsetHook();
                                 break;
 
                             // Configure the screesaver's settings
@@ -107,13 +116,20 @@ namespace XiboClient
 
                             // Show the screen saver
                             default:
+                                KeyInterceptor.SetHook();
+                                MouseInterceptor.SetHook();
                                 RunClient(true);
+                                KeyInterceptor.UnsetHook();
+                                MouseInterceptor.UnsetHook();
                                 break;
                         }
                     }
                 }
                 else
                 {
+                    // Add a message filter
+                    Application.AddMessageFilter(KeyStore.Instance);
+
                     // No arguments were passed - we run the usual client
                     RunClient();
                 }

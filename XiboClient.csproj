@@ -114,7 +114,9 @@
     </Compile>
     <Compile Include="Logic\BlackList.cs" />
     <Compile Include="Logic\CacheManager.cs" />
+    <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
+    <Compile Include="Logic\MouseInterceptor.cs" />
     <Compile Include="Logic\RegionOptions.cs" />
     <Compile Include="Logic\ApplicationSettings.cs" />
     <Compile Include="Logic\ScreenShot.cs" />

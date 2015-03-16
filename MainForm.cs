@@ -38,6 +38,7 @@ using XiboClient.Properties;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using Xilium.CefGlue;
+using XiboClient.Logic;
 
 namespace XiboClient
 {
@@ -49,7 +50,6 @@ namespace XiboClient
         private int _scheduleId;
         private int _layoutId;
         private bool _screenSaver = false;
-        private Point _mouseLocation;
 
         double _layoutWidth;
         double _layoutHeight;
@@ -95,7 +95,6 @@ namespace XiboClient
         public MainForm(IntPtr previewHandle)
         {
             InitializeComponent();
-            InitializeCommon();
             
             // Set the preview window of the screen saver selection 
             // dialog in Windows as the parent of this form.
@@ -122,7 +121,6 @@ namespace XiboClient
         public MainForm(bool screenSaver)
         {
             InitializeComponent();
-            InitializeCommon();
 
             if (screenSaver)
                 InitializeScreenSaver(false);
@@ -133,14 +131,7 @@ namespace XiboClient
         public MainForm()
         {
             InitializeComponent();
-            InitializeCommon();
             InitializeXibo();
-        }
-
-        private void InitializeCommon()
-        {
-            // Add a message filter
-            Application.AddMessageFilter(KeyStore.Instance);
         }
 
         private void InitializeXibo()
@@ -220,35 +211,14 @@ namespace XiboClient
             // Configure some listeners for the mouse (to quit)
             if (!preview)
             {
-                MouseMove += ScreenSaverForm_MouseMove;
-                MouseDown += ScreenSaverForm_MouseClick;
-
                 KeyStore.Instance.ScreenSaver = true;
+
+                MouseInterceptor.Instance.MouseEvent += Instance_MouseEvent;
             }
         }
 
-        private void ScreenSaverForm_MouseMove(object sender, MouseEventArgs e)
+        void Instance_MouseEvent()
         {
-            if (!_screenSaver)
-                return;
-
-            if (!_mouseLocation.IsEmpty)
-            {
-                // Terminate if mouse is moved a significant distance
-                if (Math.Abs(_mouseLocation.X - e.X) > 5 ||
-                    Math.Abs(_mouseLocation.Y - e.Y) > 5)
-                    Application.Exit();
-            }
-
-            // Update current mouse location
-            _mouseLocation = e.Location;
-        }
-
-        private void ScreenSaverForm_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (!_screenSaver)
-                return;
-
             Close();
         }
 
@@ -258,6 +228,7 @@ namespace XiboClient
         /// <param name="name"></param>
         void Instance_KeyPress(string name)
         {
+            Debug.WriteLine("KeyPress " + name);
             if (name == "ClientInfo")
             {
                 // Toggle
@@ -271,6 +242,7 @@ namespace XiboClient
             }
             else if (name == "ScreenSaver")
             {
+                Debug.WriteLine("Closing due to ScreenSaver key press");
                 if (!_screenSaver)
                     return;
 
@@ -328,7 +300,8 @@ namespace XiboClient
                 Cursor.Hide();
 
             // Move the cursor to the starting place
-            SetCursorStartPosition();
+            if (!_screenSaver)
+                SetCursorStartPosition();
 
             // Show the splash screen
             ShowSplashScreen();
