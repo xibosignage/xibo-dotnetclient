@@ -49,22 +49,6 @@ namespace XiboClient
 
             // XMDS completed event
             xmds1.RegisterDisplayCompleted += new XiboClient.xmds.RegisterDisplayCompletedEventHandler(xmds1_RegisterDisplayCompleted);
-            
-            // Library Path
-            if (ApplicationSettings.Default.LibraryPath == "DEFAULT")
-            {
-                Debug.WriteLine("Getting the Library Path", "OptionForm");
-                ApplicationSettings.Default.LibraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\Xibo Library";
-                ApplicationSettings.Default.Save();
-            }
-
-            // Computer name if the display name hasnt been set yet
-            if (ApplicationSettings.Default.DisplayName == "COMPUTERNAME")
-            {
-                Debug.WriteLine("Getting the display Name", "OptionForm");
-                ApplicationSettings.Default.DisplayName = Environment.MachineName;
-                ApplicationSettings.Default.Save();
-            }
 
             // Set global proxy information
             OptionForm.SetGlobalProxy();

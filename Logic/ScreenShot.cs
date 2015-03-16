@@ -14,12 +14,24 @@ namespace XiboClient.Logic
     {
         public static void TakeAndSend()
         {
-            Rectangle bounds = Screen.GetBounds(Point.Empty);
+            Rectangle bounds;
+
+            // Override the default size if necessary
+            if (ApplicationSettings.Default.SizeX != 0)
+            {
+                bounds = new Rectangle((int)ApplicationSettings.Default.OffsetX, (int)ApplicationSettings.Default.OffsetY, (int)ApplicationSettings.Default.SizeX, (int)ApplicationSettings.Default.SizeY);
+            }
+            else
+            {
+                bounds = new Rectangle(0, 0, SystemInformation.PrimaryMonitorSize.Width, SystemInformation.PrimaryMonitorSize.Height);
+            }
+
             using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))
             {
                 using (Graphics g = Graphics.FromImage(bitmap))
                 {
-                    g.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
+                    Point p = new Point(bounds.X, bounds.Y);
+                    g.CopyFromScreen(bounds.X, bounds.Y, 0, 0, bounds.Size, CopyPixelOperation.SourceCopy);
                 }
 
                 using (MemoryStream stream = new MemoryStream())

@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2012 Daniel Garner
+ * Copyright (C) 2006-2015 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -61,6 +61,7 @@ namespace XiboClient
 
             // Capture any video errors
             _videoPlayer.VideoError += new VideoPlayer.VideoErrored(_videoPlayer_VideoError);
+            _videoPlayer.VideoEnd += new VideoPlayer.VideoFinished(_videoPlayer_VideoEnd);
 
             Controls.Add(_videoPlayer);
         }
@@ -77,9 +78,6 @@ namespace XiboClient
             // Do we need to determine the end time ourselves?
             if (_duration == 0)
             {
-                // Use an event for this.
-                _videoPlayer.VideoEnd += new VideoPlayer.VideoFinished(_videoPlayer_VideoEnd);
-
                 // Set the duration to 1 second
                 Duration = 1;
                 _detectEnd = true;
@@ -148,6 +146,10 @@ namespace XiboClient
         {
             try
             {
+                // Remove the event handlers
+                _videoPlayer.VideoError -= _videoPlayer_VideoError;
+                _videoPlayer.VideoEnd -= _videoPlayer_VideoEnd;
+
                 // Stop and Clear
                 _videoPlayer.StopAndClear();
 

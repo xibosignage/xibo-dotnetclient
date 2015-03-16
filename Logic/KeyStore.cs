@@ -31,6 +31,9 @@ namespace XiboClient
         private bool _shift = false;
         private bool _control = false;
 
+        // The screensaver setting
+        public bool ScreenSaver { get; set; }
+
         // The definitions
         private Dictionary<Keys, string> _definitions;
 
@@ -81,6 +84,34 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Handle Raw Keypresses
+        /// </summary>
+        /// <param name="wParam"></param>
+        /// <param name="lParam"></param>
+        public void HandleRawKey(IntPtr wParam, IntPtr lParam)
+        {
+            bool handled = false;
+            Keys key = Keys.None;
+
+            if (wParam == (IntPtr)WM_KEYDOWN)
+            {
+                key = (Keys)Marshal.ReadInt32(lParam);
+                handled = HandleModifier(key, false);
+            }
+            else if (wParam == (IntPtr)WM_KEYUP)
+            {
+                key = (Keys)Marshal.ReadInt32(lParam);
+                handled = HandleModifier(key, true);
+                if (false == handled)
+                {
+                    // If one of the defined keys was pressed then we
+                    // raise an event.
+                    handled = HandleDefinedKey(key);
+                }
+            }
+        }
+
+        /// <summary>
         /// Compares a key against the definitions, and raises an event
         /// if there is a match.
         /// </summary>
@@ -101,6 +132,11 @@ namespace XiboClient
             {
                 OnKeyPress(name);
 
+                handled = true;
+            }
+            else if (ScreenSaver)
+            {
+                OnKeyPress("ScreenSaver");
                 handled = true;
             }
             return handled;

@@ -185,8 +185,6 @@ namespace XiboClient
                 rf.Md5 = attributes["md5"].Value;
                 rf.Size = int.Parse(attributes["size"].Value);
 
-                Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "Building required file node for " + rf.Id.ToString()), LogType.Audit.ToString());
-
                 // Does this file already exist in the RF node? We might receive duplicates.
                 bool found = false;
 

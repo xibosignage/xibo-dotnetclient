@@ -6,11 +6,11 @@ using System.Resources;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Xibo")]
+[assembly: AssemblyTitle("Xibo Open Source Digital Signage")]
 [assembly: AssemblyDescription("Digital Signage Player")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Xibo Digital Signage")]
-[assembly: AssemblyProduct("Xibo Open Source Digital Signage")]
+[assembly: AssemblyProduct("Xibo")]
 [assembly: AssemblyCopyright("Copyright Dan Garner ©  2008-2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

@@ -101,7 +101,7 @@ namespace XiboClient
 
         private bool HtmlReady()
         {
-            // Pull the RSS feed, and put it in a temporary file cache
+            // Check for cached resource files in the library
             // We want to check the file exists first
             if (!File.Exists(_filePath) || _options.updateInterval == 0)
                 return false;
@@ -109,8 +109,12 @@ namespace XiboClient
             // It exists - therefore we want to get the last time it was updated
             DateTime lastWriteDate = File.GetLastWriteTime(_filePath);
 
-            if (_options.LayoutModifiedDate.CompareTo(lastWriteDate) > 0 || DateTime.Now.CompareTo(lastWriteDate.AddHours(_options.updateInterval * 1.0 / 60.0)) > 0)
+            // Compare the last time it was updated to the layout modified time (always refresh when the layout has been modified)
+            // Also compare to the update interval (refresh if it has not been updated for longer than the update interval)
+            if (_options.LayoutModifiedDate.CompareTo(lastWriteDate) > 0 || DateTime.Now.CompareTo(lastWriteDate.AddMinutes(_options.updateInterval)) > 0)
+            {
                 return false;
+            }
             else
             {
                 UpdateCacheIfNecessary();
@@ -172,8 +176,19 @@ namespace XiboClient
                 {
                     Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Error.ToString());
 
-                    // Start the timer so that we expire
-                    base.RenderMedia();
+                    // We have failed to update from XMDS, do we have a cached file we can revert to
+                    if (File.Exists(_filePath))
+                    {
+                        // Cached file to revert to
+                        UpdateCacheIfNecessary();
+                        _webView.Browser.GetMainFrame().LoadUrl(_filePath);
+                    }
+                    else
+                    {
+                        // No cache to revert to
+                        // Start the timer so that we expire
+                        base.RenderMedia();
+                    }
                 }
                 else
                 {

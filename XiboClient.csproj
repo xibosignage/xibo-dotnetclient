@@ -114,7 +114,9 @@
     </Compile>
     <Compile Include="Logic\BlackList.cs" />
     <Compile Include="Logic\CacheManager.cs" />
+    <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
+    <Compile Include="Logic\MouseInterceptor.cs" />
     <Compile Include="Logic\RegionOptions.cs" />
     <Compile Include="Logic\ApplicationSettings.cs" />
     <Compile Include="Logic\ScreenShot.cs" />
@@ -225,6 +227,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Log\XiboTraceListener.cs" />
+    <Compile Include="XmdsAgents\LogAgent.cs" />
     <Compile Include="XmdsAgents\RegisterAgent.cs" />
     <Compile Include="XmdsAgents\FileAgent.cs" />
     <Compile Include="XmdsAgents\LibraryAgent.cs" />

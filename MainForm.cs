@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-14 Daniel Garner
+ * Copyright (C) 2006-15 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -38,6 +38,7 @@ using XiboClient.Properties;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using Xilium.CefGlue;
+using XiboClient.Logic;
 
 namespace XiboClient
 {
@@ -49,7 +50,6 @@ namespace XiboClient
         private int _scheduleId;
         private int _layoutId;
         private bool _screenSaver = false;
-        private Point _mouseLocation;
 
         double _layoutWidth;
         double _layoutHeight;
@@ -172,9 +172,6 @@ namespace XiboClient
             _clientInfoForm = new ClientInfo();
             _clientInfoForm.Hide();
 
-            // Add a message filter to listen for the i key
-            Application.AddMessageFilter(KeyStore.Instance);
-
             // Define the hotkey
             Keys key;
             try
@@ -214,43 +211,15 @@ namespace XiboClient
             // Configure some listeners for the mouse (to quit)
             if (!preview)
             {
-                MouseMove += ScreenSaverForm_MouseMove;
-                MouseDown += ScreenSaverForm_MouseClick;
-                KeyDown += ScreenSaverForm_KeyPress;
+                KeyStore.Instance.ScreenSaver = true;
+
+                MouseInterceptor.Instance.MouseEvent += Instance_MouseEvent;
             }
         }
 
-        private void ScreenSaverForm_MouseMove(object sender, MouseEventArgs e)
+        void Instance_MouseEvent()
         {
-            if (!_screenSaver)
-                return;
-
-            if (!_mouseLocation.IsEmpty)
-            {
-                // Terminate if mouse is moved a significant distance
-                if (Math.Abs(_mouseLocation.X - e.X) > 5 ||
-                    Math.Abs(_mouseLocation.Y - e.Y) > 5)
-                    Application.Exit();
-            }
-
-            // Update current mouse location
-            _mouseLocation = e.Location;
-        }
-
-        private void ScreenSaverForm_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (!_screenSaver)
-                return;
-
-            Application.Exit();
-        }
-
-        private void ScreenSaverForm_KeyPress(object sender, KeyEventArgs e)
-        {
-            if (!_screenSaver)
-                return;
-
-            Application.Exit();
+            Close();
         }
 
         /// <summary>
@@ -259,16 +228,25 @@ namespace XiboClient
         /// <param name="name"></param>
         void Instance_KeyPress(string name)
         {
-            if (name != "ClientInfo")
-                return;
-
-            // Toggle
-            if (_clientInfoForm.Visible)
-                _clientInfoForm.Hide();
-            else
+            Debug.WriteLine("KeyPress " + name);
+            if (name == "ClientInfo")
             {
-                _clientInfoForm.Show();
-                _clientInfoForm.BringToFront();
+                // Toggle
+                if (_clientInfoForm.Visible)
+                    _clientInfoForm.Hide();
+                else
+                {
+                    _clientInfoForm.Show();
+                    _clientInfoForm.BringToFront();
+                }
+            }
+            else if (name == "ScreenSaver")
+            {
+                Debug.WriteLine("Closing due to ScreenSaver key press");
+                if (!_screenSaver)
+                    return;
+
+                Close();
             }
         }
 
@@ -322,7 +300,8 @@ namespace XiboClient
                 Cursor.Hide();
 
             // Move the cursor to the starting place
-            SetCursorStartPosition();
+            if (!_screenSaver)
+                SetCursorStartPosition();
 
             // Show the splash screen
             ShowSplashScreen();

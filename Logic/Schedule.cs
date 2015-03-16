@@ -77,6 +77,10 @@ namespace XiboClient
         private LibraryAgent _libraryAgent;
         Thread _libraryAgentThread;
 
+        // Log Agent
+        private LogAgent _logAgent;
+        Thread _logAgentThread;
+
         /// <summary>
         /// Client Info Form
         /// </summary>
@@ -149,6 +153,11 @@ namespace XiboClient
             // Create a thread for the Library Agent to run in - but dont start it up yet.
             _libraryAgentThread = new Thread(new ThreadStart(_libraryAgent.Run));
             _libraryAgentThread.Name = "LibraryAgent";
+
+            // Log Agent
+            _logAgent = new LogAgent();
+            _logAgentThread = new Thread(new ThreadStart(_logAgent.Run));
+            _logAgentThread.Name = "LogAgent";
         }
 
         /// <summary>
@@ -170,6 +179,9 @@ namespace XiboClient
 
             // Start the LibraryAgent thread
             _libraryAgentThread.Start();
+
+            // Start the LogAgent thread
+            _logAgentThread.Start();
         }
 
         /// <summary>
@@ -300,6 +312,9 @@ namespace XiboClient
 
             // Stop the LibraryAgent Thread
             _libraryAgent.Stop();
+
+            // Stop the LogAgent Thread
+            _logAgent.Stop();
         }
     }
 }
