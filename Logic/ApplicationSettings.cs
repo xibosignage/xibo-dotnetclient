@@ -37,9 +37,9 @@ namespace XiboClient
         private static string _default = "default";
 
         // Application Specific Settings we want to protect
-        private string _clientVersion = "1.7.2";
+        private string _clientVersion = "1.7.3";
         private string _version = "4";
-        private int _clientCodeVersion = 106;
+        private int _clientCodeVersion = 107;
 
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
@@ -170,11 +170,16 @@ namespace XiboClient
         {
             get
             {
+                // Get the local time now and add our Unix timestamp to it.
+                // We know that the DownloadStartWindow is saved in UTC (GMT to be precise, but no biggie)
                 DateTime now = DateTime.Now;
+
+                // start is now UTC download window start.
                 DateTime start = unixEpoch.AddMilliseconds(DownloadStartWindow);
                 
-                // Reset to today
-                return new DateTime(now.Year, now.Month, now.Day, start.Hour, start.Minute, start.Second);
+                // Reset to local time, using the H:m:i from the Unix Time.
+                // This gives us a local time
+                return new DateTime(now.Year, now.Month, now.Day, start.Hour, start.Minute, start.Second, DateTimeKind.Local);
             }
         }
 
@@ -182,11 +187,12 @@ namespace XiboClient
         {
             get
             {
+                // See notes from DownloadStartWindowTime
                 DateTime now = DateTime.Now;
                 DateTime end = unixEpoch.AddMilliseconds(DownloadEndWindow);
 
                 // Reset to today
-                return new DateTime(now.Year, now.Month, now.Day, end.Hour, end.Minute, end.Second);
+                return new DateTime(now.Year, now.Month, now.Day, end.Hour, end.Minute, end.Second, DateTimeKind.Local);
             }
         }
 
