@@ -56,14 +56,14 @@ namespace XiboClient
             _webBrowser.ScriptErrorsSuppressed = true;
             _webBrowser.Visible = false;
 
+            // Start the timer (will be reset in DocumentComplete)
+            base.StartTimer();
+
             // Check to see if the HTML is ready for us.
             if (HtmlReady())
             {
                 // Write to temporary file
                 ReadControlMeta();
-
-                // Start the timer (will be reset in DocumentComplete)
-                base.StartTimer();
 
                 // Navigate to temp file
                 _webBrowser.Navigate(_filePath);
@@ -178,9 +178,6 @@ namespace XiboClient
                         // Cached file to revert to
                         UpdateCacheIfNecessary();
 
-                        // Start the timer
-                        StartTimer();
-
                         _webBrowser.Navigate(_filePath);
                     }
                     else
@@ -219,9 +216,6 @@ namespace XiboClient
 
                     // Read the control meta back out
                     ReadControlMeta();
-
-                    // Start the timer
-                    StartTimer();
 
                     // Handle Navigate in here because we will not have done it during first load
                     _webBrowser.Navigate(_filePath);
