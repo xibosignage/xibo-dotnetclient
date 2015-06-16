@@ -56,9 +56,6 @@ namespace XiboClient
             _webBrowser.ScriptErrorsSuppressed = true;
             _webBrowser.Visible = false;
 
-            // Start the timer (will be reset in DocumentComplete)
-            base.StartTimer();
-
             // Check to see if the HTML is ready for us.
             if (HtmlReady())
             {
@@ -88,11 +85,6 @@ namespace XiboClient
                 return;
 
             _webBrowser.Visible = true;
-        }
-
-        public override void RenderMedia()
-        {
-            // We don't do anything in here as we want to start the timer from when the web view has loaded
         }
 
         private bool HtmlReady()
