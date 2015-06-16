@@ -62,6 +62,9 @@ namespace XiboClient
                 // Write to temporary file
                 ReadControlMeta();
 
+                // Start the timer (will be reset in DocumentComplete)
+                base.StartTimer();
+
                 // Navigate to temp file
                 _webBrowser.Navigate(_filePath);
             }
@@ -79,7 +82,7 @@ namespace XiboClient
         void _webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             // Start the timer
-            base.StartTimer();
+            base.RestartTimer();
 
             if (_disposed)
                 return;
@@ -174,6 +177,10 @@ namespace XiboClient
                     {
                         // Cached file to revert to
                         UpdateCacheIfNecessary();
+
+                        // Start the timer
+                        StartTimer();
+
                         _webBrowser.Navigate(_filePath);
                     }
                     else
@@ -212,6 +219,9 @@ namespace XiboClient
 
                     // Read the control meta back out
                     ReadControlMeta();
+
+                    // Start the timer
+                    StartTimer();
 
                     // Handle Navigate in here because we will not have done it during first load
                     _webBrowser.Navigate(_filePath);

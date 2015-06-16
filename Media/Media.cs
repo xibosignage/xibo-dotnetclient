@@ -187,6 +187,10 @@ namespace XiboClient
                 _timer.Stop();
                 _timer.Start();
             }
+            else
+            {
+                StartTimer();
+            }
         }
 
         /// <summary>
