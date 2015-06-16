@@ -112,12 +112,12 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="pictureBox1.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAKAAAABSCAYAAADTld8/AAAABGdBTUEAALGOfPtRkwAAACBjSFJNAACH
@@ -165,7 +165,7 @@
         XTesb3QPLh88M+QwdP6m681Lt7xuXbu94vbgcOjwnZHokdE77DtTd1PuvriXeW/h/sYH6AdFD6UeVjxS
         fNTws+7PbaOWo6fHXMf6Hwc/vj/OGn/2S8Yv7ycKnpCfVEyqTDZPmU2dmnafvvF05dOJZ+nPFmYKf5X+
         tfa5zvMffnP8rX82YnbiBf/Fp99LXsq/PPRq2aueuYC5R69TXy/MF72Rf3P4LeNt37vwd5MLWe+x7ys/
-        6H7o/ujz8cGn1E+f/gUDmPP8usTo0wAAAAlwSFlzAAALEAAACxABrSO9dQAAABp0RVh0U29mdHdhcmUA
+        6H7o/ujz8cGn1E+f/gUDmPP8usTo0wAAAAlwSFlzAAALDwAACw8BkvkDpQAAABp0RVh0U29mdHdhcmUA
         UGFpbnQuTkVUIHYzLjUuMTAw9HKhAAA+J0lEQVR4Xu2dd3hURffHg6B0COmh9xZKqNIJ6aQ3AgRCF0RU
         9EVRAZFeEtIhEFBREAVEUCkCAUIKHVSqWPAFFBR9/VlRrPd3Pjc7y93NBkgI6B/O83yf3bs7d+bMnO+c
         c6bcXbt/0z8ylTPhHkF5QQUT7jW85zuV7+9Kqn4lI/Ip/JPk/DfdYjIqFCVWElQT1BTYC2qZXqsLqggq
@@ -435,8 +435,8 @@
 </value>
   </data>
   <data name="richTextBox1.Text" xml:space="preserve">
-    <value>Xibo - Digitial Signage - http://www.xibo.org.uk
-Copyright (C) 2006-2014 Daniel Garner and the Xibo Developers
+    <value>Xibo - Digital Signage - http://www.xibo.org.uk
+Copyright (C) 2006-2015 Daniel Garner and the Xibo Developers
 
 Xibo is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
