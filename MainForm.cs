@@ -459,7 +459,7 @@ namespace XiboClient
                         using (xmds.xmds statusXmds = new xmds.xmds())
                         {
                             statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
-                            statusXmds.NotifyStatusAsync(ApplicationSettings.Default.Version, ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"currentLayoutId\":" + _layoutId + "}");
+                            statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"currentLayoutId\":" + _layoutId + "}");
                         }
                     }
                 }
