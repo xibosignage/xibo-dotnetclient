@@ -62,9 +62,6 @@ namespace XiboClient
                 // Write to temporary file
                 ReadControlMeta();
 
-                // Start the timer (will be reset in DocumentComplete)
-                base.StartTimer();
-
                 // Navigate to temp file
                 _webBrowser.Navigate(_filePath);
             }
@@ -88,11 +85,6 @@ namespace XiboClient
                 return;
 
             _webBrowser.Visible = true;
-        }
-
-        public override void RenderMedia()
-        {
-            // We don't do anything in here as we want to start the timer from when the web view has loaded
         }
 
         private bool HtmlReady()
@@ -178,9 +170,6 @@ namespace XiboClient
                         // Cached file to revert to
                         UpdateCacheIfNecessary();
 
-                        // Start the timer
-                        StartTimer();
-
                         _webBrowser.Navigate(_filePath);
                     }
                     else
@@ -219,9 +208,6 @@ namespace XiboClient
 
                     // Read the control meta back out
                     ReadControlMeta();
-
-                    // Start the timer
-                    StartTimer();
 
                     // Handle Navigate in here because we will not have done it during first load
                     _webBrowser.Navigate(_filePath);
