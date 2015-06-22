@@ -79,17 +79,12 @@ namespace XiboClient
         void _webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             // Start the timer
-            base.StartTimer();
+            base.RestartTimer();
 
             if (_disposed)
                 return;
 
             _webBrowser.Visible = true;
-        }
-
-        public override void RenderMedia()
-        {
-            // We don't do anything in here as we want to start the timer from when the web view has loaded
         }
 
         private bool HtmlReady()
@@ -174,6 +169,7 @@ namespace XiboClient
                     {
                         // Cached file to revert to
                         UpdateCacheIfNecessary();
+
                         _webBrowser.Navigate(_filePath);
                     }
                     else
