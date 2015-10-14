@@ -27,6 +27,7 @@ using System.Xml;
 using XiboClient.Log;
 using System.Net;
 using System.Globalization;
+using System.IO;
 
 /// 17/02/12 Dan Created
 /// 20/02/12 Dan Added ClientInfo
@@ -199,6 +200,9 @@ namespace XiboClient.XmdsAgents
                                     // Write the Cache Manager to Disk
                                     _cacheManager.WriteCacheManager();
 
+                                    // Report the storage usage
+                                    reportStorage();
+
                                     // Set the status on the client info screen
                                     if (threadsToStart.Count == 0)
                                         _clientInfoForm.RequiredFilesStatus = "Sleeping (inside download window)";
@@ -294,6 +298,28 @@ namespace XiboClient.XmdsAgents
             {
                 // Raise an event to say it is completed
                 OnComplete(rf.Path);
+            }
+        }
+
+        private void reportStorage()
+        {
+            // Use Drive Info
+            foreach (DriveInfo drive in DriveInfo.GetDrives())
+            {
+                if (drive.IsReady && ApplicationSettings.Default.LibraryPath.Contains(drive.RootDirectory.FullName))
+                {
+                    using (xmds.xmds xmds = new xmds.xmds())
+                    {
+                        string status = "{\"availableSpace\":\"" + drive.TotalFreeSpace + "\", \"totalSpace\":\"" + drive.TotalSize + "\"}";
+
+                        xmds.Credentials = null;
+                        xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                        xmds.UseDefaultCredentials = false;
+                        xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, status);
+                    }
+
+                    break;
+                }
             }
         }
     }
