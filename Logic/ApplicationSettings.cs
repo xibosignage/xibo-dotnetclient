@@ -45,7 +45,7 @@ namespace XiboClient
         public string Version { get { return _version; } }
         public int ClientCodeVersion { get { return _clientCodeVersion; } }
 
-        private static readonly DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        private static readonly DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Local);
 
         public static ApplicationSettings Default
         {
@@ -121,6 +121,7 @@ namespace XiboClient
         }
 
         public int XmdsResetTimeout { get; set; }
+        public double CmsTimeOffset { get; set; }
 
         public decimal SizeX { get; set; }
         public decimal SizeY { get; set; }
@@ -173,9 +174,14 @@ namespace XiboClient
                 // Get the local time now and add our Unix timestamp to it.
                 // We know that the DownloadStartWindow is saved in UTC (GMT to be precise, but no biggie)
                 DateTime now = DateTime.Now;
+                DateTime start = unixEpoch.AddMilliseconds(DownloadStartWindow);
 
                 // start is now UTC download window start.
-                DateTime start = unixEpoch.AddMilliseconds(DownloadStartWindow);
+                if (CmsTimeOffset != null && CmsTimeOffset != 0)
+                {
+                    // Adjust for the timezone
+                    start = start.AddHours(CmsTimeOffset);
+                }
                 
                 // Reset to local time, using the H:m:i from the Unix Time.
                 // This gives us a local time
@@ -190,6 +196,12 @@ namespace XiboClient
                 // See notes from DownloadStartWindowTime
                 DateTime now = DateTime.Now;
                 DateTime end = unixEpoch.AddMilliseconds(DownloadEndWindow);
+
+                if (CmsTimeOffset != null && CmsTimeOffset != 0)
+                {
+                    // Adjust for the timezone
+                    end = end.AddHours(CmsTimeOffset);
+                }
 
                 // Reset to today
                 return new DateTime(now.Year, now.Month, now.Day, end.Hour, end.Minute, end.Second, DateTimeKind.Local);
