@@ -288,6 +288,16 @@ namespace XiboClient
                     continue;
                 }
 
+                // Check dependents
+                foreach (string dependent in layout.Dependents)
+                {
+                    if (!_cacheManager.IsValidPath(dependent))
+                    {
+                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
+                        continue;
+                    }
+                }
+
                 // If this is the default, skip it
                 if (layout.NodeName == "default")
                 {
@@ -388,6 +398,15 @@ namespace XiboClient
 
                         // Add it to the layout schedule
                         if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
+
+                        // Dependents
+                        if (attributes["dependents"] != null)
+                        {
+                            foreach (string dependent in attributes["dependents"].Value.Split(','))
+                            {
+                                temp.Dependents.Add(dependent);
+                            }
+                        }
                     }
 
                     _layoutSchedule.Add(temp);
@@ -522,7 +541,7 @@ namespace XiboClient
     /// A LayoutSchedule
     /// </summary>
     [Serializable]
-    public struct LayoutSchedule
+    public class LayoutSchedule
     {
         public string NodeName;
         public string layoutFile;
@@ -533,5 +552,7 @@ namespace XiboClient
 
         public DateTime FromDt;
         public DateTime ToDt;
+
+        public List<string> Dependents = new List<string>();
     }
 }

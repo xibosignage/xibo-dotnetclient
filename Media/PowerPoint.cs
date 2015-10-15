@@ -23,6 +23,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 
 namespace XiboClient
 {
@@ -45,6 +46,7 @@ namespace XiboClient
             layoutId = options.layoutId;
             mediaId = options.mediaid;
             type = options.type;
+            _filePath = Uri.UnescapeDataString(options.uri).Replace('+', ' ');
 
             webBrowser = new WebBrowser();
             webBrowser.Size = this.Size;
@@ -52,6 +54,13 @@ namespace XiboClient
             webBrowser.ScriptErrorsSuppressed = true;
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
             webBrowser.Visible = false;
+
+            // Check to see if the video exists or not (if it doesnt say we are already expired)
+            if (!File.Exists(_filePath))
+            {
+                Trace.WriteLine(new LogMessage("PowerPoint - RenderMedia", "File " + _filePath + " not found."));
+                throw new FileNotFoundException();
+            }
 
             if (!ApplicationSettings.Default.PowerpointEnabled)
             {
@@ -63,23 +72,12 @@ namespace XiboClient
             {
                 try
                 {
-                    // Try to make a URI out of the file path
-                    try
-                    {
-                        _filePath = Uri.UnescapeDataString(options.uri).Replace('+', ' ');
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine(new LogMessage("WebContent", "Unable to get a URI with exception: " + ex.Message), LogType.Audit.ToString());
-                    }
-
                     webBrowser.Navigate(_filePath);
                 }
                 catch (Exception ex)
                 {
-                    webBrowser.DocumentText = "<html><body><h1>Unable to show this web location - invalid address.</h1></body></html>";
-
                     Trace.WriteLine(new LogMessage("WebContent", "Unable to show webpage. Exception: " + ex.Message, scheduleId, layoutId), LogType.Error.ToString());
+                    throw new InvalidOperationException("Cannot navigate to PowerPoint file");
                 }
             }
 
