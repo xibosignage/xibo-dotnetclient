@@ -28,8 +28,20 @@ namespace XiboClient
             // and store them in member variables.
             _options = options;
 
-            // Set the file path
-            _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
+            // Check to see if the mode option is present.
+            string modeId = options.Dictionary.Get("modeid");
+            bool nativeOpen = modeId != string.Empty && modeId == "1";
+
+            if (nativeOpen)
+            {
+                // If we are modeid == 1, then just open the webpage without adjusting the file path
+                _filePath = Uri.UnescapeDataString(options.uri).Replace('+', ' ');
+            }
+            else
+            {
+                // Set the file path
+                _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
+            }
             
             Color backgroundColor = ColorTranslator.FromHtml(_options.backgroundColor);
 
@@ -45,16 +57,23 @@ namespace XiboClient
             _webView.Size = Size;
 
             // Check to see if the HTML is ready for us.
-            if (HtmlReady())
+            if (nativeOpen)
             {
-                // Write to temporary file
-                ReadControlMeta();
-
                 _startWhenReady = true;
             }
             else
             {
-                RefreshFromXmds();
+                if (HtmlReady())
+                {
+                    // Write to temporary file
+                    ReadControlMeta();
+
+                    _startWhenReady = true;
+                }
+                else
+                {
+                    RefreshFromXmds();
+                }
             }
 
             // We need to come up with a way of setting this control to Visible = false here and still kicking

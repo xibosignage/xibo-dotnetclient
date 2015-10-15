@@ -45,8 +45,20 @@ namespace XiboClient
             // and store them in member variables.
             _options = options;
 
-            // Set the file path
-            _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
+            // Check to see if the mode option is present.
+            string modeId = options.Dictionary.Get("modeid");
+            bool nativeOpen = modeId != string.Empty && modeId == "1";
+
+            if (nativeOpen)
+            {
+                // If we are modeid == 1, then just open the webpage without adjusting the file path
+                _filePath = Uri.UnescapeDataString(options.uri).Replace('+', ' ');
+            }
+            else
+            {
+                // Set the file path
+                _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
+            }
 
             // Create the web view we will use
             _webBrowser = new WebBrowser();
@@ -56,18 +68,26 @@ namespace XiboClient
             _webBrowser.ScriptErrorsSuppressed = true;
             _webBrowser.Visible = false;
 
-            // Check to see if the HTML is ready for us.
-            if (HtmlReady())
+            if (nativeOpen)
             {
-                // Write to temporary file
-                ReadControlMeta();
-
-                // Navigate to temp file
+                // Nativate directly
                 _webBrowser.Navigate(_filePath);
             }
             else
             {
-                RefreshFromXmds();
+                // Check to see if the HTML is ready for us.
+                if (HtmlReady())
+                {
+                    // Write to temporary file
+                    ReadControlMeta();
+
+                    // Navigate to temp file
+                    _webBrowser.Navigate(_filePath);
+                }
+                else
+                {
+                    RefreshFromXmds();
+                }
             }
 
             Controls.Add(_webBrowser);
