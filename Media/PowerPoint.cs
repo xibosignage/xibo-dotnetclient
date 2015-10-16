@@ -55,13 +55,6 @@ namespace XiboClient
             webBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser_DocumentCompleted);
             webBrowser.Visible = false;
 
-            // Check to see if the video exists or not (if it doesnt say we are already expired)
-            if (!File.Exists(_filePath))
-            {
-                Trace.WriteLine(new LogMessage("PowerPoint - RenderMedia", "File " + _filePath + " not found."));
-                throw new FileNotFoundException();
-            }
-
             if (!ApplicationSettings.Default.PowerpointEnabled)
             {
                 webBrowser.DocumentText = "<html><body><h1>Powerpoint not enabled on this display</h1></body></html>";
