@@ -323,17 +323,28 @@ namespace XiboClient
             // We want to tidy up some stuff as this form closes.
             Trace.Listeners.Remove("ClientInfo TraceListener");
 
-            // Close the client info screen
-            _clientInfoForm.Hide();
+            try
+            {
+                // Close the client info screen
+                if (_clientInfoForm != null)
+                    _clientInfoForm.Hide();
 
-            // Stop the schedule object
-            _schedule.Stop();
+                // Stop the schedule object
+                if (_schedule != null)
+                    _schedule.Stop();
 
-            // Flush the stats
-            _statLog.Flush();
+                // Flush the stats
+                if (_statLog != null)
+                    _statLog.Flush();
 
-            // Write the CacheManager to disk
-            _cacheManager.WriteCacheManager();
+                // Write the CacheManager to disk
+                if (_cacheManager != null)
+                    _cacheManager.WriteCacheManager();
+            }
+            catch (NullReferenceException)
+            {
+                // Stopped before we really started, nothing to do
+            }
 
             // Flush the logs
             Trace.Flush();

@@ -77,7 +77,10 @@ namespace XiboClient
         public void SetMute(bool mute)
         {
             if (mute)
+            {
+                axWindowsMediaPlayer1.settings.volume = 0;
                 axWindowsMediaPlayer1.settings.mute = true;
+            }
             else
                 axWindowsMediaPlayer1.settings.volume = 100;
         }
