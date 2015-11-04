@@ -193,6 +193,7 @@ namespace XiboClient
                         {
                             if (command.Date >= now && command.Date < tenSecondsTime && !command.HasRun)
                             {
+                                bool success;
                                 try
                                 {
                                     // We need to run this command
@@ -200,16 +201,7 @@ namespace XiboClient
                                     command.Command = Command.GetByCode(command.Code);
 
                                     // Run the command.
-                                    bool success = command.Command.run();
-
-                                    if (command.Command.notifyStatus())
-                                    {
-                                        using (xmds.xmds statusXmds = new xmds.xmds())
-                                        {
-                                            statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
-                                            statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"lastCommandSuccess\":" + success + "}");
-                                        }
-                                    }
+                                    success = command.Command.run();
 
                                     // Mark run
                                     command.HasRun = true;
@@ -217,6 +209,14 @@ namespace XiboClient
                                 catch (Exception e)
                                 {
                                     Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Cannot run Command: " + e.Message), LogType.Error.ToString());
+                                    success = false;
+                                }
+                                
+                                // Notify the state of the command (success or failure)
+                                using (xmds.xmds statusXmds = new xmds.xmds())
+                                {
+                                    statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                                    statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"lastCommandSuccess\":" + success + "}");
                                 }
                             }
                         }

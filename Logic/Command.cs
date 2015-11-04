@@ -30,7 +30,17 @@ namespace XiboClient.Logic
             // Parse the command string to work out how we should run this command.
             if (CommandString.StartsWith("rs232"))
             {
+                CommandRs232 rs232 = new CommandRs232(this);
+                string line = rs232.run();
 
+                if (notifyStatus())
+                {
+                    return line == Validation;
+                }
+                else
+                {
+                    return true;
+                }
             }
             else
             {
@@ -65,10 +75,13 @@ namespace XiboClient.Logic
                         return true;
                 }
             }
-
-            return false;
         }
 
+        /// <summary>
+        /// Get a command from Application Settings based on its Command Code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
         public static Command GetByCode(string code)
         {
             foreach (Command command in ApplicationSettings.Default.Commands)
