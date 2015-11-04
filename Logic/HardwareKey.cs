@@ -23,6 +23,8 @@ using System.Runtime.InteropServices;
 using System.Management;
 using System.Text;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Windows.Forms;
 
 namespace XiboClient
 {
@@ -32,6 +34,26 @@ namespace XiboClient
 
         private string _hardwareKey;
         private string _macAddress;
+        private string _channel;
+
+        public string Channel
+        {
+            get
+            {
+                if (String.IsNullOrEmpty(_channel))
+                {
+                    // Channel is based on the CMS URL, CMS Key and Hardware Key
+                    _channel = Hashes.MD5(ApplicationSettings.Default.ServerUri + ApplicationSettings.Default.ServerKey + _hardwareKey);
+                }
+
+                return _channel;
+            }
+        }
+
+        public void clearChannel()
+        {
+            _channel = null;
+        }
 
         public string MacAddress
         {
@@ -170,6 +192,17 @@ namespace XiboClient
 
                 return cpuInfo;
             }
+        }
+
+        public RSA getXmrKey()
+        {
+            const int PROVIDER_RSA_FULL = 1;
+            CspParameters cspParams;
+            cspParams = new CspParameters(PROVIDER_RSA_FULL);
+            cspParams.KeyContainerName = Application.ProductName + "RsaKey";
+            cspParams.Flags = CspProviderFlags.UseMachineKeyStore;
+            cspParams.ProviderName = "Microsoft Strong Cryptographic Provider";
+            return new RSACryptoServiceProvider(cspParams);
         }
     }
 }

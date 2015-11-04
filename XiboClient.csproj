@@ -114,6 +114,8 @@
     </Compile>
     <Compile Include="Logic\BlackList.cs" />
     <Compile Include="Logic\CacheManager.cs" />
+    <Compile Include="Logic\Command.cs" />
+    <Compile Include="Logic\CommandSchedule.cs" />
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
     <Compile Include="Logic\MouseInterceptor.cs" />
@@ -265,10 +267,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://172.28.128.3/xmds.php%3fv=4&amp;WSDL">
+    <WebReferenceUrl Include="http://192.168.0.28/xmds.php%3fv=5&amp;WSDL">
       <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>http://172.28.128.3/xmds.php%3fv=4&amp;WSDL</UpdateFromURL>
+      <UpdateFromURL>http://192.168.0.28/xmds.php%3fv=5&amp;WSDL</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>

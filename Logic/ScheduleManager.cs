@@ -61,6 +61,8 @@ namespace XiboClient
         private string _location;
         private Collection<LayoutSchedule> _layoutSchedule;
         private Collection<LayoutSchedule> _currentSchedule;
+        private Collection<CommandSchedule> _commands;
+
         private bool _refreshSchedule;
         private CacheManager _cacheManager;
         private DateTime _lastScreenShotDate;
@@ -89,6 +91,7 @@ namespace XiboClient
             // Create an empty layout schedule
             _layoutSchedule = new Collection<LayoutSchedule>();
             _currentSchedule = new Collection<LayoutSchedule>();
+            _commands = new Collection<CommandSchedule>();
 
             _lastScreenShotDate = DateTime.MinValue;
         }
@@ -180,6 +183,42 @@ namespace XiboClient
 
                             // Store the date
                             _lastScreenShotDate = DateTime.Now;
+                        }
+
+                        // Run any commands that occur in the next 10 seconds.
+                        DateTime now = DateTime.Now;
+                        DateTime tenSecondsTime = now.AddSeconds(10);
+
+                        foreach (CommandSchedule command in _commands)
+                        {
+                            if (command.Date >= now && command.Date < tenSecondsTime && !command.HasRun)
+                            {
+                                try
+                                {
+                                    // We need to run this command
+                                    // Get a fresh command from settings
+                                    command.Command = Command.GetByCode(command.Code);
+
+                                    // Run the command.
+                                    bool success = command.Command.run();
+
+                                    if (command.Command.notifyStatus())
+                                    {
+                                        using (xmds.xmds statusXmds = new xmds.xmds())
+                                        {
+                                            statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                                            statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"lastCommandSuccess\":" + success + "}");
+                                        }
+                                    }
+
+                                    // Mark run
+                                    command.HasRun = true;
+                                }
+                                catch (Exception e)
+                                {
+                                    Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Cannot run Command: " + e.Message), LogType.Error.ToString());
+                                }
+                            }
                         }
 
                         // Write a flag to the status.xml file
@@ -341,6 +380,9 @@ namespace XiboClient
             // Empty the current schedule collection
             _layoutSchedule.Clear();
 
+            // Clear the list of commands
+            _commands.Clear();
+
             // Get the schedule XML
             XmlDocument scheduleXml = GetScheduleXml();
 
@@ -365,6 +407,27 @@ namespace XiboClient
                 if (temp.NodeName == "dependants")
                 {
                     // Do nothing for now
+                }
+                else if (temp.NodeName == "command")
+                {
+                    // Try to get the command using the code
+                    try
+                    {
+                        // Pull attributes from layout nodes
+                        XmlAttributeCollection attributes = node.Attributes;
+
+                        CommandSchedule command = new CommandSchedule();
+                        command.Date = DateTime.Parse(attributes["date"].Value, CultureInfo.InvariantCulture);
+                        command.Code = attributes["code"].Value;
+                        command.ScheduleId = int.Parse(attributes["scheduleid"].Value);
+
+                        // Add to the collection
+                        _commands.Add(command);
+                    }
+                    catch (Exception e)
+                    {
+                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadScheduleFromFile", e.Message), LogType.Error.ToString());
+                    }
                 }
                 else
                 {

@@ -72,7 +72,17 @@ namespace XiboClient.XmdsAgents
                             xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(ApplicationSettings.Default.ServerKey, key.Key, ApplicationSettings.Default.DisplayName, "windows", ApplicationSettings.Default.ClientVersion, ApplicationSettings.Default.ClientCodeVersion, Environment.OSVersion.ToString(), key.MacAddress));
+                            RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(
+                                ApplicationSettings.Default.ServerKey, 
+                                key.Key, 
+                                ApplicationSettings.Default.DisplayName, 
+                                "windows", 
+                                ApplicationSettings.Default.ClientVersion, 
+                                ApplicationSettings.Default.ClientCodeVersion, 
+                                Environment.OSVersion.ToString(), 
+                                key.MacAddress,
+                                key.Channel,
+                                key.getXmrKey().ToXmlString(false)));
 
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
@@ -145,41 +155,67 @@ namespace XiboClient.XmdsAgents
 
                     foreach (XmlNode node in result.DocumentElement.ChildNodes)
                     {
-                        Object value = node.InnerText;
-
-                        switch (node.Attributes["type"].Value)
+                        // Are we a commands node?
+                        if (node.Name == "commands")
                         {
-                            case "int":
-                                value = Convert.ToInt32(value);
-                                break;
+                            List<Command> commands = new List<Command>();
 
-                            case "double":
-                                value = Convert.ToDecimal(value);
-                                break;
+                            foreach (XmlNode commandNode in node.ChildNodes)
+                            {
+                                Command command = new Command();
+                                command.Code = commandNode.Name;
+                                command.CommandString = commandNode.SelectSingleNode("commandString").InnerText;
+                                command.Validation = commandNode.SelectSingleNode("validationString").InnerText;
 
-                            case "string":
-                            case "word":
-                                value = node.InnerText;
-                                break;
+                                commands.Add(command);
+                            }
 
-                            case "checkbox":
-                                value = (node.InnerText == "0") ? false : true;
-                                break;
-
-                            default:
-                                message += String.Format("Unable to set {0} with value {1}", node.Name, value) + Environment.NewLine;
-                                continue;
+                            // Store commands
+                            ApplicationSettings.Default.Commands = commands;
                         }
+                        else
+                        {
+                            Object value = node.InnerText;
 
-                        // Match these to settings
-                        try
-                        {
-                            ApplicationSettings.Default[node.Name] = Convert.ChangeType(value, ApplicationSettings.Default[node.Name].GetType());
-                        }
-                        catch
-                        {
-                            error = true;
-                            message += "Invalid Configuration Option from CMS [" + node.Name + "]" + Environment.NewLine;
+                            switch (node.Attributes["type"].Value)
+                            {
+                                case "int":
+                                    value = Convert.ToInt32(value);
+                                    break;
+
+                                case "double":
+                                    value = Convert.ToDecimal(value);
+                                    break;
+
+                                case "string":
+                                case "word":
+                                    value = node.InnerText;
+                                    break;
+
+                                case "checkbox":
+                                    value = (node.InnerText == "0") ? false : true;
+                                    break;
+
+                                default:
+                                    message += String.Format("Unable to set {0} with value {1}", node.Name, value) + Environment.NewLine;
+                                    continue;
+                            }
+
+                            // Match these to settings
+                            try
+                            {
+                                if (ApplicationSettings.Default[node.Name] != null)
+                                {
+                                    value = Convert.ChangeType(value, ApplicationSettings.Default[node.Name].GetType());
+                                }
+
+                                ApplicationSettings.Default[node.Name] = value;
+                            }
+                            catch
+                            {
+                                error = true;
+                                message += "Invalid Configuration Option from CMS [" + node.Name + "]" + Environment.NewLine;
+                            }
                         }
                     }
 
