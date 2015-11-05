@@ -7,14 +7,14 @@ using System.Text;
 
 namespace XiboClient.Logic
 {
-    public class CommandRs232
+    public class Rs232Command
     {
         private Command _command;
 
         private SerialPort _port;
         private string _toSend;
 
-        public CommandRs232(Command command)
+        public Rs232Command(Command command)
         {
             _command = command;
         }

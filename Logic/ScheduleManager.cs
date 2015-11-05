@@ -61,7 +61,7 @@ namespace XiboClient
         private string _location;
         private Collection<LayoutSchedule> _layoutSchedule;
         private Collection<LayoutSchedule> _currentSchedule;
-        private Collection<CommandSchedule> _commands;
+        private Collection<ScheduleCommand> _commands;
 
         private bool _refreshSchedule;
         private CacheManager _cacheManager;
@@ -91,7 +91,7 @@ namespace XiboClient
             // Create an empty layout schedule
             _layoutSchedule = new Collection<LayoutSchedule>();
             _currentSchedule = new Collection<LayoutSchedule>();
-            _commands = new Collection<CommandSchedule>();
+            _commands = new Collection<ScheduleCommand>();
 
             _lastScreenShotDate = DateTime.MinValue;
         }
@@ -189,7 +189,7 @@ namespace XiboClient
                         DateTime now = DateTime.Now;
                         DateTime tenSecondsTime = now.AddSeconds(10);
 
-                        foreach (CommandSchedule command in _commands)
+                        foreach (ScheduleCommand command in _commands)
                         {
                             if (command.Date >= now && command.Date < tenSecondsTime && !command.HasRun)
                             {
@@ -403,7 +403,7 @@ namespace XiboClient
                         // Pull attributes from layout nodes
                         XmlAttributeCollection attributes = node.Attributes;
 
-                        CommandSchedule command = new CommandSchedule();
+                        ScheduleCommand command = new ScheduleCommand();
                         command.Date = DateTime.Parse(attributes["date"].Value, CultureInfo.InvariantCulture);
                         command.Code = attributes["code"].Value;
                         command.ScheduleId = int.Parse(attributes["scheduleid"].Value);

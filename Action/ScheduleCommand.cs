@@ -6,7 +6,7 @@ using System.Text;
 
 namespace XiboClient.Logic
 {
-    public class CommandSchedule
+    public class ScheduleCommand
     {
         public DateTime Date { get; set; }
         public String Code { get; set; }

@@ -95,6 +95,9 @@
     <Reference Include="NetMQ">
       <HintPath>packages\NetMQ.3.3.2.2\lib\net40\NetMQ.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>packages\Newtonsoft.Json.7.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
@@ -112,6 +115,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Action\PlayerAction.cs" />
     <Compile Include="Control\XiboCefWebBrowser.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -123,9 +127,9 @@
     </Compile>
     <Compile Include="Logic\BlackList.cs" />
     <Compile Include="Logic\CacheManager.cs" />
-    <Compile Include="Logic\Command.cs" />
-    <Compile Include="Logic\CommandRs232.cs" />
-    <Compile Include="Logic\CommandSchedule.cs" />
+    <Compile Include="Action\Command.cs" />
+    <Compile Include="Action\CommandRs232.cs" />
+    <Compile Include="Action\CommandSchedule.cs" />
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
     <Compile Include="Logic\MouseInterceptor.cs" />
@@ -133,7 +137,7 @@
     <Compile Include="Logic\RegionOptions.cs" />
     <Compile Include="Logic\ApplicationSettings.cs" />
     <Compile Include="Logic\ScreenShot.cs" />
-    <Compile Include="Logic\XmrSubscriber.cs" />
+    <Compile Include="Action\XmrSubscriber.cs" />
     <Compile Include="Media\IeWebMedia.cs">
       <SubType>Form</SubType>
     </Compile>

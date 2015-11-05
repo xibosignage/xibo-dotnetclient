@@ -1,5 +1,6 @@
 ﻿using NetMQ;
 using NetMQ.Sockets;
+using Newtonsoft.Json;
 using Org.BouncyCastle.Crypto;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using XiboClient.Action;
 using XiboClient.Log;
 
 namespace XiboClient.Logic
@@ -21,7 +23,7 @@ namespace XiboClient.Logic
         /// <summary>
         /// Last Heartbeat packet received
         /// </summary>
-        public DateTime LastHeartBeat;
+        public DateTime LastHeartBeat = DateTime.MinValue;
 
         /// <summary>
         /// Client Hardware key
@@ -71,6 +73,9 @@ namespace XiboClient.Logic
                         socket.Subscribe("H");
                         socket.Subscribe(_hardwareKey.Channel);
 
+                        // Notify
+                        _clientInfoForm.XmrSubscriberStatus = "Connected to " + ApplicationSettings.Default.XmrNetworkAddress;
+
                         while (!_forceStop)
                         {
                             lock (_locker)
@@ -78,6 +83,9 @@ namespace XiboClient.Logic
                                 try
                                 {
                                     NetMQMessage message = socket.ReceiveMultipartMessage();
+
+                                    // Update status
+                                    _clientInfoForm.XmrSubscriberStatus = "Connected (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + DateTime.Now.ToString();
 
                                     // Deal with heart beat
                                     if (message[0].ConvertToString() == "H")
@@ -89,6 +97,18 @@ namespace XiboClient.Logic
                                     // Decrypt the message
                                     string opened = OpenSslInterop.decrypt(message[2].ConvertToString(), message[1].ConvertToString(), rsaKey.Private);
 
+                                    // Decode into a JSON string
+                                    PlayerAction action = JsonConvert.DeserializeObject<PlayerAction>(opened);
+
+                                    // Make sure the TTL hasn't expired
+                                    if (DateTime.Now > action.createdDt.AddSeconds(action.ttl))
+                                    {
+                                        Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Expired Message: " + action.action), LogType.Info.ToString());
+                                        continue;
+                                    }
+
+                                    // Decide what to do with the message
+                                    
                                     // See what we need to do with this message
                                     Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Message: " + opened), LogType.Error.ToString());
                                 }
@@ -102,6 +122,9 @@ namespace XiboClient.Logic
                         }
                     }
                 }
+
+                // Update status
+                _clientInfoForm.XmrSubscriberStatus = "Not Running, last activity: " + LastHeartBeat.ToString();
 
                 Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Subscriber Stopped"), LogType.Info.ToString());
             }

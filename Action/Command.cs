@@ -30,7 +30,7 @@ namespace XiboClient.Logic
             // Parse the command string to work out how we should run this command.
             if (CommandString.StartsWith("rs232"))
             {
-                CommandRs232 rs232 = new CommandRs232(this);
+                Rs232Command rs232 = new Rs232Command(this);
                 string line = rs232.Run();
 
                 if (notifyStatus())
