@@ -265,7 +265,7 @@ namespace XiboClient
                             case "video":
                             case "image":
                             case "flash":
-                            case "ppt":
+                            case "powerpoint":
 
                                 // Get the path and see if its 
                                 if (!IsValidPath(GetUri(media)))
