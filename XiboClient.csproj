@@ -76,15 +76,24 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AsyncIO">
+      <HintPath>packages\AsyncIO.0.1.18.0\lib\net40\AsyncIO.dll</HintPath>
+    </Reference>
     <Reference Include="AxInterop.WMPLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>wmpdll\AxInterop.WMPLib.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
+    <Reference Include="BouncyCastle.Crypto">
+      <HintPath>packages\BouncyCastle.1.7.0\lib\Net40-Client\BouncyCastle.Crypto.dll</HintPath>
+    </Reference>
     <Reference Include="Interop.WMPLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>False</EmbedInteropTypes>
       <HintPath>wmpdll\Interop.WMPLib.dll</HintPath>
+    </Reference>
+    <Reference Include="NetMQ">
+      <HintPath>packages\NetMQ.3.3.2.2\lib\net40\NetMQ.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -120,9 +129,11 @@
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
     <Compile Include="Logic\MouseInterceptor.cs" />
+    <Compile Include="Logic\OpenSslInterop.cs" />
     <Compile Include="Logic\RegionOptions.cs" />
     <Compile Include="Logic\ApplicationSettings.cs" />
     <Compile Include="Logic\ScreenShot.cs" />
+    <Compile Include="Logic\XmrSubscriber.cs" />
     <Compile Include="Media\IeWebMedia.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -186,6 +197,7 @@
     </Compile>
     <BaseApplicationManifest Include="Properties\app.manifest" />
     <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

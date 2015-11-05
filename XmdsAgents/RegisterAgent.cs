@@ -82,7 +82,7 @@ namespace XiboClient.XmdsAgents
                                 Environment.OSVersion.ToString(), 
                                 key.MacAddress,
                                 key.Channel,
-                                key.getXmrKey().ToXmlString(false)));
+                                key.getXmrPublicKey()));
 
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;

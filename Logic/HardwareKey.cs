@@ -25,6 +25,10 @@ using System.Text;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Windows.Forms;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.OpenSsl;
+using System.IO;
 
 namespace XiboClient
 {
@@ -194,7 +198,11 @@ namespace XiboClient
             }
         }
 
-        public RSA getXmrKey()
+        /// <summary>
+        /// Get the XMR public key
+        /// </summary>
+        /// <returns></returns>
+        public AsymmetricCipherKeyPair getXmrKey()
         {
             const int PROVIDER_RSA_FULL = 1;
             CspParameters cspParams;
@@ -202,7 +210,27 @@ namespace XiboClient
             cspParams.KeyContainerName = Application.ProductName + "RsaKey";
             cspParams.Flags = CspProviderFlags.UseMachineKeyStore;
             cspParams.ProviderName = "Microsoft Strong Cryptographic Provider";
-            return new RSACryptoServiceProvider(cspParams);
+
+            using (RSACryptoServiceProvider provider = new RSACryptoServiceProvider(cspParams))
+            {
+                RSAParameters keyInfo = provider.ExportParameters(true);
+
+                return DotNetUtilities.GetRsaKeyPair(keyInfo);
+            }
+        }
+
+        public string getXmrPublicKey()
+        {
+            AsymmetricCipherKeyPair key = getXmrKey();
+
+            using (TextWriter textWriter = new StringWriter())
+            {
+                PemWriter writer = new PemWriter(textWriter);
+                writer.WriteObject(key.Public);
+                writer.Writer.Flush();
+
+                return textWriter.ToString();                
+            }
         }
     }
 }

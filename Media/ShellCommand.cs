@@ -48,7 +48,7 @@ namespace XiboClient
                 try
                 {
                     Command command = Command.GetByCode(_code);
-                    success = command.run();
+                    success = command.Run();
                 }
                 catch (Exception e)
                 {

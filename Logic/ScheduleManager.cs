@@ -193,30 +193,17 @@ namespace XiboClient
                         {
                             if (command.Date >= now && command.Date < tenSecondsTime && !command.HasRun)
                             {
-                                bool success;
                                 try
                                 {
                                     // We need to run this command
-                                    // Get a fresh command from settings
-                                    command.Command = Command.GetByCode(command.Code);
-
-                                    // Run the command.
-                                    success = command.Command.run();
+                                    new Thread(new ThreadStart(command.Run)).Start();
 
                                     // Mark run
                                     command.HasRun = true;
                                 }
                                 catch (Exception e)
                                 {
-                                    Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Cannot run Command: " + e.Message), LogType.Error.ToString());
-                                    success = false;
-                                }
-                                
-                                // Notify the state of the command (success or failure)
-                                using (xmds.xmds statusXmds = new xmds.xmds())
-                                {
-                                    statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
-                                    statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"lastCommandSuccess\":" + success + "}");
+                                    Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Cannot start Thread to Run Command: " + e.Message), LogType.Error.ToString());
                                 }
                             }
                         }

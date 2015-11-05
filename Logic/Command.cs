@@ -22,7 +22,7 @@ namespace XiboClient.Logic
         /// Run the Command
         /// </summary>
         /// <returns>true on success</returns>
-        public bool run()
+        public bool Run()
         {
             if (string.IsNullOrEmpty(CommandString))
                 throw new ArgumentNullException("Command string is empty, please check your Display Profile " + Code + " command for a valid command string.");
@@ -31,7 +31,7 @@ namespace XiboClient.Logic
             if (CommandString.StartsWith("rs232"))
             {
                 CommandRs232 rs232 = new CommandRs232(this);
-                string line = rs232.run();
+                string line = rs232.Run();
 
                 if (notifyStatus())
                 {

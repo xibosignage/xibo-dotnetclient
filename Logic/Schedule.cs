@@ -31,6 +31,7 @@ using XiboClient.XmdsAgents;
 using System.Threading;
 using XiboClient.Properties;
 using XiboClient.Log;
+using XiboClient.Logic;
 
 /// 17/02/12 Dan Removed Schedule call, introduced ScheduleAgent
 /// 21/02/12 Dan Named the threads
@@ -80,6 +81,10 @@ namespace XiboClient
         // Log Agent
         private LogAgent _logAgent;
         Thread _logAgentThread;
+
+        // XMR Subscriber
+        private XmrSubscriber _xmrSubscriber;
+        Thread _xmrSubscriberThread;
 
         /// <summary>
         /// Client Info Form
@@ -158,6 +163,13 @@ namespace XiboClient
             _logAgent = new LogAgent();
             _logAgentThread = new Thread(new ThreadStart(_logAgent.Run));
             _logAgentThread.Name = "LogAgent";
+
+            // XMR Subscriber
+            _xmrSubscriber = new XmrSubscriber();
+            _xmrSubscriber.HardwareKey = _hardwareKey;
+            _xmrSubscriber.ClientInfoForm = _clientInfoForm;
+            _xmrSubscriberThread = new Thread(new ThreadStart(_xmrSubscriber.Run));
+            _xmrSubscriberThread.Name = "XmrSubscriber";
         }
 
         /// <summary>
@@ -182,6 +194,9 @@ namespace XiboClient
 
             // Start the LogAgent thread
             _logAgentThread.Start();
+
+            // Start the subscriber thread
+            _xmrSubscriberThread.Start();
         }
 
         /// <summary>
@@ -315,6 +330,9 @@ namespace XiboClient
 
             // Stop the LogAgent Thread
             _logAgent.Stop();
+
+            // Stop the subsriber thread
+            _xmrSubscriberThread.Abort();
         }
     }
 }

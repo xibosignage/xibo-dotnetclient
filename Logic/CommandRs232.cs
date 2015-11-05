@@ -22,7 +22,7 @@ namespace XiboClient.Logic
         /// <summary>
         /// Run the command
         /// </summary>
-        public string run()
+        public string Run()
         {
             string response = "";
 

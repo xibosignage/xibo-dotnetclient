@@ -143,7 +143,7 @@ namespace XiboClient
                     Environment.OSVersion.ToString(), 
                     _hardwareKey.MacAddress,
                     _hardwareKey.Channel,
-                    _hardwareKey.getXmrKey().ToXmlString(false));
+                    _hardwareKey.getXmrPublicKey());
             }
             catch (Exception ex)
             {

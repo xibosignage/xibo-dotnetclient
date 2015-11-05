@@ -46,6 +46,8 @@ namespace XiboClient.Log
             this.scheduleManagerStatus = new System.Windows.Forms.TextBox();
             this.saveLogToDisk = new System.Windows.Forms.Button();
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.label3 = new System.Windows.Forms.Label();
+            this.xmrStatus = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
@@ -137,7 +139,7 @@ namespace XiboClient.Log
             // scheduleStatusLabel
             // 
             this.scheduleStatusLabel.AutoSize = true;
-            this.scheduleStatusLabel.Location = new System.Drawing.Point(148, 11);
+            this.scheduleStatusLabel.Location = new System.Drawing.Point(103, 11);
             this.scheduleStatusLabel.Name = "scheduleStatusLabel";
             this.scheduleStatusLabel.Size = new System.Drawing.Size(61, 13);
             this.scheduleStatusLabel.TabIndex = 2;
@@ -195,11 +197,31 @@ namespace XiboClient.Log
             // 
             this.saveFileDialog.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog_FileOk);
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(103, 734);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(67, 13);
+            this.label3.TabIndex = 10;
+            this.label3.Text = "XMR Status:";
+            // 
+            // xmrStatus
+            // 
+            this.xmrStatus.AutoSize = true;
+            this.xmrStatus.Location = new System.Drawing.Point(176, 734);
+            this.xmrStatus.Name = "xmrStatus";
+            this.xmrStatus.Size = new System.Drawing.Size(61, 13);
+            this.xmrStatus.TabIndex = 11;
+            this.xmrStatus.Text = "Not Started";
+            // 
             // ClientInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(810, 758);
+            this.Controls.Add(this.xmrStatus);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.saveLogToDisk);
             this.Controls.Add(this.scheduleManagerStatus);
             this.Controls.Add(this.requiredFilesTextBox);
@@ -233,5 +255,7 @@ namespace XiboClient.Log
         private System.Windows.Forms.TextBox scheduleManagerStatus;
         private System.Windows.Forms.Button saveLogToDisk;
         private System.Windows.Forms.SaveFileDialog saveFileDialog;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label xmrStatus;
     }
 }
