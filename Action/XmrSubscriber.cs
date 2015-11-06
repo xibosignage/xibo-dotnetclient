@@ -25,6 +25,10 @@ namespace XiboClient.Logic
         /// </summary>
         public DateTime LastHeartBeat = DateTime.MinValue;
 
+        // Events
+        public delegate void OnCollectNowActionDelegate();
+        public event OnCollectNowActionDelegate OnCollectNowAction;
+
         /// <summary>
         /// Client Hardware key
         /// </summary>
@@ -107,10 +111,29 @@ namespace XiboClient.Logic
                                         continue;
                                     }
 
-                                    // Decide what to do with the message
-                                    
-                                    // See what we need to do with this message
-                                    Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Message: " + opened), LogType.Error.ToString());
+                                    // Decide what to do with the message, probably raise events according to the type of message we have
+                                    switch (action.action)
+                                    {
+                                        case "commandAction":
+
+                                            // Create a schedule command out of the message
+                                            Dictionary<string, string> obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(opened);
+                                            ScheduleCommand command = new ScheduleCommand();
+                                            string code;
+                                            obj.TryGetValue("commandCode", out code);
+                                            command.Code = code;
+
+                                            new Thread(new ThreadStart(command.Run)).Start();
+                                            break;
+
+                                        case "collectNow":
+                                            OnCollectNowAction();
+                                            break;
+
+                                        default:
+                                            Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Unknown Message: " + action.action), LogType.Info.ToString());
+                                            break;
+                                    }
                                 }
                                 catch (Exception ex)
                                 {

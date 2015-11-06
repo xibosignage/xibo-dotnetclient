@@ -128,8 +128,8 @@
     <Compile Include="Logic\BlackList.cs" />
     <Compile Include="Logic\CacheManager.cs" />
     <Compile Include="Action\Command.cs" />
-    <Compile Include="Action\CommandRs232.cs" />
-    <Compile Include="Action\CommandSchedule.cs" />
+    <Compile Include="Action\Rs232Command.cs" />
+    <Compile Include="Action\ScheduleCommand.cs" />
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
     <Compile Include="Logic\MouseInterceptor.cs" />

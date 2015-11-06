@@ -57,6 +57,10 @@ namespace XiboClient
         public delegate void OnRefreshScheduleDelegate();
         public event OnRefreshScheduleDelegate OnRefreshSchedule;
 
+        // Event for Subscriber inactive
+        public delegate void OnScheduleManagerCheckCompleteDelegate();
+        public event OnScheduleManagerCheckCompleteDelegate OnScheduleManagerCheckComplete;
+
         // Member Varialbes
         private string _location;
         private Collection<LayoutSchedule> _layoutSchedule;
@@ -218,6 +222,9 @@ namespace XiboClient
                         _clientInfoForm.ScheduleStatus = "Error. " + ex.Message;
                     }
                 }
+
+                // Completed this check
+                OnScheduleManagerCheckComplete();
 
                 // Sleep this thread for 10 seconds
                 _manualReset.WaitOne(10 * 1000);

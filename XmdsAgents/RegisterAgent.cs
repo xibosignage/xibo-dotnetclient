@@ -37,6 +37,18 @@ namespace XiboClient.XmdsAgents
         private bool _forceStop = false;
         private ManualResetEvent _manualReset = new ManualResetEvent(false);
 
+        // Events
+        public delegate void OnXmrReconfigureDelegate();
+        public event OnXmrReconfigureDelegate OnXmrReconfigure;
+
+        /// <summary>
+        /// Wake Up
+        /// </summary>
+        public void WakeUp()
+        {
+            _manualReset.Set();
+        }
+
         /// <summary>
         /// Stops the thread
         /// </summary>
@@ -72,6 +84,9 @@ namespace XiboClient.XmdsAgents
                             xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
+                            // Store the XMR address
+                            string xmrAddress = ApplicationSettings.Default.XmrNetworkAddress;
+
                             RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(
                                 ApplicationSettings.Default.ServerKey, 
                                 key.Key, 
@@ -92,6 +107,12 @@ namespace XiboClient.XmdsAgents
                             {
                                 ApplicationSettings.Default.ScreenShotRequested = false;
                                 ScreenShot.TakeAndSend();
+                            }
+
+                            // Has the XMR address changed?
+                            if (xmrAddress != ApplicationSettings.Default.XmrNetworkAddress)
+                            {
+                                OnXmrReconfigure();
                             }
                         }
                     }
