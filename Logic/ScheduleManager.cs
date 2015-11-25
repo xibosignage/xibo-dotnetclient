@@ -409,6 +409,21 @@ namespace XiboClient
                         }
                     }
 
+                    // Look for dependents nodes
+                    foreach (XmlNode childNode in node.ChildNodes)
+                    {
+                        if (childNode.Name == "dependents")
+                        {
+                            foreach (XmlNode dependent in childNode.ChildNodes)
+                            {
+                                if (dependent.Name == "file")
+                                {
+                                    temp.Dependents.Add(dependent.InnerText);
+                                }
+                            }
+                        }
+                    }
+
                     _layoutSchedule.Add(temp);
                 }
             }
