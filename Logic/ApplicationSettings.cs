@@ -19,6 +19,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -44,8 +45,6 @@ namespace XiboClient
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
         public int ClientCodeVersion { get { return _clientCodeVersion; } }
-
-        private static readonly DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Local);
 
         public static ApplicationSettings Default
         {
@@ -121,7 +120,6 @@ namespace XiboClient
         }
 
         public int XmdsResetTimeout { get; set; }
-        public double CmsTimeOffset { get; set; }
 
         public decimal SizeX { get; set; }
         public decimal SizeY { get; set; }
@@ -163,29 +161,14 @@ namespace XiboClient
         public string ClientInformationKeyCode { get; set; }
 
         // Download window
-        
-        public long DownloadStartWindow { get; set; }
-        public long DownloadEndWindow { get; set; }
+        public string DownloadStartWindow { get; set; }
+        public string DownloadEndWindow { get; set; }
 
         public DateTime DownloadStartWindowTime
         {
             get
             {
-                // Get the local time now and add our Unix timestamp to it.
-                // We know that the DownloadStartWindow is saved in UTC (GMT to be precise, but no biggie)
-                DateTime now = DateTime.Now;
-                DateTime start = unixEpoch.AddMilliseconds(DownloadStartWindow);
-
-                // start is now UTC download window start.
-                if (CmsTimeOffset != null && CmsTimeOffset != 0)
-                {
-                    // Adjust for the timezone
-                    start = start.AddHours(CmsTimeOffset);
-                }
-                
-                // Reset to local time, using the H:m:i from the Unix Time.
-                // This gives us a local time
-                return new DateTime(now.Year, now.Month, now.Day, start.Hour, start.Minute, start.Second, DateTimeKind.Local);
+                return getDateFromHi(DownloadStartWindow);
             }
         }
 
@@ -193,18 +176,43 @@ namespace XiboClient
         {
             get
             {
-                // See notes from DownloadStartWindowTime
-                DateTime now = DateTime.Now;
-                DateTime end = unixEpoch.AddMilliseconds(DownloadEndWindow);
+                return getDateFromHi(DownloadEndWindow);
+            }
+        }
 
-                if (CmsTimeOffset != null && CmsTimeOffset != 0)
+        /// <summary>
+        /// Get a locally formatted date based on the H:i string provided.
+        /// </summary>
+        /// <param name="hi"></param>
+        /// <returns></returns>
+        private DateTime getDateFromHi(string hi)
+        {
+            DateTime now = DateTime.Now;
+
+            try
+            {
+                int h;
+                int m;
+
+                // Expect the format H:i (24 hour). If we don't have a : in it, then it is likely being fed by an old CMS, so disable
+                if (!hi.Contains(":"))
                 {
-                    // Adjust for the timezone
-                    end = end.AddHours(CmsTimeOffset);
+                    h = 0;
+                    m = 0;
+                }
+                else
+                {
+                    string[] split = hi.Split(':');
+                    h = int.Parse(split[0]);
+                    m = int.Parse(split[1]);
                 }
 
-                // Reset to today
-                return new DateTime(now.Year, now.Month, now.Day, end.Hour, end.Minute, end.Second, DateTimeKind.Local);
+                return new DateTime(now.Year, now.Month, now.Day, h, m, 0, DateTimeKind.Local);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("getDateFromHi", "Unable to parse H:i, Error = " + e.Message), LogType.Info.ToString());
+                return new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Local);
             }
         }
 
@@ -217,10 +225,11 @@ namespace XiboClient
             {
                 try
                 {
-                    if (DownloadStartWindow == 0 && DownloadEndWindow == 0)
-                        return true;
+                    DateTime startWindow = DownloadStartWindowTime;
+                    if (DownloadEndWindowTime < startWindow)
+                        startWindow = DownloadStartWindowTime.AddDays(-1);
 
-                    return (DownloadStartWindowTime <= DateTime.Now && DownloadEndWindowTime >= DateTime.Now);
+                    return (startWindow <= DateTime.Now && DownloadEndWindowTime >= DateTime.Now);
                 }
                 catch
                 {

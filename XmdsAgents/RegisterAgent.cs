@@ -121,17 +121,6 @@ namespace XiboClient.XmdsAgents
                 // Test the XML
                 if (result.DocumentElement.Attributes["code"].Value == "READY")
                 {
-                    // Pull the CMS time and store it
-                    try
-                    {
-                        DateTime cmsTime = DateTime.Parse(result.DocumentElement.Attributes["date"].Value);
-                        ApplicationSettings.Default.CmsTimeOffset = (cmsTime - DateTime.Now).TotalHours;
-                    }
-                    catch
-                    {
-                        Trace.WriteLine(new LogMessage("Register", "CMS Date parse error"), LogType.Info.ToString());
-                    }
-
                     // Get the config element
                     if (result.DocumentElement.ChildNodes.Count <= 0)
                         throw new Exception("Configuration not set for this display");
