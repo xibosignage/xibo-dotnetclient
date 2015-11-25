@@ -29,10 +29,12 @@ namespace XiboClient
     {
         private string _filePath;
         PictureBox _pictureBox;
+        RegionOptions _options;
         
         public ImagePosition(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
+            _options = options;
             _filePath = options.uri;
             
             if (!System.IO.File.Exists(_filePath))
@@ -45,18 +47,23 @@ namespace XiboClient
             try
             {
                 _pictureBox = new PictureBox();
-                _pictureBox.SizeMode = (options.Dictionary.Get("scaleType", "center") == "stretch") ? PictureBoxSizeMode.StretchImage : PictureBoxSizeMode.Zoom;
-                _pictureBox.Image = new Bitmap(_filePath);
                 _pictureBox.Size = new Size(_width, _height);
                 _pictureBox.Location = new Point(0, 0);
                 _pictureBox.BorderStyle = BorderStyle.None;
                 _pictureBox.BackColor = Color.Transparent;
 
-                /*if (options.Dictionary.Get("scaleType", "stretch") == "center")
+                // Do we need to align the image in any way?
+                if (options.Dictionary.Get("scaleType", "stretch") == "center" && (options.Dictionary.Get("align", "center") != "center" || options.Dictionary.Get("valign", "middle") != "middle"))
                 {
-                    string align = options.Dictionary.Get("align", "center");
-                    string valign = options.Dictionary.Get("valign", "middle");
-                }*/
+                    // Yes we do, so we must override the paint method
+                    _pictureBox.Paint += _pictureBox_Paint;
+                }
+                else
+                {
+                    // No we don't so use a normal picture box.
+                    _pictureBox.SizeMode = (options.Dictionary.Get("scaleType", "center") == "stretch") ? PictureBoxSizeMode.StretchImage : PictureBoxSizeMode.Zoom;
+                    _pictureBox.Image = new Bitmap(_filePath);
+                }
 
                 Controls.Add(this._pictureBox);
             }
@@ -64,6 +71,62 @@ namespace XiboClient
             {
                 System.Diagnostics.Trace.WriteLine(new LogMessage("ImagePosition", String.Format("Cannot create Image Object with exception: {0}", ex.Message)), LogType.Error.ToString());
             }
+        }
+
+        void _pictureBox_Paint(object sender, PaintEventArgs e)
+        {
+            string align = _options.Dictionary.Get("align", "center");
+            string valign = _options.Dictionary.Get("valign", "middle");
+
+            Image image = Image.FromFile(_filePath);
+
+            // Get our image
+            Graphics graphics = e.Graphics;
+            graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+
+            // Calculate the width and height required
+            double imageProportion = (double)image.Width / (double)image.Height;
+            double regionProportion = _pictureBox.Width / _pictureBox.Height;
+
+            int x = 0;
+            int y = 0;
+            int width = _pictureBox.Width;
+            int height = _pictureBox.Height;
+
+            if (imageProportion > regionProportion)
+            {
+                // Use the full width possible and adjust the height accordingly
+                height = (int)(_pictureBox.Width / imageProportion);
+
+                if (valign == "middle")
+                {
+                    // top margin needs to drop down half
+                    x = x + ((_pictureBox.Height - height) / 2);
+                }
+                else if (valign == "bottom") {
+                    x = x + (_pictureBox.Height - height);
+                }
+            }
+            else
+            {
+                // Use the full height possible and adjust the width accordingly
+                width = (int)(imageProportion * _pictureBox.Height);
+
+                if (align == "center")
+                {
+                    y = y + ((_pictureBox.Width - width) / 2);
+                }
+                else if (align == "right")
+                {
+                    y = y + (_pictureBox.Width - width);
+                }
+            }
+
+            graphics.DrawImage(image,
+                y,
+                x,
+                width,
+                height);
         }
 
         public override void RenderMedia()
