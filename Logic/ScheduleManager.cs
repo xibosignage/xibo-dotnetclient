@@ -269,34 +269,52 @@ namespace XiboClient
             // Temporary default Layout incase we have no layout nodes.
             LayoutSchedule defaultLayout = new LayoutSchedule();
 
+            // Store the valid layout id's
+            List<int> validLayoutIds = new List<int>();
+            List<int> invalidLayouts = new List<int>();
+
             // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
             foreach (LayoutSchedule layout in _layoutSchedule)
             {
-                // Is the layout valid in the cachemanager?
-                try
+                // Is this already invalid
+                if (invalidLayouts.Contains(layout.id))
+                    continue;
+
+                // If we haven't already assessed this layout before, then check that it is valid
+                if (!validLayoutIds.Contains(layout.id))
                 {
-                    if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                    // Is the layout valid in the cachemanager?
+                    try
                     {
-                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Error.ToString());
+                        if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                        {
+                            invalidLayouts.Add(layout.id);
+                            Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Error.ToString());
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore this layout.. raise an error?
+                        invalidLayouts.Add(layout.id);
+                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Unable to determine if layout is valid or not"), LogType.Error.ToString());
                         continue;
                     }
-                }
-                catch
-                {
-                    // Ignore this layout.. raise an error?
-                    Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Unable to determine if layout is valid or not"), LogType.Error.ToString());
-                    continue;
+
+                    // Check dependents
+                    foreach (string dependent in layout.Dependents)
+                    {
+                        if (!_cacheManager.IsValidPath(dependent))
+                        {
+                            invalidLayouts.Add(layout.id);
+                            Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
+                            continue;
+                        }
+                    }
                 }
 
-                // Check dependents
-                foreach (string dependent in layout.Dependents)
-                {
-                    if (!_cacheManager.IsValidPath(dependent))
-                    {
-                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
-                        continue;
-                    }
-                }
+                // Add to the valid layout ids
+                validLayoutIds.Add(layout.id);
 
                 // If this is the default, skip it
                 if (layout.NodeName == "default")
