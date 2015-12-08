@@ -49,6 +49,7 @@
   <SendCurrentLayoutAsStatusUpdate>false</SendCurrentLayoutAsStatusUpdate>
   <ScreenShotRequested>false</ScreenShotRequested>
   <ScreenShotRequestInterval>0</ScreenShotRequestInterval>
-  <DownloadWindowStartTime>0</DownloadWindowStartTime>
-  <DownloadWindowEndTime>0</DownloadWindowEndTime>
+  <DownloadStartWindow></DownloadStartWindow>
+  <DownloadEndWindow></DownloadEndWindow>
+  <DisplayTimeZone></DisplayTimeZone>
 </ApplicationSettings>
