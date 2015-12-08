@@ -102,13 +102,6 @@ namespace XiboClient.XmdsAgents
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
-                            // Do we need to send a screenshot?
-                            if (ApplicationSettings.Default.ScreenShotRequested)
-                            {
-                                ApplicationSettings.Default.ScreenShotRequested = false;
-                                ScreenShot.TakeAndSend();
-                            }
-
                             // Has the XMR address changed?
                             if (xmrAddress != ApplicationSettings.Default.XmrNetworkAddress)
                             {

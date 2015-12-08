@@ -163,6 +163,7 @@ namespace XiboClient
         public string XmrNetworkAddress { get; set; }
 
         // Download window
+        public string DisplayTimeZone { get; set; }
         public string DownloadStartWindow { get; set; }
         public string DownloadEndWindow { get; set; }
 
@@ -227,6 +228,9 @@ namespace XiboClient
             {
                 try
                 {
+                    if (DownloadStartWindow == DownloadEndWindow)
+                        return true;
+
                     DateTime startWindow = DownloadStartWindowTime;
                     if (DownloadEndWindowTime < startWindow)
                         startWindow = DownloadStartWindowTime.AddDays(-1);
@@ -259,21 +263,6 @@ namespace XiboClient
         public bool ClientInfomationCtrlKey { get; set; }
         public bool UseCefWebBrowser { get; set; }
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
-
-        private bool _screenShotRequested = false;
-        public bool ScreenShotRequested 
-        {
-            get
-            {
-                return _screenShotRequested;
-            }
-            set
-            {
-                _screenShotRequested = value;
-                // Reset the Hash so that the next update is taken into account.
-                Hash = "0";
-            }
-        }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;

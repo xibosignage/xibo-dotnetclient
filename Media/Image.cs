@@ -142,7 +142,9 @@ namespace XiboClient
                 {
                     Controls.Remove(_pictureBox);
 
-                    _pictureBox.Image.Dispose();
+                    if (_pictureBox.Image != null)
+                        _pictureBox.Image.Dispose();
+
                     _pictureBox.Dispose();
                 }
                 catch (Exception ex)
