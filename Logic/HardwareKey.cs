@@ -23,6 +23,12 @@ using System.Runtime.InteropServices;
 using System.Management;
 using System.Text;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Windows.Forms;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.OpenSsl;
+using System.IO;
 
 namespace XiboClient
 {
@@ -32,6 +38,26 @@ namespace XiboClient
 
         private string _hardwareKey;
         private string _macAddress;
+        private string _channel;
+
+        public string Channel
+        {
+            get
+            {
+                if (String.IsNullOrEmpty(_channel))
+                {
+                    // Channel is based on the CMS URL, CMS Key and Hardware Key
+                    _channel = Hashes.MD5(ApplicationSettings.Default.ServerUri + ApplicationSettings.Default.ServerKey + _hardwareKey);
+                }
+
+                return _channel;
+            }
+        }
+
+        public void clearChannel()
+        {
+            _channel = null;
+        }
 
         public string MacAddress
         {
@@ -169,6 +195,41 @@ namespace XiboClient
                 Debug.WriteLine("[OUT]", "GetCPUId");
 
                 return cpuInfo;
+            }
+        }
+
+        /// <summary>
+        /// Get the XMR public key
+        /// </summary>
+        /// <returns></returns>
+        public AsymmetricCipherKeyPair getXmrKey()
+        {
+            const int PROVIDER_RSA_FULL = 1;
+            CspParameters cspParams;
+            cspParams = new CspParameters(PROVIDER_RSA_FULL);
+            cspParams.KeyContainerName = Application.ProductName + "RsaKey";
+            cspParams.Flags = CspProviderFlags.UseMachineKeyStore;
+            cspParams.ProviderName = "Microsoft Strong Cryptographic Provider";
+
+            using (RSACryptoServiceProvider provider = new RSACryptoServiceProvider(cspParams))
+            {
+                RSAParameters keyInfo = provider.ExportParameters(true);
+
+                return DotNetUtilities.GetRsaKeyPair(keyInfo);
+            }
+        }
+
+        public string getXmrPublicKey()
+        {
+            AsymmetricCipherKeyPair key = getXmrKey();
+
+            using (TextWriter textWriter = new StringWriter())
+            {
+                PemWriter writer = new PemWriter(textWriter);
+                writer.WriteObject(key.Public);
+                writer.Writer.Flush();
+
+                return textWriter.ToString();                
             }
         }
     }

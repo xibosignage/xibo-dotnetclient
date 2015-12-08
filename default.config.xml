@@ -51,4 +51,5 @@
   <ScreenShotRequestInterval>0</ScreenShotRequestInterval>
   <DownloadWindowStartTime>0</DownloadWindowStartTime>
   <DownloadWindowEndTime>0</DownloadWindowEndTime>
+  <XmrNetworkAddress></XmrNetworkAddress>
 </ApplicationSettings>

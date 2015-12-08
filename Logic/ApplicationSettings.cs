@@ -26,6 +26,7 @@ using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml.Serialization;
+using XiboClient.Logic;
 
 namespace XiboClient
 {
@@ -38,7 +39,7 @@ namespace XiboClient
 
         // Application Specific Settings we want to protect
         private string _clientVersion = "1.7.5";
-        private string _version = "4";
+        private string _version = "5";
         private int _clientCodeVersion = 109;
 
         public string ClientVersion { get { return _clientVersion; } }
@@ -161,6 +162,7 @@ namespace XiboClient
         public string LogToDiskLocation { get; set; }
         public string CursorStartPosition { get; set; }
         public string ClientInformationKeyCode { get; set; }
+        public string XmrNetworkAddress { get; set; }
 
         // Download window
         
@@ -285,6 +287,8 @@ namespace XiboClient
                 _xmdsErrorCountSinceSuccessful++;
             };
         }
+
+        public List<Command> Commands { get; set; }
 
         // Settings HASH
         public string Hash { get; set; }

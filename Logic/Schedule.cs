@@ -31,6 +31,7 @@ using XiboClient.XmdsAgents;
 using System.Threading;
 using XiboClient.Properties;
 using XiboClient.Log;
+using XiboClient.Logic;
 
 /// 17/02/12 Dan Removed Schedule call, introduced ScheduleAgent
 /// 21/02/12 Dan Named the threads
@@ -81,6 +82,10 @@ namespace XiboClient
         private LogAgent _logAgent;
         Thread _logAgentThread;
 
+        // XMR Subscriber
+        private XmrSubscriber _xmrSubscriber;
+        Thread _xmrSubscriberThread;
+
         /// <summary>
         /// Client Info Form
         /// </summary>
@@ -111,6 +116,7 @@ namespace XiboClient
 
             // Create a Register Agent
             _registerAgent = new RegisterAgent();
+            _registerAgent.OnXmrReconfigure += _registerAgent_OnXmrReconfigure;
             _registerAgentThread = new Thread(new ThreadStart(_registerAgent.Run));
             _registerAgentThread.Name = "RegisterAgentThread";
 
@@ -118,6 +124,7 @@ namespace XiboClient
             _scheduleManager = new ScheduleManager(_cacheManager, scheduleLocation);
             _scheduleManager.OnNewScheduleAvailable += new ScheduleManager.OnNewScheduleAvailableDelegate(_scheduleManager_OnNewScheduleAvailable);
             _scheduleManager.OnRefreshSchedule += new ScheduleManager.OnRefreshScheduleDelegate(_scheduleManager_OnRefreshSchedule);
+            _scheduleManager.OnScheduleManagerCheckComplete += _scheduleManager_OnScheduleManagerCheckComplete;
             _scheduleManager.ClientInfoForm = _clientInfoForm;
 
             // Create a schedule manager thread
@@ -158,6 +165,16 @@ namespace XiboClient
             _logAgent = new LogAgent();
             _logAgentThread = new Thread(new ThreadStart(_logAgent.Run));
             _logAgentThread.Name = "LogAgent";
+
+            // XMR Subscriber
+            _xmrSubscriber = new XmrSubscriber();
+            _xmrSubscriber.HardwareKey = _hardwareKey;
+            _xmrSubscriber.ClientInfoForm = _clientInfoForm;
+            _xmrSubscriber.OnCollectNowAction += _xmrSubscriber_OnCollectNowAction;
+
+            // Thread start
+            _xmrSubscriberThread = new Thread(new ThreadStart(_xmrSubscriber.Run));
+            _xmrSubscriberThread.Name = "XmrSubscriber";
         }
 
         /// <summary>
@@ -182,6 +199,9 @@ namespace XiboClient
 
             // Start the LogAgent thread
             _logAgentThread.Start();
+
+            // Start the subscriber thread
+            _xmrSubscriberThread.Start();
         }
 
         /// <summary>
@@ -204,6 +224,77 @@ namespace XiboClient
         void _scheduleManager_OnRefreshSchedule()
         {
             _layoutSchedule = _scheduleManager.CurrentSchedule;            
+        }
+
+        /// <summary>
+        /// Schedule Manager has completed a cycle
+        /// </summary>
+        void _scheduleManager_OnScheduleManagerCheckComplete()
+        {
+            try
+            {
+                // See if XMR should be running
+                if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && _xmrSubscriber.LastHeartBeat != DateTime.MinValue)
+                {
+                    // Check to see if the last update date was over 5 minutes ago
+                    if (_xmrSubscriber.LastHeartBeat < DateTime.Now.AddSeconds(-90))
+                    {
+                        // Reconfigure it
+                        _registerAgent_OnXmrReconfigure();   
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "Error = " + e.Message), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// XMR Reconfigure
+        /// </summary>
+        void _registerAgent_OnXmrReconfigure()
+        {
+            try
+            {
+                // Stop and start the XMR thread
+                if (_xmrSubscriberThread != null && _xmrSubscriberThread.IsAlive)
+                {
+                    _xmrSubscriberThread.Abort();
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Schedule - OnXmrReconfigure", "Unable to abort Subscriber. " + e.Message), LogType.Error.ToString());
+            }
+
+            try
+            {
+                // Reassert the hardware key, incase its changed at all
+                _xmrSubscriber.HardwareKey = _hardwareKey;
+                
+                // Start the thread again
+                _xmrSubscriberThread = new Thread(new ThreadStart(_xmrSubscriber.Run));
+                _xmrSubscriberThread.Name = "XmrSubscriber";
+
+                _xmrSubscriberThread.Start();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Schedule - OnXmrReconfigure", "Unable to start Subscriber. " + e.Message), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Collect Now Action
+        /// </summary>
+        void _xmrSubscriber_OnCollectNowAction()
+        {
+            // Run all of the various agents
+            _registerAgent.WakeUp();
+            _scheduleAgent.WakeUp();
+            _requiredFilesAgent.WakeUp();
+            _logAgent.WakeUp();
         }
 
         /// <summary>
@@ -315,6 +406,9 @@ namespace XiboClient
 
             // Stop the LogAgent Thread
             _logAgent.Stop();
+
+            // Stop the subsriber thread
+            _xmrSubscriberThread.Abort();
         }
     }
 }

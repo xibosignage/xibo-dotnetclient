@@ -90,6 +90,24 @@ namespace XiboClient.Log
         }
 
         /// <summary>
+        /// XMR Status
+        /// </summary>
+        public string XmrSubscriberStatus
+        {
+            set
+            {
+                if (InvokeRequired)
+                {
+                    BeginInvoke(new StatusDelegate(SetXmrStatus), value);
+                }
+                else
+                {
+                    SetXmrStatus(value);
+                }
+            }
+        }
+
+        /// <summary>
         /// Client Info Object
         /// </summary>
         public ClientInfo()
@@ -148,6 +166,15 @@ namespace XiboClient.Log
         public void SetCurrentlyPlaying(string layoutName)
         {
             Text = "Client Information and Status - " + ApplicationSettings.Default.ServerUri + " - Currently Showing: " + layoutName;
+        }
+
+        /// <summary>
+        /// Sets the XMR Status
+        /// </summary>
+        /// <param name="layoutName"></param>
+        public void SetXmrStatus(string status)
+        {
+            xmrStatus.Text = status;
         }
 
         /// <summary>
