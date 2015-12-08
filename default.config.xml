@@ -52,4 +52,5 @@
   <DownloadStartWindow></DownloadStartWindow>
   <DownloadEndWindow></DownloadEndWindow>
   <DisplayTimeZone></DisplayTimeZone>
+  <XmrNetworkAddress></XmrNetworkAddress>
 </ApplicationSettings>

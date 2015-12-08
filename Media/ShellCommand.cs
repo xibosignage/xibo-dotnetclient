@@ -22,61 +22,95 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using XiboClient.Properties;
+using XiboClient.Logic;
 
 namespace XiboClient
 {
     class ShellCommand : Media
     {
         string _command = "";
+        string _code = "";
 
         public ShellCommand(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
             _command = Uri.UnescapeDataString(options.Dictionary.Get("windowsCommand")).Replace('+', ' ');
+            _code = options.Dictionary.Get("commandCode");
         }
 
         public override void RenderMedia()
         {
-            // Is this module enabled?
-            if (ApplicationSettings.Default.EnableShellCommands)
+            if (!string.IsNullOrEmpty(_code))
             {
-                // Check to see if we have an allow list
-                if (!string.IsNullOrEmpty(ApplicationSettings.Default.ShellCommandAllowList))
+                // Stored command
+                bool success;
+
+                try
                 {
-                    // Array of allowed commands
-                    string[] allowedCommands = ApplicationSettings.Default.ShellCommandAllowList.Split(',');
-
-                    // Check we are allowed to execute the command
-                    bool found = false;
-
-                    foreach (string allowedCommand in allowedCommands)
-                    {
-                        if (_command.StartsWith(allowedCommand))
-                        {
-                            found = true;
-                            ExecuteShellCommand();
-                            break;
-                        }
-                    }
-
-                    if (!found)
-                        Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands not in allow list: " + ApplicationSettings.Default.ShellCommandAllowList), LogType.Error.ToString());
+                    Command command = Command.GetByCode(_code);
+                    success = command.Run();
                 }
-                else
+                catch (Exception e)
                 {
-                    // All commands are allowed
-                    ExecuteShellCommand();
+                    Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Cannot run Command: " + e.Message), LogType.Error.ToString());
+                    success = false;
+                }
+
+                // Notify the state of the command (success or failure)
+                using (xmds.xmds statusXmds = new xmds.xmds())
+                {
+                    statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                    statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"lastCommandSuccess\":" + success + "}");
                 }
             }
             else
             {
-                Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands are disabled"), LogType.Error.ToString());
+                // shell command
+
+                // Is this module enabled?
+                if (ApplicationSettings.Default.EnableShellCommands)
+                {
+                    // Check to see if we have an allow list
+                    if (!string.IsNullOrEmpty(ApplicationSettings.Default.ShellCommandAllowList))
+                    {
+                        // Array of allowed commands
+                        string[] allowedCommands = ApplicationSettings.Default.ShellCommandAllowList.Split(',');
+
+                        // Check we are allowed to execute the command
+                        bool found = false;
+
+                        foreach (string allowedCommand in allowedCommands)
+                        {
+                            if (_command.StartsWith(allowedCommand))
+                            {
+                                found = true;
+                                ExecuteShellCommand();
+                                break;
+                            }
+                        }
+
+                        if (!found)
+                            Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands not in allow list: " + ApplicationSettings.Default.ShellCommandAllowList), LogType.Error.ToString());
+                    }
+                    else
+                    {
+                        // All commands are allowed
+                        ExecuteShellCommand();
+                    }
+                }
+                else
+                {
+                    Trace.WriteLine(new LogMessage("ShellCommand - RenderMedia", "Shell Commands are disabled"), LogType.Error.ToString());
+                }
             }
 
             // All shell commands have a duration of 1
             base.RenderMedia();
         }
 
+        /// <summary>
+        /// Execute the shell command
+        /// </summary>
         private void ExecuteShellCommand()
         {
             Trace.WriteLine(new LogMessage("ShellCommand - ExecuteShellCommand", _command), LogType.Info.ToString());

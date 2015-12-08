@@ -88,6 +88,14 @@ namespace XiboClient.XmdsAgents
         private ClientInfo _clientInfoForm;
 
         /// <summary>
+        /// Wake Up
+        /// </summary>
+        public void WakeUp()
+        {
+            _manualReset.Set();
+        }
+
+        /// <summary>
         /// Stops the thread
         /// </summary>
         public void Stop()
