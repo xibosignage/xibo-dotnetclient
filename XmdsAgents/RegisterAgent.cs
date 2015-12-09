@@ -102,13 +102,6 @@ namespace XiboClient.XmdsAgents
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
-                            // Do we need to send a screenshot?
-                            if (ApplicationSettings.Default.ScreenShotRequested)
-                            {
-                                ApplicationSettings.Default.ScreenShotRequested = false;
-                                ScreenShot.TakeAndSend();
-                            }
-
                             // Has the XMR address changed?
                             if (xmrAddress != ApplicationSettings.Default.XmrNetworkAddress)
                             {
@@ -143,36 +136,25 @@ namespace XiboClient.XmdsAgents
             string message = "";
             bool error = false;
 
-            // Work out if we need to do anything (have the settings changed since the last time)
-            string md5 = Hashes.MD5(xml);
-
             try
             {
                 // Load the result into an XML document
                 XmlDocument result = new XmlDocument();
                 result.LoadXml(xml);
                 
-                // If the XML we received has not changed, then go no further.
-                if (ApplicationSettings.Default.Hash == md5)
-                    return result.DocumentElement.Attributes["message"].Value;
-
                 // Test the XML
                 if (result.DocumentElement.Attributes["code"].Value == "READY")
                 {
-                    // Pull the CMS time and store it
-                    try
-                    {
-                        DateTime cmsTime = DateTime.Parse(result.DocumentElement.Attributes["date"].Value);
-                        ApplicationSettings.Default.CmsTimeOffset = (cmsTime - DateTime.Now).TotalHours;
-                    }
-                    catch
-                    {
-                        Trace.WriteLine(new LogMessage("Register", "CMS Date parse error"), LogType.Info.ToString());
-                    }
-
                     // Get the config element
                     if (result.DocumentElement.ChildNodes.Count <= 0)
                         throw new Exception("Configuration not set for this display");
+
+                    // Hash after removing the date
+                    result.DocumentElement.Attributes["date"].Value = "";
+                    string md5 = Hashes.MD5(result.OuterXml);
+
+                    if (md5 == ApplicationSettings.Default.Hash)
+                        return result.DocumentElement.Attributes["message"].Value;
 
                     foreach (XmlNode node in result.DocumentElement.ChildNodes)
                     {

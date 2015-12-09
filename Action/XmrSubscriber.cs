@@ -87,7 +87,7 @@ namespace XiboClient.Logic
                                 try
                                 {
                                     NetMQMessage message = socket.ReceiveMultipartMessage();
-
+                                    
                                     // Update status
                                     _clientInfoForm.XmrSubscriberStatus = "Connected (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + DateTime.Now.ToString();
 
@@ -128,6 +128,10 @@ namespace XiboClient.Logic
 
                                         case "collectNow":
                                             OnCollectNowAction();
+                                            break;
+
+                                        case "screenShot":
+                                            ScreenShot.TakeAndSend();
                                             break;
 
                                         default:

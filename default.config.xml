@@ -47,9 +47,9 @@
   <XmdsLastConnection>0001-01-01T00:00:00</XmdsLastConnection>
   <UseCefWebBrowser>false</UseCefWebBrowser>
   <SendCurrentLayoutAsStatusUpdate>false</SendCurrentLayoutAsStatusUpdate>
-  <ScreenShotRequested>false</ScreenShotRequested>
   <ScreenShotRequestInterval>0</ScreenShotRequestInterval>
-  <DownloadWindowStartTime>0</DownloadWindowStartTime>
-  <DownloadWindowEndTime>0</DownloadWindowEndTime>
+  <DownloadStartWindow></DownloadStartWindow>
+  <DownloadEndWindow></DownloadEndWindow>
+  <DisplayTimeZone></DisplayTimeZone>
   <XmrNetworkAddress></XmrNetworkAddress>
 </ApplicationSettings>
