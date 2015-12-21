@@ -91,7 +91,10 @@ namespace XiboClient.XmdsAgents
 
                         // Only do something if enabled
                         if (!ApplicationSettings.Default.EnableExpiredFileDeletion)
+                        {
+                            Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Expired File Deletion Disabled"), LogType.Info.ToString());
                             return;
+                        }
 
                         // Get required files from disk
                         _requiredFiles = RequiredFiles.LoadFromDisk();
