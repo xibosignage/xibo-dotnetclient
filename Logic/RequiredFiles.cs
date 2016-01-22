@@ -183,7 +183,7 @@ namespace XiboClient
 
                 // This stuff only executes for Layout/Files items
                 rf.Md5 = attributes["md5"].Value;
-                rf.Size = int.Parse(attributes["size"].Value);
+                rf.Size = double.Parse(attributes["size"].Value);
 
                 // Does this file already exist in the RF node? We might receive duplicates.
                 bool found = false;
