@@ -298,7 +298,7 @@ namespace XiboClient
             {
                 foreach (RequiredFile rf in RequiredFileList)
                 {
-                    if (rf.Path == path)
+                    if (rf.SaveAs == path)
                         return rf;
                 }
 

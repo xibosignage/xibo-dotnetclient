@@ -96,8 +96,13 @@ namespace XiboClient.XmdsAgents
                             return;
                         }
 
+                        // Test Date
+                        DateTime testDate = DateTime.Now.AddDays(ApplicationSettings.Default.LibraryAgentInterval * -1);
+
                         // Get required files from disk
                         _requiredFiles = RequiredFiles.LoadFromDisk();
+
+                        Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Number of required files = " + _requiredFiles.RequiredFileList.Count), LogType.Audit.ToString());
 
                         // Build a list of files in the library
                         DirectoryInfo directory = new DirectoryInfo(ApplicationSettings.Default.LibraryPath);
@@ -116,8 +121,10 @@ namespace XiboClient.XmdsAgents
                             }
                             catch
                             {
+                                Trace.WriteLine(new LogMessage("LibraryAgent - Run", fileInfo.Name + " is not in Required Files, testing last accessed date [" + fileInfo.LastAccessTime + "] is earlier than " + testDate), LogType.Audit.ToString());
+
                                 // Not a required file
-                                if (fileInfo.LastAccessTime < DateTime.Now.AddDays(ApplicationSettings.Default.LibraryAgentInterval * -1))
+                                if (fileInfo.LastAccessTime < testDate)
                                 {
                                     Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Deleting old file: " + fileInfo.Name), LogType.Info.ToString());
                                     File.Delete(fileInfo.FullName);
