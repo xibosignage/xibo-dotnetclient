@@ -229,7 +229,14 @@ namespace XiboClient
 
             Trace.WriteLine(new LogMessage("Media - SignalElapsedEvent", "Media Complete"), LogType.Audit.ToString());
 
-            DurationElapsedEvent(_filesPlayed);
+            try
+            {
+                DurationElapsedEvent(_filesPlayed);
+            }
+            catch (NullReferenceException)
+            {
+                // Happens rarely, but might be caused by outdated Intel drivers
+            }
         }
 
         /// <summary>
