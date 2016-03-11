@@ -274,7 +274,7 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message, LogType.Error.ToString());
-                MessageBox.Show("Fatal Error initialising the application", "Fatal Error");
+                MessageBox.Show("Fatal Error initialising the application. " + ex.Message, "Fatal Error");
                 Close();
                 Dispose();
             }
