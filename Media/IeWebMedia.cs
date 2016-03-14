@@ -37,6 +37,7 @@ namespace XiboClient
         private string _filePath;
         private RegionOptions _options;
         private WebBrowser _webBrowser;
+        private int _documentCompletedCount = 0;
 
         public IeWebMedia(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
@@ -98,6 +99,11 @@ namespace XiboClient
 
         void _webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
+            _documentCompletedCount++;
+
+            if (_documentCompletedCount > 1)
+                return;
+
             // Start the timer
             base.RestartTimer();
 

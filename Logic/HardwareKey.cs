@@ -23,6 +23,7 @@ using System.Runtime.InteropServices;
 using System.Management;
 using System.Text;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Windows.Forms;
 using Org.BouncyCastle.Security;
@@ -92,7 +93,7 @@ namespace XiboClient
             }
 
             // Get the Mac Address
-            _macAddress = GetMACAddress();
+            _macAddress = GetMacAddress();
 
             Debug.WriteLine("[OUT]", "HardwareKey");
         }
@@ -146,28 +147,23 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// Returns MAC Address from first Network Card in Computer
+        /// Finds the MAC address of the first operation NIC found.
         /// </summary>
-        /// <returns>[string] MAC Address</returns>
-        public string GetMACAddress()
+        /// <returns>The MAC address.</returns>
+        private string GetMacAddress()
         {
-            lock (_locker)
+            string macAddresses = string.Empty;
+
+            foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
             {
-                ManagementClass mc = new ManagementClass("Win32_NetworkAdapterConfiguration");
-                ManagementObjectCollection moc = mc.GetInstances();
-                string MACAddress = String.Empty;
-
-                foreach (ManagementObject mo in moc)
+                if (nic.OperationalStatus == OperationalStatus.Up)
                 {
-                    if (MACAddress == String.Empty)  // only return MAC Address from first card
-                    {
-                        if ((bool)mo["IPEnabled"] == true) MACAddress = mo["MacAddress"].ToString();
-                    }
-                    mo.Dispose();
+                    macAddresses += nic.GetPhysicalAddress().ToString();
+                    break;
                 }
-
-                return MACAddress;
             }
+
+            return macAddresses;
         }
 
         /// <summary>
