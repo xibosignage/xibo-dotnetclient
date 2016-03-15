@@ -128,9 +128,19 @@ namespace XiboClient
                 else if (rf.FileType == "layout")
                 {
                     rf.Id = int.Parse(attributes["id"].Value);
-                    rf.Path = attributes["path"].Value + ".xlf";
-                    rf.SaveAs = (attributes["saveAs"] == null || string.IsNullOrEmpty(attributes["saveAs"].Value)) ? rf.Path : attributes["saveAs"].Value;
+                    rf.Path = attributes["path"].Value;
                     rf.Http = (attributes["download"].Value == "http");
+
+                    if (rf.Http)
+                    {
+                        rf.SaveAs = attributes["saveAs"].Value;
+                    }
+                    else
+                    {
+                        rf.Path = rf.Path + ".xlf";
+                        rf.SaveAs = rf.Path;
+                    }
+                    
                     rf.ChunkSize = rf.Size;
                 }
                 else if (rf.FileType == "resource")
