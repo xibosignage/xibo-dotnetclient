@@ -50,6 +50,7 @@ namespace XiboClient
         private int _scheduleId;
         private int _layoutId;
         private bool _screenSaver = false;
+        private bool _showingSplash = false;
 
         double _layoutWidth;
         double _layoutHeight;
@@ -483,16 +484,19 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
-                
-                ShowSplashScreen();
 
-                // In 10 seconds fire the next layout?
-                System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-                timer.Interval = 10000;
-                timer.Tick += new EventHandler(splashScreenTimer_Tick);
+                if (!_showingSplash)
+                {
+                    ShowSplashScreen();
 
-                // Start the timer
-                timer.Start();
+                    // In 10 seconds fire the next layout?
+                    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+                    timer.Interval = 15000;
+                    timer.Tick += new EventHandler(splashScreenTimer_Tick);
+
+                    // Start the timer
+                    timer.Start();
+                }
             }
 
             // We have finished changing the layout
@@ -512,6 +516,8 @@ namespace XiboClient
             timer.Stop();
             timer.Dispose();
 
+            _showingSplash = false;
+
             _schedule.NextLayout();
         }
 
@@ -520,13 +526,6 @@ namespace XiboClient
         /// </summary>
         private void PrepareLayout(string layoutPath)
         {
-            // Create a start record for this layout
-            _stat = new Stat();
-            _stat.type = StatType.Layout;
-            _stat.scheduleID = _scheduleId;
-            _stat.layoutID = _layoutId;
-            _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
             // Get this layouts XML
             XmlDocument layoutXml = new XmlDocument();
             DateTime layoutModifiedTime;
@@ -677,6 +676,13 @@ namespace XiboClient
                 }
             }
 
+            // Create a start record for this layout
+            _stat = new Stat();
+            _stat.type = StatType.Layout;
+            _stat.scheduleID = _scheduleId;
+            _stat.layoutID = _layoutId;
+            _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
             foreach (XmlNode region in listRegions)
             {
                 // Is there any media
@@ -763,6 +769,8 @@ namespace XiboClient
         /// </summary>
         private void ShowSplashScreen()
         {
+            _showingSplash = true;
+
             if (!string.IsNullOrEmpty(ApplicationSettings.Default.SplashOverride))
             {
                 try
