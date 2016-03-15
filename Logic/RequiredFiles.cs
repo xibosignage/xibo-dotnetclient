@@ -119,7 +119,6 @@ namespace XiboClient
                 // Fill in some information that we already know
                 if (rf.FileType == "media")
                 {
-                    string[] filePart = attributes["path"].Value.Split('.');
                     rf.Id = int.Parse(attributes["id"].Value);
                     rf.Path = attributes["path"].Value;
                     rf.SaveAs = (attributes["saveAs"] == null || string.IsNullOrEmpty(attributes["saveAs"].Value)) ? rf.Path : attributes["saveAs"].Value;
@@ -130,7 +129,8 @@ namespace XiboClient
                 {
                     rf.Id = int.Parse(attributes["id"].Value);
                     rf.Path = attributes["path"].Value + ".xlf";
-                    rf.SaveAs = rf.Path;
+                    rf.SaveAs = (attributes["saveAs"] == null || string.IsNullOrEmpty(attributes["saveAs"].Value)) ? rf.Path : attributes["saveAs"].Value;
+                    rf.Http = (attributes["download"].Value == "http");
                     rf.ChunkSize = rf.Size;
                 }
                 else if (rf.FileType == "resource")

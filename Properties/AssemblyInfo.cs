@@ -11,7 +11,7 @@ using System.Resources;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Xibo Digital Signage")]
 [assembly: AssemblyProduct("Xibo")]
-[assembly: AssemblyCopyright("Copyright Dan Garner ©  2008-2015")]
+[assembly: AssemblyCopyright("Copyright Dan Garner ©  2008-2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
