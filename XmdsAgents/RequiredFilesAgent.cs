@@ -305,7 +305,7 @@ namespace XiboClient.XmdsAgents
             if (rf.FileType == "layout")
             {
                 // Raise an event to say it is completed
-                OnComplete(rf.Path);
+                OnComplete(rf.SaveAs);
             }
         }
 
