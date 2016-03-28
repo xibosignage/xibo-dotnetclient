@@ -229,7 +229,8 @@ namespace XiboClient
 
             Trace.WriteLine(new LogMessage("Media - SignalElapsedEvent", "Media Complete"), LogType.Audit.ToString());
 
-            DurationElapsedEvent(_filesPlayed);
+            if (DurationElapsedEvent != null)
+                DurationElapsedEvent(_filesPlayed);
         }
 
         /// <summary>
