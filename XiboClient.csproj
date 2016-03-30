@@ -115,7 +115,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Action\LayoutChangePlayerAction.cs" />
     <Compile Include="Action\PlayerAction.cs" />
+    <Compile Include="Action\PlayerActionInterface.cs" />
+    <Compile Include="Action\RevertToSchedulePlayerAction.cs" />
     <Compile Include="Control\XiboCefWebBrowser.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -132,6 +135,7 @@
     <Compile Include="Action\ScheduleCommand.cs" />
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
+    <Compile Include="Logic\ScheduleItem.cs" />
     <Compile Include="Logic\MouseInterceptor.cs" />
     <Compile Include="Logic\OpenSslInterop.cs" />
     <Compile Include="Logic\RegionOptions.cs" />

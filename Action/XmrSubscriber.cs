@@ -26,8 +26,8 @@ namespace XiboClient.Logic
         public DateTime LastHeartBeat = DateTime.MinValue;
 
         // Events
-        public delegate void OnCollectNowActionDelegate();
-        public event OnCollectNowActionDelegate OnCollectNowAction;
+        public delegate void OnActionDelegate(PlayerActionInterface action);
+        public event OnActionDelegate OnAction;
 
         /// <summary>
         /// Client Hardware key
@@ -127,7 +127,16 @@ namespace XiboClient.Logic
                                             break;
 
                                         case "collectNow":
-                                            OnCollectNowAction();
+                                        case RevertToSchedulePlayerAction.Name:
+                                            OnAction(action);
+                                            break;
+
+                                        case LayoutChangePlayerAction.Name:
+
+                                            LayoutChangePlayerAction changeLayout = JsonConvert.DeserializeObject<LayoutChangePlayerAction>(opened);
+
+                                            OnAction(changeLayout);
+
                                             break;
 
                                         case "screenShot":

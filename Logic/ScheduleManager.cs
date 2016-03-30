@@ -31,6 +31,7 @@ using XiboClient.Log;
 using System.Threading;
 using XiboClient.Logic;
 using System.Globalization;
+using XiboClient.Action;
 
 /// 17/02/12 Dan Added a static method to get the schedule XML from disk into a string and to write it to the disk
 /// 20/02/12 Dan Tweaked log types on a few trace messages
@@ -63,8 +64,9 @@ namespace XiboClient
 
         // Member Varialbes
         private string _location;
-        private Collection<LayoutSchedule> _layoutSchedule;
-        private Collection<LayoutSchedule> _currentSchedule;
+        private Collection<LayoutChangePlayerAction> _layoutChangeActions;
+        private Collection<ScheduleItem> _layoutSchedule;
+        private Collection<ScheduleItem> _currentSchedule;
         private Collection<ScheduleCommand> _commands;
 
         private bool _refreshSchedule;
@@ -93,8 +95,9 @@ namespace XiboClient
             _location = scheduleLocation;
 
             // Create an empty layout schedule
-            _layoutSchedule = new Collection<LayoutSchedule>();
-            _currentSchedule = new Collection<LayoutSchedule>();
+            _layoutSchedule = new Collection<ScheduleItem>();
+            _currentSchedule = new Collection<ScheduleItem>();
+            _layoutChangeActions = new Collection<LayoutChangePlayerAction>();
             _commands = new Collection<ScheduleCommand>();
 
             _lastScreenShotDate = DateTime.MinValue;
@@ -123,7 +126,7 @@ namespace XiboClient
         /// <summary>
         /// The current layout schedule
         /// </summary>
-        public Collection<LayoutSchedule> CurrentSchedule
+        public Collection<ScheduleItem> CurrentSchedule
         {
             get
             {
@@ -246,7 +249,17 @@ namespace XiboClient
                 // Try to load the schedule from disk
                 try
                 {
+                    // Empty the current schedule collection
+                    _layoutSchedule.Clear();
+
+                    // Clear the list of commands
+                    _commands.Clear();
+
+                    // Load in the schedule
                     LoadScheduleFromFile();
+
+                    // Load in the layout change actions
+                    LoadScheduleFromLayoutChangeActions();
                 }
                 catch (Exception ex)
                 {
@@ -262,7 +275,7 @@ namespace XiboClient
             }
 
             // Load the new Schedule
-            Collection<LayoutSchedule> newSchedule = LoadNewSchdule();
+            Collection<ScheduleItem> newSchedule = LoadNewSchdule();
 
             bool forceChange = false;
 
@@ -271,7 +284,7 @@ namespace XiboClient
                 forceChange = true;
 
             // Are all the items that were in the _currentSchedule still there?
-            foreach (LayoutSchedule layout in _currentSchedule)
+            foreach (ScheduleItem layout in _currentSchedule)
             {
                 if (!newSchedule.Contains(layout))
                     forceChange = true;
@@ -293,21 +306,22 @@ namespace XiboClient
         /// Loads a new schedule from _layoutSchedules
         /// </summary>
         /// <returns></returns>
-        private Collection<LayoutSchedule> LoadNewSchdule()
+        private Collection<ScheduleItem> LoadNewSchdule()
         {
             // We need to build the current schedule from the layout schedule (obeying date/time)
-            Collection<LayoutSchedule> newSchedule = new Collection<LayoutSchedule>();
-            Collection<LayoutSchedule> prioritySchedule = new Collection<LayoutSchedule>();
+            Collection<ScheduleItem> newSchedule = new Collection<ScheduleItem>();
+            Collection<ScheduleItem> prioritySchedule = new Collection<ScheduleItem>();
+            Collection<ScheduleItem> layoutChangeSchedule = new Collection<ScheduleItem>();
             
             // Temporary default Layout incase we have no layout nodes.
-            LayoutSchedule defaultLayout = new LayoutSchedule();
+            ScheduleItem defaultLayout = new ScheduleItem();
 
             // Store the valid layout id's
             List<int> validLayoutIds = new List<int>();
             List<int> invalidLayouts = new List<int>();
 
             // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
-            foreach (LayoutSchedule layout in _layoutSchedule)
+            foreach (ScheduleItem layout in _layoutSchedule)
             {
                 // Is this already invalid
                 if (invalidLayouts.Contains(layout.id))
@@ -360,8 +374,12 @@ namespace XiboClient
                 // Look at the Date/Time to see if it should be on the schedule or not
                 if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)
                 {
-                    // Priority layouts should generate their own list
-                    if (layout.Priority)
+                    // Change Action and Priority layouts should generate their own list
+                    if (layout.Override)
+                    {
+                        layoutChangeSchedule.Add(layout);
+                    }
+                    else if (layout.Priority)
                     {
                         prioritySchedule.Add(layout);
                     }
@@ -371,6 +389,10 @@ namespace XiboClient
                     }
                 }
             }
+
+            // If we have any layout change scheduled then we return those instead
+            if (layoutChangeSchedule.Count > 0)
+                return layoutChangeSchedule;
 
             // If we have any priority schedules then we need to return those instead
             if (prioritySchedule.Count > 0)
@@ -389,12 +411,6 @@ namespace XiboClient
         /// <returns></returns>
         private void LoadScheduleFromFile()
         {
-            // Empty the current schedule collection
-            _layoutSchedule.Clear();
-
-            // Clear the list of commands
-            _commands.Clear();
-
             // Get the schedule XML
             XmlDocument scheduleXml = GetScheduleXml();
 
@@ -411,7 +427,7 @@ namespace XiboClient
             // We have nodes, go through each one and add them to the layoutschedule collection
             foreach (XmlNode node in nodes)
             {
-                LayoutSchedule temp = new LayoutSchedule();
+                ScheduleItem temp = new ScheduleItem();
 
                 // Node name
                 temp.NodeName = node.Name;
@@ -511,6 +527,35 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Load schedule from layout change actions
+        /// </summary>
+        private void LoadScheduleFromLayoutChangeActions()
+        {
+            if (_layoutChangeActions.Count <= 0)
+                return;
+
+            // Loop through the layout change actions and create schedule items for them
+            foreach (LayoutChangePlayerAction action in _layoutChangeActions)
+            {
+                if (action.downloadRequired)
+                    continue;
+
+                ScheduleItem item = new ScheduleItem();
+                item.FromDt = DateTime.MinValue;
+                item.ToDt = DateTime.MaxValue;
+                item.id = action.layoutId;
+                item.scheduleid = 0;
+                item.actionId = action.GetId();
+                item.Priority = false;
+                item.Override = true;
+                item.NodeName = "layout";
+                item.layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + item.id + @".xlf";
+
+                _layoutSchedule.Add(item);
+            }
+        }
+
+        /// <summary>
         /// Sets an empty schedule into the _layoutSchedule Collection
         /// </summary>
         private void SetEmptySchedule()
@@ -521,7 +566,7 @@ namespace XiboClient
             _layoutSchedule.Clear();
 
             // Schedule up the default
-            LayoutSchedule temp = new LayoutSchedule();
+            ScheduleItem temp = new ScheduleItem();
             temp.layoutFile = ApplicationSettings.Default.LibraryPath + @"\Default.xml";
             temp.id = 0;
             temp.scheduleid = 0;
@@ -616,7 +661,7 @@ namespace XiboClient
         {
             string layoutsInSchedule = "";
 
-            foreach (LayoutSchedule layoutSchedule in CurrentSchedule)
+            foreach (ScheduleItem layoutSchedule in CurrentSchedule)
             {
                 layoutsInSchedule += "LayoutId: " + layoutSchedule.id + ". Runs from " + layoutSchedule.FromDt.ToString() + Environment.NewLine;
             }
@@ -624,25 +669,82 @@ namespace XiboClient
             return layoutsInSchedule;
         }
 
+        /// <summary>
+        /// Add a layout change action
+        /// </summary>
+        /// <param name="action"></param>
+        public void AddLayoutChangeAction(LayoutChangePlayerAction action)
+        {
+            _layoutChangeActions.Add(action);
+            RefreshSchedule = true;
+        }
+
+        /// <summary>
+        /// Replace Layout Change Action
+        /// </summary>
+        /// <param name="action"></param>
+        public void ReplaceLayoutChangeActions(LayoutChangePlayerAction action)
+        {
+            ClearLayoutChangeActions();
+            AddLayoutChangeAction(action);
+        }
+
+        /// <summary>
+        /// Clear Layout Change Actions
+        /// </summary>
+        public void ClearLayoutChangeActions()
+        {
+            _layoutChangeActions.Clear();
+            RefreshSchedule = true;
+        }
+
+        /// <summary>
+        /// Assess and Remove the Layout Change Action if completed
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public bool isLayoutChangeActionComplete(ScheduleItem item)
+        {
+            // Check each Layout Change Action we own and compare to the current item
+            foreach (LayoutChangePlayerAction action in _layoutChangeActions)
+            {
+                if (item.id == action.layoutId && item.actionId == action.GetId())
+                {
+                    // we've played
+                    action.SetPlayed();
+
+                    // Does this conclude this change action?
+                    if (action.IsServiced())
+                    {
+                        _layoutChangeActions.Remove(action);
+                        RefreshSchedule = true;
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Set all Layout Change Actions to be downloaded
+        /// </summary>
+        public void setAllLayoutChangeActionsDownloaded()
+        {
+            foreach (LayoutChangePlayerAction action in _layoutChangeActions)
+            {
+                if (action.downloadRequired)
+                {
+                    action.downloadRequired = false;
+                    RefreshSchedule = true;
+                }
+            }
+        }
+
         #endregion
-    }
-
-    /// <summary>
-    /// A LayoutSchedule
-    /// </summary>
-    [Serializable]
-    public class LayoutSchedule
-    {
-        public string NodeName;
-        public string layoutFile;
-        public int id;
-        public int scheduleid;
-
-        public bool Priority;
-
-        public DateTime FromDt;
-        public DateTime ToDt;
-
-        public List<string> Dependents = new List<string>();
     }
 }

@@ -32,6 +32,7 @@ using System.Threading;
 using XiboClient.Properties;
 using XiboClient.Log;
 using XiboClient.Logic;
+using XiboClient.Action;
 
 /// 17/02/12 Dan Removed Schedule call, introduced ScheduleAgent
 /// 21/02/12 Dan Named the threads
@@ -46,7 +47,7 @@ namespace XiboClient
         public delegate void ScheduleChangeDelegate(string layoutPath, int scheduleId, int layoutId);
         public event ScheduleChangeDelegate ScheduleChangeEvent;
 
-        private Collection<LayoutSchedule> _layoutSchedule;
+        private Collection<ScheduleItem> _layoutSchedule;
         private int _currentLayout = 0;
         private string _scheduleLocation;
 
@@ -106,7 +107,7 @@ namespace XiboClient
             _scheduleLocation = scheduleLocation;
 
             // Create a new collection for the layouts in the schedule
-            _layoutSchedule = new Collection<LayoutSchedule>();
+            _layoutSchedule = new Collection<ScheduleItem>();
             
             // Set cachemanager
             _cacheManager = cacheManager;
@@ -148,6 +149,7 @@ namespace XiboClient
             _requiredFilesAgent.HardwareKey = _hardwareKey.Key;
             _requiredFilesAgent.ClientInfoForm = _clientInfoForm;
             _requiredFilesAgent.OnComplete += new RequiredFilesAgent.OnCompleteDelegate(LayoutFileModified);
+            _requiredFilesAgent.OnFullyProvisioned += _requiredFilesAgent_OnFullyProvisioned;
 
             // Create a thread for the RequiredFiles Agent to run in - but dont start it up yet.
             _requiredFilesAgentThread = new Thread(new ThreadStart(_requiredFilesAgent.Run));
@@ -170,7 +172,7 @@ namespace XiboClient
             _xmrSubscriber = new XmrSubscriber();
             _xmrSubscriber.HardwareKey = _hardwareKey;
             _xmrSubscriber.ClientInfoForm = _clientInfoForm;
-            _xmrSubscriber.OnCollectNowAction += _xmrSubscriber_OnCollectNowAction;
+            _xmrSubscriber.OnAction += _xmrSubscriber_OnAction;
 
             // Thread start
             _xmrSubscriberThread = new Thread(new ThreadStart(_xmrSubscriber.Run));
@@ -286,11 +288,59 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// Collect Now Action
+        /// XMR Subscriber Action
         /// </summary>
-        void _xmrSubscriber_OnCollectNowAction()
+        void _xmrSubscriber_OnAction(Action.PlayerActionInterface action)
         {
-            // Run all of the various agents
+            switch (action.GetActionName())
+            {
+                case "collectNow":
+                    // Run all of the various agents
+                    wakeUpXmds();
+                    break;
+
+                case LayoutChangePlayerAction.Name:
+                    // Add to a collection of Layout Change events 
+                    if (((LayoutChangePlayerAction)action).changeMode == "replace")
+                    {
+                        _scheduleManager.ReplaceLayoutChangeActions(((LayoutChangePlayerAction)action));
+                    }
+                    else {
+                        _scheduleManager.AddLayoutChangeAction(((LayoutChangePlayerAction)action));
+                    }
+
+                    // Assess the schedule now, or later?
+                    if (((LayoutChangePlayerAction)action).IsDownloadRequired())
+                    {
+                        // Run XMDS to download the required layouts
+                        // need to notify again once a complete download has occurred.
+                        wakeUpXmds();
+                    }
+                    else
+                    {
+                        // Reassess the schedule
+                        _scheduleManager.RunNow();
+                    }
+                    
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Required files fully provisioned
+        /// </summary>
+        private void _requiredFilesAgent_OnFullyProvisioned()
+        {
+            // Mark all layout change actions as downloaded and assess the schedule
+            _scheduleManager.setAllLayoutChangeActionsDownloaded();
+            _scheduleManager.RunNow();
+        }
+
+        /// <summary>
+        /// Wake up all XMDS services
+        /// </summary>
+        public void wakeUpXmds()
+        {
             _registerAgent.WakeUp();
             _scheduleAgent.WakeUp();
             _requiredFilesAgent.WakeUp();
@@ -303,6 +353,22 @@ namespace XiboClient
         public void NextLayout()
         {
             int previousLayout = _currentLayout;
+
+            // See if the current layout is an action that can be removed.
+            // If it CAN be removed then this will almost certainly result in a change in the current _layoutSchedule
+            // therefore we should return out of this and kick off a schedule manager cycle, which will set the new layout.
+            try
+            {
+                if (_scheduleManager.isLayoutChangeActionComplete(_layoutSchedule[previousLayout]))
+                {
+                    _scheduleManager.RunNow();
+                    return;
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Schedule - NextLayout", "Unable to check layout change actions. E = " + e.Message), LogType.Error.ToString());
+            }
 
             // increment the current layout
             _currentLayout++;

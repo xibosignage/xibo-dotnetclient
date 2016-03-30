@@ -164,13 +164,6 @@ namespace XiboClient.XmdsAgents
                     if (md5 == ApplicationSettings.Default.Hash)
                         return result.DocumentElement.Attributes["message"].Value;
 
-                    // Hash after removing the date
-                    result.DocumentElement.Attributes["date"].Value = "";
-                    string md5 = Hashes.MD5(result.OuterXml);
-
-                    if (md5 == ApplicationSettings.Default.Hash)
-                        return result.DocumentElement.Attributes["message"].Value;
-
                     foreach (XmlNode node in result.DocumentElement.ChildNodes)
                     {
                         // Are we a commands node?
