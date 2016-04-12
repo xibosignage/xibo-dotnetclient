@@ -91,12 +91,12 @@ namespace XiboClient.XmdsAgents
                         ApplicationSettings.Default.IncrementXmdsErrorCount();
 
                         // Log this message, but dont abort the thread
-                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "WebException in Run: " + webEx.Message), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "WebException in Run: " + webEx.Message), LogType.Info.ToString());
                     }
                     catch (Exception ex)
                     {
                         // Log this message, but dont abort the thread
-                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Exception in Run: " + ex.Message), LogType.Info.ToString());
                     }
                 }
 
@@ -112,19 +112,12 @@ namespace XiboClient.XmdsAgents
             string message = "";
             bool error = false;
 
-            // Work out if we need to do anything (have the settings changed since the last time)
-            string md5 = Hashes.MD5(xml);
-
             try
             {
                 // Load the result into an XML document
                 XmlDocument result = new XmlDocument();
                 result.LoadXml(xml);
                 
-                // If the XML we received has not changed, then go no further.
-                if (ApplicationSettings.Default.Hash == md5)
-                    return result.DocumentElement.Attributes["message"].Value;
-
                 // Test the XML
                 if (result.DocumentElement.Attributes["code"].Value == "READY")
                 {
@@ -142,6 +135,21 @@ namespace XiboClient.XmdsAgents
                     // Get the config element
                     if (result.DocumentElement.ChildNodes.Count <= 0)
                         throw new Exception("Configuration not set for this display");
+
+                    // Hash after removing the date
+                    try
+                    {
+                        result.DocumentElement.Attributes["date"].Value = "";
+                    }
+                    catch
+                    {
+                        // No date, no need to remove
+                    }
+
+                    string md5 = Hashes.MD5(result.OuterXml);
+
+                    if (md5 == ApplicationSettings.Default.Hash)
+                        return result.DocumentElement.Attributes["message"].Value;
 
                     foreach (XmlNode node in result.DocumentElement.ChildNodes)
                     {

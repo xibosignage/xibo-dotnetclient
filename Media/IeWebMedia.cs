@@ -38,6 +38,7 @@ namespace XiboClient
         private RegionOptions _options;
         private WebBrowser _webBrowser;
         private int _documentCompletedCount = 0;
+        private bool _reloadOnXmdsRefresh = false;
 
         public IeWebMedia(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
@@ -74,21 +75,17 @@ namespace XiboClient
                 // Nativate directly
                 _webBrowser.Navigate(_filePath);
             }
+            else if (HtmlReady())
+            {
+                // Write to temporary file
+                ReadControlMeta();
+
+                // Navigate to temp file
+                _webBrowser.Navigate(_filePath);
+            }
             else
             {
-                // Check to see if the HTML is ready for us.
-                if (HtmlReady())
-                {
-                    // Write to temporary file
-                    ReadControlMeta();
-
-                    // Navigate to temp file
-                    _webBrowser.Navigate(_filePath);
-                }
-                else
-                {
-                    RefreshFromXmds();
-                }
+                Debug.WriteLine("HTML Resource is not ready to be shown (meaning the file doesn't exist at all) - wait for the download the occur and then show");
             }
 
             Controls.Add(_webBrowser);
@@ -97,47 +94,85 @@ namespace XiboClient
             Show();
         }
 
+        /// <summary>
+        /// Web Browser finished loading document
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void _webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             _documentCompletedCount++;
 
+            // Prevent double document completions
             if (_documentCompletedCount > 1)
                 return;
 
             // Start the timer
             base.RestartTimer();
 
+            // Don't do anything if we are already disposed
             if (_disposed)
                 return;
 
+            // Show the browser
             _webBrowser.Visible = true;
         }
 
+        /// <summary>
+        /// Is the cached HTML ready
+        /// </summary>
+        /// <returns>true if there is something to show, false if nothing</returns>
         private bool HtmlReady()
         {
             // Check for cached resource files in the library
             // We want to check the file exists first
-            if (!File.Exists(_filePath) || _options.updateInterval == 0)
+            if (!File.Exists(_filePath))
+            {
+                // File doesn't exist at all.
+                _reloadOnXmdsRefresh = true;
+
+                // Refresh
+                RefreshFromXmds();
+
+                // Return false
                 return false;
+            }
 
             // It exists - therefore we want to get the last time it was updated
             DateTime lastWriteDate = File.GetLastWriteTime(_filePath);
 
+            // Does it update every time?
+            if (_options.updateInterval == 0)
+            {
+                // Comment in to force a re-request with each reload of the widget
+                //_reloadOnXmdsRefresh = true;
+
+                // File exists but needs updating
+                RefreshFromXmds();
+
+                // Comment in to force a re-request with each reload of the widget
+                //return false;
+            }
             // Compare the last time it was updated to the layout modified time (always refresh when the layout has been modified)
             // Also compare to the update interval (refresh if it has not been updated for longer than the update interval)
-            if (_options.LayoutModifiedDate.CompareTo(lastWriteDate) > 0 || DateTime.Now.CompareTo(lastWriteDate.AddMinutes(_options.updateInterval)) > 0)
+            else if (_options.LayoutModifiedDate.CompareTo(lastWriteDate) > 0 || DateTime.Now.CompareTo(lastWriteDate.AddMinutes(_options.updateInterval)) > 0)
             {
-                return false;
+                // File exists but needs updating.
+                RefreshFromXmds();
             }
             else
             {
-                UpdateCacheIfNecessary();
-                return true;
+                // File exists and is in-date - nothing to do                
             }
+
+            // Refresh the local file cache with any new dimensions, etc.
+            UpdateCacheIfNecessary();
+            
+            return true;
         }
 
         /// <summary>
-        /// Updates the position of the background and saves to a temporary file
+        /// Pulls the duration out of the temporary file and sets the media Duration to the same
         /// </summary>
         private void ReadControlMeta()
         {
@@ -159,7 +194,7 @@ namespace XiboClient
                 }
                 catch
                 {
-                    Trace.WriteLine(new LogMessage("Html - SaveToTemporaryFile", "Unable to pull duration using RegEx").ToString());
+                    Trace.WriteLine(new LogMessage("Html - ReadControlMeta", "Unable to pull duration using RegEx").ToString());
                 }
             }
         }
@@ -188,21 +223,30 @@ namespace XiboClient
                 // Success / Failure
                 if (e.Error != null)
                 {
-                    Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Info.ToString());
 
-                    // We have failed to update from XMDS, do we have a cached file we can revert to
-                    if (File.Exists(_filePath))
+                    // We have failed to update from XMDS
+                    // id we have been asked to reload on XmdsRefresh, check to see if we have a file to load,
+                    // if not expire on a short timer.
+                    if (_reloadOnXmdsRefresh)
                     {
-                        // Cached file to revert to
-                        UpdateCacheIfNecessary();
+                        if (File.Exists(_filePath))
+                        {
+                            // Cached file to revert to
+                            UpdateCacheIfNecessary();
 
-                        _webBrowser.Navigate(_filePath);
-                    }
-                    else
-                    {
-                        // No cache to revert to
-                        // Start the timer so that we expire
-                        base.RenderMedia();
+                            // Navigate to the file
+                            _webBrowser.Navigate(_filePath);
+                        }
+                        else
+                        {
+                            // No cache to revert to
+                            Trace.WriteLine(new LogMessage("xmds_GetResource", "We haven't been able to download this widget and there isn't a pre-cached one to use. Skipping."), LogType.Info.ToString());
+
+                            // Start the timer so that we expire
+                            Duration = 2;
+                            base.RenderMedia();
+                        }
                     }
                 }
                 else
@@ -225,6 +269,10 @@ namespace XiboClient
                     string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");
                     html = html.Replace("[[ViewPortWidth]]", _width.ToString());
 
+                    // Comment in to write out the update date at the end of the file (in the body)
+                    // This is useful if you want to check how frequently the file is updating
+                    //html = html.Replace("<body>", "<body><h1 style='color:white'>" + DateTime.Now.ToString() + "</h1>");
+
                     // Write to the library
                     using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
@@ -232,11 +280,14 @@ namespace XiboClient
                         sw.Close();
                     }
 
-                    // Read the control meta back out
-                    ReadControlMeta();
+                    if (_reloadOnXmdsRefresh)
+                    {
+                        // Read the control meta back out
+                        ReadControlMeta();
 
-                    // Handle Navigate in here because we will not have done it during first load
-                    _webBrowser.Navigate(_filePath);
+                        // Handle Navigate in here because we will not have done it during first load
+                        _webBrowser.Navigate(_filePath);
+                    }
                 }
             }
             catch (ObjectDisposedException)
