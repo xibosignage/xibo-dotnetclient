@@ -123,7 +123,7 @@ namespace XiboClient.XmdsAgents
         /// </summary>
         public void Run()
         {
-            Trace.WriteLine(new LogMessage("FileAgent - Run", "Thread Started"), LogType.Info.ToString());
+            Trace.WriteLine(new LogMessage("FileAgent - Run", "Thread Started"), LogType.Audit.ToString());
 
             // Get the required file id from the list of required files.
             RequiredFile file = _requiredFiles.GetRequiredFile(_requiredFileId, _requiredFileType);
@@ -136,7 +136,7 @@ namespace XiboClient.XmdsAgents
 
             try
             {
-                Trace.WriteLine(new LogMessage("FileAgent - Run", "Thread alive and Lock Obtained"), LogType.Info.ToString());
+                Trace.WriteLine(new LogMessage("FileAgent - Run", "Thread alive and Lock Obtained"), LogType.Audit.ToString());
 
                 if (file.FileType == "resource")
                 {
@@ -187,7 +187,7 @@ namespace XiboClient.XmdsAgents
                     else
                     {
                         // Just error - we will pick it up again the next time we download
-                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.SaveAs), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.SaveAs), LogType.Info.ToString());
                     }
                 }
                 else
@@ -280,12 +280,20 @@ namespace XiboClient.XmdsAgents
                     else
                     {
                         // Just error - we will pick it up again the next time we download
-                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.SaveAs), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("FileAgent - Run", "Downloaded file failed MD5 check. Calculated [" + md5 + "] & XMDS [ " + file.Md5 + "] . " + file.SaveAs), LogType.Info.ToString());
                     }
                 }
 
                 // Inform the Player thread that a file has been modified.
                 OnComplete(file.Id, file.FileType);
+            }
+            catch (WebException webEx)
+            {
+                // Log this message, but dont abort the thread
+                Trace.WriteLine(new LogMessage("FileAgent - Run", "Web Exception in Run: " + webEx.Message), LogType.Info.ToString());
+
+                // Mark as not downloading
+                file.Downloading = false;
             }
             catch (Exception ex)
             {
@@ -297,7 +305,7 @@ namespace XiboClient.XmdsAgents
             }
 
             // Release the Semaphore
-            Trace.WriteLine(new LogMessage("FileAgent - Run", "Releasing Lock"), LogType.Info.ToString());
+            Trace.WriteLine(new LogMessage("FileAgent - Run", "Releasing Lock"), LogType.Audit.ToString());
 
             _fileDownloadLimit.Release();
         }

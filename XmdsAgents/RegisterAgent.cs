@@ -91,12 +91,12 @@ namespace XiboClient.XmdsAgents
                         ApplicationSettings.Default.IncrementXmdsErrorCount();
 
                         // Log this message, but dont abort the thread
-                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "WebException in Run: " + webEx.Message), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "WebException in Run: " + webEx.Message), LogType.Info.ToString());
                     }
                     catch (Exception ex)
                     {
                         // Log this message, but dont abort the thread
-                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Exception in Run: " + ex.Message), LogType.Info.ToString());
                     }
                 }
 
