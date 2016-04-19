@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2013 Daniel Garner
+ * Copyright (C) 2013-16 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -27,7 +27,7 @@ namespace XiboClient
     /// <summary>
     /// The options specific to a region
     /// </summary>
-    struct RegionOptions
+    class RegionOptions
     {
         public double scaleFactor;
         public int width;
@@ -71,6 +71,11 @@ namespace XiboClient
         public MediaDictionary Dictionary;
 
         public DateTime LayoutModifiedDate { get; set; }
+
+        /// <summary>
+        /// Audio associated with the widget
+        /// </summary>
+        public List<Media> Audio = new List<Media>();
 
         public override string ToString()
         {

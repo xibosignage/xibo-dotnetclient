@@ -457,6 +457,10 @@ namespace XiboClient
                         Trace.WriteLine(new LogMessage("ScheduleManager - LoadScheduleFromFile", e.Message), LogType.Error.ToString());
                     }
                 }
+                else if (temp.NodeName == "overlays")
+                {
+                    // TODO: Parse out overlays and load them into their own schedule
+                }
                 else
                 {
                     // Pull attributes from layout nodes

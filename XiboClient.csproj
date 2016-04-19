@@ -133,6 +133,9 @@
     <Compile Include="Logic\ApplicationSettings.cs" />
     <Compile Include="Logic\ScreenShot.cs" />
     <Compile Include="Action\XmrSubscriber.cs" />
+    <Compile Include="Media\Audio.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Media\IeWebMedia.cs">
       <SubType>Form</SubType>
     </Compile>
