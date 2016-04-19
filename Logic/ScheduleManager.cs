@@ -336,7 +336,7 @@ namespace XiboClient
                         if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
                         {
                             invalidLayouts.Add(layout.id);
-                            Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Error.ToString());
+                            Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());
                             continue;
                         }
                     }

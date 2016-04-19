@@ -193,7 +193,7 @@ namespace XiboClient
                 // Success / Failure
                 if (e.Error != null)
                 {
-                    Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("xmds_GetResource", "Unable to get Resource: " + e.Error.Message), LogType.Info.ToString());
 
                     // We have failed to update from XMDS, do we have a cached file we can revert to
                     if (File.Exists(_filePath))

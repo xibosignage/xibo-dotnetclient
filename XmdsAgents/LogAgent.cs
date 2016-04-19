@@ -71,7 +71,7 @@ namespace XiboClient.XmdsAgents
 
                         HardwareKey key = new HardwareKey();
 
-                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Thread Woken and Lock Obtained"), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Thread Woken and Lock Obtained"), LogType.Audit.ToString());
 
                         using (xmds.xmds xmds = new xmds.xmds())
                         {
@@ -92,7 +92,7 @@ namespace XiboClient.XmdsAgents
                         ApplicationSettings.Default.IncrementXmdsErrorCount();
 
                         // Log this message, but dont abort the thread
-                        Trace.WriteLine(new LogMessage("LogAgent - Run", "WebException in Run: " + webEx.Message), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("LogAgent - Run", "WebException in Run: " + webEx.Message), LogType.Info.ToString());
                     }
                     catch (Exception ex)
                     {

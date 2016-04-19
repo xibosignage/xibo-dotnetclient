@@ -141,7 +141,7 @@ namespace XiboClient.XmdsAgents
                             {
                                 _clientInfoForm.RequiredFilesStatus = string.Format("Waiting: {0} Active Downloads", filesToDownload.ToString());
 
-                                Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Currently Downloading Files, skipping collect"), LogType.Info.ToString());
+                                Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Currently Downloading Files, skipping collect"), LogType.Audit.ToString());
                             }
                             else
                             {
@@ -236,7 +236,7 @@ namespace XiboClient.XmdsAgents
                             ApplicationSettings.Default.IncrementXmdsErrorCount();
 
                             // Log this message, but dont abort the thread
-                            Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "WebException in Run: " + webEx.Message), LogType.Error.ToString());
+                            Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "WebException in Run: " + webEx.Message), LogType.Info.ToString());
 
                             _clientInfoForm.RequiredFilesStatus = "Error: " + webEx.Message;
                         }
