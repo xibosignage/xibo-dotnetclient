@@ -261,7 +261,6 @@ namespace XiboClient
         public bool EnableShellCommands { get; set; }
         public bool ShowInTaskbar { get; set; }
         public bool ClientInfomationCtrlKey { get; set; }
-        public bool UseCefWebBrowser { get; set; }
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
 
         // XMDS Status Flags

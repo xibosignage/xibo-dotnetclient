@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Xilium.CefGlue;
 using XiboClient.Logic;
 
 namespace XiboClient
@@ -35,40 +34,6 @@ namespace XiboClient
         [STAThread]
         static int Main(string[] args)
         {
-            // Do we need to initialise CEF?
-            if (ApplicationSettings.Default.UseCefWebBrowser)
-            {
-                try
-                {
-                    CefRuntime.Load();
-                }
-                catch (DllNotFoundException ex)
-                {
-                    MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return 1;
-                }
-                catch (CefRuntimeException ex)
-                {
-                    MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return 2;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString(), "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return 3;
-                }
-
-                var settings = new CefSettings();
-                settings.MultiThreadedMessageLoop = true;
-                settings.SingleProcess = false;
-                settings.LogSeverity = CefLogSeverity.Disable;
-                settings.LogFile = "cef.log";
-                settings.ResourcesDirPath = System.IO.Path.GetDirectoryName(new Uri(System.Reflection.Assembly.GetEntryAssembly().CodeBase).LocalPath);
-                settings.RemoteDebuggingPort = 20480;
-
-                CefRuntime.Initialize(new CefMainArgs(args), settings, null, IntPtr.Zero);
-            }
-
             // Ensure our process has the highest priority
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
 
@@ -147,9 +112,6 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
             Trace.Flush();
 
-            if (ApplicationSettings.Default.UseCefWebBrowser)
-                CefRuntime.Shutdown();
-
             return 0;
         }       
 
@@ -199,10 +161,6 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
 
             // TODO: Can we just restart the application?
-
-            // Shutdown the application
-            if (ApplicationSettings.Default.UseCefWebBrowser)
-                CefRuntime.Shutdown();
 
             Environment.Exit(1);
         }

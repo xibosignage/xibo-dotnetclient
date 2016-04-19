@@ -462,14 +462,9 @@ namespace XiboClient
 
             Trace.WriteLine(new LogMessage("Region - CreateNextMediaNode", string.Format("Creating new media: {0}, {1}", options.type, options.mediaid)), LogType.Audit.ToString());
             
-            bool useCef = ApplicationSettings.Default.UseCefWebBrowser;
-
             if (options.render == "html")
             {
-                if (useCef)
-                    media = new CefWebMedia(options);
-                else
-                    media = new IeWebMedia(options);
+                media = new IeWebMedia(options);
             }
             else
             {
@@ -510,10 +505,7 @@ namespace XiboClient
                     case "ticker":
                     case "text":
                     case "webpage":
-                        if (useCef)
-                            media = new CefWebMedia(options);
-                        else
-                            media = new IeWebMedia(options);
+                        media = new IeWebMedia(options);
 
                         break;
 

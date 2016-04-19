@@ -37,7 +37,6 @@ using System.Threading;
 using XiboClient.Properties;
 using System.Runtime.InteropServices;
 using System.Globalization;
-using Xilium.CefGlue;
 using XiboClient.Logic;
 
 namespace XiboClient

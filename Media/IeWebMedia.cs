@@ -26,8 +26,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using Xilium.CefGlue;
-using Xilium.CefGlue.WindowsForms;
 
 namespace XiboClient
 {

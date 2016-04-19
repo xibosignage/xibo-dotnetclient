@@ -107,21 +107,12 @@
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="Xilium.CefGlue">
-      <HintPath>bin\x86\Release\cefglue\Xilium.CefGlue.dll</HintPath>
-    </Reference>
-    <Reference Include="Xilium.CefGlue.WindowsForms">
-      <HintPath>bin\x86\Release\cefglue\Xilium.CefGlue.WindowsForms.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Action\LayoutChangePlayerAction.cs" />
     <Compile Include="Action\PlayerAction.cs" />
     <Compile Include="Action\PlayerActionInterface.cs" />
     <Compile Include="Action\RevertToSchedulePlayerAction.cs" />
-    <Compile Include="Control\XiboCefWebBrowser.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Forms\About.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -245,9 +236,6 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
-    </Compile>
-    <Compile Include="Media\CefWebMedia.cs">
-      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Log\XiboTraceListener.cs" />
     <Compile Include="XmdsAgents\LogAgent.cs" />
