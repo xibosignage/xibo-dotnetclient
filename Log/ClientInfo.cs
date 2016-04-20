@@ -108,6 +108,24 @@ namespace XiboClient.Log
         }
 
         /// <summary>
+        /// Control Count
+        /// </summary>
+        public int ControlCount
+        {
+            set
+            {
+                if (InvokeRequired)
+                {
+                    BeginInvoke(new StatusDelegate(SetControlCount), "" + value);
+                }
+                else
+                {
+                    SetControlCount("" + value);
+                }
+            }
+        }
+
+        /// <summary>
         /// Client Info Object
         /// </summary>
         public ClientInfo()
@@ -175,6 +193,15 @@ namespace XiboClient.Log
         public void SetXmrStatus(string status)
         {
             xmrStatus.Text = status;
+        }
+
+        /// <summary>
+        /// Set control count label
+        /// </summary>
+        /// <param name="count"></param>
+        public void SetControlCount(string count)
+        {
+            controlCountLabel.Text = count;
         }
 
         /// <summary>

@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2014 Daniel Garner
+ * Copyright (C) 2006-2016 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -68,6 +68,8 @@ namespace XiboClient
         private Collection<ScheduleItem> _layoutSchedule;
         private Collection<ScheduleItem> _currentSchedule;
         private Collection<ScheduleCommand> _commands;
+        private Collection<ScheduleItem> _overlaySchedule;
+        private Collection<ScheduleItem> _currentOverlaySchedule;
 
         private bool _refreshSchedule;
         private CacheManager _cacheManager;
@@ -100,6 +102,10 @@ namespace XiboClient
             _layoutChangeActions = new Collection<LayoutChangePlayerAction>();
             _commands = new Collection<ScheduleCommand>();
 
+            // Overlay schedules
+            _currentOverlaySchedule = new Collection<ScheduleItem>();
+            _overlaySchedule = new Collection<ScheduleItem>();
+
             _lastScreenShotDate = DateTime.MinValue;
         }
 
@@ -131,6 +137,17 @@ namespace XiboClient
             get
             {
                 return _currentSchedule;
+            }
+        }
+
+        /// <summary>
+        /// Get the current overlay schedule
+        /// </summary>
+        public Collection<ScheduleItem> CurrentOverlaySchedule
+        {
+            get
+            {
+                return _currentOverlaySchedule;
             }
         }
 
@@ -255,6 +272,9 @@ namespace XiboClient
                     // Clear the list of commands
                     _commands.Clear();
 
+                    // Clear the list of overlays
+                    _overlaySchedule.Clear();
+
                     // Load in the schedule
                     LoadScheduleFromFile();
 
@@ -275,7 +295,10 @@ namespace XiboClient
             }
 
             // Load the new Schedule
-            Collection<ScheduleItem> newSchedule = LoadNewSchdule();
+            Collection<ScheduleItem> newSchedule = LoadNewSchedule();
+
+            // Load a new overlay schedule
+            Collection<ScheduleItem> overlaySchedule = LoadNewOverlaySchedule();
 
             bool forceChange = false;
 
@@ -290,11 +313,22 @@ namespace XiboClient
                     forceChange = true;
             }
 
+            // Are all the items that were in the _currentOverlaySchedule still there?
+            foreach (ScheduleItem layout in _currentOverlaySchedule)
+            {
+                if (!overlaySchedule.Contains(layout))
+                    forceChange = true;
+            }
+
             // Set the new schedule
             _currentSchedule = newSchedule;
 
+            // Set the new Overlay schedule
+            _currentOverlaySchedule = overlaySchedule;
+
             // Clear up
             newSchedule = null;
+            overlaySchedule = null;
 
             // Return True if we want to refresh the schedule OR false if we are OK to leave the current one.
             // We can update the current schedule and still return false - this will not trigger a schedule change event.
@@ -306,7 +340,7 @@ namespace XiboClient
         /// Loads a new schedule from _layoutSchedules
         /// </summary>
         /// <returns></returns>
-        private Collection<ScheduleItem> LoadNewSchdule()
+        private Collection<ScheduleItem> LoadNewSchedule()
         {
             // We need to build the current schedule from the layout schedule (obeying date/time)
             Collection<ScheduleItem> newSchedule = new Collection<ScheduleItem>();
@@ -406,6 +440,85 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Loads a new schedule from _overlaySchedules
+        /// </summary>
+        /// <returns></returns>
+        private Collection<ScheduleItem> LoadNewOverlaySchedule()
+        {
+            // We need to build the current schedule from the layout schedule (obeying date/time)
+            Collection<ScheduleItem> newSchedule = new Collection<ScheduleItem>();
+            Collection<ScheduleItem> prioritySchedule = new Collection<ScheduleItem>();
+            
+            // Store the valid layout id's
+            List<int> validLayoutIds = new List<int>();
+            List<int> invalidLayouts = new List<int>();
+
+            // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
+            foreach (ScheduleItem layout in _overlaySchedule)
+            {
+                // Is this already invalid
+                if (invalidLayouts.Contains(layout.id))
+                    continue;
+
+                // If we haven't already assessed this layout before, then check that it is valid
+                if (!validLayoutIds.Contains(layout.id))
+                {
+                    // Is the layout valid in the cachemanager?
+                    try
+                    {
+                        if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                        {
+                            invalidLayouts.Add(layout.id);
+                            Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewOverlaySchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore this layout.. raise an error?
+                        invalidLayouts.Add(layout.id);
+                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewOverlaySchedule", "Unable to determine if layout is valid or not"), LogType.Error.ToString());
+                        continue;
+                    }
+
+                    // Check dependents
+                    foreach (string dependent in layout.Dependents)
+                    {
+                        if (!_cacheManager.IsValidPath(dependent))
+                        {
+                            invalidLayouts.Add(layout.id);
+                            Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewOverlaySchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
+                            continue;
+                        }
+                    }
+                }
+
+                // Add to the valid layout ids
+                validLayoutIds.Add(layout.id);
+
+                // Look at the Date/Time to see if it should be on the schedule or not
+                if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)
+                {
+                    // Change Action and Priority layouts should generate their own list
+                    if (layout.Priority)
+                    {
+                        prioritySchedule.Add(layout);
+                    }
+                    else
+                    {
+                        newSchedule.Add(layout);
+                    }
+                }
+            }
+
+            // If we have any priority schedules then we need to return those instead
+            if (prioritySchedule.Count > 0)
+                return prioritySchedule;
+
+            return newSchedule;
+        }
+
+        /// <summary>
         /// Loads the schedule from file.
         /// </summary>
         /// <returns></returns>
@@ -427,16 +540,12 @@ namespace XiboClient
             // We have nodes, go through each one and add them to the layoutschedule collection
             foreach (XmlNode node in nodes)
             {
-                ScheduleItem temp = new ScheduleItem();
-
                 // Node name
-                temp.NodeName = node.Name;
-
-                if (temp.NodeName == "dependants")
+                if (node.Name == "dependants")
                 {
                     // Do nothing for now
                 }
-                else if (temp.NodeName == "command")
+                else if (node.Name == "command")
                 {
                     // Try to get the command using the code
                     try
@@ -457,69 +566,17 @@ namespace XiboClient
                         Trace.WriteLine(new LogMessage("ScheduleManager - LoadScheduleFromFile", e.Message), LogType.Error.ToString());
                     }
                 }
-                else if (temp.NodeName == "overlays")
+                else if (node.Name == "overlays")
                 {
-                    // TODO: Parse out overlays and load them into their own schedule
+                    // Parse out overlays and load them into their own schedule
+                    foreach (XmlNode overlayNode in node.ChildNodes)
+                    {
+                        _overlaySchedule.Add(ParseNodeIntoScheduleItem(overlayNode));
+                    }
                 }
                 else
                 {
-                    // Pull attributes from layout nodes
-                    XmlAttributeCollection attributes = node.Attributes;
-
-                    // All nodes have file properties
-                    temp.layoutFile = attributes["file"].Value;
-
-                    // Replace the .xml extension with nothing
-                    string replace = ".xml";
-                    string layoutFile = temp.layoutFile.TrimEnd(replace.ToCharArray());
-
-                    // Set these on the temp layoutschedule
-                    temp.layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
-                    temp.id = int.Parse(layoutFile);
-
-                    // Get attributes that only exist on the default
-                    if (temp.NodeName != "default")
-                    {
-                        // Priority flag
-                        temp.Priority = (attributes["priority"].Value == "1") ? true : false;
-
-                        // Get the fromdt,todt
-                        temp.FromDt = DateTime.Parse(attributes["fromdt"].Value, CultureInfo.InvariantCulture);
-                        temp.ToDt = DateTime.Parse(attributes["todt"].Value, CultureInfo.InvariantCulture);
-
-                        // Pull out the scheduleid if there is one
-                        string scheduleId = "";
-                        if (attributes["scheduleid"] != null) scheduleId = attributes["scheduleid"].Value;
-
-                        // Add it to the layout schedule
-                        if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
-
-                        // Dependents
-                        if (attributes["dependents"] != null)
-                        {
-                            foreach (string dependent in attributes["dependents"].Value.Split(','))
-                            {
-                                temp.Dependents.Add(dependent);
-                            }
-                        }
-                    }
-
-                    // Look for dependents nodes
-                    foreach (XmlNode childNode in node.ChildNodes)
-                    {
-                        if (childNode.Name == "dependents")
-                        {
-                            foreach (XmlNode dependent in childNode.ChildNodes)
-                            {
-                                if (dependent.Name == "file")
-                                {
-                                    temp.Dependents.Add(dependent.InnerText);
-                                }
-                            }
-                        }
-                    }
-
-                    _layoutSchedule.Add(temp);
+                    _layoutSchedule.Add(ParseNodeIntoScheduleItem(node));
                 }
             }
 
@@ -528,6 +585,75 @@ namespace XiboClient
             scheduleXml = null;
 
             // We now have the saved XML contained in the _layoutSchedule object
+        }
+
+        /// <summary>
+        /// Parse an XML node from XMDS into a Schedule Item
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        private ScheduleItem ParseNodeIntoScheduleItem(XmlNode node)
+        {
+            ScheduleItem temp = new ScheduleItem();
+            temp.NodeName = node.Name;
+
+            // Pull attributes from layout nodes
+            XmlAttributeCollection attributes = node.Attributes;
+
+            // All nodes have file properties
+            temp.layoutFile = attributes["file"].Value;
+
+            // Replace the .xml extension with nothing
+            string replace = ".xml";
+            string layoutFile = temp.layoutFile.TrimEnd(replace.ToCharArray());
+
+            // Set these on the temp layoutschedule
+            temp.layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
+            temp.id = int.Parse(layoutFile);
+
+            // Get attributes that only exist on the default
+            if (temp.NodeName != "default")
+            {
+                // Priority flag
+                temp.Priority = (attributes["priority"].Value == "1") ? true : false;
+
+                // Get the fromdt,todt
+                temp.FromDt = DateTime.Parse(attributes["fromdt"].Value, CultureInfo.InvariantCulture);
+                temp.ToDt = DateTime.Parse(attributes["todt"].Value, CultureInfo.InvariantCulture);
+
+                // Pull out the scheduleid if there is one
+                string scheduleId = "";
+                if (attributes["scheduleid"] != null) scheduleId = attributes["scheduleid"].Value;
+
+                // Add it to the layout schedule
+                if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
+
+                // Dependents
+                if (attributes["dependents"] != null)
+                {
+                    foreach (string dependent in attributes["dependents"].Value.Split(','))
+                    {
+                        temp.Dependents.Add(dependent);
+                    }
+                }
+            }
+
+            // Look for dependents nodes
+            foreach (XmlNode childNode in node.ChildNodes)
+            {
+                if (childNode.Name == "dependents")
+                {
+                    foreach (XmlNode dependent in childNode.ChildNodes)
+                    {
+                        if (dependent.Name == "file")
+                        {
+                            temp.Dependents.Add(dependent.InnerText);
+                        }
+                    }
+                }
+            }
+
+            return temp;
         }
 
         /// <summary>
@@ -668,6 +794,11 @@ namespace XiboClient
             foreach (ScheduleItem layoutSchedule in CurrentSchedule)
             {
                 layoutsInSchedule += "LayoutId: " + layoutSchedule.id + ". Runs from " + layoutSchedule.FromDt.ToString() + Environment.NewLine;
+            }
+
+            foreach (ScheduleItem layoutSchedule in CurrentOverlaySchedule)
+            {
+                layoutsInSchedule += "Overlay LayoutId: " + layoutSchedule.id + ". Runs from " + layoutSchedule.FromDt.ToString() + Environment.NewLine;
             }
 
             return layoutsInSchedule;

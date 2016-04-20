@@ -47,8 +47,20 @@ namespace XiboClient
         public delegate void ScheduleChangeDelegate(string layoutPath, int scheduleId, int layoutId);
         public event ScheduleChangeDelegate ScheduleChangeEvent;
 
+        public delegate void OverlayChangeDelegate(Collection<ScheduleItem> overlays);
+        public event OverlayChangeDelegate OverlayChangeEvent;
+
+        /// <summary>
+        /// Current Schedule of Normal Layouts
+        /// </summary>
         private Collection<ScheduleItem> _layoutSchedule;
         private int _currentLayout = 0;
+
+        /// <summary>
+        /// Current Schedule of Overlay Layouts
+        /// </summary>
+        private Collection<ScheduleItem> _overlaySchedule;
+
         private string _scheduleLocation;
 
         private bool _forceChange = false;
@@ -211,6 +223,7 @@ namespace XiboClient
         /// </summary>
         private void _scheduleManager_OnNewScheduleAvailable()
         {
+            _overlaySchedule = _scheduleManager.CurrentOverlaySchedule;
             _layoutSchedule = _scheduleManager.CurrentSchedule;
 
             // Set the current pointer to 0
@@ -218,6 +231,10 @@ namespace XiboClient
 
             // Raise a schedule change event
             ScheduleChangeEvent(_layoutSchedule[0].layoutFile, _layoutSchedule[0].scheduleid, _layoutSchedule[0].id);
+
+            // Pass a new set of overlay's to subscribers
+            if (OverlayChangeEvent != null)
+                OverlayChangeEvent(_overlaySchedule);
         }
 
         /// <summary>
@@ -225,7 +242,7 @@ namespace XiboClient
         /// </summary>
         void _scheduleManager_OnRefreshSchedule()
         {
-            _layoutSchedule = _scheduleManager.CurrentSchedule;            
+            _layoutSchedule = _scheduleManager.CurrentSchedule;
         }
 
         /// <summary>
@@ -410,6 +427,18 @@ namespace XiboClient
         private void LayoutFileModified(string layoutPath)
         {
             Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "Layout file changed: " + layoutPath), LogType.Info.ToString());
+
+            // Determine if we need to reassess the overlays
+            foreach (ScheduleItem item in _overlaySchedule)
+            {
+                if (item.layoutFile == ApplicationSettings.Default.LibraryPath + @"\" + layoutPath)
+                {
+                    if (OverlayChangeEvent != null)
+                        OverlayChangeEvent(_overlaySchedule);
+
+                    break;
+                }
+            }
 
             // Tell the schedule to refresh
             _scheduleManager.RefreshSchedule = true;

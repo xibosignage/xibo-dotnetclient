@@ -32,6 +32,16 @@ namespace XiboClient
     /// </summary>
     class Region : Panel
     {
+        /// <summary>
+        /// Track regions created as overlays
+        /// </summary>
+        public int scheduleId = 0;
+
+        /// <summary>
+        /// Track a hash of this region at the point it was created
+        /// </summary>
+        public string hash = "";
+
         private BlackList _blackList;
         public delegate void DurationElapsedDelegate();
         public event DurationElapsedDelegate DurationElapsedEvent;
@@ -162,7 +172,9 @@ namespace XiboClient
                 {
                     // For some reason we cannot set a media node... so we need this region to become invalid
                     _hasExpired = true;
-                    DurationElapsedEvent();
+
+                    if (DurationElapsedEvent != null)
+                        DurationElapsedEvent();
                     return;
                 }
 
@@ -286,7 +298,8 @@ namespace XiboClient
                     Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", "Media Expired:" + _options.ToString() + " . Reached the end of the sequence. Starting from the beginning."), LogType.Audit.ToString());
 
                     // Region Expired
-                    DurationElapsedEvent();
+                    if (DurationElapsedEvent != null)
+                        DurationElapsedEvent();
 
                     // We want to continue on to show the next media (unless the duration elapsed event triggers a region change)
                     if (_layoutExpired)
@@ -754,7 +767,8 @@ namespace XiboClient
                 // What do we do if there is an exception moving to the next media node?
                 // For some reason we cannot set a media node... so we need this region to become invalid
                 _hasExpired = true;
-                DurationElapsedEvent();
+                if (DurationElapsedEvent != null)
+                    DurationElapsedEvent();
                 return;
             }
         }
@@ -791,6 +805,35 @@ namespace XiboClient
             {
                 try
                 {
+                    // Tidy up old audio if necessary
+                    foreach (Media audio in _options.Audio)
+                    {
+                        try
+                        {
+                            // Unbind any events and dispose
+                            audio.DurationElapsedEvent -= audio_DurationElapsedEvent;
+                            audio.Dispose();
+                        }
+                        catch
+                        {
+                            Trace.WriteLine(new LogMessage("Region - Dispose", "Unable to dispose of audio item"), LogType.Audit.ToString());
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Region - Dispose", "Unable to dispose audio for media. Ex = " + ex.Message), LogType.Audit.ToString());
+                }
+
+                try
+                {
+                    _options.Dictionary.Clear();
+                    _options.Audio.Clear();
+
+                    // Remove media from Controls
+                    Controls.Remove(_media);
+
+                    // Unbind and dispose
                     _media.DurationElapsedEvent -= media_DurationElapsedEvent;
                     _media.Dispose();
                     _media = null;

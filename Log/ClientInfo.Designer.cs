@@ -48,6 +48,7 @@ namespace XiboClient.Log
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.label3 = new System.Windows.Forms.Label();
             this.xmrStatus = new System.Windows.Forms.Label();
+            this.controlCountLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
@@ -215,11 +216,21 @@ namespace XiboClient.Log
             this.xmrStatus.TabIndex = 11;
             this.xmrStatus.Text = "Not Started";
             // 
+            // controlCountLabel
+            // 
+            this.controlCountLabel.AutoSize = true;
+            this.controlCountLabel.Location = new System.Drawing.Point(785, 319);
+            this.controlCountLabel.Name = "controlCountLabel";
+            this.controlCountLabel.Size = new System.Drawing.Size(13, 13);
+            this.controlCountLabel.TabIndex = 12;
+            this.controlCountLabel.Text = "0";
+            // 
             // ClientInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(810, 676);
+            this.Controls.Add(this.controlCountLabel);
             this.Controls.Add(this.xmrStatus);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.saveLogToDisk);
@@ -257,5 +268,6 @@ namespace XiboClient.Log
         private System.Windows.Forms.SaveFileDialog saveFileDialog;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label xmrStatus;
+        private System.Windows.Forms.Label controlCountLabel;
     }
 }
