@@ -338,7 +338,26 @@ namespace XiboClient
                         // Reassess the schedule
                         _scheduleManager.RunNow();
                     }
-                    
+
+                    break;
+
+                case OverlayLayoutPlayerAction.Name:
+                    // Add to a collection of Layout Change events 
+                    _scheduleManager.AddOverlayLayoutAction(((OverlayLayoutPlayerAction)action));
+
+                    // Assess the schedule now, or later?
+                    if (((OverlayLayoutPlayerAction)action).IsDownloadRequired())
+                    {
+                        // Run XMDS to download the required layouts
+                        // need to notify again once a complete download has occurred.
+                        wakeUpXmds();
+                    }
+                    else
+                    {
+                        // Reassess the schedule
+                        _scheduleManager.RunNow();
+                    }
+
                     break;
             }
         }
@@ -349,7 +368,7 @@ namespace XiboClient
         private void _requiredFilesAgent_OnFullyProvisioned()
         {
             // Mark all layout change actions as downloaded and assess the schedule
-            _scheduleManager.setAllLayoutChangeActionsDownloaded();
+            _scheduleManager.setAllActionsDownloaded();
             _scheduleManager.RunNow();
         }
 
@@ -376,7 +395,7 @@ namespace XiboClient
             // therefore we should return out of this and kick off a schedule manager cycle, which will set the new layout.
             try
             {
-                if (_scheduleManager.isLayoutChangeActionComplete(_layoutSchedule[previousLayout]))
+                if (_scheduleManager.removeLayoutChangeActionIfComplete(_layoutSchedule[previousLayout]))
                 {
                     _scheduleManager.RunNow();
                     return;

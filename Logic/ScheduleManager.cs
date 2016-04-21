@@ -65,6 +65,7 @@ namespace XiboClient
         // Member Varialbes
         private string _location;
         private Collection<LayoutChangePlayerAction> _layoutChangeActions;
+        private Collection<OverlayLayoutPlayerAction> _overlayLayoutActions;
         private Collection<ScheduleItem> _layoutSchedule;
         private Collection<ScheduleItem> _currentSchedule;
         private Collection<ScheduleCommand> _commands;
@@ -105,6 +106,7 @@ namespace XiboClient
             // Overlay schedules
             _currentOverlaySchedule = new Collection<ScheduleItem>();
             _overlaySchedule = new Collection<ScheduleItem>();
+            _overlayLayoutActions = new Collection<OverlayLayoutPlayerAction>();
 
             _lastScreenShotDate = DateTime.MinValue;
         }
@@ -259,6 +261,9 @@ namespace XiboClient
         /// <returns></returns>
         private bool IsNewScheduleAvailable()
         {
+            // Remove completed overlay actions
+            removeOverlayLayoutActionIfComplete();
+
             // If we dont currently have a cached schedule load one from the scheduleLocation
             // also do this if we have been told to Refresh the schedule
             if (_layoutSchedule.Count == 0 || RefreshSchedule)
@@ -280,6 +285,9 @@ namespace XiboClient
 
                     // Load in the layout change actions
                     LoadScheduleFromLayoutChangeActions();
+
+                    // Load in the overlay actions
+                    LoadScheduleFromOverlayLayoutActions();
                 }
                 catch (Exception ex)
                 {
@@ -464,6 +472,7 @@ namespace XiboClient
             // We need to build the current schedule from the layout schedule (obeying date/time)
             Collection<ScheduleItem> newSchedule = new Collection<ScheduleItem>();
             Collection<ScheduleItem> prioritySchedule = new Collection<ScheduleItem>();
+            Collection<ScheduleItem> overlayActionSchedule = new Collection<ScheduleItem>();
             
             // Store the valid layout id's
             List<int> validLayoutIds = new List<int>();
@@ -519,7 +528,11 @@ namespace XiboClient
                 if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)
                 {
                     // Change Action and Priority layouts should generate their own list
-                    if (layout.Priority >= 1)
+                    if (layout.Override)
+                    {
+                        overlayActionSchedule.Add(layout);
+                    }
+                    else if (layout.Priority >= 1)
                     {
                         // Is this higher than our priority already?
                         if (layout.Priority > highestPriority)
@@ -541,6 +554,10 @@ namespace XiboClient
                     }
                 }
             }
+
+            // Have we got any overlay actions
+            if (overlayActionSchedule.Count > 0)
+                return overlayActionSchedule;
 
             // If we have any priority schedules then we need to return those instead
             if (prioritySchedule.Count > 0)
@@ -724,6 +741,37 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Load schedule from layout change actions
+        /// </summary>
+        private void LoadScheduleFromOverlayLayoutActions()
+        {
+            if (_overlayLayoutActions.Count <= 0)
+                return;
+
+            // Loop through the layout change actions and create schedule items for them
+            foreach (OverlayLayoutPlayerAction action in _overlayLayoutActions)
+            {
+                removeOverlayLayoutActionIfComplete();
+
+                if (action.downloadRequired)
+                    continue;
+
+                ScheduleItem item = new ScheduleItem();
+                item.FromDt = DateTime.MinValue;
+                item.ToDt = DateTime.MaxValue;
+                item.id = action.layoutId;
+                item.scheduleid = action.layoutId;
+                item.actionId = action.GetId();
+                item.Priority = 0;
+                item.Override = true;
+                item.NodeName = "layout";
+                item.layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + item.id + @".xlf";
+
+                _overlaySchedule.Add(item);
+            }
+        }
+
+        /// <summary>
         /// Sets an empty schedule into the _layoutSchedule Collection
         /// </summary>
         private void SetEmptySchedule()
@@ -876,7 +924,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        public bool isLayoutChangeActionComplete(ScheduleItem item)
+        public bool removeLayoutChangeActionIfComplete(ScheduleItem item)
         {
             // Check each Layout Change Action we own and compare to the current item
             foreach (LayoutChangePlayerAction action in _layoutChangeActions)
@@ -904,11 +952,47 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Add an overlay layout action
+        /// </summary>
+        /// <param name="action"></param>
+        public void AddOverlayLayoutAction(OverlayLayoutPlayerAction action)
+        {
+            _overlayLayoutActions.Add(action);
+            RefreshSchedule = true;
+        }
+
+        /// <summary>
+        /// Remove Overlay Layout Actions if they are complete
+        /// </summary>
+        /// <param name="item"></param>
+        public void removeOverlayLayoutActionIfComplete()
+        {
+            // Check each Layout Change Action we own and compare to the current item
+            foreach (OverlayLayoutPlayerAction action in _overlayLayoutActions)
+            {
+                if (action.IsServiced())
+                {
+                    _overlayLayoutActions.Remove(action);
+                    RefreshSchedule = true;
+                }
+            }
+        }
+
+        /// <summary>
         /// Set all Layout Change Actions to be downloaded
         /// </summary>
-        public void setAllLayoutChangeActionsDownloaded()
+        public void setAllActionsDownloaded()
         {
             foreach (LayoutChangePlayerAction action in _layoutChangeActions)
+            {
+                if (action.downloadRequired)
+                {
+                    action.downloadRequired = false;
+                    RefreshSchedule = true;
+                }
+            }
+
+            foreach (OverlayLayoutPlayerAction action in _overlayLayoutActions)
             {
                 if (action.downloadRequired)
                 {

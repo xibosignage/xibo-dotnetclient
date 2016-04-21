@@ -128,15 +128,24 @@ namespace XiboClient.Logic
 
                                         case "collectNow":
                                         case RevertToSchedulePlayerAction.Name:
-                                            OnAction(action);
+                                            if (OnAction != null)
+                                                OnAction(action);
                                             break;
 
                                         case LayoutChangePlayerAction.Name:
 
                                             LayoutChangePlayerAction changeLayout = JsonConvert.DeserializeObject<LayoutChangePlayerAction>(opened);
 
-                                            OnAction(changeLayout);
+                                            if (OnAction != null)
+                                                OnAction(changeLayout);
 
+                                            break;
+
+                                        case OverlayLayoutPlayerAction.Name:
+                                            OverlayLayoutPlayerAction overlayLayout = JsonConvert.DeserializeObject<OverlayLayoutPlayerAction>(opened);
+                                            
+                                            if (OnAction != null)
+                                                OnAction(overlayLayout);
                                             break;
 
                                         case "screenShot":

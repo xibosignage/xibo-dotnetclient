@@ -1039,6 +1039,7 @@ namespace XiboClient
 
                     if (!found)
                     {
+                        Debug.WriteLine("Removing overlay which is no-longer required. Overlay: " + region.scheduleId, "Overlays");
                         region.Clear();
                         region.Dispose();
                         Controls.Remove(region);

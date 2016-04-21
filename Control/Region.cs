@@ -810,6 +810,8 @@ namespace XiboClient
                     {
                         try
                         {
+                            Debug.WriteLine("Removing audio on region dispose", "Region");
+
                             // Unbind any events and dispose
                             audio.DurationElapsedEvent -= audio_DurationElapsedEvent;
                             audio.Dispose();
@@ -829,6 +831,8 @@ namespace XiboClient
                 {
                     _options.Dictionary.Clear();
                     _options.Audio.Clear();
+
+                    Debug.WriteLine("Removing media on region dispose", "Region");
 
                     // Remove media from Controls
                     Controls.Remove(_media);

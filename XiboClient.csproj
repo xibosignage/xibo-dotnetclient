@@ -109,6 +109,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Action\OverlayLayoutPlayerAction.cs" />
     <Compile Include="Action\LayoutChangePlayerAction.cs" />
     <Compile Include="Action\PlayerAction.cs" />
     <Compile Include="Action\PlayerActionInterface.cs" />
