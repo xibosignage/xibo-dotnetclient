@@ -17,7 +17,7 @@ namespace XiboClient.Logic
         public int scheduleid;
         public Guid actionId;
 
-        public bool Priority;
+        public int Priority;
         public bool Override;
 
         public DateTime FromDt;

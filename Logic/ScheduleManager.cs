@@ -354,6 +354,9 @@ namespace XiboClient
             List<int> validLayoutIds = new List<int>();
             List<int> invalidLayouts = new List<int>();
 
+            // Store the highest priority
+            int highestPriority = 0;
+
             // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
             foreach (ScheduleItem layout in _layoutSchedule)
             {
@@ -413,9 +416,22 @@ namespace XiboClient
                     {
                         layoutChangeSchedule.Add(layout);
                     }
-                    else if (layout.Priority)
+                    else if (layout.Priority >= 1)
                     {
-                        prioritySchedule.Add(layout);
+                        // Is this higher than our priority already?
+                        if (layout.Priority > highestPriority)
+                        {
+                            prioritySchedule.Clear();
+                            prioritySchedule.Add(layout);
+
+                            // Store the new highest priority
+                            highestPriority = layout.Priority;
+                        }
+                        else if (layout.Priority == highestPriority)
+                        {
+                            prioritySchedule.Add(layout);
+                        }
+                        // Layouts with a priority lower than the current highest are discarded.
                     }
                     else
                     {
@@ -452,6 +468,9 @@ namespace XiboClient
             // Store the valid layout id's
             List<int> validLayoutIds = new List<int>();
             List<int> invalidLayouts = new List<int>();
+
+            // Store the highest priority
+            int highestPriority = 1;
 
             // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
             foreach (ScheduleItem layout in _overlaySchedule)
@@ -500,9 +519,21 @@ namespace XiboClient
                 if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)
                 {
                     // Change Action and Priority layouts should generate their own list
-                    if (layout.Priority)
+                    if (layout.Priority >= 1)
                     {
-                        prioritySchedule.Add(layout);
+                        // Is this higher than our priority already?
+                        if (layout.Priority > highestPriority)
+                        {
+                            prioritySchedule.Clear();
+                            prioritySchedule.Add(layout);
+
+                            // Store the new highest priority
+                            highestPriority = layout.Priority;
+                        }
+                        else if (layout.Priority == highestPriority)
+                        {
+                            prioritySchedule.Add(layout);
+                        }
                     }
                     else
                     {
@@ -615,7 +646,14 @@ namespace XiboClient
             if (temp.NodeName != "default")
             {
                 // Priority flag
-                temp.Priority = (attributes["priority"].Value == "1") ? true : false;
+                try
+                {
+                    temp.Priority = int.Parse(attributes["priority"].Value);
+                }
+                catch
+                {
+                    temp.Priority = 0;
+                }
 
                 // Get the fromdt,todt
                 temp.FromDt = DateTime.Parse(attributes["fromdt"].Value, CultureInfo.InvariantCulture);
@@ -676,7 +714,7 @@ namespace XiboClient
                 item.id = action.layoutId;
                 item.scheduleid = 0;
                 item.actionId = action.GetId();
-                item.Priority = false;
+                item.Priority = 0;
                 item.Override = true;
                 item.NodeName = "layout";
                 item.layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + item.id + @".xlf";
