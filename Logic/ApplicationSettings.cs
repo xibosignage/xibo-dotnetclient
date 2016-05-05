@@ -168,12 +168,12 @@ namespace XiboClient
         public string DownloadEndWindow { get; set; }
 
         // Embedded web server config
-        public string EmbeddedServerUrl { get; set; }
+        public int EmbeddedServerPort { get; set; }
         public string EmbeddedServerAddress 
         { 
             get 
             {
-                return (string.IsNullOrEmpty(EmbeddedServerUrl)) ? "http://localhost:9696/" : EmbeddedServerUrl;
+                return "http://localhost:" + ((EmbeddedServerPort == 0) ? 9696 : EmbeddedServerPort) + "/";
             }
         }
 

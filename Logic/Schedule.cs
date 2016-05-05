@@ -523,7 +523,7 @@ namespace XiboClient
         /// </summary>
         void _server_OnServerClosed()
         {
-            if (!_stopCalled)
+            if (!_stopCalled && _serverThread != null && !_serverThread.IsAlive)
             {
                 // We've stopped and we shouldn't have
                 _serverThread.Start();
