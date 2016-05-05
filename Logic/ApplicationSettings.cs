@@ -167,6 +167,16 @@ namespace XiboClient
         public string DownloadStartWindow { get; set; }
         public string DownloadEndWindow { get; set; }
 
+        // Embedded web server config
+        public string EmbeddedServerUrl { get; set; }
+        public string EmbeddedServerAddress 
+        { 
+            get 
+            {
+                return (string.IsNullOrEmpty(EmbeddedServerUrl)) ? "http://localhost:9696/" : EmbeddedServerUrl;
+            }
+        }
+
         public DateTime DownloadStartWindowTime
         {
             get

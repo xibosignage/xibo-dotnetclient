@@ -33,6 +33,7 @@ namespace XiboClient
     {
         private bool _disposed = false;
         private string _filePath;
+        private string _localWebPath;
         private RegionOptions _options;
         private WebBrowser _webBrowser;
         private int _documentCompletedCount = 0;
@@ -58,6 +59,7 @@ namespace XiboClient
             {
                 // Set the file path
                 _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
+                _localWebPath = ApplicationSettings.Default.EmbeddedServerAddress + _options.mediaid + ".htm";
             }
 
             // Create the web view we will use
@@ -79,7 +81,7 @@ namespace XiboClient
                 ReadControlMeta();
 
                 // Navigate to temp file
-                _webBrowser.Navigate(_filePath);
+                _webBrowser.Navigate(_localWebPath);
             }
             else
             {
@@ -234,7 +236,7 @@ namespace XiboClient
                             UpdateCacheIfNecessary();
 
                             // Navigate to the file
-                            _webBrowser.Navigate(_filePath);
+                            _webBrowser.Navigate(_localWebPath);
                         }
                         else
                         {
@@ -285,7 +287,7 @@ namespace XiboClient
                         ReadControlMeta();
 
                         // Handle Navigate in here because we will not have done it during first load
-                        _webBrowser.Navigate(_filePath);
+                        _webBrowser.Navigate(_localWebPath);
                     }
                 }
             }

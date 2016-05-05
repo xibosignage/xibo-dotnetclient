@@ -33,6 +33,7 @@ using XiboClient.Properties;
 using XiboClient.Log;
 using XiboClient.Logic;
 using XiboClient.Action;
+using XiboClient.Control;
 
 /// 17/02/12 Dan Removed Schedule call, introduced ScheduleAgent
 /// 21/02/12 Dan Named the threads
@@ -64,6 +65,11 @@ namespace XiboClient
         private string _scheduleLocation;
 
         private bool _forceChange = false;
+
+        /// <summary>
+        /// Has stop been called?
+        /// </summary>
+        private bool _stopCalled = false;
 
         // Key
         private HardwareKey _hardwareKey;
@@ -98,6 +104,10 @@ namespace XiboClient
         // XMR Subscriber
         private XmrSubscriber _xmrSubscriber;
         Thread _xmrSubscriberThread;
+
+        // Local Web Server
+        private EmbeddedServer _server;
+        Thread _serverThread;
 
         /// <summary>
         /// Client Info Form
@@ -189,6 +199,13 @@ namespace XiboClient
             // Thread start
             _xmrSubscriberThread = new Thread(new ThreadStart(_xmrSubscriber.Run));
             _xmrSubscriberThread.Name = "XmrSubscriber";
+
+            // Embedded Server
+            _server = new EmbeddedServer();
+            _server.ClientInfoForm = _clientInfoForm;
+            _server.OnServerClosed += _server_OnServerClosed;
+            _serverThread = new Thread(new ThreadStart(_server.Run));
+            _serverThread.Name = "EmbeddedServer";
         }
 
         /// <summary>
@@ -216,6 +233,9 @@ namespace XiboClient
 
             // Start the subscriber thread
             _xmrSubscriberThread.Start();
+
+            // Start the embedded server thread
+            _serverThread.Start();
         }
 
         /// <summary>
@@ -499,10 +519,25 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// On Server Closed Event
+        /// </summary>
+        void _server_OnServerClosed()
+        {
+            if (!_stopCalled)
+            {
+                // We've stopped and we shouldn't have
+                _serverThread.Start();
+            }
+        }
+
+        /// <summary>
         /// Stops the Schedule Object
         /// </summary>
         public void Stop()
         {
+            // Stop has been called
+            _stopCalled = true;
+
             // Stop the register agent
             _registerAgent.Stop();
 
@@ -523,6 +558,9 @@ namespace XiboClient
 
             // Stop the subsriber thread
             _xmrSubscriberThread.Abort();
+
+            // Stop the embedded server
+            _server.Stop();
         }
     }
 }

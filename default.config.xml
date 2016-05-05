@@ -52,4 +52,5 @@
   <DownloadEndWindow></DownloadEndWindow>
   <DisplayTimeZone></DisplayTimeZone>
   <XmrNetworkAddress></XmrNetworkAddress>
+  <EmbeddedServerUrl>http://localhost:9696/</EmbeddedServerUrl>
 </ApplicationSettings>
