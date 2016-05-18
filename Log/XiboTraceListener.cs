@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2015 Daniel Garner, Spring Signage Ltd
+ * Copyright (C) 2006-2016 Daniel Garner, Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -104,7 +104,7 @@ namespace XiboClient
             });
 
             // Flush if we have build up a backlog.
-            if (_traceMessages.Count > 25)
+            if (_traceMessages.Count > ((ApplicationSettings.Default.LogLevel == "audit") ? 100 : 25))
                 Flush();
         }
 

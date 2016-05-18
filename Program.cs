@@ -187,19 +187,23 @@ namespace XiboClient
 
         static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
-            HandleUnhandledException(e);
+            HandleUnhandledException(e.Exception);
         }
 
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            HandleUnhandledException(e);
+            HandleUnhandledException(e.ExceptionObject);
         }
 
         static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            HandleUnhandledException(e);
+            HandleUnhandledException(e.Exception);
         }
 
+        /// <summary>
+        /// Event for unhandled exceptions
+        /// </summary>
+        /// <param name="o"></param>
         static void HandleUnhandledException(Object o)
         {
             Exception e = o as Exception;
@@ -208,17 +212,25 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
             Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
 
-            // Also write to the event log
-            if (!EventLog.SourceExists(Application.ProductName))
-                EventLog.CreateEventSource(Application.ProductName, "Xibo");
+            try
+            {
+                // Also write to the event log
+                if (!EventLog.SourceExists(Application.ProductName))
+                    EventLog.CreateEventSource(Application.ProductName, "Xibo");
 
-            EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
+                EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
 
-            // Shutdown the application
-            if (ApplicationSettings.Default.UseCefWebBrowser)
-                CefRuntime.Shutdown();
+                // Shutdown the application
+                if (ApplicationSettings.Default.UseCefWebBrowser)
+                    CefRuntime.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Error.ToString());
+            }
 
-            Environment.Exit(1);
+            // Try to restart
+            Application.Restart();
         }
 
         [DllImport("User32.dll")]

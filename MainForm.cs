@@ -234,9 +234,13 @@ namespace XiboClient
             {
                 // Toggle
                 if (_clientInfoForm.Visible)
+                {
                     _clientInfoForm.Hide();
+                    TopMost = true;
+                }
                 else
                 {
+                    TopMost = false;
                     _clientInfoForm.Show();
                     _clientInfoForm.BringToFront();
                 }

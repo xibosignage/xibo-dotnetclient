@@ -236,7 +236,7 @@ namespace XiboClient
         public int ScreenShotRequestInterval { get; set; }
 
         private int _maxLogFileUploads;
-        public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 3 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }
+        public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 10 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }
 
         public bool PowerpointEnabled { get; set; }
         public bool StatsEnabled { get; set; }
