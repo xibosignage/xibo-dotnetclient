@@ -24,6 +24,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Xilium.CefGlue;
 using XiboClient.Logic;
+using System.Threading.Tasks;
 
 namespace XiboClient
 {
@@ -74,6 +75,14 @@ namespace XiboClient
 
             Application.SetCompatibleTextRenderingDefault(false);
 
+#if !DEBUG
+            // Catch unhandled exceptions
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+            Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+#endif
+
+            // Add the Xibo Tracelistener
             Trace.Listeners.Add(new XiboTraceListener());
 
             try
@@ -139,10 +148,6 @@ namespace XiboClient
                 HandleUnhandledException(ex);
             }
 
-            // Catch unhandled exceptions
-            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
-            Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
-
             // Always flush at the end
             Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
             Trace.Flush();
@@ -190,6 +195,11 @@ namespace XiboClient
             HandleUnhandledException(e);
         }
 
+        static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            HandleUnhandledException(e);
+        }
+
         static void HandleUnhandledException(Object o)
         {
             Exception e = o as Exception;
@@ -198,7 +208,11 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
             Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
 
-            // TODO: Can we just restart the application?
+            // Also write to the event log
+            if (!EventLog.SourceExists(Application.ProductName))
+                EventLog.CreateEventSource(Application.ProductName, "Xibo");
+
+            EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
 
             // Shutdown the application
             if (ApplicationSettings.Default.UseCefWebBrowser)

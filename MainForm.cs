@@ -310,6 +310,11 @@ namespace XiboClient
             // Change the default Proxy class
             OptionForm.SetGlobalProxy();
 
+            // Set this form to topmost
+#if !DEBUG
+            TopMost = true;
+#endif
+
             // UserApp data
             Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + ApplicationSettings.Default.LibraryPath), LogType.Info.ToString());
         }
