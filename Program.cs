@@ -149,17 +149,17 @@ namespace XiboClient
 
         static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
-            HandleUnhandledException(e);
+            HandleUnhandledException(e.Exception);
         }
 
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            HandleUnhandledException(e);
+            HandleUnhandledException(e.ExceptionObject);
         }
 
         static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            HandleUnhandledException(e);
+            HandleUnhandledException(e.Exception);
         }
 
         static void HandleUnhandledException(Object o)
@@ -171,10 +171,19 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
 
             // Also write to the event log
-            if (!EventLog.SourceExists(Application.ProductName))
-                EventLog.CreateEventSource(Application.ProductName, "Xibo");
+            try
+            {
+                if (!EventLog.SourceExists(Application.ProductName))
+                    EventLog.CreateEventSource(Application.ProductName, "Xibo");
 
-            EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
+                EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("Main", "Couldn't write to event log: " + ex.Message), LogType.Error.ToString());
+            }
+
+            Trace.Flush();
 
             Environment.Exit(1);
         }

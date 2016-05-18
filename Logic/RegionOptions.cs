@@ -26,8 +26,9 @@ namespace XiboClient
 {
     /// <summary>
     /// The options specific to a region
+    ///     NOTE: Don't change this to a class
     /// </summary>
-    class RegionOptions
+    struct RegionOptions
     {
         public double scaleFactor;
         public int width;
@@ -75,7 +76,21 @@ namespace XiboClient
         /// <summary>
         /// Audio associated with the widget
         /// </summary>
-        public List<Media> Audio = new List<Media>();
+        public List<Media> Audio
+        {
+            get
+            {
+                if (_audio == null)
+                    _audio = new List<Media>();
+
+                return _audio;
+            }
+            set
+            {
+                _audio = value;
+            }
+        }
+        private List<Media> _audio;
 
         public override string ToString()
         {
