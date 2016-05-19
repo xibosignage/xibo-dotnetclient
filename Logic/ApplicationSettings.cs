@@ -85,7 +85,15 @@ namespace XiboClient
                 }
                 catch (Exception e)
                 {
-                    MessageBox.Show(string.Format("{0}. Path: {1}.", e.Message, path + Path.DirectorySeparatorChar + fileName));
+                    if (File.Exists(path + Path.DirectorySeparatorChar + fileName + ".bak"))
+                    {
+                        if (File.Exists(path + Path.DirectorySeparatorChar + fileName))
+                            File.Delete(path + Path.DirectorySeparatorChar + fileName);
+
+                        File.Copy(path + Path.DirectorySeparatorChar + fileName + ".bak", path + Path.DirectorySeparatorChar + fileName);
+                    }
+
+                    MessageBox.Show(string.Format("Corrupted configuration file, will try to restore from backup. Please restart. Message: {0}. Path: {1}.", e.Message, path + Path.DirectorySeparatorChar + fileName));
                     throw;
                 }
             }
@@ -103,6 +111,9 @@ namespace XiboClient
                 Path.GetFileNameWithoutExtension(Application.ExecutablePath) + '.' + _fileSuffix;
 
             // Copy the old settings file to a backup
+            if (File.Exists(path + ".bak"))
+                File.Delete(path + ".bak");
+
             File.Copy(path, path + ".bak");
 
             // Serialise into a new file
@@ -112,6 +123,9 @@ namespace XiboClient
             }
 
             // If we've done that successfully, then move the new file into the original
+            if (File.Exists(path))
+                File.Delete(path);
+
             File.Move(path + ".new", path);
         }
 

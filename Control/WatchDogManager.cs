@@ -14,13 +14,14 @@ namespace XiboClient.Control
         {
             // Check to see if the WatchDog EXE exists where we expect it to be
             string path = Path.GetDirectoryName(Application.ExecutablePath) + @"\watchdog\x86\XiboClientWatchdog.exe";
+            string args = "-p \"" + Application.ExecutablePath + "\" -l \"" + ApplicationSettings.Default.LibraryPath + "\"";
 
             // Start it
             if (File.Exists(path))
             {
                 try
                 {
-                    Process.Start(path, "-p " + Application.ExecutablePath + " -l " + ApplicationSettings.Default.LibraryPath);
+                    Process.Start(path, args);
                 }
                 catch (Exception e)
                 {
