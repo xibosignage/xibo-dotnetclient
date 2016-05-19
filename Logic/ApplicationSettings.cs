@@ -97,13 +97,22 @@ namespace XiboClient
                 return;
 
             XmlSerializer serial = new XmlSerializer(typeof(ApplicationSettings));
-            string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath) + '.' + _fileSuffix;
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) +
+                Path.DirectorySeparatorChar +
+                Path.GetFileNameWithoutExtension(Application.ExecutablePath) + '.' + _fileSuffix;
 
-            using (StreamWriter sr = new StreamWriter(path + Path.DirectorySeparatorChar + fileName))
+            // Copy the old settings file to a backup
+            File.Copy(path, path + ".bak");
+
+            // Serialise into a new file
+            using (StreamWriter sr = new StreamWriter(path + ".new"))
             {
                 serial.Serialize(sr, _instance);
             }
+
+            // If we've done that successfully, then move the new file into the original
+            File.Move(path + ".new", path);
         }
 
         public object this[string propertyName]
