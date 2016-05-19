@@ -31,7 +31,6 @@ namespace XiboClient.Log
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ClientInfo));
             this.logDataGridView = new System.Windows.Forms.DataGridView();
             this.Thread = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Date = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -208,7 +207,6 @@ namespace XiboClient.Log
             this.Controls.Add(this.scheduleStatusLabel);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.logDataGridView);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "ClientInfo";
             this.Text = "Player Information and Status";
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).EndInit();

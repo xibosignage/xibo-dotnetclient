@@ -103,6 +103,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Control\WatchDogManager.cs" />
     <Compile Include="Control\XiboCefWebBrowser.cs">
       <SubType>Component</SubType>
     </Compile>

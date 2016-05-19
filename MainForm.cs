@@ -39,6 +39,7 @@ using System.Runtime.InteropServices;
 using System.Globalization;
 using Xilium.CefGlue;
 using XiboClient.Logic;
+using XiboClient.Control;
 
 namespace XiboClient
 {
@@ -201,6 +202,11 @@ namespace XiboClient
                 TextWriterTraceListener listener = new TextWriterTraceListener(ApplicationSettings.Default.LogToDiskLocation);
                 Trace.Listeners.Add(listener);
             }
+
+#if !DEBUG
+            // Initialise the watchdog
+            WatchDogManager.Start();
+#endif
             
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
         }
