@@ -205,6 +205,10 @@ namespace XiboClient
 
 #if !DEBUG
             // Initialise the watchdog
+            // Update/write the status.json file
+            File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
+
+            // Start watchdog
             WatchDogManager.Start();
 #endif
             
@@ -242,11 +246,15 @@ namespace XiboClient
                 if (_clientInfoForm.Visible)
                 {
                     _clientInfoForm.Hide();
+#if !DEBUG
                     TopMost = true;
+#endif
                 }
                 else
                 {
+#if !DEBUG
                     TopMost = false;
+#endif
                     _clientInfoForm.Show();
                     _clientInfoForm.BringToFront();
                 }
