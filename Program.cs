@@ -36,6 +36,11 @@ namespace XiboClient
         [STAThread]
         static int Main(string[] args)
         {
+            NativeMethods.SetErrorMode(NativeMethods.SetErrorMode(0) |
+                           ErrorModes.SEM_NOGPFAULTERRORBOX |
+                           ErrorModes.SEM_FAILCRITICALERRORS |
+                           ErrorModes.SEM_NOOPENFILEERRORBOX);
+
             // Do we need to initialise CEF?
             if (ApplicationSettings.Default.UseCefWebBrowser)
             {
@@ -235,5 +240,21 @@ namespace XiboClient
 
         [DllImport("User32.dll")]
         public static extern int ShowWindowAsync(IntPtr hWnd , int swCommand);
+
+        internal static class NativeMethods
+        {
+            [DllImport("kernel32.dll")]
+            internal static extern ErrorModes SetErrorMode(ErrorModes mode);
+        }
+
+        [Flags]
+        internal enum ErrorModes : uint
+        {
+            SYSTEM_DEFAULT = 0x0,
+            SEM_FAILCRITICALERRORS = 0x0001,
+            SEM_NOALIGNMENTFAULTEXCEPT = 0x0004,
+            SEM_NOGPFAULTERRORBOX = 0x0002,
+            SEM_NOOPENFILEERRORBOX = 0x8000
+        }
     }
 }
