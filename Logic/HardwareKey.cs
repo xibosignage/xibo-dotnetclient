@@ -132,7 +132,7 @@ namespace XiboClient
             {
                 if (nic.OperationalStatus == OperationalStatus.Up)
                 {
-                    macAddresses += nic.GetPhysicalAddress().ToString();
+                    macAddresses += BitConverter.ToString(nic.GetPhysicalAddress().GetAddressBytes()).Replace('-', ':');
                     break;
                 }
             }
