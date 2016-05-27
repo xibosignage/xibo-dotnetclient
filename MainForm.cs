@@ -476,14 +476,14 @@ namespace XiboClient
                 try
                 {
                     PrepareLayout(layoutPath);
-                    _clientInfoForm.CurrentLayoutId = layoutPath;
 
+                    _clientInfoForm.CurrentLayoutId = layoutPath;
                 }
                 catch (Exception e)
                 {
                     DestroyLayout();
                     Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Prepare Layout Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
-                    throw e;
+                    throw;
                 }
 
                 // Do we need to notify?
@@ -501,7 +501,7 @@ namespace XiboClient
                 catch (Exception e)
                 {
                     Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Notify Status Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
-                    throw e;
+                    throw;
                 }
             }
             catch (Exception ex)
@@ -509,17 +509,15 @@ namespace XiboClient
                 Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
 
                 if (!_showingSplash)
-                {
                     ShowSplashScreen();
+                
+                // In 10 seconds fire the next layout
+                System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+                timer.Interval = 10000;
+                timer.Tick += new EventHandler(splashScreenTimer_Tick);
 
-                    // In 10 seconds fire the next layout?
-                    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-                    timer.Interval = 15000;
-                    timer.Tick += new EventHandler(splashScreenTimer_Tick);
-
-                    // Start the timer
-                    timer.Start();
-                }
+                // Start the timer
+                timer.Start();
             }
 
             // We have finished changing the layout
@@ -538,8 +536,6 @@ namespace XiboClient
             System.Windows.Forms.Timer timer = (System.Windows.Forms.Timer)sender;
             timer.Stop();
             timer.Dispose();
-
-            _showingSplash = false;
 
             _schedule.NextLayout();
         }
@@ -560,9 +556,9 @@ namespace XiboClient
             }
             else
             {
+                // try to open the layout file
                 try
                 {
-                    // try to open the layout file
                     using (FileStream fs = File.Open(layoutPath, FileMode.Open, FileAccess.Read, FileShare.Write))
                     {
                         using (XmlReader reader = XmlReader.Create(fs))
@@ -573,14 +569,14 @@ namespace XiboClient
                         }
                         fs.Close();
                     }
-
-                    layoutModifiedTime = File.GetLastWriteTime(layoutPath);
                 }
-                catch (Exception ex)
+                catch (IOException ioEx) 
                 {
-                    Trace.WriteLine(string.Format("Could not find the layout file {0}: {1}", layoutPath, ex.Message));
+                    Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "IOException: " + ioEx.ToString()), LogType.Error.ToString());
                     throw;
                 }
+
+                layoutModifiedTime = File.GetLastWriteTime(layoutPath);
             }
 
             // Attributes of the main layout node
@@ -755,6 +751,9 @@ namespace XiboClient
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
             }
+
+            // We have loaded a layout and therefore are no longer showing the splash screen
+            _showingSplash = false;
 
             // Null stuff
             listRegions = null;
