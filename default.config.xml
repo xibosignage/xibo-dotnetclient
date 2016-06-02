@@ -51,4 +51,5 @@
   <ScreenShotRequestInterval>0</ScreenShotRequestInterval>
   <DownloadWindowStartTime>0</DownloadWindowStartTime>
   <DownloadWindowEndTime>0</DownloadWindowEndTime>
+  <PreventSleep>1</PreventSleep>
 </ApplicationSettings>
