@@ -116,8 +116,8 @@ namespace XiboClient
             ApplicationSettings.Default.OffsetX = 0;
             ApplicationSettings.Default.OffsetY = 0;
 
-            InitializeXibo();
             InitializeScreenSaver(true);
+            InitializeXibo();
         }
 
         public MainForm(bool screenSaver)
@@ -205,11 +205,14 @@ namespace XiboClient
 
 #if !DEBUG
             // Initialise the watchdog
-            // Update/write the status.json file
-            File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
+            if (!_screenSaver)
+            {
+                // Update/write the status.json file
+                File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
 
-            // Start watchdog
-            WatchDogManager.Start();
+                // Start watchdog
+                WatchDogManager.Start();
+            }
 #endif
             
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
@@ -330,7 +333,8 @@ namespace XiboClient
 
             // Set this form to topmost
 #if !DEBUG
-            TopMost = true;
+            if (!_screenSaver)
+                TopMost = true;
 #endif
 
             // UserApp data
@@ -443,7 +447,7 @@ namespace XiboClient
         /// </summary>
         private void ChangeToNextLayout(string layoutPath)
         {
-            if (!ApplicationSettings.Default.PreventSleep)
+            if (ApplicationSettings.Default.PreventSleep)
             {
                 try
                 {
