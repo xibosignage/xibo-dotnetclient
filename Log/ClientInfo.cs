@@ -95,7 +95,7 @@ namespace XiboClient.Log
         public ClientInfo()
         {
             InitializeComponent();
-
+            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             MaximizeBox = false;
             MinimizeBox = false;
 

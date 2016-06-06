@@ -28,7 +28,6 @@ namespace XiboClient
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(OptionForm));
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
@@ -463,10 +462,9 @@ namespace XiboClient
             this.Controls.Add(this.buttonDisplayAdmin);
             this.Controls.Add(this.menuStrip1);
             this.Controls.Add(this.buttonSaveSettings);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "OptionForm";
-            this.Text = "Xibo Player Options";
+            this.Text = "Player Options";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.tabControl1.ResumeLayout(false);

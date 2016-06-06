@@ -87,10 +87,13 @@ namespace XiboClient
             _resourceTemplate = _resourceTemplate.Replace("<!--[[[BODYCONTENT]]]-->", _fileContent);
 
             // Write it to the file
-            using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8))
+            using (FileStream fileStream = File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
             {
-                sw.Write(_resourceTemplate);
-                sw.Close();
+                using (StreamWriter sw = new StreamWriter(fileStream, Encoding.UTF8))
+                {
+                    sw.Write(_resourceTemplate);
+                    sw.Close();
+                }
             }
         }
 
