@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2015 Daniel Garner, Spring Signage Ltd
+ * Copyright (C) 2006-2016 Daniel Garner, Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -104,7 +104,7 @@ namespace XiboClient
             });
 
             // Flush if we have build up a backlog.
-            if (_traceMessages.Count > 25)
+            if (_traceMessages.Count > ((ApplicationSettings.Default.LogLevel == "audit") ? 100 : 25))
                 Flush();
         }
 
@@ -116,16 +116,19 @@ namespace XiboClient
             try
             {
                 // Open the Text Writer
-                using (StreamWriter tw = new StreamWriter(File.Open(string.Format("{0}_{1}", _logPath, DateTime.Now.ToFileTimeUtc().ToString()), FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8))
+                using (FileStream fileStream = File.Open(string.Format("{0}_{1}", _logPath, DateTime.Now.ToFileTimeUtc().ToString()), FileMode.Append, FileAccess.Write, FileShare.Read))
                 {
-                    string theMessage;
-
-                    foreach (TraceMessage message in _traceMessages)
+                    using (StreamWriter tw = new StreamWriter(fileStream, Encoding.UTF8))
                     {
-                        string traceMsg = message.message.ToString();
+                        string theMessage;
 
-                        theMessage = string.Format("<trace date=\"{0}\" category=\"{1}\">{2}</trace>", message.dateTime, message.category, traceMsg);
-                        tw.WriteLine(theMessage);
+                        foreach (TraceMessage message in _traceMessages)
+                        {
+                            string traceMsg = message.message.ToString();
+
+                            theMessage = string.Format("<trace date=\"{0}\" category=\"{1}\">{2}</trace>", message.dateTime, message.category, traceMsg);
+                            tw.WriteLine(theMessage);
+                        }
                     }
                 }
 

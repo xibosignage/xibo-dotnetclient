@@ -41,7 +41,7 @@ namespace XiboClient
         public OptionForm()
         {
             InitializeComponent();
-
+            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             Debug.WriteLine("Initialise Option Form Components", "OptionForm");
 
             // Get a hardware key here, just in case we havent been able to get one before

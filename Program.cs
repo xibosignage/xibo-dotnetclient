@@ -24,6 +24,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Xilium.CefGlue;
 using XiboClient.Logic;
+using System.Threading.Tasks;
 
 namespace XiboClient
 {
@@ -35,6 +36,11 @@ namespace XiboClient
         [STAThread]
         static int Main(string[] args)
         {
+            NativeMethods.SetErrorMode(NativeMethods.SetErrorMode(0) |
+                           ErrorModes.SEM_NOGPFAULTERRORBOX |
+                           ErrorModes.SEM_FAILCRITICALERRORS |
+                           ErrorModes.SEM_NOOPENFILEERRORBOX);
+
             // Do we need to initialise CEF?
             if (ApplicationSettings.Default.UseCefWebBrowser)
             {
@@ -74,6 +80,14 @@ namespace XiboClient
 
             Application.SetCompatibleTextRenderingDefault(false);
 
+#if !DEBUG
+            // Catch unhandled exceptions
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+            Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+#endif
+
+            // Add the Xibo Tracelistener
             Trace.Listeners.Add(new XiboTraceListener());
 
             try
@@ -139,10 +153,6 @@ namespace XiboClient
                 HandleUnhandledException(ex);
             }
 
-            // Catch unhandled exceptions
-            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
-            Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
-
             // Always flush at the end
             Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
             Trace.Flush();
@@ -182,14 +192,23 @@ namespace XiboClient
 
         static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
-            HandleUnhandledException(e);
+            HandleUnhandledException(e.Exception);
         }
 
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            HandleUnhandledException(e);
+            HandleUnhandledException(e.ExceptionObject);
         }
 
+        static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            HandleUnhandledException(e.Exception);
+        }
+
+        /// <summary>
+        /// Event for unhandled exceptions
+        /// </summary>
+        /// <param name="o"></param>
         static void HandleUnhandledException(Object o)
         {
             Exception e = o as Exception;
@@ -198,16 +217,44 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
             Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
 
-            // TODO: Can we just restart the application?
+            try
+            {
+                // Also write to the event log
+                if (!EventLog.SourceExists(Application.ProductName))
+                    EventLog.CreateEventSource(Application.ProductName, "Xibo");
 
-            // Shutdown the application
-            if (ApplicationSettings.Default.UseCefWebBrowser)
-                CefRuntime.Shutdown();
+                EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
 
-            Environment.Exit(1);
+                // Shutdown the application
+                if (ApplicationSettings.Default.UseCefWebBrowser)
+                    CefRuntime.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Error.ToString());
+            }
+
+            // Try to restart
+            Application.Restart();
         }
 
         [DllImport("User32.dll")]
         public static extern int ShowWindowAsync(IntPtr hWnd , int swCommand);
+
+        internal static class NativeMethods
+        {
+            [DllImport("kernel32.dll")]
+            internal static extern ErrorModes SetErrorMode(ErrorModes mode);
+        }
+
+        [Flags]
+        internal enum ErrorModes : uint
+        {
+            SYSTEM_DEFAULT = 0x0,
+            SEM_FAILCRITICALERRORS = 0x0001,
+            SEM_NOALIGNMENTFAULTEXCEPT = 0x0004,
+            SEM_NOGPFAULTERRORBOX = 0x0002,
+            SEM_NOOPENFILEERRORBOX = 0x8000
+        }
     }
 }
