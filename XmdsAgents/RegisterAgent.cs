@@ -115,12 +115,12 @@ namespace XiboClient.XmdsAgents
                         ApplicationSettings.Default.IncrementXmdsErrorCount();
 
                         // Log this message, but dont abort the thread
-                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "WebException in Run: " + webEx.Message), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "WebException in Run: " + webEx.Message), LogType.Info.ToString());
                     }
                     catch (Exception ex)
                     {
                         // Log this message, but dont abort the thread
-                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Exception in Run: " + ex.Message), LogType.Info.ToString());
                     }
                 }
 
@@ -150,7 +150,15 @@ namespace XiboClient.XmdsAgents
                         throw new Exception("Configuration not set for this display");
 
                     // Hash after removing the date
-                    result.DocumentElement.Attributes["date"].Value = "";
+                    try
+                    {
+                        result.DocumentElement.Attributes["date"].Value = "";
+                    }
+                    catch
+                    {
+                        // No date, no need to remove
+                    }
+
                     string md5 = Hashes.MD5(result.OuterXml);
 
                     if (md5 == ApplicationSettings.Default.Hash)

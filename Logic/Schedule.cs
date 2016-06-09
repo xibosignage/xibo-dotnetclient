@@ -32,6 +32,8 @@ using System.Threading;
 using XiboClient.Properties;
 using XiboClient.Log;
 using XiboClient.Logic;
+using XiboClient.Action;
+using XiboClient.Control;
 
 /// 17/02/12 Dan Removed Schedule call, introduced ScheduleAgent
 /// 21/02/12 Dan Named the threads
@@ -46,11 +48,28 @@ namespace XiboClient
         public delegate void ScheduleChangeDelegate(string layoutPath, int scheduleId, int layoutId);
         public event ScheduleChangeDelegate ScheduleChangeEvent;
 
-        private Collection<LayoutSchedule> _layoutSchedule;
+        public delegate void OverlayChangeDelegate(Collection<ScheduleItem> overlays);
+        public event OverlayChangeDelegate OverlayChangeEvent;
+
+        /// <summary>
+        /// Current Schedule of Normal Layouts
+        /// </summary>
+        private Collection<ScheduleItem> _layoutSchedule;
         private int _currentLayout = 0;
+
+        /// <summary>
+        /// Current Schedule of Overlay Layouts
+        /// </summary>
+        private Collection<ScheduleItem> _overlaySchedule;
+
         private string _scheduleLocation;
 
         private bool _forceChange = false;
+
+        /// <summary>
+        /// Has stop been called?
+        /// </summary>
+        private bool _stopCalled = false;
 
         // Key
         private HardwareKey _hardwareKey;
@@ -86,6 +105,10 @@ namespace XiboClient
         private XmrSubscriber _xmrSubscriber;
         Thread _xmrSubscriberThread;
 
+        // Local Web Server
+        private EmbeddedServer _server;
+        Thread _serverThread;
+
         /// <summary>
         /// Client Info Form
         /// </summary>
@@ -106,7 +129,7 @@ namespace XiboClient
             _scheduleLocation = scheduleLocation;
 
             // Create a new collection for the layouts in the schedule
-            _layoutSchedule = new Collection<LayoutSchedule>();
+            _layoutSchedule = new Collection<ScheduleItem>();
             
             // Set cachemanager
             _cacheManager = cacheManager;
@@ -148,6 +171,7 @@ namespace XiboClient
             _requiredFilesAgent.HardwareKey = _hardwareKey.Key;
             _requiredFilesAgent.ClientInfoForm = _clientInfoForm;
             _requiredFilesAgent.OnComplete += new RequiredFilesAgent.OnCompleteDelegate(LayoutFileModified);
+            _requiredFilesAgent.OnFullyProvisioned += _requiredFilesAgent_OnFullyProvisioned;
 
             // Create a thread for the RequiredFiles Agent to run in - but dont start it up yet.
             _requiredFilesAgentThread = new Thread(new ThreadStart(_requiredFilesAgent.Run));
@@ -170,11 +194,18 @@ namespace XiboClient
             _xmrSubscriber = new XmrSubscriber();
             _xmrSubscriber.HardwareKey = _hardwareKey;
             _xmrSubscriber.ClientInfoForm = _clientInfoForm;
-            _xmrSubscriber.OnCollectNowAction += _xmrSubscriber_OnCollectNowAction;
+            _xmrSubscriber.OnAction += _xmrSubscriber_OnAction;
 
             // Thread start
             _xmrSubscriberThread = new Thread(new ThreadStart(_xmrSubscriber.Run));
             _xmrSubscriberThread.Name = "XmrSubscriber";
+
+            // Embedded Server
+            _server = new EmbeddedServer();
+            _server.ClientInfoForm = _clientInfoForm;
+            _server.OnServerClosed += _server_OnServerClosed;
+            _serverThread = new Thread(new ThreadStart(_server.Run));
+            _serverThread.Name = "EmbeddedServer";
         }
 
         /// <summary>
@@ -202,6 +233,9 @@ namespace XiboClient
 
             // Start the subscriber thread
             _xmrSubscriberThread.Start();
+
+            // Start the embedded server thread
+            _serverThread.Start();
         }
 
         /// <summary>
@@ -209,6 +243,7 @@ namespace XiboClient
         /// </summary>
         private void _scheduleManager_OnNewScheduleAvailable()
         {
+            _overlaySchedule = _scheduleManager.CurrentOverlaySchedule;
             _layoutSchedule = _scheduleManager.CurrentSchedule;
 
             // Set the current pointer to 0
@@ -216,6 +251,10 @@ namespace XiboClient
 
             // Raise a schedule change event
             ScheduleChangeEvent(_layoutSchedule[0].layoutFile, _layoutSchedule[0].scheduleid, _layoutSchedule[0].id);
+
+            // Pass a new set of overlay's to subscribers
+            if (OverlayChangeEvent != null)
+                OverlayChangeEvent(_overlaySchedule);
         }
 
         /// <summary>
@@ -223,7 +262,7 @@ namespace XiboClient
         /// </summary>
         void _scheduleManager_OnRefreshSchedule()
         {
-            _layoutSchedule = _scheduleManager.CurrentSchedule;            
+            _layoutSchedule = _scheduleManager.CurrentSchedule;
         }
 
         /// <summary>
@@ -286,11 +325,78 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// Collect Now Action
+        /// XMR Subscriber Action
         /// </summary>
-        void _xmrSubscriber_OnCollectNowAction()
+        void _xmrSubscriber_OnAction(Action.PlayerActionInterface action)
         {
-            // Run all of the various agents
+            switch (action.GetActionName())
+            {
+                case "collectNow":
+                    // Run all of the various agents
+                    wakeUpXmds();
+                    break;
+
+                case LayoutChangePlayerAction.Name:
+                    // Add to a collection of Layout Change events 
+                    if (((LayoutChangePlayerAction)action).changeMode == "replace")
+                    {
+                        _scheduleManager.ReplaceLayoutChangeActions(((LayoutChangePlayerAction)action));
+                    }
+                    else {
+                        _scheduleManager.AddLayoutChangeAction(((LayoutChangePlayerAction)action));
+                    }
+
+                    // Assess the schedule now, or later?
+                    if (((LayoutChangePlayerAction)action).IsDownloadRequired())
+                    {
+                        // Run XMDS to download the required layouts
+                        // need to notify again once a complete download has occurred.
+                        wakeUpXmds();
+                    }
+                    else
+                    {
+                        // Reassess the schedule
+                        _scheduleManager.RunNow();
+                    }
+
+                    break;
+
+                case OverlayLayoutPlayerAction.Name:
+                    // Add to a collection of Layout Change events 
+                    _scheduleManager.AddOverlayLayoutAction(((OverlayLayoutPlayerAction)action));
+
+                    // Assess the schedule now, or later?
+                    if (((OverlayLayoutPlayerAction)action).IsDownloadRequired())
+                    {
+                        // Run XMDS to download the required layouts
+                        // need to notify again once a complete download has occurred.
+                        wakeUpXmds();
+                    }
+                    else
+                    {
+                        // Reassess the schedule
+                        _scheduleManager.RunNow();
+                    }
+
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Required files fully provisioned
+        /// </summary>
+        private void _requiredFilesAgent_OnFullyProvisioned()
+        {
+            // Mark all layout change actions as downloaded and assess the schedule
+            _scheduleManager.setAllActionsDownloaded();
+            _scheduleManager.RunNow();
+        }
+
+        /// <summary>
+        /// Wake up all XMDS services
+        /// </summary>
+        public void wakeUpXmds()
+        {
             _registerAgent.WakeUp();
             _scheduleAgent.WakeUp();
             _requiredFilesAgent.WakeUp();
@@ -303,6 +409,22 @@ namespace XiboClient
         public void NextLayout()
         {
             int previousLayout = _currentLayout;
+
+            // See if the current layout is an action that can be removed.
+            // If it CAN be removed then this will almost certainly result in a change in the current _layoutSchedule
+            // therefore we should return out of this and kick off a schedule manager cycle, which will set the new layout.
+            try
+            {
+                if (_scheduleManager.removeLayoutChangeActionIfComplete(_layoutSchedule[previousLayout]))
+                {
+                    _scheduleManager.RunNow();
+                    return;
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Schedule - NextLayout", "Unable to check layout change actions. E = " + e.Message), LogType.Error.ToString());
+            }
 
             // increment the current layout
             _currentLayout++;
@@ -345,6 +467,18 @@ namespace XiboClient
         {
             Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "Layout file changed: " + layoutPath), LogType.Info.ToString());
 
+            // Determine if we need to reassess the overlays
+            foreach (ScheduleItem item in _overlaySchedule)
+            {
+                if (item.layoutFile == ApplicationSettings.Default.LibraryPath + @"\" + layoutPath)
+                {
+                    if (OverlayChangeEvent != null)
+                        OverlayChangeEvent(_overlaySchedule);
+
+                    break;
+                }
+            }
+
             // Tell the schedule to refresh
             _scheduleManager.RefreshSchedule = true;
 
@@ -385,10 +519,25 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// On Server Closed Event
+        /// </summary>
+        void _server_OnServerClosed()
+        {
+            if (!_stopCalled && _serverThread != null && !_serverThread.IsAlive)
+            {
+                // We've stopped and we shouldn't have
+                _serverThread.Start();
+            }
+        }
+
+        /// <summary>
         /// Stops the Schedule Object
         /// </summary>
         public void Stop()
         {
+            // Stop has been called
+            _stopCalled = true;
+
             // Stop the register agent
             _registerAgent.Stop();
 
@@ -409,6 +558,9 @@ namespace XiboClient
 
             // Stop the subsriber thread
             _xmrSubscriberThread.Abort();
+
+            // Stop the embedded server
+            _server.Stop();
         }
     }
 }

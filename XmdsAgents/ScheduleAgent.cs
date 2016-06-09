@@ -120,7 +120,7 @@ namespace XiboClient.XmdsAgents
                         // If we are restarting, reset
                         _manualReset.Reset();
 
-                        Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Woken and Lock Obtained"), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Woken and Lock Obtained"), LogType.Audit.ToString());
 
                         _clientInfoForm.ScheduleStatus = "Running: Get Data from Xibo Server";
 
@@ -164,7 +164,7 @@ namespace XiboClient.XmdsAgents
                         ApplicationSettings.Default.IncrementXmdsErrorCount();
 
                         // Log this message, but dont abort the thread
-                        Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "WebException in Run: " + webEx.Message), LogType.Error.ToString());
+                        Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "WebException in Run: " + webEx.Message), LogType.Info.ToString());
 
                         _clientInfoForm.ScheduleStatus = "Error: " + webEx.Message;
                     }

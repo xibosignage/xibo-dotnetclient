@@ -20,7 +20,7 @@
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <PublishUrl>T:\Development\Version 2\Client\</PublishUrl>
@@ -48,6 +48,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -56,6 +57,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -65,6 +67,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <UseVSHostingProcess>false</UseVSHostingProcess>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -74,6 +77,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <UseVSHostingProcess>true</UseVSHostingProcess>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AsyncIO">
@@ -95,8 +99,9 @@
     <Reference Include="NetMQ">
       <HintPath>packages\NetMQ.3.3.2.2\lib\net40\NetMQ.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>packages\Newtonsoft.Json.7.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>packages\Newtonsoft.Json.8.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -107,18 +112,17 @@
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="Xilium.CefGlue">
-      <HintPath>bin\x86\Release\cefglue\Xilium.CefGlue.dll</HintPath>
-    </Reference>
-    <Reference Include="Xilium.CefGlue.WindowsForms">
-      <HintPath>bin\x86\Release\cefglue\Xilium.CefGlue.WindowsForms.dll</HintPath>
+    <Reference Include="Unosquare.Labs.EmbedIO">
+      <HintPath>packages\EmbedIO.1.0.17\lib\Unosquare.Labs.EmbedIO.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Action\OverlayLayoutPlayerAction.cs" />
+    <Compile Include="Action\LayoutChangePlayerAction.cs" />
     <Compile Include="Action\PlayerAction.cs" />
-    <Compile Include="Control\XiboCefWebBrowser.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="Action\PlayerActionInterface.cs" />
+    <Compile Include="Action\RevertToSchedulePlayerAction.cs" />
+    <Compile Include="Control\EmbeddedServer.cs" />
     <Compile Include="Forms\About.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -132,12 +136,16 @@
     <Compile Include="Action\ScheduleCommand.cs" />
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
+    <Compile Include="Logic\ScheduleItem.cs" />
     <Compile Include="Logic\MouseInterceptor.cs" />
     <Compile Include="Logic\OpenSslInterop.cs" />
     <Compile Include="Logic\RegionOptions.cs" />
     <Compile Include="Logic\ApplicationSettings.cs" />
     <Compile Include="Logic\ScreenShot.cs" />
     <Compile Include="Action\XmrSubscriber.cs" />
+    <Compile Include="Media\Audio.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Media\IeWebMedia.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -241,9 +249,6 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
-    </Compile>
-    <Compile Include="Media\CefWebMedia.cs">
-      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Log\XiboTraceListener.cs" />
     <Compile Include="XmdsAgents\LogAgent.cs" />

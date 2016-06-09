@@ -167,6 +167,16 @@ namespace XiboClient
         public string DownloadStartWindow { get; set; }
         public string DownloadEndWindow { get; set; }
 
+        // Embedded web server config
+        public int EmbeddedServerPort { get; set; }
+        public string EmbeddedServerAddress 
+        { 
+            get 
+            {
+                return "http://localhost:" + ((EmbeddedServerPort == 0) ? 9696 : EmbeddedServerPort) + "/";
+            }
+        }
+
         public DateTime DownloadStartWindowTime
         {
             get
@@ -261,7 +271,6 @@ namespace XiboClient
         public bool EnableShellCommands { get; set; }
         public bool ShowInTaskbar { get; set; }
         public bool ClientInfomationCtrlKey { get; set; }
-        public bool UseCefWebBrowser { get; set; }
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
 
         // XMDS Status Flags

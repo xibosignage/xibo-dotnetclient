@@ -48,6 +48,9 @@ namespace XiboClient.XmdsAgents
         public delegate void OnCompleteDelegate(string path);
         public event OnCompleteDelegate OnComplete;
 
+        public delegate void OnFullyProvisionedDelegate();
+        public event OnFullyProvisionedDelegate OnFullyProvisioned;
+
         private RequiredFiles _requiredFiles;
         private Semaphore _fileDownloadLimit;
 
@@ -138,7 +141,7 @@ namespace XiboClient.XmdsAgents
                             {
                                 _clientInfoForm.RequiredFilesStatus = string.Format("Waiting: {0} Active Downloads", filesToDownload.ToString());
 
-                                Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Currently Downloading Files, skipping collect"), LogType.Info.ToString());
+                                Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Currently Downloading Files, skipping collect"), LogType.Audit.ToString());
                             }
                             else
                             {
@@ -213,7 +216,13 @@ namespace XiboClient.XmdsAgents
 
                                     // Set the status on the client info screen
                                     if (threadsToStart.Count == 0)
+                                    {
                                         _clientInfoForm.RequiredFilesStatus = "Sleeping (inside download window)";
+                                        
+                                        // Raise an event to say we've completed
+                                        if (OnFullyProvisioned != null)
+                                            OnFullyProvisioned();
+                                    }
                                     else
                                         _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", threadsToStart.Count.ToString());
 
@@ -227,7 +236,7 @@ namespace XiboClient.XmdsAgents
                             ApplicationSettings.Default.IncrementXmdsErrorCount();
 
                             // Log this message, but dont abort the thread
-                            Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "WebException in Run: " + webEx.Message), LogType.Error.ToString());
+                            Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "WebException in Run: " + webEx.Message), LogType.Info.ToString());
 
                             _clientInfoForm.RequiredFilesStatus = "Error: " + webEx.Message;
                         }
@@ -292,9 +301,20 @@ namespace XiboClient.XmdsAgents
 
             // Set the status on the client info screen
             if (_requiredFiles.FilesDownloading == 0)
+            {
                 _clientInfoForm.RequiredFilesStatus = "Sleeping";
+
+                // If we are the last download thread to complete, then we should report media inventory and raise an event to say we've got everything
+                _requiredFiles.ReportInventory();
+
+                // Raise an event to say we've completed
+                if (OnFullyProvisioned != null)
+                    OnFullyProvisioned();
+            }
             else
+            {
                 _clientInfoForm.RequiredFilesStatus = string.Format("{0} files to download", _requiredFiles.FilesDownloading.ToString());
+            }
 
             // Update the RequiredFiles TextBox
             _clientInfoForm.UpdateRequiredFiles(RequiredFilesString());
@@ -305,7 +325,8 @@ namespace XiboClient.XmdsAgents
             if (rf.FileType == "layout")
             {
                 // Raise an event to say it is completed
-                OnComplete(rf.SaveAs);
+                if (OnComplete != null)
+                    OnComplete(rf.SaveAs);
             }
         }
 
