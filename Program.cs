@@ -224,18 +224,19 @@ namespace XiboClient
                     EventLog.CreateEventSource(Application.ProductName, "Xibo");
 
                 EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
-
-                // Shutdown the application
-                if (ApplicationSettings.Default.UseCefWebBrowser)
-                    CefRuntime.Shutdown();
             }
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Error.ToString());
             }
 
+            // Shutdown the application
+            if (ApplicationSettings.Default.UseCefWebBrowser)
+                CefRuntime.Shutdown();
+
             // Try to restart
-            Application.Restart();
+            // This is disabled so that we let the application crash normally and restart using the watchdog
+            //Application.Restart();
         }
 
         [DllImport("User32.dll")]

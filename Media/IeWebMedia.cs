@@ -373,6 +373,7 @@ namespace XiboClient
 
                     // Detatch event and remove
                     _webBrowser.DocumentCompleted -= _webBrowser_DocumentCompleted;
+                    _webBrowser.Navigate("about:blank");
                     _webBrowser.Dispose();
                 }
                 catch
