@@ -50,7 +50,6 @@
   <ScreenShotRequestInterval>0</ScreenShotRequestInterval>
   <DownloadStartWindow></DownloadStartWindow>
   <DownloadEndWindow></DownloadEndWindow>
-  <DisplayTimeZone></DisplayTimeZone>
   <PreventSleep>1</PreventSleep>
   <XmrNetworkAddress></XmrNetworkAddress>
   <EmbeddedServerPort>9696</EmbeddedServerPort>

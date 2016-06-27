@@ -40,6 +40,7 @@ namespace XiboClient
                            ErrorModes.SEM_FAILCRITICALERRORS |
                            ErrorModes.SEM_NOOPENFILEERRORBOX);
 
+
             // Ensure our process has the highest priority
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
 
@@ -186,7 +187,6 @@ namespace XiboClient
                 {
                     if (!EventLog.SourceExists(Application.ProductName))
                         EventLog.CreateEventSource(Application.ProductName, "Xibo");
-
                     EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
                 }
                 catch (Exception ex)

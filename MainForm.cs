@@ -158,6 +158,13 @@ namespace XiboClient
         {
             Thread.CurrentThread.Name = "UI Thread";
 
+            // Check the directories exist
+            if (!Directory.Exists(ApplicationSettings.Default.LibraryPath) || !Directory.Exists(ApplicationSettings.Default.LibraryPath + @"\backgrounds\"))
+            {
+                // Will handle the create of everything here
+                Directory.CreateDirectory(ApplicationSettings.Default.LibraryPath + @"\backgrounds");
+            }
+
             // Default the XmdsConnection
             ApplicationSettings.Default.XmdsLastConnection = DateTime.MinValue;
 
@@ -221,20 +228,26 @@ namespace XiboClient
                 Trace.Listeners.Add(listener);
             }
 
-            // An empty set of overlay regions
-            _overlays = new Collection<Region>();
-            
 #if !DEBUG
             // Initialise the watchdog
             if (!_screenSaver)
             {
-                // Update/write the status.json file
-                File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
+                try
+                {
+                    // Update/write the status.json file
+                    File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
 
-                // Start watchdog
-                WatchDogManager.Start();
+                    // Start watchdog
+                    WatchDogManager.Start();
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm - InitializeXibo", "Cannot start watchdog. E = " + e.Message), LogType.Error.ToString());
+                }
             }
 #endif
+            // An empty set of overlay regions
+            _overlays = new Collection<Region>();
             
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
         }
@@ -333,13 +346,6 @@ namespace XiboClient
         /// <param name="e"></param>
         private void MainForm_Load(object sender, EventArgs e)
         {
-            // Check the directories exist
-            if (!Directory.Exists(ApplicationSettings.Default.LibraryPath) || !Directory.Exists(ApplicationSettings.Default.LibraryPath + @"\backgrounds\"))
-            {
-                // Will handle the create of everything here
-                Directory.CreateDirectory(ApplicationSettings.Default.LibraryPath + @"\backgrounds");
-            }
-
             // Is the mouse enabled?
             if (!ApplicationSettings.Default.EnableMouse)
                 // Hide the cursor
@@ -785,6 +791,9 @@ namespace XiboClient
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
             }
+
+            // We have loaded a layout and therefore are no longer showing the splash screen
+            _showingSplash = false;
 
             // We have loaded a layout and therefore are no longer showing the splash screen
             _showingSplash = false;
