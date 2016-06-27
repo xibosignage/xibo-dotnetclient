@@ -35,7 +35,7 @@
   <StatsFlushCount>10</StatsFlushCount>
   <CollectInterval>900</CollectInterval>
   <MaxConcurrentDownloads>5</MaxConcurrentDownloads>
-  <MaxLogFileUploads>4</MaxLogFileUploads>
+  <MaxLogFileUploads>5</MaxLogFileUploads>
   <PowerpointEnabled>false</PowerpointEnabled>
   <StatsEnabled>true</StatsEnabled>
   <ExpireModifiedLayouts>true</ExpireModifiedLayouts>
@@ -50,7 +50,7 @@
   <ScreenShotRequestInterval>0</ScreenShotRequestInterval>
   <DownloadStartWindow></DownloadStartWindow>
   <DownloadEndWindow></DownloadEndWindow>
-  <DisplayTimeZone></DisplayTimeZone>
+  <PreventSleep>1</PreventSleep>
   <XmrNetworkAddress></XmrNetworkAddress>
   <EmbeddedServerPort>9696</EmbeddedServerPort>
 </ApplicationSettings>

@@ -123,6 +123,7 @@
     <Compile Include="Action\PlayerActionInterface.cs" />
     <Compile Include="Action\RevertToSchedulePlayerAction.cs" />
     <Compile Include="Control\EmbeddedServer.cs" />
+    <Compile Include="Control\WatchDogManager.cs" />
     <Compile Include="Forms\About.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -329,7 +330,10 @@
     <Content Include="new-icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <PropertyGroup>
+    <PostBuildEvent>echo F|xcopy /Y "$(TargetPath)" "$(TargetDir)\Xibo.scr"</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

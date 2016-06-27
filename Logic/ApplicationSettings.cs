@@ -1,6 +1,6 @@
 ﻿/*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-15 Spring Signage Ltd
+ * Copyright (C) 2006-16 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -85,7 +85,15 @@ namespace XiboClient
                 }
                 catch (Exception e)
                 {
-                    MessageBox.Show(string.Format("{0}. Path: {1}.", e.Message, path + Path.DirectorySeparatorChar + fileName));
+                    if (File.Exists(path + Path.DirectorySeparatorChar + fileName + ".bak"))
+                    {
+                        if (File.Exists(path + Path.DirectorySeparatorChar + fileName))
+                            File.Delete(path + Path.DirectorySeparatorChar + fileName);
+
+                        File.Copy(path + Path.DirectorySeparatorChar + fileName + ".bak", path + Path.DirectorySeparatorChar + fileName);
+                    }
+
+                    MessageBox.Show(string.Format("Corrupted configuration file, will try to restore from backup. Please restart. Message: {0}. Path: {1}.", e.Message, path + Path.DirectorySeparatorChar + fileName));
                     throw;
                 }
             }
@@ -97,13 +105,28 @@ namespace XiboClient
                 return;
 
             XmlSerializer serial = new XmlSerializer(typeof(ApplicationSettings));
-            string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath) + '.' + _fileSuffix;
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) +
+                Path.DirectorySeparatorChar +
+                Path.GetFileNameWithoutExtension(Application.ExecutablePath) + '.' + _fileSuffix;
 
-            using (StreamWriter sr = new StreamWriter(path + Path.DirectorySeparatorChar + fileName))
+            // Copy the old settings file to a backup
+            if (File.Exists(path + ".bak"))
+                File.Delete(path + ".bak");
+
+            File.Copy(path, path + ".bak");
+
+            // Serialise into a new file
+            using (StreamWriter sr = new StreamWriter(path + ".new"))
             {
                 serial.Serialize(sr, _instance);
             }
+
+            // If we've done that successfully, then move the new file into the original
+            if (File.Exists(path))
+                File.Delete(path);
+
+            File.Move(path + ".new", path);
         }
 
         public object this[string propertyName]
@@ -261,7 +284,7 @@ namespace XiboClient
         public int ScreenShotRequestInterval { get; set; }
 
         private int _maxLogFileUploads;
-        public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 3 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }
+        public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 10 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }
 
         public bool PowerpointEnabled { get; set; }
         public bool StatsEnabled { get; set; }
@@ -272,6 +295,7 @@ namespace XiboClient
         public bool ShowInTaskbar { get; set; }
         public bool ClientInfomationCtrlKey { get; set; }
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
+        public bool PreventSleep { get; set; }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;

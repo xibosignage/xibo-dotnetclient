@@ -38,6 +38,7 @@ using XiboClient.Properties;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using XiboClient.Logic;
+using XiboClient.Control;
 
 namespace XiboClient
 {
@@ -133,8 +134,8 @@ namespace XiboClient
             ApplicationSettings.Default.OffsetX = 0;
             ApplicationSettings.Default.OffsetY = 0;
 
-            InitializeXibo();
             InitializeScreenSaver(true);
+            InitializeXibo();
         }
 
         public MainForm(bool screenSaver)
@@ -156,6 +157,13 @@ namespace XiboClient
         private void InitializeXibo()
         {
             Thread.CurrentThread.Name = "UI Thread";
+
+            // Check the directories exist
+            if (!Directory.Exists(ApplicationSettings.Default.LibraryPath) || !Directory.Exists(ApplicationSettings.Default.LibraryPath + @"\backgrounds\"))
+            {
+                // Will handle the create of everything here
+                Directory.CreateDirectory(ApplicationSettings.Default.LibraryPath + @"\backgrounds");
+            }
 
             // Default the XmdsConnection
             ApplicationSettings.Default.XmdsLastConnection = DateTime.MinValue;
@@ -220,6 +228,24 @@ namespace XiboClient
                 Trace.Listeners.Add(listener);
             }
 
+#if !DEBUG
+            // Initialise the watchdog
+            if (!_screenSaver)
+            {
+                try
+                {
+                    // Update/write the status.json file
+                    File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
+
+                    // Start watchdog
+                    WatchDogManager.Start();
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm - InitializeXibo", "Cannot start watchdog. E = " + e.Message), LogType.Error.ToString());
+                }
+            }
+#endif
             // An empty set of overlay regions
             _overlays = new Collection<Region>();
             
@@ -255,9 +281,17 @@ namespace XiboClient
             {
                 // Toggle
                 if (_clientInfoForm.Visible)
+                {
                     _clientInfoForm.Hide();
+#if !DEBUG
+                    TopMost = true;
+#endif
+                }
                 else
                 {
+#if !DEBUG
+                    TopMost = false;
+#endif
                     _clientInfoForm.Show();
                     _clientInfoForm.BringToFront();
                 }
@@ -312,13 +346,6 @@ namespace XiboClient
         /// <param name="e"></param>
         private void MainForm_Load(object sender, EventArgs e)
         {
-            // Check the directories exist
-            if (!Directory.Exists(ApplicationSettings.Default.LibraryPath) || !Directory.Exists(ApplicationSettings.Default.LibraryPath + @"\backgrounds\"))
-            {
-                // Will handle the create of everything here
-                Directory.CreateDirectory(ApplicationSettings.Default.LibraryPath + @"\backgrounds");
-            }
-
             // Is the mouse enabled?
             if (!ApplicationSettings.Default.EnableMouse)
                 // Hide the cursor
@@ -336,7 +363,8 @@ namespace XiboClient
 
             // Set this form to topmost
 #if !DEBUG
-            TopMost = true;
+            if (!_screenSaver)
+                TopMost = true;
 #endif
 
             // UserApp data
@@ -449,13 +477,16 @@ namespace XiboClient
         /// </summary>
         private void ChangeToNextLayout(string layoutPath)
         {
-            try
+            if (ApplicationSettings.Default.PreventSleep)
             {
-                SetThreadExecutionState(EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS);
-            }
-            catch
-            {
-                Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Unable to set Thread Execution state"), LogType.Info.ToString());
+                try
+                {
+                    SetThreadExecutionState(EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS);
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Unable to set Thread Execution state"), LogType.Info.ToString());
+                }
             }
 
             try
@@ -482,14 +513,14 @@ namespace XiboClient
                 try
                 {
                     PrepareLayout(layoutPath);
-                    _clientInfoForm.CurrentLayoutId = layoutPath;
 
+                    _clientInfoForm.CurrentLayoutId = layoutPath;
                 }
                 catch (Exception e)
                 {
                     DestroyLayout();
                     Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Prepare Layout Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
-                    throw e;
+                    throw;
                 }
 
                 _clientInfoForm.ControlCount = Controls.Count;
@@ -509,7 +540,7 @@ namespace XiboClient
                 catch (Exception e)
                 {
                     Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Notify Status Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
-                    throw e;
+                    throw;
                 }
             }
             catch (Exception ex)
@@ -517,17 +548,15 @@ namespace XiboClient
                 Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
 
                 if (!_showingSplash)
-                {
                     ShowSplashScreen();
+                
+                // In 10 seconds fire the next layout
+                System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+                timer.Interval = 10000;
+                timer.Tick += new EventHandler(splashScreenTimer_Tick);
 
-                    // In 10 seconds fire the next layout?
-                    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-                    timer.Interval = 15000;
-                    timer.Tick += new EventHandler(splashScreenTimer_Tick);
-
-                    // Start the timer
-                    timer.Start();
-                }
+                // Start the timer
+                timer.Start();
             }
 
             // We have finished changing the layout
@@ -546,8 +575,6 @@ namespace XiboClient
             System.Windows.Forms.Timer timer = (System.Windows.Forms.Timer)sender;
             timer.Stop();
             timer.Dispose();
-
-            _showingSplash = false;
 
             _schedule.NextLayout();
         }
@@ -568,9 +595,9 @@ namespace XiboClient
             }
             else
             {
+                // try to open the layout file
                 try
                 {
-                    // try to open the layout file
                     using (FileStream fs = File.Open(layoutPath, FileMode.Open, FileAccess.Read, FileShare.Write))
                     {
                         using (XmlReader reader = XmlReader.Create(fs))
@@ -581,14 +608,14 @@ namespace XiboClient
                         }
                         fs.Close();
                     }
-
-                    layoutModifiedTime = File.GetLastWriteTime(layoutPath);
                 }
-                catch (Exception ex)
+                catch (IOException ioEx) 
                 {
-                    Trace.WriteLine(string.Format("Could not find the layout file {0}: {1}", layoutPath, ex.Message));
+                    Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "IOException: " + ioEx.ToString()), LogType.Error.ToString());
                     throw;
                 }
+
+                layoutModifiedTime = File.GetLastWriteTime(layoutPath);
             }
 
             // Attributes of the main layout node
@@ -764,6 +791,12 @@ namespace XiboClient
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
             }
+
+            // We have loaded a layout and therefore are no longer showing the splash screen
+            _showingSplash = false;
+
+            // We have loaded a layout and therefore are no longer showing the splash screen
+            _showingSplash = false;
 
             // Null stuff
             listRegions = null;

@@ -111,10 +111,14 @@ namespace XiboClient
         {
             try
             {
-                StreamWriter tw = new StreamWriter(File.Open(blackListFile, FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8);
-
-                tw.Write(String.Format("[{0}],", id));
-                tw.Close();
+                using (FileStream fileStream = File.Open(blackListFile, FileMode.Append, FileAccess.Write, FileShare.Read))
+                {
+                    using (StreamWriter tw = new StreamWriter(fileStream, Encoding.UTF8))
+                    {
+                        tw.Write(String.Format("[{0}],", id));
+                        tw.Close();
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -148,8 +152,6 @@ namespace XiboClient
         /// <returns></returns>
         public Boolean BlackListed(string fileId)
         {
-            StreamReader sr = null;
-
             // Store as an XML Fragment
             if (!File.Exists(blackListFile))
             {
@@ -159,20 +161,19 @@ namespace XiboClient
             try
             {
                 // Use an XML Text Reader to grab the shiv from the black list location.
-                sr = new StreamReader(File.Open(blackListFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-                
-                string listed = sr.ReadToEnd();
-
-                return listed.Contains(String.Format("[{0}]", fileId));
+                using (FileStream fileStream = File.Open(blackListFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    using (StreamReader sr = new StreamReader(fileStream))
+                    {
+                        string listed = sr.ReadToEnd();
+                        
+                        return listed.Contains(String.Format("[{0}]", fileId));
+                    }
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.Message, "BlackList - BlackListed");
-            }
-            finally
-            {
-                // Make sure the xr is closed
-                if (sr != null) sr.Close();
             }
 
             return false;

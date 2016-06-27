@@ -838,9 +838,12 @@ namespace XiboClient
                 try
                 {
                     // Read the schedule file
-                    using (StreamReader sr = new StreamReader(File.Open(scheduleLocation, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite)))
+                    using (FileStream fileStream = File.Open(scheduleLocation, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite))
                     {
-                        scheduleXml = sr.ReadToEnd();
+                        using (StreamReader sr = new StreamReader(fileStream))
+                        {
+                            scheduleXml = sr.ReadToEnd();
+                        }
                     }
                 }
                 catch (FileNotFoundException)
