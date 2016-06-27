@@ -1,6 +1,6 @@
 ﻿/*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006 - 2015 Daniel Garner
+ * Copyright (C) 2006 - 2016 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -110,15 +110,25 @@ namespace XiboClient.XmdsAgents
 
         private void ProcessFiles(xmds.xmds xmds, string key, string type)
         {
-            // Get a list of all the log files waiting to be sent to XMDS.
-            string[] logFiles = Directory.GetFiles(ApplicationSettings.Default.LibraryPath, "*" + type + "*");
-
+            // Test for old files
+            DateTime testDate = DateTime.Now.AddDays(ApplicationSettings.Default.LibraryAgentInterval * -1);
+            
             // Track processed files
             int filesProcessed = 0;
 
+            // Get a list of all the log files waiting to be sent to XMDS.
+            DirectoryInfo directory = new DirectoryInfo(ApplicationSettings.Default.LibraryPath);
+
             // Loop through each file
-            foreach (string fileName in logFiles)
+            foreach (FileInfo fileInfo in directory.GetFiles("*" + type + "*"))
             {
+                if (fileInfo.LastAccessTime < testDate)
+                {
+                    Trace.WriteLine(new LogMessage("LogAgent - Run", "Deleting old file: " + fileInfo.Name), LogType.Info.ToString());
+                    File.Delete(fileInfo.FullName);
+                    continue;
+                }
+
                 // Only process as many files in one go as configured
                 if (filesProcessed >= ApplicationSettings.Default.MaxLogFileUploads)
                     break;
@@ -127,7 +137,7 @@ namespace XiboClient.XmdsAgents
                 StringBuilder builder = new StringBuilder();
                 builder.Append("<log>");
 
-                foreach (string entry in File.ReadAllLines(fileName))
+                foreach (string entry in File.ReadAllLines(fileInfo.FullName))
                     builder.Append(entry);
 
                 builder.Append("</log>");
@@ -138,7 +148,7 @@ namespace XiboClient.XmdsAgents
                     xmds.SubmitLog(ApplicationSettings.Default.ServerKey, key, builder.ToString());
 
                 // Delete the file we are on
-                File.Delete(fileName);
+                File.Delete(fileInfo.FullName);
 
                 // Increment files processed
                 filesProcessed++;

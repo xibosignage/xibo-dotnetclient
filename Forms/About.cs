@@ -32,7 +32,7 @@ namespace XiboClient
         public About()
         {
             InitializeComponent();
-
+            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             label1.Text = Application.ProductName;
             label2.Text = ApplicationSettings.Default.ClientVersion;
         }

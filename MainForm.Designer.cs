@@ -1,3 +1,4 @@
+using System.Windows.Forms;
 using XiboClient.Properties;
 namespace XiboClient
 {
@@ -41,7 +42,7 @@ namespace XiboClient
             this.ClientSize = new System.Drawing.Size(1024, 768);
             this.DoubleBuffered = global::XiboClient.ApplicationSettings.Default.DoubleBuffering;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             this.Name = "MainForm";
             this.Text = "Xibo Client";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;

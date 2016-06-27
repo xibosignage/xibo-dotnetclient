@@ -150,10 +150,13 @@ namespace XiboClient.XmdsAgents
                         string result = xmds.GetResource(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, file.LayoutId, file.RegionId, file.MediaId);
 
                         // Write the result to disk
-                        using (StreamWriter sw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                        using (FileStream fileStream = File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read))
                         {
-                            sw.Write(result);
-                            sw.Close();
+                            using (StreamWriter sw = new StreamWriter(fileStream))
+                            {
+                                sw.Write(result);
+                                sw.Close();
+                            }
                         }
 
                         // File completed
@@ -216,10 +219,13 @@ namespace XiboClient.XmdsAgents
                             string layoutXml = Encoding.UTF8.GetString(getFileReturn);
 
                             // Full file is downloaded
-                            using (StreamWriter sw = new StreamWriter(File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                            using (FileStream fileStream = File.Open(ApplicationSettings.Default.LibraryPath + @"\" + file.SaveAs, FileMode.Create, FileAccess.Write, FileShare.Read))
                             {
-                                sw.Write(layoutXml);
-                                sw.Close();
+                                using (StreamWriter sw = new StreamWriter(fileStream))
+                                {
+                                    sw.Write(layoutXml);
+                                    sw.Close();
+                                }
                             }
 
                             file.Complete = true;

@@ -35,6 +35,11 @@ namespace XiboClient
         [STAThread]
         static int Main(string[] args)
         {
+            NativeMethods.SetErrorMode(NativeMethods.SetErrorMode(0) |
+                           ErrorModes.SEM_NOGPFAULTERRORBOX |
+                           ErrorModes.SEM_FAILCRITICALERRORS |
+                           ErrorModes.SEM_NOOPENFILEERRORBOX);
+
             // Ensure our process has the highest priority
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
 
@@ -162,6 +167,10 @@ namespace XiboClient
             HandleUnhandledException(e.Exception);
         }
 
+        /// <summary>
+        /// Event for unhandled exceptions
+        /// </summary>
+        /// <param name="o"></param>
         static void HandleUnhandledException(Object o)
         {
             Exception e = o as Exception;
@@ -170,25 +179,49 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
             Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
 
-            // Also write to the event log
             try
             {
-                if (!EventLog.SourceExists(Application.ProductName))
-                    EventLog.CreateEventSource(Application.ProductName, "Xibo");
+                // Also write to the event log
+                try
+                {
+                    if (!EventLog.SourceExists(Application.ProductName))
+                        EventLog.CreateEventSource(Application.ProductName, "Xibo");
 
-                EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
+                    EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Main", "Couldn't write to event log: " + ex.Message), LogType.Error.ToString());
+                }
+
+                Trace.Flush();
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("Main", "Couldn't write to event log: " + ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Error.ToString());
             }
 
-            Trace.Flush();
-
-            Environment.Exit(1);
+            // Try to restart
+            Application.Restart();
         }
 
         [DllImport("User32.dll")]
         public static extern int ShowWindowAsync(IntPtr hWnd , int swCommand);
+
+        internal static class NativeMethods
+        {
+            [DllImport("kernel32.dll")]
+            internal static extern ErrorModes SetErrorMode(ErrorModes mode);
+        }
+
+        [Flags]
+        internal enum ErrorModes : uint
+        {
+            SYSTEM_DEFAULT = 0x0,
+            SEM_FAILCRITICALERRORS = 0x0001,
+            SEM_NOALIGNMENTFAULTEXCEPT = 0x0004,
+            SEM_NOGPFAULTERRORBOX = 0x0002,
+            SEM_NOOPENFILEERRORBOX = 0x8000
+        }
     }
 }

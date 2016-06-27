@@ -164,11 +164,14 @@ namespace XiboClient
             try
             {
                 // Open the Text Writer
-                using (StreamWriter tw = new StreamWriter(File.Open(string.Format("{0}_{1}", ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.StatsLogFile, DateTime.Now.ToFileTimeUtc().ToString()), FileMode.Append, FileAccess.Write, FileShare.Read), Encoding.UTF8))
+                using (FileStream fileStream = File.Open(string.Format("{0}_{1}", ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.StatsLogFile, DateTime.Now.ToFileTimeUtc().ToString()), FileMode.Append, FileAccess.Write, FileShare.Read))
                 {
-                    foreach (Stat stat in _stats)
+                    using (StreamWriter tw = new StreamWriter(fileStream, Encoding.UTF8))
                     {
-                        tw.WriteLine(stat.ToString());
+                        foreach (Stat stat in _stats)
+                        {
+                            tw.WriteLine(stat.ToString());
+                        }
                     }
                 }
             }

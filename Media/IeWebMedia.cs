@@ -275,10 +275,13 @@ namespace XiboClient
                     //html = html.Replace("<body>", "<body><h1 style='color:white'>" + DateTime.Now.ToString() + "</h1>");
 
                     // Write to the library
-                    using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (FileStream fileStream = File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                     {
-                        sw.Write(html);
-                        sw.Close();
+                        using (StreamWriter sw = new StreamWriter(fileStream))
+                        {
+                            sw.Write(html);
+                            sw.Close();
+                        }
                     }
 
                     if (_reloadOnXmdsRefresh)
@@ -313,9 +316,12 @@ namespace XiboClient
             // Ammend the resource file so that we can open it directly from the library (this is better than using a tempoary file)
             string cachedFile = "";
 
-            using (StreamReader reader = new StreamReader(File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (FileStream fileStream = File.Open(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
-                cachedFile = reader.ReadToEnd();
+                using (StreamReader reader = new StreamReader(fileStream))
+                {
+                    cachedFile = reader.ReadToEnd();
+                }
             }
 
             if (cachedFile.Contains("[[ViewPortWidth]]"))
@@ -337,10 +343,13 @@ namespace XiboClient
                 html = html.Replace("[[ViewPortWidth]]", _width.ToString());
 
                 // Write to the library
-                using (StreamWriter sw = new StreamWriter(File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (FileStream fileStream = File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                 {
-                    sw.Write(html);
-                    sw.Close();
+                    using (StreamWriter sw = new StreamWriter(fileStream))
+                    {
+                        sw.Write(html);
+                        sw.Close();
+                    }
                 }
             }
         }
