@@ -284,13 +284,15 @@ namespace XiboClient
                 {
                     _clientInfoForm.Hide();
 #if !DEBUG
-                    TopMost = true;
+                    if (!_screenSaver)
+                        TopMost = true;
 #endif
                 }
                 else
                 {
 #if !DEBUG
-                    TopMost = false;
+                    if (!_screenSaver)
+                        TopMost = false;
 #endif
                     _clientInfoForm.Show();
                     _clientInfoForm.BringToFront();
@@ -329,6 +331,12 @@ namespace XiboClient
 
                 // Initialize the other schedule components
                 _schedule.InitializeComponents();
+
+                // Set this form to topmost
+#if !DEBUG
+                if (!_screenSaver)
+                    TopMost = true;
+#endif
             }
             catch (Exception ex)
             {
@@ -360,12 +368,6 @@ namespace XiboClient
 
             // Change the default Proxy class
             OptionForm.SetGlobalProxy();
-
-            // Set this form to topmost
-#if !DEBUG
-            if (!_screenSaver)
-                TopMost = true;
-#endif
 
             // UserApp data
             Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + ApplicationSettings.Default.LibraryPath), LogType.Info.ToString());

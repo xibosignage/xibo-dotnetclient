@@ -225,7 +225,7 @@ namespace XiboClient.XmdsAgents
                             catch
                             {
                                 error = true;
-                                message += "Invalid Configuration Option from CMS [" + node.Name + "]" + Environment.NewLine;
+                                message += "CMS sent configuration for [" + node.Name + "] which this player doesn't understand." + Environment.NewLine;
                             }
                         }
                     }
@@ -239,8 +239,8 @@ namespace XiboClient.XmdsAgents
                     message += result.DocumentElement.Attributes["message"].Value;
                 }
 
-                if (string.IsNullOrEmpty(message))
-                    message = result.DocumentElement.Attributes["message"].Value;
+                // Append the informational message with the message attribute.
+                message = result.DocumentElement.Attributes["message"].Value + Environment.NewLine + message;
             }
             catch (Exception ex)
             {
