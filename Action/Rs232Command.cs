@@ -21,6 +21,7 @@ namespace XiboClient.Logic
 
         /// <summary>
         /// Run the command
+        /// throws an exception if we cannot open or write to the port
         /// </summary>
         public string Run()
         {
@@ -28,6 +29,8 @@ namespace XiboClient.Logic
 
             // Parse and configure the port
             parse();
+
+            Trace.WriteLine(new LogMessage("Rs232Command - run", "Parsed command, will open port " + _port.PortName + " and write " + _toSend), LogType.Audit.ToString());
 
             // try to open the COM port
             if (!_port.IsOpen)
