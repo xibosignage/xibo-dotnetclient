@@ -1,6 +1,6 @@
 ﻿/*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2014 Spring Signage Ltd
+ * Copyright (C) 2014-2016 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *

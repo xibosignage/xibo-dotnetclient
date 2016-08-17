@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2015 Daniel Garner
+ * Copyright (C) 2006-2016 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -449,23 +449,26 @@ namespace XiboClient
             // And some stuff on Raw nodes
             XmlNode rawNode = mediaNode.SelectSingleNode("raw");
 
-            foreach (XmlNode raw in rawNode.ChildNodes)
+            if (rawNode != null)
             {
-                if (raw.Name == "text")
+                foreach (XmlNode raw in rawNode.ChildNodes)
                 {
-                    _options.text = raw.InnerText;
-                }
-                else if (raw.Name == "template")
-                {
-                    _options.documentTemplate = raw.InnerText;
-                }
-                else if (raw.Name == "embedHtml")
-                {
-                    _options.text = raw.InnerText;
-                }
-                else if (raw.Name == "embedScript")
-                {
-                    _options.javaScript = raw.InnerText;
+                    if (raw.Name == "text")
+                    {
+                        _options.text = raw.InnerText;
+                    }
+                    else if (raw.Name == "template")
+                    {
+                        _options.documentTemplate = raw.InnerText;
+                    }
+                    else if (raw.Name == "embedHtml")
+                    {
+                        _options.text = raw.InnerText;
+                    }
+                    else if (raw.Name == "embedScript")
+                    {
+                        _options.javaScript = raw.InnerText;
+                    }
                 }
             }
 
@@ -775,11 +778,16 @@ namespace XiboClient
 
         /// <summary>
         /// Clears the Region of anything that it shouldnt still have... 
+        /// called when Destroying a Layout and when Removing an Overlay
         /// </summary>
         public void Clear()
         {
             try
             {
+                // Stop the current media item
+                if (_media != null)
+                    StopMedia(_media);
+
                 // What happens if we are disposing this region but we have not yet completed the stat event?
                 if (string.IsNullOrEmpty(_stat.toDate))
                 {

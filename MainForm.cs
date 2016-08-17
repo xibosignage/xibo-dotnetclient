@@ -324,7 +324,7 @@ namespace XiboClient
                 _schedule = new Schedule(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.ScheduleFile, ref _cacheManager, ref _clientInfoForm);
 
                 // Bind to the schedule change event - notifys of changes to the schedule
-                _schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
+                _schedule.ScheduleChangeEvent += ScheduleChangeEvent;
 
                 // Bind to the overlay change event
                 _schedule.OverlayChangeEvent += ScheduleOverlayChangeEvent;
@@ -446,7 +446,7 @@ namespace XiboClient
         /// Handles the ScheduleChange event
         /// </summary>
         /// <param name="layoutPath"></param>
-        void schedule_ScheduleChangeEvent(string layoutPath, int scheduleId, int layoutId)
+        void ScheduleChangeEvent(string layoutPath, int scheduleId, int layoutId)
         {
             Trace.WriteLine(new LogMessage("MainForm - ScheduleChangeEvent", string.Format("Schedule Changing to {0}", layoutPath)), LogType.Audit.ToString());
 
