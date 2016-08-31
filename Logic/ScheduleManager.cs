@@ -237,12 +237,29 @@ namespace XiboClient
             if (_currentSchedule.Count == 0)
                 forceChange = true;
 
+            // Log
+            List<string> currentScheduleString = new List<string>();
+            List<string> newScheduleString = new List<string>();
+
             // Are all the items that were in the _currentSchedule still there?
             foreach (LayoutSchedule layout in _currentSchedule)
             {
                 if (!newSchedule.Contains(layout))
+                {
+                    Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "New Schedule does not contain " + layout.id), LogType.Audit.ToString());
                     forceChange = true;
+                }
+
+                currentScheduleString.Add(layout.ToString());
             }
+
+            foreach (LayoutSchedule layout in _currentSchedule)
+            {
+                newScheduleString.Add(layout.ToString());
+            }
+
+            Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Layouts in Current Schedule: " + string.Join(Environment.NewLine, currentScheduleString)), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Layouts in New Schedule: " + string.Join(Environment.NewLine, newScheduleString)), LogType.Audit.ToString());
 
             // Set the new schedule
             _currentSchedule = newSchedule;
@@ -275,7 +292,7 @@ namespace XiboClient
                 // Is the layout valid in the cachemanager?
                 try
                 {
-                    if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                    if (!_cacheManager.IsValidPath(layout.id + ".xlf"))
                     {
                         Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());
                         continue;
@@ -557,5 +574,32 @@ namespace XiboClient
         public DateTime ToDt;
 
         public List<string> Dependents = new List<string>();
+
+        /// <summary>
+        /// ToString
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return string.Format("[{0}] From {1} to {2} with priority {3}. {4} dependents.", id, FromDt.ToString(), ToDt.ToString(), Priority, Dependents.Count);
+        }
+
+        public override int GetHashCode()
+        {
+            return id + scheduleid;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+                return false;
+
+            LayoutSchedule compare = obj as LayoutSchedule;
+
+            return id == compare.id &&
+                scheduleid == compare.scheduleid &&
+                FromDt.Ticks == compare.FromDt.Ticks &&
+                ToDt.Ticks == compare.ToDt.Ticks;
+        }
     }
 }
