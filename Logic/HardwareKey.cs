@@ -72,6 +72,9 @@ namespace XiboClient
         {
             Debug.WriteLine("[IN]", "HardwareKey");
 
+            // Get the Mac Address
+            _macAddress = GetMacAddress();
+
             // Get the key from the Settings
             _hardwareKey = ApplicationSettings.Default.HardwareKey;
 
@@ -80,8 +83,10 @@ namespace XiboClient
             {
                 try
                 {
+                    string systemDriveLetter = Path.GetPathRoot(Environment.SystemDirectory);
+
                     // Calculate the Hardware key from the CPUID and Volume Serial
-                    _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+                    _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial(systemDriveLetter[0].ToString()) + _macAddress);
                 }
                 catch
                 {
@@ -91,9 +96,6 @@ namespace XiboClient
                 // Store the key
                 ApplicationSettings.Default.HardwareKey = _hardwareKey;
             }
-
-            // Get the Mac Address
-            _macAddress = GetMacAddress();
 
             Debug.WriteLine("[OUT]", "HardwareKey");
         }
@@ -154,13 +156,20 @@ namespace XiboClient
         {
             string macAddresses = string.Empty;
 
-            foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+            try
             {
-                if (nic.OperationalStatus == OperationalStatus.Up)
+                foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
                 {
-                    macAddresses += BitConverter.ToString(nic.GetPhysicalAddress().GetAddressBytes()).Replace('-', ':');
-                    break;
+                    if (nic.OperationalStatus == OperationalStatus.Up)
+                    {
+                        macAddresses += BitConverter.ToString(nic.GetPhysicalAddress().GetAddressBytes()).Replace('-', ':');
+                        break;
+                    }
                 }
+            }
+            catch
+            {
+                macAddresses = "00:00:00:00:00:00";
             }
 
             return macAddresses;
