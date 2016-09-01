@@ -46,6 +46,9 @@ namespace XiboClient
         public string uri;
         public int duration;
 
+        // Region Loop
+        public bool RegionLoop;
+
         //xml
         public XmlNodeList mediaNodes;
 

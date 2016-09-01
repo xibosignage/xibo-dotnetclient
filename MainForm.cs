@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-15 Daniel Garner
+ * Copyright (C) 2006-16 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -752,6 +752,20 @@ namespace XiboClient
                     continue;
                 }
 
+                // Region loop setting
+                options.RegionLoop = false;
+
+                XmlNode regionOptionsNode = region.SelectSingleNode("options");
+
+                if (regionOptionsNode != null)
+                {
+                    foreach (XmlNode option in regionOptionsNode.ChildNodes)
+                    {
+                        if (option.Name == "loop" && option.InnerText == "1")
+                            options.RegionLoop = true;
+                    }
+                }
+
                 //each region
                 XmlAttributeCollection nodeAttibutes = region.Attributes;
 
@@ -793,9 +807,6 @@ namespace XiboClient
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
             }
-
-            // We have loaded a layout and therefore are no longer showing the splash screen
-            _showingSplash = false;
 
             // We have loaded a layout and therefore are no longer showing the splash screen
             _showingSplash = false;

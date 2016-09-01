@@ -181,8 +181,20 @@ namespace XiboClient
                 // If the sequence hasnt been changed, OR the layout has been expired
                 // there has been no change to the sequence, therefore the media we have already created is still valid
                 // or this media has actually been destroyed and we are working out way out the call stack
-                if (_layoutExpired || (_currentSequence == temp))
+                if (_layoutExpired)
+                {
                     return;
+                }
+                else if (_currentSequence == temp)
+                {
+                    // Media has not changed, we are likely the only valid media item in the region
+                    // the layout has not yet expired, so depending on whether we loop or not, we either
+                    // reload the same media item again
+                    // or do nothing (return)
+                    // This could be made more succinct, but is clearer written as an elseif.
+                    if (!_options.RegionLoop)
+                        return;
+                }
 
                 // Store the Current Index
                 _options.CurrentIndex = _currentSequence;
