@@ -118,6 +118,7 @@ namespace XiboClient
             _scheduleManager = new ScheduleManager(_cacheManager, scheduleLocation);
             _scheduleManager.OnNewScheduleAvailable += new ScheduleManager.OnNewScheduleAvailableDelegate(_scheduleManager_OnNewScheduleAvailable);
             _scheduleManager.OnRefreshSchedule += new ScheduleManager.OnRefreshScheduleDelegate(_scheduleManager_OnRefreshSchedule);
+            _scheduleManager.OnScheduleManagerCheckComplete += _scheduleManager_OnScheduleManagerCheckComplete;
             _scheduleManager.ClientInfoForm = _clientInfoForm;
 
             // Create a schedule manager thread
@@ -204,6 +205,35 @@ namespace XiboClient
         void _scheduleManager_OnRefreshSchedule()
         {
             _layoutSchedule = _scheduleManager.CurrentSchedule;            
+        }
+
+        /// <summary>
+        /// Schedule Manager has completed its check cycle
+        /// </summary>
+        void _scheduleManager_OnScheduleManagerCheckComplete()
+        {
+            if (agentThreadsAlive())
+            {
+                // Update status marker on the main thread.
+                _clientInfoForm.UpdateStatusMarkerFile();
+            }
+            else
+            {
+                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "Agent threads are dead, not updating status.json"), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Are all the required agent threads alive?
+        /// </summary>
+        /// <returns></returns>
+        private bool agentThreadsAlive()
+        {
+            return _scheduleAgentThread.IsAlive &&
+                _registerAgentThread.IsAlive &&
+                _requiredFilesAgentThread.IsAlive &&
+                _logAgentThread.IsAlive &&
+                _libraryAgentThread.IsAlive;
         }
 
         /// <summary>

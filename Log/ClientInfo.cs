@@ -268,7 +268,8 @@ namespace XiboClient.Log
         /// </summary>
         private void updateStatusFile()
         {
-            File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\",\"state\":\"" + Thread.State.ToString() + "\"}");
+            File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"),
+                "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\",\"state\":\"" + Thread.State.ToString() + "\",\"xmdsLastActivity\":\"" + ApplicationSettings.Default.XmdsLastConnection.ToString() + "\",\"xmdsCollectInterval\":\"" + ApplicationSettings.Default.CollectInterval.ToString() + "\"}");
         }
     }
 }

@@ -57,6 +57,9 @@ namespace XiboClient
         public delegate void OnRefreshScheduleDelegate();
         public event OnRefreshScheduleDelegate OnRefreshSchedule;
 
+        public delegate void OnScheduleManagerCheckCompleteDelegate();
+        public event OnScheduleManagerCheckCompleteDelegate OnScheduleManagerCheckComplete;
+
         // Member Varialbes
         private string _location;
         private Collection<LayoutSchedule> _layoutSchedule;
@@ -183,7 +186,8 @@ namespace XiboClient
                         }
 
                         // Write a flag to the status.xml file
-                        _clientInfoForm.UpdateStatusMarkerFile();
+                        if (OnScheduleManagerCheckComplete != null)
+                            OnScheduleManagerCheckComplete();
                     }
                     catch (Exception ex)
                     {
@@ -308,7 +312,7 @@ namespace XiboClient
                 // Check dependents
                 foreach (string dependent in layout.Dependents)
                 {
-                    if (!_cacheManager.IsValidPath(dependent))
+                    if (!string.IsNullOrEmpty(dependent) && !_cacheManager.IsValidPath(dependent))
                     {
                         Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
                         continue;
@@ -417,7 +421,7 @@ namespace XiboClient
                         if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
 
                         // Dependents
-                        if (attributes["dependents"] != null)
+                        if (attributes["dependents"] != null && !string.IsNullOrEmpty(attributes["dependents"].Value))
                         {
                             foreach (string dependent in attributes["dependents"].Value.Split(','))
                             {
