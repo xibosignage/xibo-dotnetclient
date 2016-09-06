@@ -183,7 +183,7 @@ namespace XiboClient
                         }
 
                         // Write a flag to the status.xml file
-                        File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
+                        _clientInfoForm.UpdateStatusMarkerFile();
                     }
                     catch (Exception ex)
                     {
