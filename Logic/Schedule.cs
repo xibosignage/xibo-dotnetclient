@@ -49,6 +49,25 @@ namespace XiboClient
         private int _currentLayout = 0;
         private string _scheduleLocation;
 
+        /// <summary>
+        /// The current layout id
+        /// </summary>
+        public int CurrentLayoutId
+        {
+            get
+            {
+                return _currentLayoutId;
+            }
+            set
+            {
+                _currentLayoutId = value;
+
+                if (_scheduleManager != null)
+                    _scheduleManager.CurrentLayoutId = _currentLayoutId;
+            }
+        }
+        private int _currentLayoutId;
+
         private bool _forceChange = false;
 
         // Key

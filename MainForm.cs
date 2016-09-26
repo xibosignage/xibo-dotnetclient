@@ -492,6 +492,7 @@ namespace XiboClient
                     PrepareLayout(layoutPath);
 
                     _clientInfoForm.CurrentLayoutId = layoutPath;
+                    _schedule.CurrentLayoutId = _layoutId;
                 }
                 catch (Exception e)
                 {
