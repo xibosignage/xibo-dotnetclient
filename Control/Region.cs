@@ -476,16 +476,25 @@ namespace XiboClient
                 switch (options.type)
                 {
                     case "image":
+                        if (!_cacheManager.IsValidPath(options.uri))
+                            throw new InvalidOperationException("File invalid");
+
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new ImagePosition(options);
                         break;
 
                     case "powerpoint":
+                        if (!_cacheManager.IsValidPath(options.uri))
+                            throw new InvalidOperationException("File invalid");
+
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new PowerPoint(options);
                         break;
 
                     case "video":
+                        if (!_cacheManager.IsValidPath(options.uri))
+                            throw new InvalidOperationException("File invalid");
+
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
 
                         // Which video engine are we using?
@@ -518,6 +527,9 @@ namespace XiboClient
                         break;
 
                     case "flash":
+                        if (!_cacheManager.IsValidPath(options.uri))
+                            throw new InvalidOperationException("File invalid");
+
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new Flash(options);
                         break;

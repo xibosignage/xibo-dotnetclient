@@ -317,7 +317,22 @@ namespace XiboClient
                 if (_layoutSchedule[_currentLayout].layoutFile == ApplicationSettings.Default.LibraryPath + @"\" + layoutPath)
                 {
                     // What happens if the action of downloading actually invalidates this layout?
-                    if (!_cacheManager.IsValidPath(layoutPath))
+                    bool valid = _cacheManager.IsValidPath(layoutPath);
+
+                    if (valid)
+                    {
+                        // Check dependents
+                        foreach (string dependent in _layoutSchedule[_currentLayout].Dependents)
+                        {
+                            if (!string.IsNullOrEmpty(dependent) && !_cacheManager.IsValidPath(dependent))
+                            {
+                                valid = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!valid)
                     {
                         Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "The current layout is now invalid, refreshing the current schedule."), LogType.Audit.ToString());
 

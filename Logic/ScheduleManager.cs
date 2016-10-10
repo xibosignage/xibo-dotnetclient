@@ -432,6 +432,15 @@ namespace XiboClient
                     temp.layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + layoutFile + @".xlf";
                     temp.id = int.Parse(layoutFile);
 
+                    // Dependents
+                    if (attributes["dependents"] != null && !string.IsNullOrEmpty(attributes["dependents"].Value))
+                    {
+                        foreach (string dependent in attributes["dependents"].Value.Split(','))
+                        {
+                            temp.Dependents.Add(dependent);
+                        }
+                    }
+
                     // Get attributes that only exist on the default
                     if (temp.NodeName != "default")
                     {
@@ -448,15 +457,6 @@ namespace XiboClient
 
                         // Add it to the layout schedule
                         if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
-
-                        // Dependents
-                        if (attributes["dependents"] != null && !string.IsNullOrEmpty(attributes["dependents"].Value))
-                        {
-                            foreach (string dependent in attributes["dependents"].Value.Split(','))
-                            {
-                                temp.Dependents.Add(dependent);
-                            }
-                        }
                     }
 
                     _layoutSchedule.Add(temp);
