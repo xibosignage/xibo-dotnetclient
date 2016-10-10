@@ -57,6 +57,9 @@ namespace XiboClient
         public delegate void OnRefreshScheduleDelegate();
         public event OnRefreshScheduleDelegate OnRefreshSchedule;
 
+        public delegate void OnScheduleManagerCheckCompleteDelegate();
+        public event OnScheduleManagerCheckCompleteDelegate OnScheduleManagerCheckComplete;
+
         // Member Varialbes
         private string _location;
         private Collection<LayoutSchedule> _layoutSchedule;
@@ -64,6 +67,11 @@ namespace XiboClient
         private bool _refreshSchedule;
         private CacheManager _cacheManager;
         private DateTime _lastScreenShotDate;
+        
+        /// <summary>
+        /// The currently playing layout Id
+        /// </summary>
+        private int _currenctLayoutId;
 
         /// <summary>
         /// Client Info Form
@@ -121,6 +129,22 @@ namespace XiboClient
             get
             {
                 return _currentSchedule;
+            }
+        }
+
+        /// <summary>
+        /// Get or Set the current layout id
+        /// </summary>
+        public int CurrentLayoutId
+        {
+            get
+            {
+                return _currenctLayoutId;
+            }
+            set
+            {
+                lock (_locker)
+                    _currenctLayoutId = value;
             }
         }
 
@@ -183,7 +207,8 @@ namespace XiboClient
                         }
 
                         // Write a flag to the status.xml file
-                        File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
+                        if (OnScheduleManagerCheckComplete != null)
+                            OnScheduleManagerCheckComplete();
                     }
                     catch (Exception ex)
                     {
@@ -237,12 +262,29 @@ namespace XiboClient
             if (_currentSchedule.Count == 0)
                 forceChange = true;
 
+            // Log
+            List<string> currentScheduleString = new List<string>();
+            List<string> newScheduleString = new List<string>();
+
             // Are all the items that were in the _currentSchedule still there?
             foreach (LayoutSchedule layout in _currentSchedule)
             {
                 if (!newSchedule.Contains(layout))
+                {
+                    Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "New Schedule does not contain " + layout.id), LogType.Audit.ToString());
                     forceChange = true;
+                }
+
+                currentScheduleString.Add(layout.ToString());
             }
+
+            foreach (LayoutSchedule layout in _currentSchedule)
+            {
+                newScheduleString.Add(layout.ToString());
+            }
+
+            Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Layouts in Current Schedule: " + string.Join(Environment.NewLine, currentScheduleString)), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Layouts in New Schedule: " + string.Join(Environment.NewLine, newScheduleString)), LogType.Audit.ToString());
 
             // Set the new schedule
             _currentSchedule = newSchedule;
@@ -272,29 +314,37 @@ namespace XiboClient
             // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
             foreach (LayoutSchedule layout in _layoutSchedule)
             {
-                // Is the layout valid in the cachemanager?
-                try
+                if (!ApplicationSettings.Default.ExpireModifiedLayouts && layout.id == CurrentLayoutId)
                 {
-                    if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                    Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Skipping validity test for current layout."), LogType.Audit.ToString());
+                }
+                else
+                {
+
+                    // Is the layout valid in the cachemanager?
+                    try
                     {
-                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());
+                        if (!_cacheManager.IsValidPath(layout.id + ".xlf"))
+                        {
+                            Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore this layout.. raise an error?
+                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Unable to determine if layout is valid or not"), LogType.Error.ToString());
                         continue;
                     }
-                }
-                catch
-                {
-                    // Ignore this layout.. raise an error?
-                    Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Unable to determine if layout is valid or not"), LogType.Error.ToString());
-                    continue;
-                }
 
-                // Check dependents
-                foreach (string dependent in layout.Dependents)
-                {
-                    if (!_cacheManager.IsValidPath(dependent))
+                    // Check dependents
+                    foreach (string dependent in layout.Dependents)
                     {
-                        Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
-                        continue;
+                        if (!string.IsNullOrEmpty(dependent) && !_cacheManager.IsValidPath(dependent))
+                        {
+                            Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
+                            continue;
+                        }
                     }
                 }
 
@@ -400,7 +450,7 @@ namespace XiboClient
                         if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
 
                         // Dependents
-                        if (attributes["dependents"] != null)
+                        if (attributes["dependents"] != null && !string.IsNullOrEmpty(attributes["dependents"].Value))
                         {
                             foreach (string dependent in attributes["dependents"].Value.Split(','))
                             {
@@ -557,5 +607,32 @@ namespace XiboClient
         public DateTime ToDt;
 
         public List<string> Dependents = new List<string>();
+
+        /// <summary>
+        /// ToString
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return string.Format("[{0}] From {1} to {2} with priority {3}. {4} dependents.", id, FromDt.ToString(), ToDt.ToString(), Priority, Dependents.Count);
+        }
+
+        public override int GetHashCode()
+        {
+            return id + scheduleid;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+                return false;
+
+            LayoutSchedule compare = obj as LayoutSchedule;
+
+            return id == compare.id &&
+                scheduleid == compare.scheduleid &&
+                FromDt.Ticks == compare.FromDt.Ticks &&
+                ToDt.Ticks == compare.ToDt.Ticks;
+        }
     }
 }

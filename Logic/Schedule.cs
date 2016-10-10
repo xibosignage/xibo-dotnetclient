@@ -49,6 +49,25 @@ namespace XiboClient
         private int _currentLayout = 0;
         private string _scheduleLocation;
 
+        /// <summary>
+        /// The current layout id
+        /// </summary>
+        public int CurrentLayoutId
+        {
+            get
+            {
+                return _currentLayoutId;
+            }
+            set
+            {
+                _currentLayoutId = value;
+
+                if (_scheduleManager != null)
+                    _scheduleManager.CurrentLayoutId = _currentLayoutId;
+            }
+        }
+        private int _currentLayoutId;
+
         private bool _forceChange = false;
 
         // Key
@@ -118,6 +137,7 @@ namespace XiboClient
             _scheduleManager = new ScheduleManager(_cacheManager, scheduleLocation);
             _scheduleManager.OnNewScheduleAvailable += new ScheduleManager.OnNewScheduleAvailableDelegate(_scheduleManager_OnNewScheduleAvailable);
             _scheduleManager.OnRefreshSchedule += new ScheduleManager.OnRefreshScheduleDelegate(_scheduleManager_OnRefreshSchedule);
+            _scheduleManager.OnScheduleManagerCheckComplete += _scheduleManager_OnScheduleManagerCheckComplete;
             _scheduleManager.ClientInfoForm = _clientInfoForm;
 
             // Create a schedule manager thread
@@ -207,6 +227,35 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Schedule Manager has completed its check cycle
+        /// </summary>
+        void _scheduleManager_OnScheduleManagerCheckComplete()
+        {
+            if (agentThreadsAlive())
+            {
+                // Update status marker on the main thread.
+                _clientInfoForm.UpdateStatusMarkerFile();
+            }
+            else
+            {
+                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "Agent threads are dead, not updating status.json"), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Are all the required agent threads alive?
+        /// </summary>
+        /// <returns></returns>
+        private bool agentThreadsAlive()
+        {
+            return _scheduleAgentThread.IsAlive &&
+                _registerAgentThread.IsAlive &&
+                _requiredFilesAgentThread.IsAlive &&
+                _logAgentThread.IsAlive &&
+                _libraryAgentThread.IsAlive;
+        }
+
+        /// <summary>
         /// Moves the layout on
         /// </summary>
         public void NextLayout()
@@ -268,7 +317,7 @@ namespace XiboClient
                 if (_layoutSchedule[_currentLayout].layoutFile == ApplicationSettings.Default.LibraryPath + @"\" + layoutPath)
                 {
                     // What happens if the action of downloading actually invalidates this layout?
-                    if (!_cacheManager.IsValidLayout(layoutPath))
+                    if (!_cacheManager.IsValidPath(layoutPath))
                     {
                         Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "The current layout is now invalid, refreshing the current schedule."), LogType.Audit.ToString());
 

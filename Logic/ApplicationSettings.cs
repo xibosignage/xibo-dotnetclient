@@ -37,9 +37,9 @@ namespace XiboClient
         private static string _default = "default";
 
         // Application Specific Settings we want to protect
-        private string _clientVersion = "1.7.8";
+        private string _clientVersion = "1.7.9";
         private string _version = "4";
-        private int _clientCodeVersion = 112;
+        private int _clientCodeVersion = 113;
 
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
