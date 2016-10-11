@@ -199,7 +199,7 @@ namespace XiboClient
                     {
                         // If we cached it over 2 minutes ago, then check the GetLastWriteTime
                         if (file.cacheDate > DateTime.Now.AddMinutes(-2))
-                            return true;
+                            return File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + path);
 
                         try
                         {

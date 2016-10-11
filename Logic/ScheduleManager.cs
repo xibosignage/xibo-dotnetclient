@@ -320,7 +320,6 @@ namespace XiboClient
                 }
                 else
                 {
-
                     // Is the layout valid in the cachemanager?
                     try
                     {
@@ -338,14 +337,20 @@ namespace XiboClient
                     }
 
                     // Check dependents
+                    bool validDependents = true;
                     foreach (string dependent in layout.Dependents)
                     {
                         if (!string.IsNullOrEmpty(dependent) && !_cacheManager.IsValidPath(dependent))
                         {
                             Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
-                            continue;
+
+                            validDependents = false;
+                            break;
                         }
                     }
+
+                    if (!validDependents)
+                        continue;
                 }
 
                 // If this is the default, skip it
