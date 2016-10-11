@@ -156,9 +156,7 @@ namespace XiboClient
                 if (!SetNextMediaNodeInOptions())
                 {
                     // For some reason we cannot set a media node... so we need this region to become invalid
-                    _hasExpired = true;
-                    DurationElapsedEvent();
-                    return;
+                    throw new InvalidOperationException("Unable to set any region media nodes.");
                 }
 
                 // If the sequence hasnt been changed, OR the layout has been expired
@@ -182,7 +180,7 @@ namespace XiboClient
                     // Try the next node
                     startSuccessful = false;
                     continue;
-                }             
+                }
 
                 // First thing we do is stop the current stat record
                 if (!initialMedia)
@@ -473,28 +471,21 @@ namespace XiboClient
             }
             else
             {
+                // We've set our next media node in options already
+                // this includes checking that file based media is valid.
                 switch (options.type)
                 {
                     case "image":
-                        if (!_cacheManager.IsValidPath(options.uri))
-                            throw new InvalidOperationException("File invalid");
-
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new ImagePosition(options);
                         break;
 
                     case "powerpoint":
-                        if (!_cacheManager.IsValidPath(options.uri))
-                            throw new InvalidOperationException("File invalid");
-
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new PowerPoint(options);
                         break;
 
                     case "video":
-                        if (!_cacheManager.IsValidPath(options.uri))
-                            throw new InvalidOperationException("File invalid");
-
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
 
                         // Which video engine are we using?
@@ -527,9 +518,6 @@ namespace XiboClient
                         break;
 
                     case "flash":
-                        if (!_cacheManager.IsValidPath(options.uri))
-                            throw new InvalidOperationException("File invalid");
-
                         options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                         media = new Flash(options);
                         break;
