@@ -694,7 +694,7 @@ namespace XiboClient
                         GenerateBackgroundImage(layoutAttributes["background"].Value, backgroundWidth, backgroundHeight, bgFilePath);
 
                     BackgroundImage = new Bitmap(bgFilePath);
-                    options.backgroundImage = bgFilePath;
+                    options.backgroundImage = @"/backgrounds/" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value; ;
                 }
                 else
                 {
