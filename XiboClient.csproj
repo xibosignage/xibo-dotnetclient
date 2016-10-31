@@ -256,8 +256,7 @@
     <Compile Include="XmdsAgents\RegisterAgent.cs" />
     <Compile Include="XmdsAgents\FileAgent.cs" />
     <Compile Include="XmdsAgents\LibraryAgent.cs" />
-    <Compile Include="XmdsAgents\RequiredFilesAgent.cs" />
-    <Compile Include="XmdsAgents\ScheduleAgent.cs" />
+    <Compile Include="XmdsAgents\ScheduleAndFilesAgent.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

@@ -517,6 +517,7 @@ namespace XiboClient
                     PrepareLayout(layoutPath);
 
                     _clientInfoForm.CurrentLayoutId = layoutPath;
+                    _schedule.CurrentLayoutId = _layoutId;
                 }
                 catch (Exception e)
                 {
@@ -613,6 +614,7 @@ namespace XiboClient
                 }
                 catch (IOException ioEx) 
                 {
+                    _cacheManager.Remove(layoutPath);
                     Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "IOException: " + ioEx.ToString()), LogType.Error.ToString());
                     throw;
                 }
