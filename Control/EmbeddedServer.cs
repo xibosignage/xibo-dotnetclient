@@ -52,7 +52,14 @@ namespace XiboClient.Control
 
                 using (WebServer server = new WebServer(ApplicationSettings.Default.EmbeddedServerAddress))
                 {
-                    server.RegisterModule(new StaticFilesModule(ApplicationSettings.Default.LibraryPath));
+                    Dictionary<string, string> headers = new Dictionary<string, string>()
+                    {
+                        { Constants.HeaderCacheControl, "no-cache, no-store, must-revalidate" },
+                        { Constants.HeaderPragma, "no-cache" },
+                        { Constants.HeaderExpires, "0" }
+                    };
+
+                    server.RegisterModule(new StaticFilesModule(ApplicationSettings.Default.LibraryPath, headers));
                     server.Module<StaticFilesModule>().UseRamCache = true;
                     server.Module<StaticFilesModule>().DefaultExtension = ".html";
 

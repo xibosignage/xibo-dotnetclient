@@ -39,6 +39,7 @@ using System.Runtime.InteropServices;
 using System.Globalization;
 using XiboClient.Logic;
 using XiboClient.Control;
+using XiboClient.Error;
 
 namespace XiboClient
 {
@@ -519,6 +520,10 @@ namespace XiboClient
                     _clientInfoForm.CurrentLayoutId = layoutPath;
                     _schedule.CurrentLayoutId = _layoutId;
                 }
+                catch (DefaultLayoutException)
+                {
+                    throw;
+                }
                 catch (Exception e)
                 {
                     DestroyLayout();
@@ -548,7 +553,8 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
+                if (!(ex is DefaultLayoutException))
+                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
 
                 if (!_showingSplash)
                     ShowSplashScreen();
@@ -594,7 +600,7 @@ namespace XiboClient
             // Default or not
             if (layoutPath == ApplicationSettings.Default.LibraryPath + @"\Default.xml" || String.IsNullOrEmpty(layoutPath))
             {
-                throw new Exception("Default layout");
+                throw new DefaultLayoutException();
             }
             else
             {

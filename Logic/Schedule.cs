@@ -288,8 +288,14 @@ namespace XiboClient
                 // See if XMR should be running
                 if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && _xmrSubscriber.LastHeartBeat != DateTime.MinValue)
                 {
+                    // Log when severly overdue a check
+                    if (_xmrSubscriber.LastHeartBeat < DateTime.Now.AddHours(-1))
+                    {
+                        Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over an hour ago."));
+                    }
+
                     // Check to see if the last update date was over 5 minutes ago
-                    if (_xmrSubscriber.LastHeartBeat < DateTime.Now.AddSeconds(-90))
+                    if (_xmrSubscriber.LastHeartBeat < DateTime.Now.AddMinutes(-5))
                     {
                         // Reconfigure it
                         _registerAgent_OnXmrReconfigure();   
