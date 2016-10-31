@@ -351,7 +351,7 @@ namespace XiboClient
                 currentScheduleString.Add(layout.ToString());
             }
             
-            foreach (LayoutSchedule layout in _currentSchedule)
+            foreach (ScheduleItem layout in _currentSchedule)
             {
                 newScheduleString.Add(layout.ToString());
             }
@@ -547,7 +547,7 @@ namespace XiboClient
                     // Is the layout valid in the cachemanager?
                     try
                     {
-                        if (!_cacheManager.IsValidLayout(layout.id + ".xlf"))
+                        if (!_cacheManager.IsValidPath(layout.id + ".xlf"))
                         {
                             invalidLayouts.Add(layout.id);
                             Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewOverlaySchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());

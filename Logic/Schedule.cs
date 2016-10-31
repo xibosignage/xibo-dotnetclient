@@ -175,7 +175,7 @@ namespace XiboClient
             _scheduleAndRfAgent.CurrentScheduleManager = _scheduleManager;
             _scheduleAndRfAgent.ScheduleLocation = scheduleLocation;
             _scheduleAndRfAgent.HardwareKey = _hardwareKey.Key;
-            _requiredFilesAgent.OnFullyProvisioned += _requiredFilesAgent_OnFullyProvisioned;
+            _scheduleAndRfAgent.OnFullyProvisioned += _requiredFilesAgent_OnFullyProvisioned;
             _scheduleAndRfAgent.ClientInfoForm = _clientInfoForm;
             _scheduleAndRfAgent.OnComplete += new ScheduleAndFilesAgent.OnCompleteDelegate(LayoutFileModified);
 
@@ -423,8 +423,7 @@ namespace XiboClient
         public void wakeUpXmds()
         {
             _registerAgent.WakeUp();
-            _scheduleAgent.WakeUp();
-            _requiredFilesAgent.WakeUp();
+            _scheduleAndRfAgent.WakeUp();
             _logAgent.WakeUp();
         }
 
