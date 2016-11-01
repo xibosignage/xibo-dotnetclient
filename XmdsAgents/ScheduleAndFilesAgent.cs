@@ -366,7 +366,7 @@ namespace XiboClient.XmdsAgents
                 {
                     using (xmds.xmds xmds = new xmds.xmds())
                     {
-                        string status = "{\"availableSpace\":\"" + drive.TotalFreeSpace + "\", \"totalSpace\":\"" + drive.TotalSize + "\"}";
+                        string status = "{\"availableSpace\":\"" + drive.TotalFreeSpace + "\", \"totalSpace\":\"" + drive.TotalSize + "\", \"deviceName\":\"" + Environment.MachineName + "\"}";
 
                         xmds.Credentials = null;
                         xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
