@@ -44,7 +44,7 @@ namespace XiboClient
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             this.Name = "MainForm";
-            this.Text = "Xibo Client";
+            this.Text = Application.ProductName;
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.ResumeLayout(false);

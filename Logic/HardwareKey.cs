@@ -72,6 +72,9 @@ namespace XiboClient
         {
             Debug.WriteLine("[IN]", "HardwareKey");
 
+            // Get the Mac Address
+            _macAddress = GetMacAddress();
+
             // Get the key from the Settings
             _hardwareKey = ApplicationSettings.Default.HardwareKey;
 
@@ -80,8 +83,10 @@ namespace XiboClient
             {
                 try
                 {
+                    string systemDriveLetter = Path.GetPathRoot(Environment.SystemDirectory);
+
                     // Calculate the Hardware key from the CPUID and Volume Serial
-                    _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+                    _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial(systemDriveLetter[0].ToString()) + _macAddress);
                 }
                 catch
                 {
@@ -91,9 +96,6 @@ namespace XiboClient
                 // Store the key
                 ApplicationSettings.Default.HardwareKey = _hardwareKey;
             }
-
-            // Get the Mac Address
-            _macAddress = GetMacAddress();
 
             Debug.WriteLine("[OUT]", "HardwareKey");
         }
@@ -154,13 +156,20 @@ namespace XiboClient
         {
             string macAddresses = string.Empty;
 
-            foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+            try
             {
-                if (nic.OperationalStatus == OperationalStatus.Up)
+                foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
                 {
-                    macAddresses += BitConverter.ToString(nic.GetPhysicalAddress().GetAddressBytes()).Replace('-', ':');
-                    break;
+                    if (nic.OperationalStatus == OperationalStatus.Up)
+                    {
+                        macAddresses += BitConverter.ToString(nic.GetPhysicalAddress().GetAddressBytes()).Replace('-', ':');
+                        break;
+                    }
                 }
+            }
+            catch
+            {
+                macAddresses = "00:00:00:00:00:00";
             }
 
             return macAddresses;
@@ -203,7 +212,7 @@ namespace XiboClient
             const int PROVIDER_RSA_FULL = 1;
             CspParameters cspParams;
             cspParams = new CspParameters(PROVIDER_RSA_FULL);
-            cspParams.KeyContainerName = Application.ProductName + "RsaKey";
+            cspParams.KeyContainerName = Application.ProductName + "-" + Environment.UserName + "-" + "RsaKey";
             cspParams.Flags = CspProviderFlags.UseMachineKeyStore;
             cspParams.ProviderName = "Microsoft Strong Cryptographic Provider";
 
@@ -217,15 +226,23 @@ namespace XiboClient
 
         public string getXmrPublicKey()
         {
-            AsymmetricCipherKeyPair key = getXmrKey();
-
-            using (TextWriter textWriter = new StringWriter())
+            try
             {
-                PemWriter writer = new PemWriter(textWriter);
-                writer.WriteObject(key.Public);
-                writer.Writer.Flush();
+                AsymmetricCipherKeyPair key = getXmrKey();
 
-                return textWriter.ToString();                
+                using (TextWriter textWriter = new StringWriter())
+                {
+                    PemWriter writer = new PemWriter(textWriter);
+                    writer.WriteObject(key.Public);
+                    writer.Writer.Flush();
+
+                    return textWriter.ToString();
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("HardwareKey - getXmrPublicKey", "Unable to get XMR public key. E = " + e.Message), LogType.Error.ToString());
+                return null;
             }
         }
     }

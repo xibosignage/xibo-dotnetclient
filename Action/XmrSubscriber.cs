@@ -175,7 +175,7 @@ namespace XiboClient.Logic
             }
             catch (Exception e)
             {
-                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Unable to Subscribe to XMR: " + e.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Unable to Subscribe to XMR: " + e.Message), LogType.Info.ToString());
                 _clientInfoForm.XmrSubscriberStatus = e.Message;
             }
         }

@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-15 Daniel Garner
+ * Copyright (C) 2006-16 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -39,6 +39,7 @@ using System.Runtime.InteropServices;
 using System.Globalization;
 using XiboClient.Logic;
 using XiboClient.Control;
+using XiboClient.Error;
 
 namespace XiboClient
 {
@@ -324,7 +325,7 @@ namespace XiboClient
                 _schedule = new Schedule(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.ScheduleFile, ref _cacheManager, ref _clientInfoForm);
 
                 // Bind to the schedule change event - notifys of changes to the schedule
-                _schedule.ScheduleChangeEvent += new Schedule.ScheduleChangeDelegate(schedule_ScheduleChangeEvent);
+                _schedule.ScheduleChangeEvent += ScheduleChangeEvent;
 
                 // Bind to the overlay change event
                 _schedule.OverlayChangeEvent += ScheduleOverlayChangeEvent;
@@ -446,7 +447,7 @@ namespace XiboClient
         /// Handles the ScheduleChange event
         /// </summary>
         /// <param name="layoutPath"></param>
-        void schedule_ScheduleChangeEvent(string layoutPath, int scheduleId, int layoutId)
+        void ScheduleChangeEvent(string layoutPath, int scheduleId, int layoutId)
         {
             Trace.WriteLine(new LogMessage("MainForm - ScheduleChangeEvent", string.Format("Schedule Changing to {0}", layoutPath)), LogType.Audit.ToString());
 
@@ -517,6 +518,11 @@ namespace XiboClient
                     PrepareLayout(layoutPath);
 
                     _clientInfoForm.CurrentLayoutId = layoutPath;
+                    _schedule.CurrentLayoutId = _layoutId;
+                }
+                catch (DefaultLayoutException)
+                {
+                    throw;
                 }
                 catch (Exception e)
                 {
@@ -547,7 +553,8 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
+                if (!(ex is DefaultLayoutException))
+                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
 
                 if (!_showingSplash)
                     ShowSplashScreen();
@@ -593,7 +600,7 @@ namespace XiboClient
             // Default or not
             if (layoutPath == ApplicationSettings.Default.LibraryPath + @"\Default.xml" || String.IsNullOrEmpty(layoutPath))
             {
-                throw new Exception("Default layout");
+                throw new DefaultLayoutException();
             }
             else
             {
@@ -613,6 +620,7 @@ namespace XiboClient
                 }
                 catch (IOException ioEx) 
                 {
+                    _cacheManager.Remove(layoutPath);
                     Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "IOException: " + ioEx.ToString()), LogType.Error.ToString());
                     throw;
                 }
@@ -686,7 +694,7 @@ namespace XiboClient
                         GenerateBackgroundImage(layoutAttributes["background"].Value, backgroundWidth, backgroundHeight, bgFilePath);
 
                     BackgroundImage = new Bitmap(bgFilePath);
-                    options.backgroundImage = bgFilePath;
+                    options.backgroundImage = @"/backgrounds/" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value; ;
                 }
                 else
                 {
@@ -752,6 +760,20 @@ namespace XiboClient
                     continue;
                 }
 
+                // Region loop setting
+                options.RegionLoop = false;
+
+                XmlNode regionOptionsNode = region.SelectSingleNode("options");
+
+                if (regionOptionsNode != null)
+                {
+                    foreach (XmlNode option in regionOptionsNode.ChildNodes)
+                    {
+                        if (option.Name == "loop" && option.InnerText == "1")
+                            options.RegionLoop = true;
+                    }
+                }
+
                 //each region
                 XmlAttributeCollection nodeAttibutes = region.Attributes;
 
@@ -793,9 +815,6 @@ namespace XiboClient
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
             }
-
-            // We have loaded a layout and therefore are no longer showing the splash screen
-            _showingSplash = false;
 
             // We have loaded a layout and therefore are no longer showing the splash screen
             _showingSplash = false;

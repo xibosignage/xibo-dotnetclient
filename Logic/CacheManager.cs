@@ -199,7 +199,7 @@ namespace XiboClient
                     {
                         // If we cached it over 2 minutes ago, then check the GetLastWriteTime
                         if (file.cacheDate > DateTime.Now.AddMinutes(-2))
-                            return true;
+                            return File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + path);
 
                         try
                         {
@@ -228,93 +228,6 @@ namespace XiboClient
 
                 // Reached the end of the cache and havent found the file.
                 return false;
-            }
-        }
-
-        /// <summary>
-        /// Is the provided layout file a valid layout (has all media)
-        /// </summary>
-        /// <param name="layoutFile"></param>
-        /// <returns></returns>
-        public bool IsValidLayout(string layoutFile)
-        {
-            lock (_locker)
-            {
-                Debug.WriteLine("Checking if Layout " + layoutFile + " is valid");
-
-                if (!IsValidPath(layoutFile))
-                    return false;
-
-                
-                // Load the XLF, get all media ID's
-                XmlDocument layoutXml = new XmlDocument();
-                layoutXml.Load(ApplicationSettings.Default.LibraryPath + @"\" + layoutFile);
-
-                try
-                {
-                    XmlNodeList mediaNodes = layoutXml.SelectNodes("//media");
-
-                    // Store some information about the validity of local video to decide if this layout should be valid or not.
-                    int countInvalidLocalVideo = 0;
-
-                    foreach (XmlNode media in mediaNodes)
-                    {
-                        // Is this a stored media type?
-                        switch (media.Attributes["type"].Value)
-                        {
-                            case "video":
-                            case "image":
-                            case "flash":
-                            case "powerpoint":
-
-                                // Get the path and see if its 
-                                if (!IsValidPath(GetUri(media)))
-                                {
-                                    Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", "Invalid Media: " + media.Attributes["id"].Value.ToString()), LogType.Audit.ToString());
-                                    return false;
-                                }
-
-                                break;
-
-                            default:
-                                continue;
-                        }
-                    }
-
-                    // If the number of invalid local video elements is equal to the number of elements on the layout, then don't show
-                    if (countInvalidLocalVideo == mediaNodes.Count)
-                        return false;
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine(new LogMessage("CacheManager - IsValidLayout", "Exception checking media. " + ex.Message), LogType.Audit.ToString());
-                    return false;
-                }
-
-                // Also check to see if there is a background image that needs to be downloaded
-                try
-                {
-                    XmlNode layoutNode = layoutXml.SelectSingleNode("/layout");
-                    XmlAttributeCollection layoutAttributes = layoutNode.Attributes;
-
-                    if (layoutAttributes["background"] != null && !string.IsNullOrEmpty(layoutAttributes["background"].Value))
-                    {
-                        if (!IsValidPath(layoutAttributes["background"].Value))
-                        {
-                            Debug.WriteLine("Invalid background: " + layoutAttributes["background"].Value);
-                            return false;
-                        }
-                    }
-                }
-                catch
-                {
-                    // We dont want a missing background attribute to stop this process
-                    return true;
-                }
-
-                Debug.WriteLine("Layout " + layoutFile + " is valid");
-
-                return true;
             }
         }
 

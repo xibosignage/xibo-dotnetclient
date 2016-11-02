@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2015 Daniel Garner
+ * Copyright (C) 2006-2016 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -171,18 +171,26 @@ namespace XiboClient
                 if (!SetNextMediaNodeInOptions())
                 {
                     // For some reason we cannot set a media node... so we need this region to become invalid
-                    _hasExpired = true;
-
-                    if (DurationElapsedEvent != null)
-                        DurationElapsedEvent();
-                    return;
+                    throw new InvalidOperationException("Unable to set any region media nodes.");
                 }
 
                 // If the sequence hasnt been changed, OR the layout has been expired
                 // there has been no change to the sequence, therefore the media we have already created is still valid
                 // or this media has actually been destroyed and we are working out way out the call stack
-                if (_layoutExpired || (_currentSequence == temp))
+                if (_layoutExpired)
+                {
                     return;
+                }
+                else if (_currentSequence == temp)
+                {
+                    // Media has not changed, we are likely the only valid media item in the region
+                    // the layout has not yet expired, so depending on whether we loop or not, we either
+                    // reload the same media item again
+                    // or do nothing (return)
+                    // This could be made more succinct, but is clearer written as an elseif.
+                    if (!_options.RegionLoop)
+                        return;
+                }
 
                 // Store the Current Index
                 _options.CurrentIndex = _currentSequence;
@@ -199,7 +207,7 @@ namespace XiboClient
                     // Try the next node
                     startSuccessful = false;
                     continue;
-                }             
+                }
 
                 // First thing we do is stop the current stat record
                 if (!initialMedia)
@@ -449,23 +457,26 @@ namespace XiboClient
             // And some stuff on Raw nodes
             XmlNode rawNode = mediaNode.SelectSingleNode("raw");
 
-            foreach (XmlNode raw in rawNode.ChildNodes)
+            if (rawNode != null)
             {
-                if (raw.Name == "text")
+                foreach (XmlNode raw in rawNode.ChildNodes)
                 {
-                    _options.text = raw.InnerText;
-                }
-                else if (raw.Name == "template")
-                {
-                    _options.documentTemplate = raw.InnerText;
-                }
-                else if (raw.Name == "embedHtml")
-                {
-                    _options.text = raw.InnerText;
-                }
-                else if (raw.Name == "embedScript")
-                {
-                    _options.javaScript = raw.InnerText;
+                    if (raw.Name == "text")
+                    {
+                        _options.text = raw.InnerText;
+                    }
+                    else if (raw.Name == "template")
+                    {
+                        _options.documentTemplate = raw.InnerText;
+                    }
+                    else if (raw.Name == "embedHtml")
+                    {
+                        _options.text = raw.InnerText;
+                    }
+                    else if (raw.Name == "embedScript")
+                    {
+                        _options.javaScript = raw.InnerText;
+                    }
                 }
             }
 
@@ -539,6 +550,8 @@ namespace XiboClient
             }
             else
             {
+                // We've set our next media node in options already
+                // this includes checking that file based media is valid.
                 switch (options.type)
                 {
                     case "image":
@@ -775,11 +788,16 @@ namespace XiboClient
 
         /// <summary>
         /// Clears the Region of anything that it shouldnt still have... 
+        /// called when Destroying a Layout and when Removing an Overlay
         /// </summary>
         public void Clear()
         {
             try
             {
+                // Stop the current media item
+                if (_media != null)
+                    StopMedia(_media);
+
                 // What happens if we are disposing this region but we have not yet completed the stat event?
                 if (string.IsNullOrEmpty(_stat.toDate))
                 {

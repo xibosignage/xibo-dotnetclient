@@ -35,7 +35,7 @@ using System.IO;
 
 namespace XiboClient.XmdsAgents
 {
-    class RequiredFilesAgent
+    class ScheduleAndFilesAgent
     {
         private static object _locker = new object();
         private bool _forceStop = false;
@@ -53,6 +53,30 @@ namespace XiboClient.XmdsAgents
 
         private RequiredFiles _requiredFiles;
         private Semaphore _fileDownloadLimit;
+
+        /// <summary>
+        /// Current Schedule Manager for this Xibo Client
+        /// </summary>
+        public ScheduleManager CurrentScheduleManager
+        {
+            set
+            {
+                _scheduleManager = value;
+            }
+        }
+        private ScheduleManager _scheduleManager;
+
+        /// <summary>
+        /// Schedule File Location
+        /// </summary>
+        public string ScheduleLocation
+        {
+            set
+            {
+                _scheduleLocation = value;
+            }
+        }
+        private string _scheduleLocation;
 
         /// <summary>
         /// Client Hardware key
@@ -93,7 +117,7 @@ namespace XiboClient.XmdsAgents
         /// <summary>
         /// Required Files Agent
         /// </summary>
-        public RequiredFilesAgent()
+        public ScheduleAndFilesAgent()
         {
             _fileDownloadLimit = new Semaphore(ApplicationSettings.Default.MaxConcurrentDownloads, ApplicationSettings.Default.MaxConcurrentDownloads);
             _requiredFiles = new RequiredFiles();
@@ -125,15 +149,18 @@ namespace XiboClient.XmdsAgents
 
             while (!_forceStop)
             {
+                // If we are restarting, reset
+                _manualReset.Reset();
+
                 lock (_locker)
                 {
+                    // Run the schedule Agent thread
+                    scheduleAgent();
+                
                     if (ApplicationSettings.Default.InDownloadWindow)
                     {
                         try
                         {
-                            // If we are restarting, reset
-                            _manualReset.Reset();
-
                             int filesToDownload = _requiredFiles.FilesDownloading;
 
                             // If we are currently downloading something, we have to wait
@@ -339,7 +366,7 @@ namespace XiboClient.XmdsAgents
                 {
                     using (xmds.xmds xmds = new xmds.xmds())
                     {
-                        string status = "{\"availableSpace\":\"" + drive.TotalFreeSpace + "\", \"totalSpace\":\"" + drive.TotalSize + "\"}";
+                        string status = "{\"availableSpace\":\"" + drive.TotalFreeSpace + "\", \"totalSpace\":\"" + drive.TotalSize + "\", \"deviceName\":\"" + Environment.MachineName + "\"}";
 
                         xmds.Credentials = null;
                         xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
@@ -349,6 +376,72 @@ namespace XiboClient.XmdsAgents
 
                     break;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Schedule Agent
+        /// </summary>
+        private void scheduleAgent()
+        {
+            try
+            {
+                // If we are restarting, reset
+                _manualReset.Reset();
+
+                Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Woken and Lock Obtained"), LogType.Audit.ToString());
+
+                _clientInfoForm.ScheduleStatus = "Running: Get Data from Xibo Server";
+
+                using (xmds.xmds xmds = new xmds.xmds())
+                {
+                    xmds.Credentials = null;
+                    xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                    xmds.UseDefaultCredentials = false;
+
+                    string scheduleXml = xmds.Schedule(ApplicationSettings.Default.ServerKey, _hardwareKey);
+
+                    // Set the flag to indicate we have a connection to XMDS
+                    ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
+
+                    _clientInfoForm.ScheduleStatus = "Running: Data Received";
+
+                    // Hash of the result
+                    string md5NewSchedule = Hashes.MD5(scheduleXml);
+                    string md5CurrentSchedule = Hashes.MD5(ScheduleManager.GetScheduleXmlString(_scheduleLocation));
+
+                    // Compare the results of the HASH
+                    if (md5CurrentSchedule != md5NewSchedule)
+                    {
+                        Trace.WriteLine(new LogMessage("Schedule Agent - Run", "Received new schedule"));
+
+                        _clientInfoForm.ScheduleStatus = "Running: New Schedule Received";
+
+                        // Write the result to the schedule xml location
+                        ScheduleManager.WriteScheduleXmlToDisk(_scheduleLocation, scheduleXml);
+
+                        // Indicate to the schedule manager that it should read the XML file
+                        _scheduleManager.RefreshSchedule = true;
+                    }
+
+                    _clientInfoForm.ScheduleStatus = "Sleeping";
+                }
+            }
+            catch (WebException webEx)
+            {
+                // Increment the quantity of XMDS failures and bail out
+                ApplicationSettings.Default.IncrementXmdsErrorCount();
+
+                // Log this message, but dont abort the thread
+                Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "WebException in Run: " + webEx.Message), LogType.Info.ToString());
+
+                _clientInfoForm.ScheduleStatus = "Error: " + webEx.Message;
+            }
+            catch (Exception ex)
+            {
+                // Log this message, but dont abort the thread
+                Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());
+                _clientInfoForm.ScheduleStatus = "Error. " + ex.Message;
             }
         }
     }

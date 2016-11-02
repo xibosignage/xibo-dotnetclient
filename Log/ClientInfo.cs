@@ -17,6 +17,9 @@ namespace XiboClient.Log
         public delegate void StatusDelegate(string status);
         public delegate void AddLogMessage(string message, LogType logType);
 
+        // Delegate for updating the status file
+        public delegate void UpdateStatusFile();
+
         /// <summary>
         /// Set the schedule status
         /// </summary>
@@ -297,6 +300,30 @@ namespace XiboClient.Log
             }
 
             MessageBox.Show("Log saved as " + saveFileDialog.FileName, "Log Saved");
+        }
+
+        /// <summary>
+        /// Update Status Marker File
+        /// </summary>
+        public void UpdateStatusMarkerFile()
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new UpdateStatusFile(updateStatusFile));
+            }
+            else
+            {
+                updateStatusFile();
+            }
+        }
+
+        /// <summary>
+        /// Update status file
+        /// </summary>
+        private void updateStatusFile()
+        {
+            File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"),
+                "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\",\"state\":\"" + Thread.State.ToString() + "\",\"xmdsLastActivity\":\"" + ApplicationSettings.Default.XmdsLastConnection.ToString() + "\",\"xmdsCollectInterval\":\"" + ApplicationSettings.Default.CollectInterval.ToString() + "\"}");
         }
     }
 }

@@ -64,6 +64,25 @@ namespace XiboClient
 
         private string _scheduleLocation;
 
+        /// <summary>
+        /// The current layout id
+        /// </summary>
+        public int CurrentLayoutId
+        {
+            get
+            {
+                return _currentLayoutId;
+            }
+            set
+            {
+                _currentLayoutId = value;
+
+                if (_scheduleManager != null)
+                    _scheduleManager.CurrentLayoutId = _currentLayoutId;
+            }
+        }
+        private int _currentLayoutId;
+
         private bool _forceChange = false;
 
         /// <summary>
@@ -85,13 +104,9 @@ namespace XiboClient
         private RegisterAgent _registerAgent;
         Thread _registerAgentThread;
 
-        // Schedule Agent
-        private ScheduleAgent _scheduleAgent;
-        Thread _scheduleAgentThread;
-
         // Required Files Agent
-        private RequiredFilesAgent _requiredFilesAgent;
-        Thread _requiredFilesAgentThread;
+        private ScheduleAndFilesAgent _scheduleAndRfAgent;
+        Thread _scheduleAndRfAgentThread;
 
         // Library Agent
         private LibraryAgent _libraryAgent;
@@ -154,28 +169,19 @@ namespace XiboClient
             _scheduleManagerThread = new Thread(new ThreadStart(_scheduleManager.Run));
             _scheduleManagerThread.Name = "ScheduleManagerThread";
 
-            // Create a Schedule Agent
-            _scheduleAgent = new ScheduleAgent();
-            _scheduleAgent.CurrentScheduleManager = _scheduleManager;
-            _scheduleAgent.ScheduleLocation = scheduleLocation;
-            _scheduleAgent.HardwareKey = _hardwareKey.Key;
-            _scheduleAgent.ClientInfoForm = _clientInfoForm;
-
-            // Create a thread for the Schedule Agent to run in - but dont start it up yet.
-            _scheduleAgentThread = new Thread(new ThreadStart(_scheduleAgent.Run));
-            _scheduleAgentThread.Name = "ScheduleAgentThread";
-
             // Create a RequiredFilesAgent
-            _requiredFilesAgent = new RequiredFilesAgent();
-            _requiredFilesAgent.CurrentCacheManager = cacheManager;
-            _requiredFilesAgent.HardwareKey = _hardwareKey.Key;
-            _requiredFilesAgent.ClientInfoForm = _clientInfoForm;
-            _requiredFilesAgent.OnComplete += new RequiredFilesAgent.OnCompleteDelegate(LayoutFileModified);
-            _requiredFilesAgent.OnFullyProvisioned += _requiredFilesAgent_OnFullyProvisioned;
+            _scheduleAndRfAgent = new ScheduleAndFilesAgent();
+            _scheduleAndRfAgent.CurrentCacheManager = cacheManager;
+            _scheduleAndRfAgent.CurrentScheduleManager = _scheduleManager;
+            _scheduleAndRfAgent.ScheduleLocation = scheduleLocation;
+            _scheduleAndRfAgent.HardwareKey = _hardwareKey.Key;
+            _scheduleAndRfAgent.OnFullyProvisioned += _requiredFilesAgent_OnFullyProvisioned;
+            _scheduleAndRfAgent.ClientInfoForm = _clientInfoForm;
+            _scheduleAndRfAgent.OnComplete += new ScheduleAndFilesAgent.OnCompleteDelegate(LayoutFileModified);
 
             // Create a thread for the RequiredFiles Agent to run in - but dont start it up yet.
-            _requiredFilesAgentThread = new Thread(new ThreadStart(_requiredFilesAgent.Run));
-            _requiredFilesAgentThread.Name = "RequiredFilesAgentThread";
+            _scheduleAndRfAgentThread = new Thread(new ThreadStart(_scheduleAndRfAgent.Run));
+            _scheduleAndRfAgentThread.Name = "RequiredFilesAgentThread";
 
             // Library Agent
             _libraryAgent = new LibraryAgent();
@@ -216,11 +222,8 @@ namespace XiboClient
             // Start the RegisterAgent thread
             _registerAgentThread.Start();
 
-            // Start the ScheduleAgent thread
-            _scheduleAgentThread.Start();
-
             // Start the RequiredFilesAgent thread
-            _requiredFilesAgentThread.Start();
+            _scheduleAndRfAgentThread.Start();
 
             // Start the ScheduleManager thread
             _scheduleManagerThread.Start();
@@ -270,13 +273,29 @@ namespace XiboClient
         /// </summary>
         void _scheduleManager_OnScheduleManagerCheckComplete()
         {
+            if (agentThreadsAlive())
+            {
+                // Update status marker on the main thread.
+                _clientInfoForm.UpdateStatusMarkerFile();
+            }
+            else
+            {
+                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "Agent threads are dead, not updating status.json"), LogType.Error.ToString());
+            }
+            
             try
             {
                 // See if XMR should be running
                 if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && _xmrSubscriber.LastHeartBeat != DateTime.MinValue)
                 {
+                    // Log when severly overdue a check
+                    if (_xmrSubscriber.LastHeartBeat < DateTime.Now.AddHours(-1))
+                    {
+                        Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over an hour ago."));
+                    }
+
                     // Check to see if the last update date was over 5 minutes ago
-                    if (_xmrSubscriber.LastHeartBeat < DateTime.Now.AddSeconds(-90))
+                    if (_xmrSubscriber.LastHeartBeat < DateTime.Now.AddMinutes(-5))
                     {
                         // Reconfigure it
                         _registerAgent_OnXmrReconfigure();   
@@ -287,6 +306,18 @@ namespace XiboClient
             {
                 Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "Error = " + e.Message), LogType.Error.ToString());
             }
+        }
+        
+        /// <summary>
+        /// Are all the required agent threads alive?
+        /// </summary>
+        /// <returns></returns>
+        private bool agentThreadsAlive()
+        {
+            return _registerAgentThread.IsAlive &&
+                _scheduleAndRfAgentThread.IsAlive &&
+                _logAgentThread.IsAlive &&
+                _libraryAgentThread.IsAlive;
         }
 
         /// <summary>
@@ -398,8 +429,7 @@ namespace XiboClient
         public void wakeUpXmds()
         {
             _registerAgent.WakeUp();
-            _scheduleAgent.WakeUp();
-            _requiredFilesAgent.WakeUp();
+            _scheduleAndRfAgent.WakeUp();
             _logAgent.WakeUp();
         }
 
@@ -493,7 +523,22 @@ namespace XiboClient
                 if (_layoutSchedule[_currentLayout].layoutFile == ApplicationSettings.Default.LibraryPath + @"\" + layoutPath)
                 {
                     // What happens if the action of downloading actually invalidates this layout?
-                    if (!_cacheManager.IsValidLayout(layoutPath))
+                    bool valid = _cacheManager.IsValidPath(layoutPath);
+
+                    if (valid)
+                    {
+                        // Check dependents
+                        foreach (string dependent in _layoutSchedule[_currentLayout].Dependents)
+                        {
+                            if (!string.IsNullOrEmpty(dependent) && !_cacheManager.IsValidPath(dependent))
+                            {
+                                valid = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!valid)
                     {
                         Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "The current layout is now invalid, refreshing the current schedule."), LogType.Audit.ToString());
 
@@ -541,11 +586,8 @@ namespace XiboClient
             // Stop the register agent
             _registerAgent.Stop();
 
-            // Stop the schedule agent
-            _scheduleAgent.Stop();
-
             // Stop the requiredfiles agent
-            _requiredFilesAgent.Stop();
+            _scheduleAndRfAgent.Stop();
 
             // Stop the Schedule Manager Thread
             _scheduleManager.Stop();
