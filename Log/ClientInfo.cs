@@ -322,8 +322,15 @@ namespace XiboClient.Log
         /// </summary>
         private void updateStatusFile()
         {
-            File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"),
-                "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\",\"state\":\"" + Thread.State.ToString() + "\",\"xmdsLastActivity\":\"" + ApplicationSettings.Default.XmdsLastConnection.ToString() + "\",\"xmdsCollectInterval\":\"" + ApplicationSettings.Default.CollectInterval.ToString() + "\"}");
+            try
+            {
+                File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"),
+                    "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\",\"state\":\"" + Thread.State.ToString() + "\",\"xmdsLastActivity\":\"" + ApplicationSettings.Default.XmdsLastConnection.ToString() + "\",\"xmdsCollectInterval\":\"" + ApplicationSettings.Default.CollectInterval.ToString() + "\"}");
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("ClientInfo - updateStatusFile", "Failed to update status file. e = " + e.Message), LogType.Error.ToString());
+            }
         }
     }
 }

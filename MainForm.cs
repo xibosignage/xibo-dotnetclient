@@ -508,7 +508,7 @@ namespace XiboClient
                         Controls.Remove(control);
                     }
 
-                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
                     throw e;
                 }
 
@@ -527,7 +527,7 @@ namespace XiboClient
                 catch (Exception e)
                 {
                     DestroyLayout();
-                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Prepare Layout Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Prepare Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
                     throw;
                 }
 
@@ -547,7 +547,7 @@ namespace XiboClient
                 }
                 catch (Exception e)
                 {
-                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Notify Status Failed. Exception raised was: " + e.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Notify Status Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
                     throw;
                 }
             }

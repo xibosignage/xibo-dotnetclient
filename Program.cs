@@ -124,7 +124,7 @@ namespace XiboClient
             Trace.Flush();
 
             return 0;
-        }       
+        }
 
         private static void RunClient()
         {
@@ -201,8 +201,8 @@ namespace XiboClient
                 Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Error.ToString());
             }
 
-            // Try to restart
-            Application.Restart();
+            // Exit the application and allow it to be restarted by the Watchdog.
+            Application.Exit();
         }
 
         [DllImport("User32.dll")]
