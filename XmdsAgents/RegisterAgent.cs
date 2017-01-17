@@ -107,6 +107,12 @@ namespace XiboClient.XmdsAgents
                             {
                                 OnXmrReconfigure();
                             }
+
+                            // Is the timezone empty?
+                            if (string.IsNullOrEmpty(ApplicationSettings.Default.DisplayTimeZone))
+                            {
+                                reportTimezone();
+                            }
                         }
                     }
                     catch (WebException webEx)
@@ -248,6 +254,45 @@ namespace XiboClient.XmdsAgents
             }
 
             return message;
+        }
+
+        /// <summary>
+        /// Report the timezone to XMDS
+        /// </summary>
+        private void reportTimezone()
+        {
+            using (xmds.xmds xmds = new xmds.xmds())
+            {
+                string status = "{\"timeZone\":\"" + WindowsToIana(TimeZone.CurrentTimeZone.StandardName) + "\"}";
+
+                xmds.Credentials = null;
+                xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                xmds.UseDefaultCredentials = false;
+                xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, status);
+            }
+        }
+
+        /// <summary>
+        /// Windows to IANA timezone mapping
+        /// ref: http://stackoverflow.com/questions/17348807/how-to-translate-between-windows-and-iana-time-zones
+        /// </summary>
+        /// <param name="windowsZoneId"></param>
+        /// <returns></returns>
+        private string WindowsToIana(string windowsZoneId)
+        {
+            if (windowsZoneId.Equals("UTC", StringComparison.Ordinal))
+                return "Etc/UTC";
+
+            var tzdbSource = NodaTime.TimeZones.TzdbDateTimeZoneSource.Default;
+            var tzi = TimeZoneInfo.FindSystemTimeZoneById(windowsZoneId);
+            if (tzi == null) 
+                return null;
+            
+            var tzid = tzdbSource.MapTimeZoneId(tzi);
+            if (tzid == null) 
+                return null;
+            
+            return tzdbSource.CanonicalIdMap[tzid];
         }
     }
 }
