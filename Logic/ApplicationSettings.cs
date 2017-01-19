@@ -182,7 +182,22 @@ namespace XiboClient
         private string _displayName;
         public string DisplayName { get { return (_displayName == "COMPUTERNAME") ? Environment.MachineName : _displayName; } set { _displayName = value; } }
 
-        public string ServerUri { get; set; }
+        /// <summary>
+        /// Server Address
+        /// </summary>
+        private string _serverUri;
+        public string ServerUri 
+        { 
+            get
+            {
+                return (string.IsNullOrEmpty(_serverUri)) ? "http://localhost" : _serverUri;
+            }
+            set
+            {
+                _serverUri = value;
+            }
+        }
+
         public string ProxyUser { get; set; }
         public string ProxyPassword { get; set; }
         public string ProxyDomain { get; set; }
