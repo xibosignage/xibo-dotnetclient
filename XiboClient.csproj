@@ -301,8 +301,11 @@
   <ItemGroup>
     <Content Include="default.config.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </Content>
     <Content Include="new-icon.ico" />
+    <None Include="Resources\licence.txt" />
+    <None Include="Resources\logo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

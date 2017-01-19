@@ -165,7 +165,18 @@ namespace XiboClient
 
         private string _libraryPath;
         public string LibraryPath { get { return (_libraryPath == "DEFAULT") ? (Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + Application.ProductName + " Library") : _libraryPath; } set { _libraryPath = value; } }
-        public string XiboClient_xmds_xmds { get; set; }
+
+        /// <summary>
+        /// XMDS Url configuration
+        /// </summary>
+        public string XiboClient_xmds_xmds
+        {
+            get
+            {
+                return ServerUri.TrimEnd('\\') + @"/xmds.php?v=" + ApplicationSettings.Default.Version;
+            }
+        }
+        
         public string ServerKey { get; set; }
 
         private string _displayName;

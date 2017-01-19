@@ -15,7 +15,7 @@ namespace XiboClient.Control
             // Check to see if the WatchDog EXE exists where we expect it to be
             // Uncomment to test local watchdog install. 
             //string path = @"C:\Program Files (x86)\Xibo Player\watchdog\x86\XiboClientWatchdog.exe";
-            string path = Path.GetDirectoryName(Application.ExecutablePath) + @"\watchdog\x86\XiboClientWatchdog.exe";
+            string path = Path.GetDirectoryName(Application.ExecutablePath) + @"\watchdog\x86\" + Application.ProductName + "ClientWatchdog.exe";
             string args = "-p \"" + Application.ExecutablePath + "\" -l \"" + ApplicationSettings.Default.LibraryPath + "\"";
 
             // Start it

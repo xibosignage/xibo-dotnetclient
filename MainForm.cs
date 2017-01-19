@@ -138,6 +138,8 @@ namespace XiboClient
 
         private void InitializeXibo()
         {
+            this.Text = Application.ProductName;
+
             Thread.CurrentThread.Name = "UI Thread";
 
             // Check the directories exist

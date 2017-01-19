@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Text;
 using System.Windows.Forms;
 
@@ -35,6 +36,8 @@ namespace XiboClient
             Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             label1.Text = Application.ProductName;
             label2.Text = ApplicationSettings.Default.ClientVersion;
+
+            richTextBox1.Text = XiboClient.Properties.Resources.licence;
         }
 
         private void buttonHelp_Click(object sender, EventArgs e)
@@ -42,7 +45,7 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                System.Diagnostics.Process.Start("http://xibo.org.uk/manual");
+                System.Diagnostics.Process.Start(Properties.Resources.SupportUrl);
             }
             catch
             {
@@ -53,11 +56,6 @@ namespace XiboClient
         private void buttonClose_Click(object sender, EventArgs e)
         {
             this.Close();
-        }
-
-        private void richTextBox1_TextChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }
