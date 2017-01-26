@@ -62,6 +62,9 @@ namespace XiboClient.XmdsAgents
             _persistentFiles.Add("requiredFiles.xml");
             _persistentFiles.Add("schedule.xml");
             _persistentFiles.Add("status.json");
+            _persistentFiles.Add("hardwarekey");
+            _persistentFiles.Add("config.xml");
+            _persistentFiles.Add("id_rsa");
         }
 
         /// <summary>
