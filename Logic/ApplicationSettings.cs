@@ -105,33 +105,41 @@ namespace XiboClient
                 }
 
                 // Populate it with the default.config.xml
-                document = new XmlDocument();
-                document.Load(Path.GetDirectoryName(Application.ExecutablePath) + Path.DirectorySeparatorChar + _default + ".config.xml");
-                _instance.PopulateFromXml(document);
+                _instance.AppendConfigFile(Path.GetDirectoryName(Application.ExecutablePath) + Path.DirectorySeparatorChar + _default + ".config.xml");
 
                 // Load the global settings.
-                document = new XmlDocument();
-                document.Load(path + Path.DirectorySeparatorChar + fileName + ".xml");
-                _instance.PopulateFromXml(document);
+                _instance.AppendConfigFile(path + Path.DirectorySeparatorChar + fileName + ".xml");
 
                 // Load the hardware key
                 if (File.Exists(_instance.LibraryPath + "\\hardwarekey"))
                     _instance.HardwareKey = File.ReadAllText(_instance.LibraryPath + "\\hardwarekey");
 
                 // Load the player settings
-                try
-                {
-                    document = new XmlDocument();
-                    document.Load(_instance.LibraryPath + "\\config.xml");
-                    _instance.PopulateFromXml(document);
-                }
-                catch
-                {
-                    Trace.WriteLine(new LogMessage("ApplicationSettings - Default", "Unable to load corrupted Player settings."), LogType.Error.ToString());
-                }
+                _instance.AppendConfigFile(_instance.LibraryPath + "\\config.xml");
 
                 // Return the instance
                 return _instance;
+            }
+        }
+
+        /// <summary>
+        /// Append config file
+        /// </summary>
+        /// <param name="path"></param>
+        private void AppendConfigFile(string path)
+        {
+            if (File.Exists(path))
+            {
+                try
+                {
+                    XmlDocument document = new XmlDocument();
+                    document.Load(path);
+                    PopulateFromXml(document);
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("ApplicationSettings - AppendConfigFile", "Unable to load config file."), LogType.Error.ToString());
+                }
             }
         }
 
