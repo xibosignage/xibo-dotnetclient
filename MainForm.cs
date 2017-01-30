@@ -609,7 +609,7 @@ namespace XiboClient
                 // try to open the layout file
                 try
                 {
-                    using (FileStream fs = File.Open(layoutPath, FileMode.Open, FileAccess.Read, FileShare.Write))
+                    using (FileStream fs = File.Open(layoutPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
                         using (XmlReader reader = XmlReader.Create(fs))
                         {

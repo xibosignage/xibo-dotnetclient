@@ -140,7 +140,6 @@ namespace XiboClient.XmdsAgents
         public static string ProcessRegisterXml(string xml)
         {
             string message = "";
-            bool error = false;
 
             try
             {
