@@ -100,7 +100,7 @@ namespace XiboClient
                     }
 
                     // Take a backup and Delete the old config file
-                    File.Copy(path + Path.DirectorySeparatorChar + fileName + ".config.xml", path + Path.DirectorySeparatorChar + fileName + ".config.xml.bak");
+                    File.Copy(path + Path.DirectorySeparatorChar + fileName + ".config.xml", path + Path.DirectorySeparatorChar + fileName + ".config.xml.bak", true);
                     File.Delete(path + Path.DirectorySeparatorChar + fileName + ".config.xml");
                 }
 
