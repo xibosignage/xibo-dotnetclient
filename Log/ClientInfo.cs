@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Xml.Serialization;
 using XiboClient.Properties;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace XiboClient.Log
 {
@@ -330,6 +331,45 @@ namespace XiboClient.Log
             catch (Exception e)
             {
                 Trace.WriteLine(new LogMessage("ClientInfo - updateStatusFile", "Failed to update status file. e = " + e.Message), LogType.Error.ToString());
+            }
+        }
+
+        public void notifyStatusToXmds()
+        {
+            try
+            {
+                StringBuilder sb = new StringBuilder();
+                StringWriter sw = new StringWriter(sb);
+
+                using (JsonWriter writer = new JsonTextWriter(sw))
+                {
+                    writer.Formatting = Formatting.None;
+                    writer.WriteStartObject();
+                    writer.WritePropertyName("lastActivity");
+                    writer.WriteValue(DateTime.Now.ToString());
+                    writer.WritePropertyName("applicationState");
+                    writer.WriteValue(Thread.State.ToString());
+                    writer.WritePropertyName("xmdsLastActivity");
+                    writer.WriteValue(ApplicationSettings.Default.XmdsLastConnection.ToString());
+                    writer.WritePropertyName("scheduleStatus");
+                    writer.WriteValue(scheduleStatusLabel.Text);
+                    writer.WritePropertyName("requiredFilesStatus");
+                    writer.WriteValue(requiredFilesStatus.Text);
+                    writer.WritePropertyName("xmrStatus");
+                    writer.WriteValue(xmrStatus.Text);
+                    writer.WriteEndObject();
+                }
+
+                // Notify the state of the command (success or failure)
+                using (xmds.xmds statusXmds = new xmds.xmds())
+                {
+                    statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                    statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("ClientInfo - notifyStatusToXmds", "Failed to notify status to XMDS. e = " + e.Message), LogType.Error.ToString());
             }
         }
     }

@@ -87,7 +87,11 @@ namespace XiboClient.Logic
                                 NetMQMessage message = socket.ReceiveMultipartMessage();
 
                                 // Update status
-                                _clientInfoForm.XmrSubscriberStatus = "Connected (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + DateTime.Now.ToString();
+                                string statusMessage = "Connected (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + DateTime.Now.ToString();
+
+                                // Write this out to a log
+                                _clientInfoForm.XmrSubscriberStatus = statusMessage;                    
+                                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", statusMessage), LogType.Audit.ToString());
 
                                 // Deal with heart beat
                                 if (message[0].ConvertToString() == "H")
@@ -148,6 +152,7 @@ namespace XiboClient.Logic
 
                                     case "screenShot":
                                         ScreenShot.TakeAndSend();
+                                        _clientInfoForm.notifyStatusToXmds();
                                         break;
 
                                     default:
