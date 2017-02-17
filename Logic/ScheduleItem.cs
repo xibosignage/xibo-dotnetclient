@@ -49,7 +49,9 @@ namespace XiboClient.Logic
             return id == compare.id &&
                 scheduleid == compare.scheduleid &&
                 FromDt.Ticks == compare.FromDt.Ticks &&
-                ToDt.Ticks == compare.ToDt.Ticks;
+                ToDt.Ticks == compare.ToDt.Ticks &&
+                actionId == compare.actionId
+                ;
         }
     }
 }
