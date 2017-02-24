@@ -324,7 +324,7 @@ namespace XiboClient
                 }
 
                 // Check the path exists
-                if (!Directory.Exists(_libraryPath))
+                if (!String.IsNullOrEmpty(_libraryPath) && !Directory.Exists(_libraryPath))
                 {
                     // Create everything up to the folder name we've specified.
                     Directory.CreateDirectory(_libraryPath);
