@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+ * Copyright (C) 2006-1017 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -30,6 +30,7 @@ using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.OpenSsl;
 using System.IO;
+using Org.BouncyCastle.Crypto.Generators;
 
 namespace XiboClient
 {
@@ -37,6 +38,7 @@ namespace XiboClient
     {
         private static object _locker = new object();
 
+        private static AsymmetricCipherKeyPair _keys;
         private string _hardwareKey;
         private string _macAddress;
         private string _channel;
@@ -209,40 +211,81 @@ namespace XiboClient
         /// <returns></returns>
         public AsymmetricCipherKeyPair getXmrKey()
         {
-            const int PROVIDER_RSA_FULL = 1;
-            CspParameters cspParams;
-            cspParams = new CspParameters(PROVIDER_RSA_FULL);
-            cspParams.KeyContainerName = Application.ProductName + "-" + Environment.UserName + "-" + "RsaKey";
-            cspParams.Flags = CspProviderFlags.UseMachineKeyStore;
-            cspParams.ProviderName = "Microsoft Strong Cryptographic Provider";
-
-            using (RSACryptoServiceProvider provider = new RSACryptoServiceProvider(cspParams))
+            lock (_locker)
             {
-                RSAParameters keyInfo = provider.ExportParameters(true);
+                // Return the cached key if we have one.
+                if (_keys != null)
+                    return _keys;
 
-                return DotNetUtilities.GetRsaKeyPair(keyInfo);
+                if (File.Exists(ApplicationSettings.Default.LibraryPath + "\\id_rsa"))
+                {
+                    try
+                    {
+                        using (TextReader textReader = new StringReader(File.ReadAllText(ApplicationSettings.Default.LibraryPath + "\\id_rsa")))
+                        {
+                            PemReader reader = new PemReader(textReader);
+                            _keys = (AsymmetricCipherKeyPair)reader.ReadObject();
+                        }
+
+                        return _keys;
+                    }
+                    catch (Exception e)
+                    {
+                        File.Delete(ApplicationSettings.Default.LibraryPath + "\\id_rsa");
+
+                        // Generate a new key
+                        Trace.WriteLine(new LogMessage("HardwareKey - getXmrKey", "Unable to read existing key."), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("HardwareKey - getXmrKey", "Unable to read existing key. e=" + e.Message), LogType.Audit.ToString());
+                    }
+                }
+
+                // If we get here, we need to generate and save a key
+                RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
+                generator.Init(new KeyGenerationParameters(new SecureRandom(), 1024));
+
+                _keys = generator.GenerateKeyPair();
+
+                // Save this key using PEM writer
+                File.WriteAllText(ApplicationSettings.Default.LibraryPath + "\\id_rsa", getKeyAsString(_keys.Private));
+                File.WriteAllText(ApplicationSettings.Default.LibraryPath + "\\id_rsa.pub", getKeyAsString(_keys.Public));
+
+                return _keys;
             }
         }
 
+        /// <summary>
+        /// Get Public Key
+        /// </summary>
+        /// <returns></returns>
         public string getXmrPublicKey()
         {
             try
             {
                 AsymmetricCipherKeyPair key = getXmrKey();
 
-                using (TextWriter textWriter = new StringWriter())
-                {
-                    PemWriter writer = new PemWriter(textWriter);
-                    writer.WriteObject(key.Public);
-                    writer.Writer.Flush();
-
-                    return textWriter.ToString();
-                }
+                return getKeyAsString(key.Public);
             }
             catch (Exception e)
             {
                 Trace.WriteLine(new LogMessage("HardwareKey - getXmrPublicKey", "Unable to get XMR public key. E = " + e.Message), LogType.Error.ToString());
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Get Key as string
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        private string getKeyAsString(AsymmetricKeyParameter key)
+        {
+            using (TextWriter textWriter = new StringWriter())
+            {
+                PemWriter writer = new PemWriter(textWriter);
+                writer.WriteObject(key);
+                writer.Writer.Flush();
+
+                return textWriter.ToString();
             }
         }
     }

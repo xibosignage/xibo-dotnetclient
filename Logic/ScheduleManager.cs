@@ -230,6 +230,9 @@ namespace XiboClient
 
                             // Store the date
                             _lastScreenShotDate = DateTime.Now;
+
+                            // Notify status to XMDS
+                            _clientInfoForm.notifyStatusToXmds();
                         }
 
                         // Run any commands that occur in the next 10 seconds.

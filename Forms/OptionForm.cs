@@ -41,8 +41,16 @@ namespace XiboClient
         public OptionForm()
         {
             InitializeComponent();
+            
+            // Set the icon
             Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-            Debug.WriteLine("Initialise Option Form Components", "OptionForm");
+
+            // Hide unnecessary fields
+            if (Application.ProductName != "Xibo")
+            {
+                label17.Hide();
+                linkLabel1.Hide();
+            }
 
             // Get a hardware key here, just in case we havent been able to get one before
             _hardwareKey = new HardwareKey();
@@ -106,9 +114,6 @@ namespace XiboClient
             {
                 tbStatus.AppendText("Saving with CMS... Please wait...");
 
-                // Make sure our XMDS location is correct
-                ApplicationSettings.Default.XiboClient_xmds_xmds = textBoxXmdsUri.Text.TrimEnd('/') + @"/xmds.php?v=" + ApplicationSettings.Default.Version;
-            
                 // Simple settings
                 ApplicationSettings.Default.ServerKey = textBoxServerKey.Text;
                 ApplicationSettings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
@@ -185,7 +190,7 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                Process.Start("http://xibo.org.uk/manual");
+                Process.Start(Properties.Resources.SupportUrl);
             }
             catch
             {

@@ -1,6 +1,6 @@
 ﻿/*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-16 Spring Signage Ltd
+ * Copyright (C) 2006-17 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -26,6 +26,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+using System.Xml;
 using System.Xml.Serialization;
 using XiboClient.Logic;
 
@@ -35,100 +36,176 @@ namespace XiboClient
     public class ApplicationSettings
     {
         private static ApplicationSettings _instance;
-        private static string _fileSuffix = "config.xml";
         private static string _default = "default";
+        private List<string> _globalProperties;
 
         // Application Specific Settings we want to protect
-        private string _clientVersion = "1.8.0-rc2";
+        private string _clientVersion = "1.8.0-rc3";
         private string _version = "5";
-        private int _clientCodeVersion = 125;
+        private int _clientCodeVersion = 126;
 
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
         public int ClientCodeVersion { get { return _clientCodeVersion; } }
 
+        private ApplicationSettings()
+        {
+            _globalProperties = new List<string>();
+            _globalProperties.Add("ServerUri");
+            _globalProperties.Add("ServerKey");
+            _globalProperties.Add("LibraryPath");
+            _globalProperties.Add("ProxyUser");
+            _globalProperties.Add("ProxyPassword");
+            _globalProperties.Add("ProxyDomain");
+            _globalProperties.Add("ProxyPort");
+        }
+
+        /// <summary>
+        /// Access the application settings.
+        /// load()
+        /// </summary>
         public static ApplicationSettings Default
         {
             get
             {
+                // Return the settings instance if we've loaded already
                 if (_instance != null)
                     return _instance;
 
-                string fileName = "";
-                string path = "";
+                // Check to see if we need to migrate
+                XmlDocument document;
+                string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
 
+                // Create a new application settings instance.
+                _instance = new ApplicationSettings();
+
+                if (File.Exists(path + Path.DirectorySeparatorChar + fileName + ".config.xml"))
+                {
+                    // Migrate to the new settings format
+                    //  player specific settings in %APPDATA%\<app_name>.config.json
+                    //  cms settings and run time info in <library>\config.json
+                    try
+                    {
+                        // Load the XML document
+                        document = new XmlDocument();
+                        document.Load(path + Path.DirectorySeparatorChar + fileName + ".config.xml");
+
+                        _instance.PopulateFromXml(document);
+                        _instance.Save();
+                    }
+                    catch
+                    {
+                        // Unable to load XML - consider the migration complete
+                    }
+
+                    // Take a backup and Delete the old config file
+                    File.Copy(path + Path.DirectorySeparatorChar + fileName + ".config.xml", path + Path.DirectorySeparatorChar + fileName + ".config.xml.bak", true);
+                    File.Delete(path + Path.DirectorySeparatorChar + fileName + ".config.xml");
+                }
+
+                // Populate it with the default.config.xml
+                _instance.AppendConfigFile(Path.GetDirectoryName(Application.ExecutablePath) + Path.DirectorySeparatorChar + _default + ".config.xml");
+
+                // Load the global settings.
+                _instance.AppendConfigFile(path + Path.DirectorySeparatorChar + fileName + ".xml");
+
+                // Load the hardware key
+                if (File.Exists(_instance.LibraryPath + "\\hardwarekey"))
+                    _instance.HardwareKey = File.ReadAllText(_instance.LibraryPath + "\\hardwarekey");
+
+                // Load the player settings
+                _instance.AppendConfigFile(_instance.LibraryPath + "\\config.xml");
+
+                // Return the instance
+                return _instance;
+            }
+        }
+
+        /// <summary>
+        /// Append config file
+        /// </summary>
+        /// <param name="path"></param>
+        private void AppendConfigFile(string path)
+        {
+            if (File.Exists(path))
+            {
                 try
                 {
-                    XmlSerializer serial = new XmlSerializer(typeof(ApplicationSettings));
-
-                    path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                    fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath) + '.' + _fileSuffix;
-
-                    // The default config file is stored in the application executable path (install folder)
-                    // with the default.config.xml suffix
-                    string defaultConfigFile = Path.GetDirectoryName(Application.ExecutablePath) + Path.DirectorySeparatorChar + _default + "." + _fileSuffix;
-
-                    if (!File.Exists(path + Path.DirectorySeparatorChar + fileName))
-                    {
-                        // Copy the defaults
-                        if (!File.Exists(defaultConfigFile))
-                            throw new Exception("Missing default.xml file - this should be in the same path as the executable.");
-
-                        File.Copy(defaultConfigFile, path + Path.DirectorySeparatorChar + fileName);
-                    }
-
-                    using (StreamReader sr = new StreamReader(path + Path.DirectorySeparatorChar + fileName))
-                    {
-                        ApplicationSettings appSettings = (ApplicationSettings)serial.Deserialize(sr);
-                        return _instance = appSettings;
-                    }
+                    XmlDocument document = new XmlDocument();
+                    document.Load(path);
+                    PopulateFromXml(document);
                 }
-                catch (Exception e)
+                catch
                 {
-                    if (File.Exists(path + Path.DirectorySeparatorChar + fileName + ".bak"))
-                    {
-                        if (File.Exists(path + Path.DirectorySeparatorChar + fileName))
-                            File.Delete(path + Path.DirectorySeparatorChar + fileName);
-
-                        File.Copy(path + Path.DirectorySeparatorChar + fileName + ".bak", path + Path.DirectorySeparatorChar + fileName);
-                    }
-
-                    MessageBox.Show(string.Format("Corrupted configuration file, will try to restore from backup. Please restart. Message: {0}. Path: {1}.", e.Message, path + Path.DirectorySeparatorChar + fileName));
-                    throw;
+                    Trace.WriteLine(new LogMessage("ApplicationSettings - AppendConfigFile", "Unable to load config file."), LogType.Error.ToString());
                 }
             }
         }
 
+        /// <summary>
+        /// Save settings
+        /// </summary>
         public void Save()
         {
             if (_instance == null)
                 return;
 
-            XmlSerializer serial = new XmlSerializer(typeof(ApplicationSettings));
-            
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) +
-                Path.DirectorySeparatorChar +
-                Path.GetFileNameWithoutExtension(Application.ExecutablePath) + '.' + _fileSuffix;
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
 
-            // Copy the old settings file to a backup
-            if (File.Exists(path + ".bak"))
-                File.Delete(path + ".bak");
-
-            File.Copy(path, path + ".bak");
-
-            // Serialise into a new file
-            using (StreamWriter sr = new StreamWriter(path + ".new"))
+            // Write the global settings file
+            using (XmlWriter writer = XmlWriter.Create(path + Path.DirectorySeparatorChar + fileName + ".xml"))
             {
-                serial.Serialize(sr, _instance);
+                writer.WriteStartDocument();
+                writer.WriteStartElement("ApplicationSettings");
+
+                foreach (PropertyInfo property in _instance.GetType().GetProperties())
+                {
+                    if (property.CanRead && _globalProperties.Contains(property.Name))
+                    {
+                        writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
+                    }
+                }
+
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
             }
 
-            // If we've done that successfully, then move the new file into the original
-            if (File.Exists(path))
-                File.Delete(path);
+            // Write the hardware key file
+            File.WriteAllText(_instance.LibraryPath + "\\hardwarekey", _instance.HardwareKey);
 
-            File.Move(path + ".new", path);
+            // Write the player settings file
+            using (XmlWriter writer = XmlWriter.Create(_instance.LibraryPath + "\\config.xml"))
+            {
+                writer.WriteStartDocument();
+                writer.WriteStartElement("PlayerSettings");
+
+                foreach (PropertyInfo property in _instance.GetType().GetProperties())
+                {
+                    try
+                    {
+                        if (property.CanRead && !_globalProperties.Contains(property.Name) && property.Name != "HardwareKey")
+                        {
+                            writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
+                        }
+                    }
+                    catch
+                    {
+                        Trace.WriteLine(new LogMessage("PopulateFromXml", "Unable to write [" + property.Name + "]."), LogType.Info.ToString());
+                    }
+                }
+
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
         }
 
+        /// <summary>
+        /// Object array access
+        /// </summary>
+        /// <param name="propertyName"></param>
+        /// <returns></returns>
         public object this[string propertyName]
         {
             get
@@ -143,6 +220,79 @@ namespace XiboClient
             }
         }
 
+        /// <summary>
+        /// Populate from the XML document provided.
+        /// </summary>
+        /// <param name="document"></param>
+        public void PopulateFromXml(XmlDocument document)
+        {
+            foreach (XmlNode node in document.DocumentElement.ChildNodes)
+            {
+                // Are we a commands node?
+                if (node.Name == "commands")
+                {
+                    List<Command> commands = new List<Command>();
+
+                    foreach (XmlNode commandNode in node.ChildNodes)
+                    {
+                        Command command = new Command();
+                        command.Code = commandNode.Name;
+                        command.CommandString = commandNode.SelectSingleNode("commandString").InnerText;
+                        command.Validation = commandNode.SelectSingleNode("validationString").InnerText;
+
+                        commands.Add(command);
+                    }
+
+                    // Store commands
+                    ApplicationSettings.Default.Commands = commands;
+                }
+                else
+                {
+                    Object value = node.InnerText;
+                    string type = (node.Attributes["type"] != null) ? node.Attributes["type"].Value : "string";
+
+                    switch (type)
+                    {
+                        case "int":
+                            value = Convert.ToInt32(value);
+                            break;
+
+                        case "double":
+                            value = Convert.ToDecimal(value);
+                            break;
+
+                        case "string":
+                        case "word":
+                            value = node.InnerText;
+                            break;
+
+                        case "checkbox":
+                            value = (node.InnerText == "0") ? false : true;
+                            break;
+
+                        default:
+                            continue;
+                    }
+
+                    // Match these to settings
+                    try
+                    {
+                        if (ApplicationSettings.Default[node.Name] != null)
+                        {
+                            value = Convert.ChangeType(value, ApplicationSettings.Default[node.Name].GetType());
+                        }
+
+                        ApplicationSettings.Default[node.Name] = value;
+                    }
+                    catch
+                    {
+                        Trace.WriteLine(new LogMessage("PopulateFromXml", "XML configuration for [" + node.Name + "] which this player doesn't understand."), LogType.Info.ToString());
+                    }
+                }
+            }
+        }
+
+        #region "The Settings"
         public int XmdsResetTimeout { get; set; }
 
         public decimal SizeX { get; set; }
@@ -164,13 +314,39 @@ namespace XiboClient
 
         private string _libraryPath;
         public string LibraryPath { get { return (_libraryPath == "DEFAULT") ? (Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + Application.ProductName + " Library") : _libraryPath; } set { _libraryPath = value; } }
-        public string XiboClient_xmds_xmds { get; set; }
+
+        /// <summary>
+        /// XMDS Url configuration
+        /// </summary>
+        public string XiboClient_xmds_xmds
+        {
+            get
+            {
+                return ServerUri.TrimEnd('\\') + @"/xmds.php?v=" + ApplicationSettings.Default.Version;
+            }
+        }
+        
         public string ServerKey { get; set; }
 
         private string _displayName;
         public string DisplayName { get { return (_displayName == "COMPUTERNAME") ? Environment.MachineName : _displayName; } set { _displayName = value; } }
 
-        public string ServerUri { get; set; }
+        /// <summary>
+        /// Server Address
+        /// </summary>
+        private string _serverUri;
+        public string ServerUri 
+        { 
+            get
+            {
+                return (string.IsNullOrEmpty(_serverUri)) ? "http://localhost" : _serverUri;
+            }
+            set
+            {
+                _serverUri = value;
+            }
+        }
+
         public string ProxyUser { get; set; }
         public string ProxyPassword { get; set; }
         public string ProxyDomain { get; set; }
@@ -320,6 +496,8 @@ namespace XiboClient
         }
 
         public List<Command> Commands { get; set; }
+
+        #endregion
 
         // Settings HASH
         public string Hash { get; set; }

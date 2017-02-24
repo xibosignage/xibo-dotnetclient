@@ -178,7 +178,7 @@ namespace XiboClient
 
             // What happens if we cannot start?
             Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
-            Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Audit.ToString());
 
             try
             {
@@ -191,14 +191,14 @@ namespace XiboClient
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(new LogMessage("Main", "Couldn't write to event log: " + ex.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("Main", "Couldn't write to event log: " + ex.Message), LogType.Info.ToString());
                 }
 
                 Trace.Flush();
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Info.ToString());
             }
 
             // Exit the application and allow it to be restarted by the Watchdog.

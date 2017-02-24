@@ -15,10 +15,9 @@
   <RequiredFilesFile>requiredFiles.xml</RequiredFilesFile>
   <VideoRenderingEngine>WindowsMediaPlayer</VideoRenderingEngine>
   <LibraryPath>DEFAULT</LibraryPath>
-  <XiboClient_xmds_xmds>http://localhost/xibo/1.7/server-170-alpha/server/xmds.php</XiboClient_xmds_xmds>
   <ServerKey>yourserverkey</ServerKey>
   <DisplayName>COMPUTERNAME</DisplayName>
-  <ServerUri>http://localhost/xibo</ServerUri>
+  <ServerUri></ServerUri>
   <ProxyUser></ProxyUser>
   <ProxyPassword></ProxyPassword>
   <ProxyDomain></ProxyDomain>

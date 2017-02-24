@@ -61,12 +61,51 @@ namespace XiboClient.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Xibo - Digital Signage - http://www.xibo.org.uk
+        ///Copyright (C) 2006-2017 Spring Signage Ltd
+        ///
+        ///Xibo is free software: you can redistribute it and/or modify
+        ///it under the terms of the GNU Affero General Public License as published by
+        ///the Free Software Foundation, either version 3 of the License, or
+        ///any later version. 
+        ///
+        ///Xibo is distributed in the hope that it will be useful,
+        ///but WITHOUT ANY WARRANTY; without even the implied warranty of
+        ///MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        ///GNU  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string licence {
+            get {
+                return ResourceManager.GetString("licence", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap logo {
+            get {
+                object obj = ResourceManager.GetObject("logo", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap splash {
             get {
                 object obj = ResourceManager.GetObject("splash", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to http://xibo.org.uk/manual.
+        /// </summary>
+        internal static string SupportUrl {
+            get {
+                return ResourceManager.GetString("SupportUrl", resourceCulture);
             }
         }
     }
