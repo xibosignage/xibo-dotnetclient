@@ -162,7 +162,7 @@ namespace XiboClient
             Thread.CurrentThread.Name = "UI Thread";
 
             // Check the directories exist
-            if (!Directory.Exists(ApplicationSettings.Default.LibraryPath) || !Directory.Exists(ApplicationSettings.Default.LibraryPath + @"\backgrounds\"))
+            if (!Directory.Exists(ApplicationSettings.Default.LibraryPath + @"\backgrounds\"))
             {
                 // Will handle the create of everything here
                 Directory.CreateDirectory(ApplicationSettings.Default.LibraryPath + @"\backgrounds");

@@ -313,7 +313,30 @@ namespace XiboClient
         public string VideoRenderingEngine { get; set; }
 
         private string _libraryPath;
-        public string LibraryPath { get { return (_libraryPath == "DEFAULT") ? (Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + Application.ProductName + " Library") : _libraryPath; } set { _libraryPath = value; } }
+        public string LibraryPath 
+        { 
+            get 
+            {
+                if (_libraryPath == "DEFAULT")
+                {
+                    // Get the users document space for a library
+                    _libraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + Application.ProductName + " Library";
+                }
+
+                // Check the path exists
+                if (!Directory.Exists(_libraryPath))
+                {
+                    // Create everything up to the folder name we've specified.
+                    Directory.CreateDirectory(_libraryPath);
+                }
+
+                return _libraryPath;
+            } 
+            set 
+            {
+                _libraryPath = value; 
+            } 
+        }
 
         /// <summary>
         /// XMDS Url configuration
