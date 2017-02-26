@@ -362,6 +362,11 @@ namespace XiboClient
         {
             switch (action.GetActionName())
             {
+                case RevertToSchedulePlayerAction.Name:
+                    _scheduleManager.ClearLayoutChangeActions();
+                    _scheduleManager.RunNow();
+                    break;
+
                 case "collectNow":
                     // Run all of the various agents
                     wakeUpXmds();
