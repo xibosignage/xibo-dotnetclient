@@ -37,6 +37,14 @@ namespace XiboClient.XmdsAgents
         private ManualResetEvent _manualReset = new ManualResetEvent(false);
 
         /// <summary>
+        /// Wake Up
+        /// </summary>
+        public void WakeUp()
+        {
+            _manualReset.Set();
+        }
+
+        /// <summary>
         /// Stops the thread
         /// </summary>
         public void Stop()

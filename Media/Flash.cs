@@ -92,6 +92,7 @@ namespace XiboClient
             }
             else
             {
+                string bgImage = ApplicationSettings.Default.LibraryPath + @"/" + _backgroundImage;
                 bodyStyle = "background-image: url('" + _backgroundImage + "'); background-attachment:fixed; background-color:" + _backgroundColor + " background-repeat: no-repeat; background-position: " + _backgroundLeft + " " + _backgroundTop + ";";
             }
 

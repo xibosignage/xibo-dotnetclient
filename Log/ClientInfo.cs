@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Xml.Serialization;
 using XiboClient.Properties;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace XiboClient.Log
 {
@@ -93,6 +94,42 @@ namespace XiboClient.Log
         }
 
         /// <summary>
+        /// XMR Status
+        /// </summary>
+        public string XmrSubscriberStatus
+        {
+            set
+            {
+                if (InvokeRequired)
+                {
+                    BeginInvoke(new StatusDelegate(SetXmrStatus), value);
+                }
+                else
+                {
+                    SetXmrStatus(value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Control Count
+        /// </summary>
+        public int ControlCount
+        {
+            set
+            {
+                if (InvokeRequired)
+                {
+                    BeginInvoke(new StatusDelegate(SetControlCount), "" + value);
+                }
+                else
+                {
+                    SetControlCount("" + value);
+                }
+            }
+        }
+
+        /// <summary>
         /// Client Info Object
         /// </summary>
         public ClientInfo()
@@ -151,6 +188,24 @@ namespace XiboClient.Log
         public void SetCurrentlyPlaying(string layoutName)
         {
             Text = "Client Information and Status - " + ApplicationSettings.Default.ServerUri + " - Currently Showing: " + layoutName;
+        }
+
+        /// <summary>
+        /// Sets the XMR Status
+        /// </summary>
+        /// <param name="layoutName"></param>
+        public void SetXmrStatus(string status)
+        {
+            xmrStatus.Text = status;
+        }
+
+        /// <summary>
+        /// Set control count label
+        /// </summary>
+        /// <param name="count"></param>
+        public void SetControlCount(string count)
+        {
+            controlCountLabel.Text = count;
         }
 
         /// <summary>
@@ -268,8 +323,54 @@ namespace XiboClient.Log
         /// </summary>
         private void updateStatusFile()
         {
-            File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"),
-                "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\",\"state\":\"" + Thread.State.ToString() + "\",\"xmdsLastActivity\":\"" + ApplicationSettings.Default.XmdsLastConnection.ToString() + "\",\"xmdsCollectInterval\":\"" + ApplicationSettings.Default.CollectInterval.ToString() + "\"}");
+            try
+            {
+                File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"),
+                    "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\",\"state\":\"" + Thread.State.ToString() + "\",\"xmdsLastActivity\":\"" + ApplicationSettings.Default.XmdsLastConnection.ToString() + "\",\"xmdsCollectInterval\":\"" + ApplicationSettings.Default.CollectInterval.ToString() + "\"}");
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("ClientInfo - updateStatusFile", "Failed to update status file. e = " + e.Message), LogType.Error.ToString());
+            }
+        }
+
+        public void notifyStatusToXmds()
+        {
+            try
+            {
+                StringBuilder sb = new StringBuilder();
+                StringWriter sw = new StringWriter(sb);
+
+                using (JsonWriter writer = new JsonTextWriter(sw))
+                {
+                    writer.Formatting = Formatting.None;
+                    writer.WriteStartObject();
+                    writer.WritePropertyName("lastActivity");
+                    writer.WriteValue(DateTime.Now.ToString());
+                    writer.WritePropertyName("applicationState");
+                    writer.WriteValue(Thread.State.ToString());
+                    writer.WritePropertyName("xmdsLastActivity");
+                    writer.WriteValue(ApplicationSettings.Default.XmdsLastConnection.ToString());
+                    writer.WritePropertyName("scheduleStatus");
+                    writer.WriteValue(scheduleStatusLabel.Text);
+                    writer.WritePropertyName("requiredFilesStatus");
+                    writer.WriteValue(requiredFilesStatus.Text);
+                    writer.WritePropertyName("xmrStatus");
+                    writer.WriteValue(xmrStatus.Text);
+                    writer.WriteEndObject();
+                }
+
+                // Notify the state of the command (success or failure)
+                using (xmds.xmds statusXmds = new xmds.xmds())
+                {
+                    statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                    statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("ClientInfo - notifyStatusToXmds", "Failed to notify status to XMDS. e = " + e.Message), LogType.Error.ToString());
+            }
         }
     }
 }

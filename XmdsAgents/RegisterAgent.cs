@@ -37,6 +37,18 @@ namespace XiboClient.XmdsAgents
         private bool _forceStop = false;
         private ManualResetEvent _manualReset = new ManualResetEvent(false);
 
+        // Events
+        public delegate void OnXmrReconfigureDelegate();
+        public event OnXmrReconfigureDelegate OnXmrReconfigure;
+
+        /// <summary>
+        /// Wake Up
+        /// </summary>
+        public void WakeUp()
+        {
+            _manualReset.Set();
+        }
+
         /// <summary>
         /// Stops the thread
         /// </summary>
@@ -72,16 +84,34 @@ namespace XiboClient.XmdsAgents
                             xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
                             xmds.UseDefaultCredentials = false;
 
-                            RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(ApplicationSettings.Default.ServerKey, key.Key, ApplicationSettings.Default.DisplayName, "windows", ApplicationSettings.Default.ClientVersion, ApplicationSettings.Default.ClientCodeVersion, Environment.OSVersion.ToString(), key.MacAddress));
+                            // Store the XMR address
+                            string xmrAddress = ApplicationSettings.Default.XmrNetworkAddress;
+
+                            RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(
+                                ApplicationSettings.Default.ServerKey, 
+                                key.Key, 
+                                ApplicationSettings.Default.DisplayName, 
+                                "windows", 
+                                ApplicationSettings.Default.ClientVersion, 
+                                ApplicationSettings.Default.ClientCodeVersion, 
+                                Environment.OSVersion.ToString(), 
+                                key.MacAddress,
+                                key.Channel,
+                                key.getXmrPublicKey()));
 
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
-                            // Do we need to send a screenshot?
-                            if (ApplicationSettings.Default.ScreenShotRequested)
+                            // Has the XMR address changed?
+                            if (xmrAddress != ApplicationSettings.Default.XmrNetworkAddress)
                             {
-                                ApplicationSettings.Default.ScreenShotRequested = false;
-                                ScreenShot.TakeAndSend();
+                                OnXmrReconfigure();
+                            }
+
+                            // Is the timezone empty?
+                            if (string.IsNullOrEmpty(ApplicationSettings.Default.DisplayTimeZone))
+                            {
+                                reportTimezone();
                             }
                         }
                     }
@@ -110,7 +140,6 @@ namespace XiboClient.XmdsAgents
         public static string ProcessRegisterXml(string xml)
         {
             string message = "";
-            bool error = false;
 
             try
             {
@@ -121,17 +150,6 @@ namespace XiboClient.XmdsAgents
                 // Test the XML
                 if (result.DocumentElement.Attributes["code"].Value == "READY")
                 {
-                    // Pull the CMS time and store it
-                    try
-                    {
-                        DateTime cmsTime = DateTime.Parse(result.DocumentElement.Attributes["date"].Value);
-                        ApplicationSettings.Default.CmsTimeOffset = (cmsTime - DateTime.Now).TotalHours;
-                    }
-                    catch
-                    {
-                        Trace.WriteLine(new LogMessage("Register", "CMS Date parse error"), LogType.Info.ToString());
-                    }
-
                     // Get the config element
                     if (result.DocumentElement.ChildNodes.Count <= 0)
                         throw new Exception("Configuration not set for this display");
@@ -139,7 +157,11 @@ namespace XiboClient.XmdsAgents
                     // Hash after removing the date
                     try
                     {
-                        result.DocumentElement.Attributes["date"].Value = "";
+                        if (result.DocumentElement.Attributes["date"] != null)
+                            result.DocumentElement.Attributes["date"].Value = "";
+
+                        if (result.DocumentElement.Attributes["localDate"] != null)
+                            result.DocumentElement.Attributes["localDate"].Value = "";
                     }
                     catch
                     {
@@ -151,48 +173,11 @@ namespace XiboClient.XmdsAgents
                     if (md5 == ApplicationSettings.Default.Hash)
                         return result.DocumentElement.Attributes["message"].Value;
 
-                    foreach (XmlNode node in result.DocumentElement.ChildNodes)
-                    {
-                        Object value = node.InnerText;
-
-                        switch (node.Attributes["type"].Value)
-                        {
-                            case "int":
-                                value = Convert.ToInt32(value);
-                                break;
-
-                            case "double":
-                                value = Convert.ToDecimal(value);
-                                break;
-
-                            case "string":
-                            case "word":
-                                value = node.InnerText;
-                                break;
-
-                            case "checkbox":
-                                value = (node.InnerText == "0") ? false : true;
-                                break;
-
-                            default:
-                                message += String.Format("Unable to set {0} with value {1}", node.Name, value) + Environment.NewLine;
-                                continue;
-                        }
-
-                        // Match these to settings
-                        try
-                        {
-                            ApplicationSettings.Default[node.Name] = Convert.ChangeType(value, ApplicationSettings.Default[node.Name].GetType());
-                        }
-                        catch
-                        {
-                            error = true;
-                            message += "Invalid Configuration Option from CMS [" + node.Name + "]" + Environment.NewLine;
-                        }
-                    }
+                    // Populate the settings based on the XML we've received.
+                    ApplicationSettings.Default.PopulateFromXml(result);
 
                     // Store the MD5 hash and the save
-                    ApplicationSettings.Default.Hash = (error) ? "0" : md5;
+                    ApplicationSettings.Default.Hash = md5;
                     ApplicationSettings.Default.Save();
                 }
                 else
@@ -200,8 +185,8 @@ namespace XiboClient.XmdsAgents
                     message += result.DocumentElement.Attributes["message"].Value;
                 }
 
-                if (string.IsNullOrEmpty(message))
-                    message = result.DocumentElement.Attributes["message"].Value;
+                // Append the informational message with the message attribute.
+                message = result.DocumentElement.Attributes["message"].Value + Environment.NewLine + message;
             }
             catch (Exception ex)
             {
@@ -209,6 +194,45 @@ namespace XiboClient.XmdsAgents
             }
 
             return message;
+        }
+
+        /// <summary>
+        /// Report the timezone to XMDS
+        /// </summary>
+        private void reportTimezone()
+        {
+            using (xmds.xmds xmds = new xmds.xmds())
+            {
+                string status = "{\"timeZone\":\"" + WindowsToIana(TimeZone.CurrentTimeZone.StandardName) + "\"}";
+
+                xmds.Credentials = null;
+                xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                xmds.UseDefaultCredentials = false;
+                xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, status);
+            }
+        }
+
+        /// <summary>
+        /// Windows to IANA timezone mapping
+        /// ref: http://stackoverflow.com/questions/17348807/how-to-translate-between-windows-and-iana-time-zones
+        /// </summary>
+        /// <param name="windowsZoneId"></param>
+        /// <returns></returns>
+        private string WindowsToIana(string windowsZoneId)
+        {
+            if (windowsZoneId.Equals("UTC", StringComparison.Ordinal))
+                return "Etc/UTC";
+
+            var tzdbSource = NodaTime.TimeZones.TzdbDateTimeZoneSource.Default;
+            var tzi = TimeZoneInfo.FindSystemTimeZoneById(windowsZoneId);
+            if (tzi == null) 
+                return null;
+            
+            var tzid = tzdbSource.MapTimeZoneId(tzi);
+            if (tzid == null) 
+                return null;
+            
+            return tzdbSource.CanonicalIdMap[tzid];
         }
     }
 }

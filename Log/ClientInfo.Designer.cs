@@ -45,6 +45,9 @@ namespace XiboClient.Log
             this.scheduleManagerStatus = new System.Windows.Forms.TextBox();
             this.saveLogToDisk = new System.Windows.Forms.Button();
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.label3 = new System.Windows.Forms.Label();
+            this.xmrStatus = new System.Windows.Forms.Label();
+            this.controlCountLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
@@ -75,7 +78,7 @@ namespace XiboClient.Log
             dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.logDataGridView.DefaultCellStyle = dataGridViewCellStyle2;
-            this.logDataGridView.Location = new System.Drawing.Point(12, 314);
+            this.logDataGridView.Location = new System.Drawing.Point(12, 343);
             this.logDataGridView.Name = "logDataGridView";
             this.logDataGridView.ReadOnly = true;
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
@@ -86,7 +89,7 @@ namespace XiboClient.Log
             dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             this.logDataGridView.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
-            this.logDataGridView.Size = new System.Drawing.Size(786, 408);
+            this.logDataGridView.Size = new System.Drawing.Size(786, 324);
             this.logDataGridView.TabIndex = 0;
             // 
             // Thread
@@ -136,7 +139,7 @@ namespace XiboClient.Log
             // scheduleStatusLabel
             // 
             this.scheduleStatusLabel.AutoSize = true;
-            this.scheduleStatusLabel.Location = new System.Drawing.Point(148, 11);
+            this.scheduleStatusLabel.Location = new System.Drawing.Point(103, 11);
             this.scheduleStatusLabel.Name = "scheduleStatusLabel";
             this.scheduleStatusLabel.Size = new System.Drawing.Size(61, 13);
             this.scheduleStatusLabel.TabIndex = 2;
@@ -182,7 +185,7 @@ namespace XiboClient.Log
             // 
             // saveLogToDisk
             // 
-            this.saveLogToDisk.Location = new System.Drawing.Point(13, 729);
+            this.saveLogToDisk.Location = new System.Drawing.Point(12, 314);
             this.saveLogToDisk.Name = "saveLogToDisk";
             this.saveLogToDisk.Size = new System.Drawing.Size(75, 23);
             this.saveLogToDisk.TabIndex = 9;
@@ -194,11 +197,41 @@ namespace XiboClient.Log
             // 
             this.saveFileDialog.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog_FileOk);
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(102, 319);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(67, 13);
+            this.label3.TabIndex = 10;
+            this.label3.Text = "XMR Status:";
+            // 
+            // xmrStatus
+            // 
+            this.xmrStatus.AutoSize = true;
+            this.xmrStatus.Location = new System.Drawing.Point(175, 319);
+            this.xmrStatus.Name = "xmrStatus";
+            this.xmrStatus.Size = new System.Drawing.Size(61, 13);
+            this.xmrStatus.TabIndex = 11;
+            this.xmrStatus.Text = "Not Started";
+            // 
+            // controlCountLabel
+            // 
+            this.controlCountLabel.AutoSize = true;
+            this.controlCountLabel.Location = new System.Drawing.Point(785, 319);
+            this.controlCountLabel.Name = "controlCountLabel";
+            this.controlCountLabel.Size = new System.Drawing.Size(13, 13);
+            this.controlCountLabel.TabIndex = 12;
+            this.controlCountLabel.Text = "0";
+            // 
             // ClientInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(810, 758);
+            this.ClientSize = new System.Drawing.Size(810, 676);
+            this.Controls.Add(this.controlCountLabel);
+            this.Controls.Add(this.xmrStatus);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.saveLogToDisk);
             this.Controls.Add(this.scheduleManagerStatus);
             this.Controls.Add(this.requiredFilesTextBox);
@@ -231,5 +264,8 @@ namespace XiboClient.Log
         private System.Windows.Forms.TextBox scheduleManagerStatus;
         private System.Windows.Forms.Button saveLogToDisk;
         private System.Windows.Forms.SaveFileDialog saveFileDialog;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label xmrStatus;
+        private System.Windows.Forms.Label controlCountLabel;
     }
 }

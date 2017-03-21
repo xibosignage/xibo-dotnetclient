@@ -1,6 +1,6 @@
 ﻿/*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2014 Spring Signage Ltd
+ * Copyright (C) 2014-2016 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -26,8 +26,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using Xilium.CefGlue;
-using Xilium.CefGlue.WindowsForms;
 
 namespace XiboClient
 {
@@ -35,6 +33,7 @@ namespace XiboClient
     {
         private bool _disposed = false;
         private string _filePath;
+        private string _localWebPath;
         private RegionOptions _options;
         private WebBrowser _webBrowser;
         private int _documentCompletedCount = 0;
@@ -60,6 +59,7 @@ namespace XiboClient
             {
                 // Set the file path
                 _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
+                _localWebPath = ApplicationSettings.Default.EmbeddedServerAddress + _options.mediaid + ".htm";
             }
 
             // Create the web view we will use
@@ -81,7 +81,7 @@ namespace XiboClient
                 ReadControlMeta();
 
                 // Navigate to temp file
-                _webBrowser.Navigate(_filePath);
+                _webBrowser.Navigate(_localWebPath);
             }
             else
             {
@@ -236,7 +236,7 @@ namespace XiboClient
                             UpdateCacheIfNecessary();
 
                             // Navigate to the file
-                            _webBrowser.Navigate(_filePath);
+                            _webBrowser.Navigate(_localWebPath);
                         }
                         else
                         {
@@ -256,14 +256,15 @@ namespace XiboClient
 
                     // Handle the background
                     String bodyStyle;
+                    String backgroundColor = _options.Dictionary.Get("backgroundColor", _options.backgroundColor);
 
                     if (_options.backgroundImage == null || _options.backgroundImage == "")
                     {
-                        bodyStyle = "background-color:" + _options.backgroundColor + " ;";
+                        bodyStyle = "background-color:" + backgroundColor + " ;";
                     }
                     else
                     {
-                        bodyStyle = "background-image: url('" + _options.backgroundImage.Replace('\\', '/') + "'); background-attachment:fixed; background-color:" + _options.backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
+                        bodyStyle = "background-image: url('" + _options.backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
                     }
 
                     string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");
@@ -289,7 +290,7 @@ namespace XiboClient
                         ReadControlMeta();
 
                         // Handle Navigate in here because we will not have done it during first load
-                        _webBrowser.Navigate(_filePath);
+                        _webBrowser.Navigate(_localWebPath);
                     }
                 }
             }
@@ -327,14 +328,15 @@ namespace XiboClient
             {
                 // Handle the background
                 String bodyStyle;
+                String backgroundColor = _options.Dictionary.Get("backgroundColor", _options.backgroundColor);
 
                 if (_options.backgroundImage == null || _options.backgroundImage == "")
                 {
-                    bodyStyle = "background-color:" + _options.backgroundColor + " ;";
+                    bodyStyle = "background-color:" + backgroundColor + " ;";
                 }
                 else
                 {
-                    bodyStyle = "background-image: url('" + _options.backgroundImage.Replace('\\', '/') + "'); background-attachment:fixed; background-color:" + _options.backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
+                    bodyStyle = "background-image: url('" + _options.backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
                 }
 
                 string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");

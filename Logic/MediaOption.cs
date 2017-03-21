@@ -91,6 +91,25 @@ namespace XiboClient
                 return def;
             }
         }
+
+        public int Get(string name, int def)
+        {
+            string value;
+
+            try
+            {
+                value = Get(name);
+
+                if (string.IsNullOrEmpty(value))
+                    return def;
+
+                return int.Parse(value);
+            }
+            catch
+            {
+                return def;
+            }
+        }
     }
 
     struct MediaOption

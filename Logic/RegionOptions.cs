@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2013 Daniel Garner
+ * Copyright (C) 2013-16 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -26,6 +26,7 @@ namespace XiboClient
 {
     /// <summary>
     /// The options specific to a region
+    ///     NOTE: Don't change this to a class
     /// </summary>
     struct RegionOptions
     {
@@ -44,6 +45,9 @@ namespace XiboClient
         public string type;
         public string uri;
         public int duration;
+
+        // Region Loop
+        public bool RegionLoop;
 
         //xml
         public XmlNodeList mediaNodes;
@@ -71,6 +75,25 @@ namespace XiboClient
         public MediaDictionary Dictionary;
 
         public DateTime LayoutModifiedDate { get; set; }
+
+        /// <summary>
+        /// Audio associated with the widget
+        /// </summary>
+        public List<Media> Audio
+        {
+            get
+            {
+                if (_audio == null)
+                    _audio = new List<Media>();
+
+                return _audio;
+            }
+            set
+            {
+                _audio = value;
+            }
+        }
+        private List<Media> _audio;
 
         public override string ToString()
         {

@@ -164,7 +164,7 @@ namespace XiboClient.XmdsAgents
                         file.Complete = true;
                     }
                 }
-                else if (file.FileType == "media" && file.Http)
+                else if (file.Http)
                 {
                     // Download using HTTP and the rf.Path
                     using (WebClient wc = new WebClient())

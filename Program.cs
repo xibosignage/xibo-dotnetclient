@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Xilium.CefGlue;
 using XiboClient.Logic;
 using System.Threading.Tasks;
 
@@ -41,39 +40,6 @@ namespace XiboClient
                            ErrorModes.SEM_FAILCRITICALERRORS |
                            ErrorModes.SEM_NOOPENFILEERRORBOX);
 
-            // Do we need to initialise CEF?
-            if (ApplicationSettings.Default.UseCefWebBrowser)
-            {
-                try
-                {
-                    CefRuntime.Load();
-                }
-                catch (DllNotFoundException ex)
-                {
-                    MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return 1;
-                }
-                catch (CefRuntimeException ex)
-                {
-                    MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return 2;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString(), "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return 3;
-                }
-
-                var settings = new CefSettings();
-                settings.MultiThreadedMessageLoop = true;
-                settings.SingleProcess = false;
-                settings.LogSeverity = CefLogSeverity.Disable;
-                settings.LogFile = "cef.log";
-                settings.ResourcesDirPath = System.IO.Path.GetDirectoryName(new Uri(System.Reflection.Assembly.GetEntryAssembly().CodeBase).LocalPath);
-                settings.RemoteDebuggingPort = 20480;
-
-                CefRuntime.Initialize(new CefMainArgs(args), settings, null, IntPtr.Zero);
-            }
 
             // Ensure our process has the highest priority
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
@@ -157,11 +123,8 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
             Trace.Flush();
 
-            if (ApplicationSettings.Default.UseCefWebBrowser)
-                CefRuntime.Shutdown();
-
             return 0;
-        }       
+        }
 
         private static void RunClient()
         {
@@ -215,28 +178,31 @@ namespace XiboClient
 
             // What happens if we cannot start?
             Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
-            Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Audit.ToString());
 
             try
             {
                 // Also write to the event log
-                if (!EventLog.SourceExists(Application.ProductName))
-                    EventLog.CreateEventSource(Application.ProductName, "Xibo");
+                try
+                {
+                    if (!EventLog.SourceExists(Application.ProductName))
+                        EventLog.CreateEventSource(Application.ProductName, "Xibo");
+                    EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Main", "Couldn't write to event log: " + ex.Message), LogType.Info.ToString());
+                }
 
-                EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
+                Trace.Flush();
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Info.ToString());
             }
 
-            // Shutdown the application
-            if (ApplicationSettings.Default.UseCefWebBrowser)
-                CefRuntime.Shutdown();
-
-            // Try to restart
-            // This is disabled so that we let the application crash normally and restart using the watchdog
-            //Application.Restart();
+            // Exit the application and allow it to be restarted by the Watchdog.
+            Application.Exit();
         }
 
         [DllImport("User32.dll")]

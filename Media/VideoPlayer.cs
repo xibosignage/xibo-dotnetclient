@@ -35,6 +35,7 @@ namespace XiboClient
     public partial class VideoPlayer : Form
     {
         private bool _finished;
+        private bool _visible = true;
 
         public delegate void VideoFinished();
         public event VideoFinished VideoEnd;
@@ -54,9 +55,16 @@ namespace XiboClient
 
         public void StartPlayer(string filePath)
         {
-            axWindowsMediaPlayer1.Visible = true;
-            axWindowsMediaPlayer1.Width = this.Width;
-            axWindowsMediaPlayer1.Height = this.Height;
+            if (_visible)
+            {
+                axWindowsMediaPlayer1.Visible = true;
+                axWindowsMediaPlayer1.Width = this.Width;
+                axWindowsMediaPlayer1.Height = this.Height;
+            }
+            else
+            {
+                axWindowsMediaPlayer1.Visible = false;
+            }
             axWindowsMediaPlayer1.Location = new System.Drawing.Point(0, 0);
 
             axWindowsMediaPlayer1.uiMode = "none";
@@ -68,12 +76,20 @@ namespace XiboClient
             axWindowsMediaPlayer1.ErrorEvent += new EventHandler(axWindowsMediaPlayer1_ErrorEvent);
         }
 
+        /// <summary>
+        /// Set Loop
+        /// </summary>
+        /// <param name="looping"></param>
         public void SetLooping(bool looping)
         {
             axWindowsMediaPlayer1.settings.setMode("loop", looping);
             _looping = looping;
         }
 
+        /// <summary>
+        /// Set Mute
+        /// </summary>
+        /// <param name="mute"></param>
         public void SetMute(bool mute)
         {
             if (mute)
@@ -85,6 +101,35 @@ namespace XiboClient
                 axWindowsMediaPlayer1.settings.volume = 100;
         }
 
+        /// <summary>
+        /// Set Volume
+        /// </summary>
+        /// <param name="volume"></param>
+        public void SetVolume(int volume)
+        {
+            if (volume == 0)
+            {
+                SetMute(true);
+            }
+            else
+            {
+                axWindowsMediaPlayer1.settings.volume = volume;
+                axWindowsMediaPlayer1.settings.mute = false;
+            }
+        }
+
+        /// <summary>
+        /// Visible
+        /// </summary>
+        /// <param name="visible"></param>
+        public void SetVisible(bool visible)
+        {
+            _visible = visible;
+        }
+
+        /// <summary>
+        /// Stop and Clear everything
+        /// </summary>
         public void StopAndClear()
         {
             try

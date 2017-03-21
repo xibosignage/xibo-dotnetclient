@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2015 Daniel Garner
+ * Copyright (C) 2006-2016 Daniel Garner
  *
  * This file is part of Xibo.
  *
@@ -32,6 +32,16 @@ namespace XiboClient
     /// </summary>
     class Region : Panel
     {
+        /// <summary>
+        /// Track regions created as overlays
+        /// </summary>
+        public int scheduleId = 0;
+
+        /// <summary>
+        /// Track a hash of this region at the point it was created
+        /// </summary>
+        public string hash = "";
+
         private BlackList _blackList;
         public delegate void DurationElapsedDelegate();
         public event DurationElapsedDelegate DurationElapsedEvent;
@@ -41,6 +51,11 @@ namespace XiboClient
         private bool _hasExpired = false;
         private bool _layoutExpired = false;
         private int _currentSequence = -1;
+
+        /// <summary>
+        /// Audio Sequence
+        /// </summary>
+        private int _audioSequence = -1;
 
         // Stat objects
         private StatLog _statLog;
@@ -156,16 +171,26 @@ namespace XiboClient
                 if (!SetNextMediaNodeInOptions())
                 {
                     // For some reason we cannot set a media node... so we need this region to become invalid
-                    _hasExpired = true;
-                    DurationElapsedEvent();
-                    return;
+                    throw new InvalidOperationException("Unable to set any region media nodes.");
                 }
 
                 // If the sequence hasnt been changed, OR the layout has been expired
                 // there has been no change to the sequence, therefore the media we have already created is still valid
                 // or this media has actually been destroyed and we are working out way out the call stack
-                if (_layoutExpired || (_currentSequence == temp))
+                if (_layoutExpired)
+                {
                     return;
+                }
+                else if (_currentSequence == temp)
+                {
+                    // Media has not changed, we are likely the only valid media item in the region
+                    // the layout has not yet expired, so depending on whether we loop or not, we either
+                    // reload the same media item again
+                    // or do nothing (return)
+                    // This could be made more succinct, but is clearer written as an elseif.
+                    if (!_options.RegionLoop)
+                        return;
+                }
 
                 // Store the Current Index
                 _options.CurrentIndex = _currentSequence;
@@ -182,7 +207,7 @@ namespace XiboClient
                     // Try the next node
                     startSuccessful = false;
                     continue;
-                }             
+                }
 
                 // First thing we do is stop the current stat record
                 if (!initialMedia)
@@ -242,6 +267,24 @@ namespace XiboClient
             _options.javaScript = "";
             _options.Dictionary = new MediaDictionary();
 
+            // Tidy up old audio if necessary
+            foreach (Media audio in _options.Audio)
+            {
+                try
+                {
+                    // Unbind any events and dispose
+                    audio.DurationElapsedEvent -= audio_DurationElapsedEvent;
+                    audio.Dispose();
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("Region - SetNextMediaNodeInOptions", "Unable to dispose of audio item"), LogType.Audit.ToString());
+                }
+            }
+            
+            // Empty the options node
+            _options.Audio.Clear();
+
             // Get a media node
             bool validNode = false;
             int numAttempts = 0;
@@ -263,7 +306,8 @@ namespace XiboClient
                     Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", "Media Expired:" + _options.ToString() + " . Reached the end of the sequence. Starting from the beginning."), LogType.Audit.ToString());
 
                     // Region Expired
-                    DurationElapsedEvent();
+                    if (DurationElapsedEvent != null)
+                        DurationElapsedEvent();
 
                     // We want to continue on to show the next media (unless the duration elapsed event triggers a region change)
                     if (_layoutExpired)
@@ -297,7 +341,7 @@ namespace XiboClient
                 ParseOptionsForMediaNode(mediaNode, nodeAttributes);
 
                 // Is this a file based media node?
-                if (_options.type == "video" || _options.type == "flash" || _options.type == "image" || _options.type == "powerpoint")
+                if (_options.type == "video" || _options.type == "flash" || _options.type == "image" || _options.type == "powerpoint" || _options.type == "audio")
                 {
                     // Use the cache manager to determine if the file is valid
                     validNode = _cacheManager.IsValidPath(_options.uri);
@@ -358,7 +402,7 @@ namespace XiboClient
             }
 
             // There will be some stuff on option nodes
-            XmlNode optionNode = mediaNode.FirstChild;
+            XmlNode optionNode = mediaNode.SelectSingleNode("options");
 
             // Track if an update interval has been provided in the XLF
             bool updateIntervalProvided = false;
@@ -411,25 +455,63 @@ namespace XiboClient
             }
 
             // And some stuff on Raw nodes
-            XmlNode rawNode = mediaNode.LastChild;
+            XmlNode rawNode = mediaNode.SelectSingleNode("raw");
 
-            foreach (XmlNode raw in rawNode.ChildNodes)
+            if (rawNode != null)
             {
-                if (raw.Name == "text")
+                foreach (XmlNode raw in rawNode.ChildNodes)
                 {
-                    _options.text = raw.InnerText;
+                    if (raw.Name == "text")
+                    {
+                        _options.text = raw.InnerText;
+                    }
+                    else if (raw.Name == "template")
+                    {
+                        _options.documentTemplate = raw.InnerText;
+                    }
+                    else if (raw.Name == "embedHtml")
+                    {
+                        _options.text = raw.InnerText;
+                    }
+                    else if (raw.Name == "embedScript")
+                    {
+                        _options.javaScript = raw.InnerText;
+                    }
                 }
-                else if (raw.Name == "template")
+            }
+
+            // Audio Nodes?
+            XmlNode audio = mediaNode.SelectSingleNode("audio");
+
+            if (audio != null)
+            {
+                foreach (XmlNode audioNode in audio.ChildNodes)
                 {
-                    _options.documentTemplate = raw.InnerText;
-                }
-                else if (raw.Name == "embedHtml")
-                {
-                    _options.text = raw.InnerText;
-                }
-                else if (raw.Name == "embedScript")
-                {
-                    _options.javaScript = raw.InnerText;
+                    RegionOptions options = new RegionOptions();
+                    options.Dictionary = new MediaDictionary();
+                    options.duration = 0;
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + audioNode.InnerText;
+
+                    if (audioNode.Attributes["loop"] != null)
+                    {
+                        options.Dictionary.Add("loop", audioNode.Attributes["loop"].Value);
+
+                        if (options.Dictionary.Get("loop", 0) == 1)
+                        {
+                            // Set the media duration to be equal to the duration of the parent media
+                            options.duration = (_options.duration == 0) ? int.MaxValue : _options.duration;
+                        }
+                    }
+
+                    if (audioNode.Attributes["volume"] != null)
+                        options.Dictionary.Add("volume", audioNode.Attributes["volume"].Value);
+
+                    Media audioMedia = new Audio(options);
+                    
+                    // Bind to the media complete event
+                    audioMedia.DurationElapsedEvent += audio_DurationElapsedEvent;
+
+                    _options.Audio.Add(audioMedia);
                 }
             }
 
@@ -462,17 +544,14 @@ namespace XiboClient
 
             Trace.WriteLine(new LogMessage("Region - CreateNextMediaNode", string.Format("Creating new media: {0}, {1}", options.type, options.mediaid)), LogType.Audit.ToString());
             
-            bool useCef = ApplicationSettings.Default.UseCefWebBrowser;
-
             if (options.render == "html")
             {
-                if (useCef)
-                    media = new CefWebMedia(options);
-                else
-                    media = new IeWebMedia(options);
+                media = new IeWebMedia(options);
             }
             else
             {
+                // We've set our next media node in options already
+                // this includes checking that file based media is valid.
                 switch (options.type)
                 {
                     case "image":
@@ -505,15 +584,17 @@ namespace XiboClient
 
                         break;
 
+                    case "audio":
+                        options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                        media = new Audio(options);
+                        break;
+
                     case "datasetview":
                     case "embedded":
                     case "ticker":
                     case "text":
                     case "webpage":
-                        if (useCef)
-                            media = new CefWebMedia(options);
-                        else
-                            media = new IeWebMedia(options);
+                        media = new IeWebMedia(options);
 
                         break;
 
@@ -537,7 +618,7 @@ namespace XiboClient
 
             // Add event handler for when this completes
             media.DurationElapsedEvent += new Media.DurationElapsedDelegate(media_DurationElapsedEvent);
-
+            
             return media;
         }
 
@@ -551,12 +632,60 @@ namespace XiboClient
 
             media.RenderMedia();
             Controls.Add(media);
+
+            // Reset the audio sequence and start
+            _audioSequence = 1;
+            startAudio();
+        }
+
+        /// <summary>
+        /// Start Audio if necessary
+        /// </summary>
+        private void startAudio()
+        {
+            // Start any associated audio
+            if (_options.Audio.Count >= _audioSequence)
+            {
+                Media audio = _options.Audio[_audioSequence - 1];
+
+                // call render media and add to controls
+                audio.RenderMedia();
+                Controls.Add(audio);
+            }
+        }
+
+        /// <summary>
+        /// Audio Finished Playing
+        /// </summary>
+        /// <param name="filesPlayed"></param>
+        void audio_DurationElapsedEvent(int filesPlayed)
+        {
+            try
+            {
+                StopMedia(_options.Audio[_audioSequence - 1], true);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("Region - audio_DurationElapsedEvent", "Audio -  Unable to dispose. Ex = " + ex.Message), LogType.Audit.ToString());
+            }
+
+            _audioSequence = _audioSequence + filesPlayed;
+            startAudio();
+        }
+
+        /// <summary>
+        /// Stop normal media node
+        /// </summary>
+        /// <param name="media"></param>
+        private void StopMedia(Media media)
+        {
+            StopMedia(media, false);
         }
 
         /// <summary>
         /// Stop the provided media
         /// </summary>
-        private void StopMedia(Media media)
+        private void StopMedia(Media media, bool audio)
         {
             Trace.WriteLine(new LogMessage("Region - Stop Media", "Stopping media"), LogType.Audit.ToString());
 
@@ -575,6 +704,19 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("Region - Stop Media", "Unable to dispose. Ex = " + ex.Message), LogType.Audit.ToString());
+            }
+
+            // Stop any associated audio
+            if (!audio && _options.Audio.Count >= _audioSequence)
+            {
+                try
+                {
+                    StopMedia(_options.Audio[_audioSequence - 1], true);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Region - Stop Media", "Audio -  Unable to dispose. Ex = " + ex.Message), LogType.Audit.ToString());
+                }
             }
         }
 
@@ -638,18 +780,24 @@ namespace XiboClient
                 // What do we do if there is an exception moving to the next media node?
                 // For some reason we cannot set a media node... so we need this region to become invalid
                 _hasExpired = true;
-                DurationElapsedEvent();
+                if (DurationElapsedEvent != null)
+                    DurationElapsedEvent();
                 return;
             }
         }
 
         /// <summary>
         /// Clears the Region of anything that it shouldnt still have... 
+        /// called when Destroying a Layout and when Removing an Overlay
         /// </summary>
         public void Clear()
         {
             try
             {
+                // Stop the current media item
+                if (_media != null)
+                    StopMedia(_media);
+
                 // What happens if we are disposing this region but we have not yet completed the stat event?
                 if (string.IsNullOrEmpty(_stat.toDate))
                 {
@@ -675,6 +823,39 @@ namespace XiboClient
             {
                 try
                 {
+                    // Tidy up old audio if necessary
+                    foreach (Media audio in _options.Audio)
+                    {
+                        try
+                        {
+                            Debug.WriteLine("Removing audio on region dispose", "Region");
+
+                            // Unbind any events and dispose
+                            audio.DurationElapsedEvent -= audio_DurationElapsedEvent;
+                            audio.Dispose();
+                        }
+                        catch
+                        {
+                            Trace.WriteLine(new LogMessage("Region - Dispose", "Unable to dispose of audio item"), LogType.Audit.ToString());
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("Region - Dispose", "Unable to dispose audio for media. Ex = " + ex.Message), LogType.Audit.ToString());
+                }
+
+                try
+                {
+                    _options.Dictionary.Clear();
+                    _options.Audio.Clear();
+
+                    Debug.WriteLine("Removing media on region dispose", "Region");
+
+                    // Remove media from Controls
+                    Controls.Remove(_media);
+
+                    // Unbind and dispose
                     _media.DurationElapsedEvent -= media_DurationElapsedEvent;
                     _media.Dispose();
                     _media = null;
