@@ -187,7 +187,24 @@ namespace XiboClient
                     {
                         if (property.CanRead && !_globalProperties.Contains(property.Name) && property.Name != "HardwareKey")
                         {
-                            writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
+                            if (property.Name == "Commands")
+                            {
+                                writer.WriteStartElement("commands");
+
+                                foreach (Command command in _instance.Commands)
+                                {
+                                    writer.WriteStartElement(command.Code);
+                                    writer.WriteElementString("commandString", command.CommandString);
+                                    writer.WriteElementString("commandValidation", command.Validation);
+                                    writer.WriteEndElement();
+                                }
+
+                                writer.WriteEndElement();
+                            }
+                            else
+                            {
+                                writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
+                            }
                         }
                     }
                     catch
@@ -229,7 +246,7 @@ namespace XiboClient
             foreach (XmlNode node in document.DocumentElement.ChildNodes)
             {
                 // Are we a commands node?
-                if (node.Name == "commands")
+                if (node.Name.ToLower() == "commands")
                 {
                     List<Command> commands = new List<Command>();
 
