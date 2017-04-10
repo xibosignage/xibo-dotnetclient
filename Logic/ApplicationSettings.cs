@@ -40,9 +40,9 @@ namespace XiboClient
         private List<string> _globalProperties;
 
         // Application Specific Settings we want to protect
-        private string _clientVersion = "1.8.0";
+        private string _clientVersion = "1.8.1";
         private string _version = "5";
-        private int _clientCodeVersion = 127;
+        private int _clientCodeVersion = 128;
 
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
@@ -187,7 +187,24 @@ namespace XiboClient
                     {
                         if (property.CanRead && !_globalProperties.Contains(property.Name) && property.Name != "HardwareKey")
                         {
-                            writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
+                            if (property.Name == "Commands")
+                            {
+                                writer.WriteStartElement("commands");
+
+                                foreach (Command command in _instance.Commands)
+                                {
+                                    writer.WriteStartElement(command.Code);
+                                    writer.WriteElementString("commandString", command.CommandString);
+                                    writer.WriteElementString("commandValidation", command.Validation);
+                                    writer.WriteEndElement();
+                                }
+
+                                writer.WriteEndElement();
+                            }
+                            else
+                            {
+                                writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
+                            }
                         }
                     }
                     catch
@@ -229,7 +246,7 @@ namespace XiboClient
             foreach (XmlNode node in document.DocumentElement.ChildNodes)
             {
                 // Are we a commands node?
-                if (node.Name == "commands")
+                if (node.Name.ToLower() == "commands")
                 {
                     List<Command> commands = new List<Command>();
 
