@@ -273,6 +273,10 @@ namespace XiboClient
         /// </summary>
         void _scheduleManager_OnScheduleManagerCheckComplete()
         {
+            // XMR address is present and has received at least 1 heart beat
+            bool xmrShouldBeRunning = (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && _xmrSubscriber.LastHeartBeat != DateTime.MinValue);
+
+            // If the agent threads are all alive, and either XMR shouldn't be running OR the subscriber thread is alive.
             if (agentThreadsAlive())
             {
                 // Update status marker on the main thread.
@@ -280,31 +284,19 @@ namespace XiboClient
             }
             else
             {
-                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "Agent threads are dead, not updating status.json"), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "Agent threads/XMR is dead, not updating status.json"), LogType.Error.ToString());
             }
-            
-            try
-            {
-                // See if XMR should be running
-                if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && _xmrSubscriber.LastHeartBeat != DateTime.MinValue)
-                {
-                    // Log when severly overdue a check
-                    if (_xmrSubscriber.LastHeartBeat < DateTime.Now.AddHours(-1))
-                    {
-                        Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over an hour ago."));
-                    }
 
-                    // Check to see if the last update date was over 5 minutes ago
-                    if (_xmrSubscriber.LastHeartBeat < DateTime.Now.AddMinutes(-5))
-                    {
-                        // Reconfigure it
-                        _registerAgent_OnXmrReconfigure();   
-                    }
-                }
-            }
-            catch (Exception e)
+            // Log for overdue XMR
+            if (xmrShouldBeRunning && _xmrSubscriber.LastHeartBeat < DateTime.Now.AddHours(-1))
             {
-                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "Error = " + e.Message), LogType.Error.ToString());
+                _clientInfoForm.XmrSubscriberStatus = "Long term Inactive (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
+                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over an hour ago."));
+            }
+            else if (xmrShouldBeRunning && _xmrSubscriber.LastHeartBeat < DateTime.Now.AddMinutes(-5))
+            {
+                _clientInfoForm.XmrSubscriberStatus = "Inactive (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
+                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over 5 minutes ago."), LogType.Audit.ToString());
             }
         }
         
@@ -317,7 +309,8 @@ namespace XiboClient
             return _registerAgentThread.IsAlive &&
                 _scheduleAndRfAgentThread.IsAlive &&
                 _logAgentThread.IsAlive &&
-                _libraryAgentThread.IsAlive;
+                _libraryAgentThread.IsAlive &&
+                _xmrSubscriberThread.IsAlive;
         }
 
         /// <summary>
@@ -328,30 +321,11 @@ namespace XiboClient
             try
             {
                 // Stop and start the XMR thread
-                if (_xmrSubscriberThread != null && _xmrSubscriberThread.IsAlive)
-                {
-                    _xmrSubscriberThread.Abort();
-                }
+                _xmrSubscriber.Restart();
             }
             catch (Exception e)
             {
                 Trace.WriteLine(new LogMessage("Schedule - OnXmrReconfigure", "Unable to abort Subscriber. " + e.Message), LogType.Error.ToString());
-            }
-
-            try
-            {
-                // Reassert the hardware key, incase its changed at all
-                _xmrSubscriber.HardwareKey = _hardwareKey;
-                
-                // Start the thread again
-                _xmrSubscriberThread = new Thread(new ThreadStart(_xmrSubscriber.Run));
-                _xmrSubscriberThread.Name = "XmrSubscriber";
-
-                _xmrSubscriberThread.Start();
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(new LogMessage("Schedule - OnXmrReconfigure", "Unable to start Subscriber. " + e.Message), LogType.Error.ToString());
             }
         }
 
@@ -604,7 +578,10 @@ namespace XiboClient
             _logAgent.Stop();
 
             // Stop the subsriber thread
-            _xmrSubscriberThread.Abort();
+            _xmrSubscriber.Stop();
+
+            // Clean up any NetMQ sockets, etc (false means don't block).
+            NetMQ.NetMQConfig.Cleanup(false);
 
             // Stop the embedded server
             _server.Stop();
