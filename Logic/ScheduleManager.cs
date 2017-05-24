@@ -257,10 +257,6 @@ namespace XiboClient
                                 }
                             }
                         }
-
-                        // Write a flag to the status.xml file
-                        if (OnScheduleManagerCheckComplete != null)
-                            OnScheduleManagerCheckComplete();
                     }
                     catch (Exception ex)
                     {
@@ -271,7 +267,8 @@ namespace XiboClient
                 }
 
                 // Completed this check
-                OnScheduleManagerCheckComplete();
+                if (OnScheduleManagerCheckComplete != null)
+                    OnScheduleManagerCheckComplete();
 
                 // Sleep this thread for 10 seconds
                 _manualReset.WaitOne(10 * 1000);
