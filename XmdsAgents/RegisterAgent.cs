@@ -223,16 +223,16 @@ namespace XiboClient.XmdsAgents
             if (windowsZoneId.Equals("UTC", StringComparison.Ordinal))
                 return "Etc/UTC";
 
-            var tzdbSource = NodaTime.TimeZones.TzdbDateTimeZoneSource.Default;
-            var tzi = TimeZoneInfo.FindSystemTimeZoneById(windowsZoneId);
-            if (tzi == null) 
-                return null;
-            
-            var tzid = tzdbSource.MapTimeZoneId(tzi);
-            if (tzid == null) 
-                return null;
-            
-            return tzdbSource.CanonicalIdMap[tzid];
+            var source = NodaTime.TimeZones.TzdbDateTimeZoneSource.Default;
+            string result;
+            // If there's no such mapping, result will be null.
+            source.WindowsMapping.PrimaryMapping.TryGetValue(windowsZoneId, out result);
+            // Canonicalize
+            if (result != null)
+            {
+                result = source.CanonicalIdMap[result];
+            }
+            return result;
         }
     }
 }
