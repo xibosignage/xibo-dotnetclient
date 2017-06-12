@@ -292,6 +292,10 @@ namespace XiboClient
             {
                 _clientInfoForm.XmrSubscriberStatus = "Long term Inactive (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
                 Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over an hour ago."));
+
+                // Issue an XMR restart if we've gone this long without connecting
+                // we do this because we suspect that the TCP socket has died without notifying the poller
+                restartXmr();
             }
             else if (xmrShouldBeRunning && _xmrSubscriber.LastHeartBeat < DateTime.Now.AddMinutes(-5))
             {
@@ -318,15 +322,7 @@ namespace XiboClient
         /// </summary>
         void _registerAgent_OnXmrReconfigure()
         {
-            try
-            {
-                // Stop and start the XMR thread
-                _xmrSubscriber.Restart();
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(new LogMessage("Schedule - OnXmrReconfigure", "Unable to abort Subscriber. " + e.Message), LogType.Error.ToString());
-            }
+            restartXmr();
         }
 
         /// <summary>
@@ -410,6 +406,22 @@ namespace XiboClient
             _registerAgent.WakeUp();
             _scheduleAndRfAgent.WakeUp();
             _logAgent.WakeUp();
+        }
+
+        /// <summary>
+        /// Restart XMR
+        /// </summary>
+        public void restartXmr()
+        {
+            try
+            {
+                // Stop and start the XMR thread
+                _xmrSubscriber.Restart();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Schedule - restartXmr", "Unable to restart XMR: " + e.Message), LogType.Error.ToString());
+            }
         }
 
         /// <summary>
