@@ -192,7 +192,17 @@ namespace XiboClient.Logic
             }
 
             // Decrypt the message
-            string opened = OpenSslInterop.decrypt(message[2].ConvertToString(), message[1].ConvertToString(), rsaKey.Private);
+            string opened;
+            try
+            {
+                opened = OpenSslInterop.decrypt(message[2].ConvertToString(), message[1].ConvertToString(), rsaKey.Private);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Unopenable Message: " + e.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", e.ToString()), LogType.Audit.ToString());
+                return;
+            }
 
             // Decode into a JSON string
             PlayerAction action = JsonConvert.DeserializeObject<PlayerAction>(opened);
