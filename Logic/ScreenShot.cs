@@ -34,18 +34,49 @@ namespace XiboClient.Logic
                     g.CopyFromScreen(bounds.X, bounds.Y, 0, 0, bounds.Size, CopyPixelOperation.SourceCopy);
                 }
 
-                using (MemoryStream stream = new MemoryStream())
+                // Resize?
+                if (ApplicationSettings.Default.ScreenShotSize != 0)
                 {
-                    bitmap.Save(stream, ImageFormat.Jpeg);
+                    Size thumbSize;
+                    double ratio = (double)bounds.Width / (double)bounds.Height;
 
-                    byte[] bytes = stream.ToArray();
-                    
-                    using (xmds.xmds screenShotXmds = new xmds.xmds())
+                    if (bounds.Width > bounds.Height)
                     {
-                        screenShotXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
-                        screenShotXmds.SubmitScreenShotCompleted += screenShotXmds_SubmitScreenShotCompleted;
-                        screenShotXmds.SubmitScreenShotAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, bytes);
+                        // Landscape
+                        thumbSize = new Size(ApplicationSettings.Default.ScreenShotSize, (int)(ApplicationSettings.Default.ScreenShotSize / ratio));
                     }
+                    else
+                    {
+                        // Portrait
+                        thumbSize = new Size((int)(ApplicationSettings.Default.ScreenShotSize * ratio), ApplicationSettings.Default.ScreenShotSize);
+                    }
+
+                    // Create a bitmap at our desired resolution
+                    using (Bitmap thumb = new Bitmap(bitmap, thumbSize.Width, thumbSize.Height))
+                    {
+                        send(thumb);
+                    }
+                }
+                else
+                {
+                    send(bitmap);
+                }
+            }
+        }
+
+        private static void send(Bitmap bitmap)
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                bitmap.Save(stream, ImageFormat.Jpeg);
+
+                byte[] bytes = stream.ToArray();
+
+                using (xmds.xmds screenShotXmds = new xmds.xmds())
+                {
+                    screenShotXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                    screenShotXmds.SubmitScreenShotCompleted += screenShotXmds_SubmitScreenShotCompleted;
+                    screenShotXmds.SubmitScreenShotAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, bytes);
                 }
             }
         }
