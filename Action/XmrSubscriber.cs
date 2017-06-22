@@ -158,7 +158,7 @@ namespace XiboClient.Logic
         {
             try
             {
-                processeMessage(e.Socket.ReceiveMultipartMessage(), _hardwareKey.getXmrKey());
+                processMessage(e.Socket.ReceiveMultipartMessage(), _hardwareKey.getXmrKey());
             }
             catch (NetMQException netMQException)
             {
@@ -167,7 +167,8 @@ namespace XiboClient.Logic
             catch (Exception ex)
             {
                 // Log this message, but dont abort the thread
-                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("XmrSubscriber - _socket_ReceiveReady", "Exception in Run: " + ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("XmrSubscriber - _socket_ReceiveReady", e.ToString()), LogType.Audit.ToString());
                 _clientInfoForm.XmrSubscriberStatus = "Error. " + ex.Message;
             }
         }
@@ -175,7 +176,7 @@ namespace XiboClient.Logic
         /// <summary>
         /// Wait for a Message
         /// </summary>
-        private void processeMessage(NetMQMessage message, AsymmetricCipherKeyPair rsaKey)
+        private void processMessage(NetMQMessage message, AsymmetricCipherKeyPair rsaKey)
         {
             // Update status
             string statusMessage = "Connected (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + DateTime.Now.ToString();
@@ -199,8 +200,8 @@ namespace XiboClient.Logic
             }
             catch (Exception e)
             {
-                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Unopenable Message: " + e.Message), LogType.Error.ToString());
-                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", e.ToString()), LogType.Audit.ToString());
+                Trace.WriteLine(new LogMessage("XmrSubscriber - processMessage", "Unopenable Message: " + e.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("XmrSubscriber - processMessage", e.ToString()), LogType.Audit.ToString());
                 return;
             }
 
@@ -210,7 +211,7 @@ namespace XiboClient.Logic
             // Make sure the TTL hasn't expired
             if (DateTime.Now > action.createdDt.AddSeconds(action.ttl))
             {
-                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Expired Message: " + action.action), LogType.Info.ToString());
+                Trace.WriteLine(new LogMessage("XmrSubscriber - processMessage", "Expired Message: " + action.action), LogType.Info.ToString());
                 return;
             }
 
