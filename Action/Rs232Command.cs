@@ -12,7 +12,8 @@ namespace XiboClient.Logic
         private Command _command;
 
         private SerialPort _port;
-        private string _toSend;
+        private string _toSend = null;
+        private bool _useHex = false;
 
         public Rs232Command(Command command)
         {
@@ -39,7 +40,15 @@ namespace XiboClient.Logic
             try
             {
                 // Write our data stream
-                _port.Write(_toSend);
+                if (_useHex)
+                {
+                    byte[] bytes = _toSend.Split(' ').Select(s => Convert.ToByte(s, 16)).ToArray();
+                    _port.Write(bytes, 0, bytes.Length);
+                }
+                else
+                {
+                    _port.Write(_toSend);
+                }
 
                 // Read
                 if (_command.notifyStatus())
@@ -86,6 +95,9 @@ namespace XiboClient.Logic
 
             // Get the actual command to send
             _toSend = command[2];
+
+            // Do we have a HEX bit?
+            _useHex = (connection.Length >= 7 && connection[6] == "1");
         }
     }
 }

@@ -40,9 +40,9 @@ namespace XiboClient
         private List<string> _globalProperties;
 
         // Application Specific Settings we want to protect
-        private string _clientVersion = "1.8.1";
+        private string _clientVersion = "1.8.2";
         private string _version = "5";
-        private int _clientCodeVersion = 128;
+        private int _clientCodeVersion = 129;
 
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
@@ -498,6 +498,7 @@ namespace XiboClient
         public int CollectInterval { get; set; }
         public int MaxConcurrentDownloads { get; set; }
         public int ScreenShotRequestInterval { get; set; }
+        public int ScreenShotSize { get; set; }
 
         private int _maxLogFileUploads;
         public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 10 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }
