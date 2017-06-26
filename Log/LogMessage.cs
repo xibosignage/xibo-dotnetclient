@@ -97,7 +97,7 @@ namespace XiboClient
             // Just do this with a string builder rather than an XML builder.
             String theMessage;
 
-            theMessage = String.Format("<logdate>{0}</logdate>", LogDate);
+            theMessage = String.Format("<logdate>{0}</logdate>", LogDate.ToString("yyyy-MM-dd HH:mm:ss"));
             theMessage += String.Format("<thread>{0}</thread>", _thread);
             theMessage += String.Format("<method>{0}</method>", _method);
             theMessage += String.Format("<message>{0}</message>", SecurityElement.Escape(_message));

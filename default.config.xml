@@ -52,4 +52,5 @@
   <PreventSleep>1</PreventSleep>
   <XmrNetworkAddress></XmrNetworkAddress>
   <EmbeddedServerPort>9696</EmbeddedServerPort>
+  <ScreenShotSize>0</ScreenShotSize>
 </ApplicationSettings>

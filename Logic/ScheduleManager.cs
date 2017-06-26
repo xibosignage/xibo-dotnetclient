@@ -257,10 +257,6 @@ namespace XiboClient
                                 }
                             }
                         }
-
-                        // Write a flag to the status.xml file
-                        if (OnScheduleManagerCheckComplete != null)
-                            OnScheduleManagerCheckComplete();
                     }
                     catch (Exception ex)
                     {
@@ -271,7 +267,8 @@ namespace XiboClient
                 }
 
                 // Completed this check
-                OnScheduleManagerCheckComplete();
+                if (OnScheduleManagerCheckComplete != null)
+                    OnScheduleManagerCheckComplete();
 
                 // Sleep this thread for 10 seconds
                 _manualReset.WaitOne(10 * 1000);
@@ -286,6 +283,9 @@ namespace XiboClient
         /// <returns></returns>
         private bool IsNewScheduleAvailable()
         {
+            // Remove completed change actions
+            removeLayoutChangeActionIfComplete();
+
             // Remove completed overlay actions
             removeOverlayLayoutActionIfComplete();
 
@@ -789,8 +789,10 @@ namespace XiboClient
                 if (action.downloadRequired)
                     continue;
 
+                DateTime actionCreateDt = DateTime.Parse(action.createdDt);
+                
                 ScheduleItem item = new ScheduleItem();
-                item.FromDt = DateTime.MinValue;
+                item.FromDt = actionCreateDt.AddSeconds(-1);
                 item.ToDt = DateTime.MaxValue;
                 item.id = action.layoutId;
                 item.scheduleid = 0;
@@ -946,6 +948,9 @@ namespace XiboClient
 
             foreach (ScheduleItem layoutSchedule in CurrentSchedule)
             {
+                if (layoutSchedule.Override)
+                    layoutsInSchedule += "API Action ";
+
                 layoutsInSchedule += "LayoutId: " + layoutSchedule.id + ". Runs from " + layoutSchedule.FromDt.ToString() + Environment.NewLine;
             }
 
@@ -1016,6 +1021,22 @@ namespace XiboClient
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Remove Layout Change actions if they have completed
+        /// </summary>
+        public void removeLayoutChangeActionIfComplete()
+        {
+            // Check every action to see if complete
+            foreach (LayoutChangePlayerAction action in _layoutChangeActions)
+            {
+                if (action.IsServiced())
+                {
+                    _layoutChangeActions.Remove(action);
+                    RefreshSchedule = true;
+                }
+            }
         }
 
         /// <summary>
