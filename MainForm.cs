@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-16 Daniel Garner
+ * Copyright (C) 2006-17 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -1034,9 +1034,13 @@ namespace XiboClient
                     break;
 
                 case "Bottom Right":
-                default:
                     position = new Point(_clientSize.Width, _clientSize.Height);
                     break;
+
+                default:
+                    // The default position or "unchanged" as it will be sent, is to not do anything
+                    // leave the cursor where it is
+                    return;
             }
 
             Cursor.Position = position;
