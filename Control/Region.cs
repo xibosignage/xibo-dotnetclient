@@ -167,6 +167,9 @@ namespace XiboClient
                 // Store the current sequence
                 int temp = _currentSequence;
 
+                // Before we can try to set the next media node, we need to stop any currently running Audio
+                StopAudio();
+
                 // Set the next media node for this panel
                 if (!SetNextMediaNodeInOptions())
                 {
@@ -662,7 +665,7 @@ namespace XiboClient
         {
             try
             {
-                StopMedia(_options.Audio[_audioSequence - 1], true);
+                StopMedia(_options.Audio[_audioSequence - 1]);
             }
             catch (Exception ex)
             {
@@ -678,14 +681,6 @@ namespace XiboClient
         /// </summary>
         /// <param name="media"></param>
         private void StopMedia(Media media)
-        {
-            StopMedia(media, false);
-        }
-
-        /// <summary>
-        /// Stop the provided media
-        /// </summary>
-        private void StopMedia(Media media, bool audio)
         {
             Trace.WriteLine(new LogMessage("Region - Stop Media", "Stopping media"), LogType.Audit.ToString());
 
@@ -705,13 +700,19 @@ namespace XiboClient
             {
                 Trace.WriteLine(new LogMessage("Region - Stop Media", "Unable to dispose. Ex = " + ex.Message), LogType.Audit.ToString());
             }
+        }
 
-            // Stop any associated audio
-            if (!audio && _options.Audio.Count >= _audioSequence)
+        /// <summary>
+        /// Stop Audio
+        /// </summary>
+        private void StopAudio()
+        {
+            // Stop the currently playing audio (if there is any)
+            if (_options.Audio.Count > 0)
             {
                 try
                 {
-                    StopMedia(_options.Audio[_audioSequence - 1], true);
+                    StopMedia(_options.Audio[_audioSequence - 1]);
                 }
                 catch (Exception ex)
                 {
@@ -794,6 +795,9 @@ namespace XiboClient
         {
             try
             {
+                // Stop Audio
+                StopAudio();
+
                 // Stop the current media item
                 if (_media != null)
                     StopMedia(_media);
