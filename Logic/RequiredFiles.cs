@@ -91,7 +91,7 @@ namespace XiboClient
 
             // Start up the Xmds Service Object
             _report.Credentials = null;
-            _report.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+            _report.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=mediaInventory";
             _report.UseDefaultCredentials = false;
         }
 

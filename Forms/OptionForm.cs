@@ -121,7 +121,7 @@ namespace XiboClient
                 ApplicationSettings.Default.HardwareKey = tbHardwareKey.Text;
 
                 // Also tweak the address of the xmds1
-                xmds1.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                xmds1.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
 
                 // Proxy Settings
                 ApplicationSettings.Default.ProxyUser = textBoxProxyUser.Text;
