@@ -363,7 +363,7 @@ namespace XiboClient.Log
                 // Notify the state of the command (success or failure)
                 using (xmds.xmds statusXmds = new xmds.xmds())
                 {
-                    statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                    statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
                     statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
                 }
             }
