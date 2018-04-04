@@ -1,6 +1,6 @@
 ﻿/*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-17 Spring Signage Ltd
+ * Copyright (C) 2006-18 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -40,9 +40,9 @@ namespace XiboClient
         private List<string> _globalProperties;
 
         // Application Specific Settings we want to protect
-        private string _clientVersion = "1.8.3";
+        private string _clientVersion = "1.8.8";
         private string _version = "5";
-        private int _clientCodeVersion = 130;
+        private int _clientCodeVersion = 131;
 
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
