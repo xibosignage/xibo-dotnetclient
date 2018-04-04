@@ -376,9 +376,9 @@ namespace XiboClient
                     _webBrowser.Navigate("about:blank");
                     _webBrowser.Dispose();
                 }
-                catch
+                catch (Exception e)
                 {
-                    Debug.WriteLine(new LogMessage("WebBrowser still in use.", String.Format("Dispose")));
+                    Trace.WriteLine(new LogMessage("IeWebMedia - Dispose", "Cannot dispose of web browser. E = " + e.Message), LogType.Info.ToString());
                 }
             }
 

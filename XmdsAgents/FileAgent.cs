@@ -295,6 +295,9 @@ namespace XiboClient.XmdsAgents
             }
             catch (WebException webEx)
             {
+                // Remove from the cache manager
+                _requiredFiles.CurrentCacheManager.Remove(file.SaveAs);
+
                 // Log this message, but dont abort the thread
                 Trace.WriteLine(new LogMessage("FileAgent - Run", "Web Exception in Run: " + webEx.Message), LogType.Info.ToString());
 
@@ -303,6 +306,9 @@ namespace XiboClient.XmdsAgents
             }
             catch (Exception ex)
             {
+                // Remove from the cache manager
+                _requiredFiles.CurrentCacheManager.Remove(file.SaveAs);
+
                 // Log this message, but dont abort the thread
                 Trace.WriteLine(new LogMessage("FileAgent - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());
 

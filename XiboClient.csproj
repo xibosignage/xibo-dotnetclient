@@ -232,8 +232,7 @@
     <Compile Include="XmdsAgents\RegisterAgent.cs" />
     <Compile Include="XmdsAgents\FileAgent.cs" />
     <Compile Include="XmdsAgents\LibraryAgent.cs" />
-    <Compile Include="XmdsAgents\RequiredFilesAgent.cs" />
-    <Compile Include="XmdsAgents\ScheduleAgent.cs" />
+    <Compile Include="XmdsAgents\ScheduleAndFilesAgent.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -302,8 +301,11 @@
   <ItemGroup>
     <Content Include="default.config.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </Content>
     <Content Include="new-icon.ico" />
+    <None Include="Resources\licence.txt" />
+    <None Include="Resources\logo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
