@@ -11,7 +11,7 @@ using System.Resources;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Xibo Digital Signage")]
 [assembly: AssemblyProduct("Xibo")]
-[assembly: AssemblyCopyright("Copyright Dan Garner ©  2008-2017")]
+[assembly: AssemblyCopyright("Copyright Dan Garner ©  2008-2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -30,6 +30,6 @@ using System.Resources;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("10.8.2.0")]
-[assembly: AssemblyFileVersion("10.8.2.0")]
+[assembly: AssemblyVersion("10.8.8.0")]
+[assembly: AssemblyFileVersion("10.8.8.0")]
 [assembly: NeutralResourcesLanguageAttribute("en-GB")]
