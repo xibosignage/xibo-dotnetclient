@@ -81,7 +81,7 @@ namespace XiboClient.XmdsAgents
                         using (xmds.xmds xmds = new xmds.xmds())
                         {
                             xmds.Credentials = null;
-                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
                             xmds.UseDefaultCredentials = false;
 
                             // Store the XMR address
@@ -206,7 +206,7 @@ namespace XiboClient.XmdsAgents
                 string status = "{\"timeZone\":\"" + WindowsToIana(TimeZone.CurrentTimeZone.StandardName) + "\"}";
 
                 xmds.Credentials = null;
-                xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
                 xmds.UseDefaultCredentials = false;
                 xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, status);
             }

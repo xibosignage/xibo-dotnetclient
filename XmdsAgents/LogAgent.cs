@@ -76,11 +76,13 @@ namespace XiboClient.XmdsAgents
                         using (xmds.xmds xmds = new xmds.xmds())
                         {
                             xmds.Credentials = null;
-                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=submitLog";
                             xmds.UseDefaultCredentials = false;
 
                             // Log
                             ProcessFiles(xmds, key.Key, ApplicationSettings.Default.LogLocation);
+
+                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=submitStats";
 
                             // Stat
                             ProcessFiles(xmds, key.Key, ApplicationSettings.Default.StatsLogFile);

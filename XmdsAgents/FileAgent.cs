@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006 - 2012 Daniel Garner
+ * Copyright (C) 2006 - 2017 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -144,7 +144,7 @@ namespace XiboClient.XmdsAgents
                     using (xmds.xmds xmds = new xmds.xmds())
                     {
                         xmds.Credentials = null;
-                        xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                        xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=getResource";
                         xmds.UseDefaultCredentials = true;
 
                         string result = xmds.GetResource(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, file.LayoutId, file.RegionId, file.MediaId);
@@ -204,7 +204,7 @@ namespace XiboClient.XmdsAgents
                         using (xmds.xmds xmds = new xmds.xmds())
                         {
                             xmds.Credentials = null;
-                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=getFile";
                             xmds.UseDefaultCredentials = false;
 
                             getFileReturn = xmds.GetFile(ApplicationSettings.Default.ServerKey, _hardwareKey, file.Id, file.FileType, file.ChunkOffset, file.ChunkSize);

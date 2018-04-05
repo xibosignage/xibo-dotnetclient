@@ -177,7 +177,7 @@ namespace XiboClient.XmdsAgents
                                 using (xmds.xmds xmds = new xmds.xmds())
                                 {
                                     xmds.Credentials = null;
-                                    xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                                    xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=requiredFiles";
                                     xmds.UseDefaultCredentials = false;
 
                                     // Get required files from XMDS
@@ -369,7 +369,7 @@ namespace XiboClient.XmdsAgents
                         string status = "{\"availableSpace\":\"" + drive.TotalFreeSpace + "\", \"totalSpace\":\"" + drive.TotalSize + "\", \"deviceName\":\"" + Environment.MachineName + "\"}";
 
                         xmds.Credentials = null;
-                        xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                        xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
                         xmds.UseDefaultCredentials = false;
                         xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, status);
                     }
@@ -396,7 +396,7 @@ namespace XiboClient.XmdsAgents
                 using (xmds.xmds xmds = new xmds.xmds())
                 {
                     xmds.Credentials = null;
-                    xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                    xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=schedule";
                     xmds.UseDefaultCredentials = false;
 
                     string scheduleXml = xmds.Schedule(ApplicationSettings.Default.ServerKey, _hardwareKey);

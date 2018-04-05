@@ -116,7 +116,7 @@ namespace XiboClient
         public MainForm(IntPtr previewHandle)
         {
             InitializeComponent();
-            
+
             // Set the preview window of the screen saver selection 
             // dialog in Windows as the parent of this form.
             SetParent(this.Handle, previewHandle);
@@ -129,7 +129,7 @@ namespace XiboClient
             // preview window in the screen saver selection dialog in Windows.
             Rectangle ParentRect;
             GetClientRect(previewHandle, out ParentRect);
-            
+
             ApplicationSettings.Default.SizeX = ParentRect.Size.Width;
             ApplicationSettings.Default.SizeY = ParentRect.Size.Height;
             ApplicationSettings.Default.OffsetX = 0;
@@ -145,7 +145,7 @@ namespace XiboClient
 
             if (screenSaver)
                 InitializeScreenSaver(false);
-            
+
             InitializeXibo();
         }
 
@@ -171,21 +171,11 @@ namespace XiboClient
             // Default the XmdsConnection
             ApplicationSettings.Default.XmdsLastConnection = DateTime.MinValue;
 
-            // Override the default size if necessary
-            if (ApplicationSettings.Default.SizeX != 0)
-            {
-                _clientSize = new Size((int)ApplicationSettings.Default.SizeX, (int)ApplicationSettings.Default.SizeY);
-                Size = _clientSize;
-                WindowState = FormWindowState.Normal;
-                Location = new Point((int)ApplicationSettings.Default.OffsetX, (int)ApplicationSettings.Default.OffsetY);
-                StartPosition = FormStartPosition.Manual;
-            }
-            else
-            {
-                _clientSize = SystemInformation.PrimaryMonitorSize;
-                ApplicationSettings.Default.SizeX = _clientSize.Width;
-                ApplicationSettings.Default.SizeY = _clientSize.Height;
-            }
+            // Set the Main Window Size
+            SetMainWindowSize();
+
+            // Bind to the resize event
+            Microsoft.Win32.SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
             // Show in taskbar
             ShowInTaskbar = ApplicationSettings.Default.ShowInTaskbar;
@@ -251,7 +241,7 @@ namespace XiboClient
 #endif
             // An empty set of overlay regions
             _overlays = new Collection<Region>();
-            
+
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
         }
 
@@ -542,7 +532,7 @@ namespace XiboClient
                     {
                         using (xmds.xmds statusXmds = new xmds.xmds())
                         {
-                            statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds;
+                            statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
                             statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"currentLayoutId\":" + _layoutId + "}");
                         }
                     }
@@ -560,7 +550,7 @@ namespace XiboClient
 
                 if (!_showingSplash)
                     ShowSplashScreen();
-                
+
                 // In 10 seconds fire the next layout
                 System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
                 timer.Interval = 10000;
@@ -620,7 +610,7 @@ namespace XiboClient
                         fs.Close();
                     }
                 }
-                catch (IOException ioEx) 
+                catch (IOException ioEx)
                 {
                     _cacheManager.Remove(layoutPath);
                     Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "IOException: " + ioEx.ToString()), LogType.Error.ToString());
@@ -708,7 +698,7 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "Unable to set background: " + ex.Message), LogType.Error.ToString());
-                
+
                 // Assume there is no background image
                 this.BackgroundImage = null;
                 options.backgroundImage = "";
@@ -944,7 +934,7 @@ namespace XiboClient
             }
 
             bool isExpired = true;
-            
+
             // Check the other regions to see if they are also expired.
             foreach (Region temp in _regions)
             {
@@ -968,7 +958,7 @@ namespace XiboClient
 
                 // We are changing the layout
                 _changingLayout = true;
-                
+
                 // Yield and restart
                 _schedule.NextLayout();
             }
@@ -977,11 +967,11 @@ namespace XiboClient
         /// <summary>
         /// Disposes Layout - removes the controls
         /// </summary>
-        private void DestroyLayout() 
+        private void DestroyLayout()
         {
             Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
 
-            if (_regions == null) 
+            if (_regions == null)
                 return;
 
             lock (_regions)
@@ -995,7 +985,7 @@ namespace XiboClient
 
                         // Clear the region
                         region.Clear();
-                        
+
                         Trace.WriteLine(new LogMessage("MainForm - DestoryLayout", "Calling Dispose on Region " + region.regionOptions.regionId), LogType.Audit.ToString());
                         region.Dispose();
                     }
@@ -1253,6 +1243,47 @@ namespace XiboClient
             {
                 Trace.WriteLine(new LogMessage("MainForm - _schedule_OverlayChangeEvent", "Unknown issue managing overlays. Ex = " + e.Message), LogType.Info.ToString());
             }
+        }
+
+        /// <summary>
+        /// Set the Main Window Size, either to the primary monitor, or the configured size
+        /// </summary>
+        private void SetMainWindowSize()
+        {
+            // Override the default size if necessary
+            if (ApplicationSettings.Default.SizeX != 0)
+            {
+                _clientSize = new Size((int)ApplicationSettings.Default.SizeX, (int)ApplicationSettings.Default.SizeY);
+                Size = _clientSize;
+                WindowState = FormWindowState.Normal;
+                Location = new Point((int)ApplicationSettings.Default.OffsetX, (int)ApplicationSettings.Default.OffsetY);
+                StartPosition = FormStartPosition.Manual;
+            }
+            else
+            {
+                _clientSize = SystemInformation.PrimaryMonitorSize;
+                ApplicationSettings.Default.SizeX = _clientSize.Width;
+                ApplicationSettings.Default.SizeY = _clientSize.Height;
+            }
+        }
+        
+        /// <summary>
+        /// Display Settings Changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
+        {
+            Trace.WriteLine(new LogMessage("SystemEvents_DisplaySettingsChanged", "Display Settings have changed, resizing the Player window and moving on to the next Layout"), LogType.Info.ToString());
+
+            // Reassert the size of our client (should resize if necessary)
+            SetMainWindowSize();
+
+            // Expire the current layout and move on
+            _changingLayout = true;
+
+            // Yield and restart
+            _schedule.NextLayout();
         }
     }
 }
