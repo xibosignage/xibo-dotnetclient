@@ -25,6 +25,8 @@ namespace XiboClient.Logic
 
         public List<string> Dependents = new List<string>();
 
+        public bool Refresh = false;
+
         /// <summary>
         /// ToString
         /// </summary>

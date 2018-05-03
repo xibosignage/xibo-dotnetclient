@@ -37,11 +37,6 @@ namespace XiboClient
         /// </summary>
         public int scheduleId = 0;
 
-        /// <summary>
-        /// Track a hash of this region at the point it was created
-        /// </summary>
-        public string hash = "";
-
         private BlackList _blackList;
         public delegate void DurationElapsedDelegate();
         public event DurationElapsedDelegate DurationElapsedEvent;

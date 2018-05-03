@@ -370,7 +370,6 @@ namespace XiboClient
                     forceChange = true;
             }
 
-
             // Set the new schedule
             _currentSchedule = newSchedule;
 

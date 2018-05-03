@@ -1075,30 +1075,50 @@ namespace XiboClient
             try
             {
                 // Parse all overlays and compare what we have now to the overlays we have already created (see OverlayRegions)
+                Debug.WriteLine("Arrived at Manage Overlays with " + overlays.Count + " overlay schedules to show. We're already showing " + _overlays.Count + " overlay Regions", "Overlays");
 
-                // Take the ones we currently have up and remove them if they aren't in the new list
+                // Take the ones we currently have up and remove them if they aren't in the new list or if they've been set to refresh
                 // We use a for loop so that we are able to remove the region from the collection
                 for (int i = 0; i < _overlays.Count; i++)
                 {
+                    Debug.WriteLine("Assessing Overlay Region " + i, "Overlays");
+
                     Region region = _overlays[i];
                     bool found = false;
+                    bool refresh = false;
 
                     foreach (ScheduleItem item in overlays)
                     {
-                        if (item.scheduleid == region.scheduleId && _cacheManager.GetMD5(item.id + ".xlf") == region.hash)
+                        if (item.scheduleid == region.scheduleId)
                         {
                             found = true;
+                            refresh = item.Refresh;
                             break;
                         }
                     }
 
-                    if (!found)
+                    if (!found || refresh)
                     {
-                        Debug.WriteLine("Removing overlay which is no-longer required. Overlay: " + region.scheduleId, "Overlays");
+                        if (refresh)
+                        {
+                            Trace.WriteLine(new LogMessage("MainForm - ManageOverlays", "Refreshing item that has changed."), LogType.Info.ToString());
+                        }
+                        Debug.WriteLine("Removing overlay " + i + " which is no-longer required. Overlay: " + region.scheduleId, "Overlays");
+
+                        // Remove the Region from the overlays collection
+                        _overlays.Remove(region);
+
+                        // As we've removed the thing we're iterating over, reduce i
+                        i--;
+
+                        // Clear down and dispose of the region.
                         region.Clear();
                         region.Dispose();
                         Controls.Remove(region);
-                        _overlays.Remove(region);
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Overlay Region found and not needing refresh " + i, "Overlays");
                     }
                 }
 
@@ -1117,7 +1137,13 @@ namespace XiboClient
                     }
 
                     if (found)
+                    {
+                        Debug.WriteLine("Region already found for overlay - we're assuming here that if we've found one, they are all there.", "Overlays");
                         continue;
+                    }
+
+                    // Reset refresh
+                    item.Refresh = false;
 
                     // Parse the layout for regions, and create them.
                     string layoutPath = item.layoutFile;
@@ -1181,6 +1207,20 @@ namespace XiboClient
                     // New region and region options objects
                     RegionOptions options = new RegionOptions();
 
+                    // Deal with the color
+                    // this is imperfect, but we haven't any way to make these controls transparent.
+                    try
+                    {
+                        if (layoutAttributes["bgcolor"].Value != "")
+                        {
+                            options.backgroundColor = layoutAttributes["bgcolor"].Value;
+                        }
+                    }
+                    catch
+                    {
+                        options.backgroundColor = "#000000";
+                    }
+
                     // Get the regions
                     XmlNodeList listRegions = layoutXml.SelectNodes("/layout/region");
 
@@ -1222,7 +1262,6 @@ namespace XiboClient
 
                         Region temp = new Region(ref _statLog, ref _cacheManager);
                         temp.scheduleId = item.scheduleid;
-                        temp.hash = _cacheManager.GetMD5(item.id + ".xlf");
                         temp.BorderStyle = _borderStyle;
 
                         // Dont be fooled, this innocent little statement kicks everything off

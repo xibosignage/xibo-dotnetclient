@@ -489,16 +489,20 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "Layout file changed: " + layoutPath), LogType.Info.ToString());
 
             // Determine if we need to reassess the overlays
+            bool changeRequired = false;
+
             foreach (ScheduleItem item in _overlaySchedule)
             {
                 if (item.layoutFile == ApplicationSettings.Default.LibraryPath + @"\" + layoutPath)
                 {
-                    if (OverlayChangeEvent != null)
-                        OverlayChangeEvent(_overlaySchedule);
-
-                    break;
+                    // We should mark this item as being one to remove and re-add.
+                    item.Refresh = true;
+                    changeRequired = true;
                 }
             }
+
+            if (OverlayChangeEvent != null && changeRequired)
+                OverlayChangeEvent(_overlaySchedule);
 
             // Tell the schedule to refresh
             _scheduleManager.RefreshSchedule = true;
