@@ -815,11 +815,7 @@ namespace XiboClient
             listRegions = null;
             listMedia = null;
 
-            // Bring overlays to the front
-            foreach (Region region in _overlays)
-            {
-                region.BringToFront();
-            }
+            bringOverlaysForward();
         }
 
         /// <summary>
@@ -1281,6 +1277,17 @@ namespace XiboClient
             catch (Exception e)
             {
                 Trace.WriteLine(new LogMessage("MainForm - _schedule_OverlayChangeEvent", "Unknown issue managing overlays. Ex = " + e.Message), LogType.Info.ToString());
+            }
+
+            bringOverlaysForward();
+        }
+
+        private void bringOverlaysForward()
+        {
+            // Bring overlays to the front
+            foreach (Region region in _overlays)
+            {
+                region.BringToFront();
             }
         }
 

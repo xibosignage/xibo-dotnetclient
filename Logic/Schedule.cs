@@ -246,7 +246,11 @@ namespace XiboClient
         /// </summary>
         private void _scheduleManager_OnNewScheduleAvailable()
         {
-            _overlaySchedule = _scheduleManager.CurrentOverlaySchedule;
+            Debug.WriteLine("New Schedule Available", "Schedule");
+            Debug.WriteLine(_scheduleManager.CurrentOverlaySchedule.Count + " overlays", "Schedule");
+            Debug.WriteLine(_scheduleManager.CurrentSchedule.Count + " normal schedules", "Schedule");
+
+            _overlaySchedule = new Collection<ScheduleItem>(_scheduleManager.CurrentOverlaySchedule);
             _layoutSchedule = _scheduleManager.CurrentSchedule;
 
             // Set the current pointer to 0
@@ -488,6 +492,11 @@ namespace XiboClient
         {
             Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "Layout file changed: " + layoutPath), LogType.Info.ToString());
 
+            // Are we set to expire modified layouts? If not then just return as if
+            // nothing had happened.
+            if (!ApplicationSettings.Default.ExpireModifiedLayouts)
+                return;
+
             // Determine if we need to reassess the overlays
             bool changeRequired = false;
 
@@ -503,14 +512,6 @@ namespace XiboClient
 
             if (OverlayChangeEvent != null && changeRequired)
                 OverlayChangeEvent(_overlaySchedule);
-
-            // Tell the schedule to refresh
-            _scheduleManager.RefreshSchedule = true;
-
-            // Are we set to expire modified layouts? If not then just return as if
-            // nothing had happened.
-            if (!ApplicationSettings.Default.ExpireModifiedLayouts)
-                return;
 
             // If the layout that got changed is the current layout, move on
             try
@@ -538,6 +539,7 @@ namespace XiboClient
                         Trace.WriteLine(new LogMessage("Schedule - LayoutFileModified", "The current layout is now invalid, refreshing the current schedule."), LogType.Audit.ToString());
 
                         // We should not force a change and we should tell the schedule manager to run now
+                        _scheduleManager.RefreshSchedule = true;
                         _scheduleManager.RunNow();
                     }
                     else
