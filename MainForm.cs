@@ -662,7 +662,7 @@ namespace XiboClient
             // Deal with the color
             try
             {
-                if (layoutAttributes["bgcolor"].Value != "")
+                if (layoutAttributes["bgcolor"] != null && layoutAttributes["bgcolor"].Value != "")
                 {
                     this.BackColor = ColorTranslator.FromHtml(layoutAttributes["bgcolor"].Value);
                     options.backgroundColor = layoutAttributes["bgcolor"].Value;
@@ -1207,7 +1207,7 @@ namespace XiboClient
                     // this is imperfect, but we haven't any way to make these controls transparent.
                     try
                     {
-                        if (layoutAttributes["bgcolor"].Value != "")
+                        if (layoutAttributes["bgcolor"] != null && layoutAttributes["bgcolor"].Value != "")
                         {
                             options.backgroundColor = layoutAttributes["bgcolor"].Value;
                         }

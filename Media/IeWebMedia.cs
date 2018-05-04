@@ -360,7 +360,7 @@ namespace XiboClient
         /// <param name="disposing"></param>
         protected override void Dispose(bool disposing)
         {
-            _disposed = true;
+            Debug.WriteLine("Disposing of " + _filePath, "IeWebMedia - Dispose");
 
             if (disposing)
             {
@@ -374,9 +374,14 @@ namespace XiboClient
                     PerformLayout();
 
                     // Detatch event and remove
-                    _webBrowser.DocumentCompleted -= _webBrowser_DocumentCompleted;
-                    _webBrowser.Navigate("about:blank");
-                    _webBrowser.Dispose();
+                    if (_webBrowser != null && !_disposed)
+                    {
+                        _webBrowser.DocumentCompleted -= _webBrowser_DocumentCompleted;
+                        _webBrowser.Navigate("about:blank");
+                        _webBrowser.Dispose();
+
+                        _disposed = true;
+                    }
                 }
                 catch (Exception e)
                 {
