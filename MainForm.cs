@@ -1,6 +1,6 @@
 /*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-17 Spring Signage Ltd
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Copyright (C) 2006-2018 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -1297,9 +1297,23 @@ namespace XiboClient
         private void SetMainWindowSize()
         {
             // Override the default size if necessary
-            if (ApplicationSettings.Default.SizeX != 0)
+            if (ApplicationSettings.Default.SizeX != 0 || ApplicationSettings.Default.SizeY != 0)
             {
-                _clientSize = new Size((int)ApplicationSettings.Default.SizeX, (int)ApplicationSettings.Default.SizeY);
+                // Determine the client size
+                int sizeX = (int)ApplicationSettings.Default.SizeX;
+                if (sizeX <= 0)
+                {
+                    sizeX = SystemInformation.PrimaryMonitorSize.Width;
+                }
+
+                int sizeY = (int)ApplicationSettings.Default.SizeY;
+                if (sizeY <= 0)
+                {
+                    sizeY = SystemInformation.PrimaryMonitorSize.Height;
+                }
+
+                _clientSize = new Size(sizeX, sizeY);
+
                 Size = _clientSize;
                 WindowState = FormWindowState.Normal;
                 Location = new Point((int)ApplicationSettings.Default.OffsetX, (int)ApplicationSettings.Default.OffsetY);
@@ -1307,6 +1321,7 @@ namespace XiboClient
             }
             else
             {
+                // Use the primary monitor size
                 _clientSize = SystemInformation.PrimaryMonitorSize;
                 ApplicationSettings.Default.SizeX = _clientSize.Width;
                 ApplicationSettings.Default.SizeY = _clientSize.Height;
