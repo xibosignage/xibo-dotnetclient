@@ -342,6 +342,7 @@ namespace XiboClient
             // Log
             List<string> currentScheduleString = new List<string>();
             List<string> newScheduleString = new List<string>();
+            List<string> newOverlaysString = new List<string>();
 
             // Are all the items that were in the _currentSchedule still there?
             foreach (ScheduleItem layout in _currentSchedule)
@@ -354,7 +355,7 @@ namespace XiboClient
                 currentScheduleString.Add(layout.ToString());
             }
             
-            foreach (ScheduleItem layout in _currentSchedule)
+            foreach (ScheduleItem layout in newSchedule)
             {
                 newScheduleString.Add(layout.ToString());
             }
@@ -362,14 +363,31 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Layouts in Current Schedule: " + string.Join(Environment.NewLine, currentScheduleString)), LogType.Audit.ToString());
             Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Layouts in New Schedule: " + string.Join(Environment.NewLine, newScheduleString)), LogType.Audit.ToString());
 
-
-            // Are all the items that were in the _currentOverlaySchedule still there?
-            foreach (ScheduleItem layout in _currentOverlaySchedule)
+            // Old layout overlays
+            foreach (ScheduleItem layout in overlaySchedule)
             {
-                if (!overlaySchedule.Contains(layout))
-                    forceChange = true;
+                newOverlaysString.Add(layout.ToString());
             }
 
+            // Try to work out whether the overlay schedule has changed or not.
+            // easiest way to do this is to see if the sizes have changed
+            if (_currentOverlaySchedule.Count != overlaySchedule.Count)
+            {
+                forceChange = true;
+            }
+            else
+            {
+                // Compare them on an object by object level.
+                // Are all the items that were in the _currentOverlaySchedule still there?
+                foreach (ScheduleItem layout in _currentOverlaySchedule)
+                {
+                    // New overlay schedule doesn't contain the layout?
+                    if (!overlaySchedule.Contains(layout))
+                        forceChange = true;
+                }
+            }
+
+            Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Overlay Layouts: " + string.Join(Environment.NewLine, newOverlaysString)), LogType.Audit.ToString());
 
             // Set the new schedule
             _currentSchedule = newSchedule;

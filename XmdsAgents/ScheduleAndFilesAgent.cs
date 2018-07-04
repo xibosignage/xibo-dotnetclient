@@ -119,7 +119,9 @@ namespace XiboClient.XmdsAgents
         /// </summary>
         public ScheduleAndFilesAgent()
         {
-            _fileDownloadLimit = new Semaphore(ApplicationSettings.Default.MaxConcurrentDownloads, ApplicationSettings.Default.MaxConcurrentDownloads);
+            int limit = (ApplicationSettings.Default.MaxConcurrentDownloads <= 0) ? 1 : ApplicationSettings.Default.MaxConcurrentDownloads;
+
+            _fileDownloadLimit = new Semaphore(limit, limit);
             _requiredFiles = new RequiredFiles();
         }
 

@@ -167,15 +167,27 @@ namespace XiboClient
 
                             try
                             {
-                                updated = int.Parse(attributes["updated"].Value);
+                                updated = (attributes["updated"] != null) ? int.Parse(attributes["updated"].Value) : 0;
                             }
-                            catch (Exception) {}
+                            catch (Exception e)
+                            {
+                                Debug.WriteLine("Can't read Updated attribute from Resource node. e = " + e.Message, "RequiredFiles");
+                            }
 
                             DateTime updatedDt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
                             updatedDt = updatedDt.AddSeconds(updated);
 
-                            if (File.GetLastWriteTimeUtc(ApplicationSettings.Default.LibraryPath + @"\" + rf.MediaId + ".htm") > updatedDt)
+                            DateTime fileUpdatedDt = File.GetLastWriteTimeUtc(ApplicationSettings.Default.LibraryPath + @"\" + rf.MediaId + ".htm");
+
+                            if (fileUpdatedDt > updatedDt)
+                            {
+                                Debug.WriteLine("Resource node does not need updating. Current: " + fileUpdatedDt + ", XMDS: " + updatedDt + ", updated: " + updated, "RequiredFiles");
                                 rf.Complete = true;
+                            }
+                            else
+                            {
+                                Debug.WriteLine("Resource node needs updating. Current: " + fileUpdatedDt + ", XMDS: " + updatedDt, "RequiredFiles");
+                            }
                         }
 
                         // Add to the Rf Node
