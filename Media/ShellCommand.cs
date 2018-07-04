@@ -205,8 +205,11 @@ namespace XiboClient
                 // Remove the webbrowser control
                 try
                 {
-                    // Terminate the command
-                    TerminateCommand();
+                    // Terminate the command (only if we've been asked to!)
+                    if (_terminateCommand)
+                    {
+                        TerminateCommand();
+                    }
                 }
                 catch
                 {

@@ -1,6 +1,6 @@
 ﻿/*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2014-2016 Spring Signage Ltd
+ * Copyright (C) 2014-2018 Spring Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -267,8 +267,10 @@ namespace XiboClient
                         bodyStyle = "background-image: url('" + _options.backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
                     }
 
-                    string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");
+                    string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body {" + bodyStyle + " }</style><!--END_STYLE_ADJUST--></head>");
                     html = html.Replace("[[ViewPortWidth]]", _width.ToString());
+                    html += "<!--VIEWPORT=" + _width.ToString() + "x" + _height.ToString() + "-->";
+                    html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
 
                     // Comment in to write out the update date at the end of the file (in the body)
                     // This is useful if you want to check how frequently the file is updating
@@ -324,8 +326,16 @@ namespace XiboClient
                 }
             }
 
-            if (cachedFile.Contains("[[ViewPortWidth]]"))
+            // Compare the cached dimensions in the file with the dimensions now, and 
+            // regenerate if they are different.
+            if (cachedFile.Contains("[[ViewPortWidth]]") || !ReadCachedViewPort(cachedFile).Equals(_width.ToString() + "x" + _height.ToString()))
             {
+                // Regex out the existing replacement if present
+                cachedFile = Regex.Replace(cachedFile, "<!--START_STYLE_ADJUST-->(.*)<!--END_STYLE_ADJUST-->", "");
+                cachedFile = Regex.Replace(cachedFile, "<meta name=\"viewport\" content=\"width=(.*)\" />", "<meta name=\"viewport\" content=\"width=[[ViewPortWidth]]\" />");
+                cachedFile = Regex.Replace(cachedFile, "<!--VIEWPORT=(.*)-->", "");
+                cachedFile = Regex.Replace(cachedFile, "<!--CACHEDATE=(.*)-->", "");
+
                 // Handle the background
                 String bodyStyle;
                 String backgroundColor = _options.Dictionary.Get("backgroundColor", _options.backgroundColor);
@@ -339,8 +349,10 @@ namespace XiboClient
                     bodyStyle = "background-image: url('" + _options.backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
                 }
 
-                string html = cachedFile.Replace("</head>", "<style type='text/css'>body {" + bodyStyle + " }</style></head>");
+                string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body {" + bodyStyle + " }</style><!--END_STYLE_ADJUST--></head>");
                 html = html.Replace("[[ViewPortWidth]]", _width.ToString());
+                html += "<!--VIEWPORT=" + _width.ToString() + "x" + _height.ToString() + "-->";
+                html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
 
                 // Write to the library
                 using (FileStream fileStream = File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
@@ -355,12 +367,38 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Pulls the duration out of the temporary file and sets the media Duration to the same
+        /// </summary>
+        private string ReadCachedViewPort(string html)
+        {
+            // Parse out the duration using a regular expression
+            try
+            {
+                Match match = Regex.Match(html, "<!--VIEWPORT=(.*?)-->");
+
+                if (match.Success)
+                {
+                    // We have a match, so override our duration.
+                    return match.Groups[1].Value;
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
         /// Dispose of this text item
         /// </summary>
         /// <param name="disposing"></param>
         protected override void Dispose(bool disposing)
         {
-            _disposed = true;
+            Debug.WriteLine("Disposing of " + _filePath, "IeWebMedia - Dispose");
 
             if (disposing)
             {
@@ -374,9 +412,14 @@ namespace XiboClient
                     PerformLayout();
 
                     // Detatch event and remove
-                    _webBrowser.DocumentCompleted -= _webBrowser_DocumentCompleted;
-                    _webBrowser.Navigate("about:blank");
-                    _webBrowser.Dispose();
+                    if (_webBrowser != null && !_disposed)
+                    {
+                        _webBrowser.DocumentCompleted -= _webBrowser_DocumentCompleted;
+                        _webBrowser.Navigate("about:blank");
+                        _webBrowser.Dispose();
+
+                        _disposed = true;
+                    }
                 }
                 catch (Exception e)
                 {
