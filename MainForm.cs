@@ -69,7 +69,6 @@ namespace XiboClient
         double _layoutWidth;
         double _layoutHeight;
         double _scaleFactor;
-        private Size _clientSize;
 
         private StatLog _statLog;
         private Stat _stat;
@@ -631,7 +630,7 @@ namespace XiboClient
 
 
             // Scaling factor, will be applied to all regions
-            _scaleFactor = Math.Min(_clientSize.Width / _layoutWidth, _clientSize.Height / _layoutHeight);
+            _scaleFactor = Math.Min(ClientSize.Width / _layoutWidth, ClientSize.Height / _layoutHeight);
 
             // Want to be able to center this shiv - therefore work out which one of these is going to have left overs
             int backgroundWidth = (int)(_layoutWidth * _scaleFactor);
@@ -642,8 +641,8 @@ namespace XiboClient
 
             try
             {
-                leftOverX = Math.Abs(_clientSize.Width - backgroundWidth);
-                leftOverY = Math.Abs(_clientSize.Height - backgroundHeight);
+                leftOverX = Math.Abs(ClientSize.Width - backgroundWidth);
+                leftOverY = Math.Abs(ClientSize.Height - backgroundHeight);
 
                 if (leftOverX != 0) leftOverX = leftOverX / 2;
                 if (leftOverY != 0) leftOverY = leftOverY / 2;
@@ -857,7 +856,7 @@ namespace XiboClient
                 {
                     using (Image bgSplash = Image.FromFile(ApplicationSettings.Default.SplashOverride))
                     {
-                        Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
+                        Bitmap bmpSplash = new Bitmap(bgSplash, ClientSize);
                         BackgroundImage = bmpSplash;
                     }
                 }
@@ -889,7 +888,7 @@ namespace XiboClient
             {
                 using (Image bgSplash = Image.FromStream(resourceStream))
                 {
-                    Bitmap bmpSplash = new Bitmap(bgSplash, _clientSize);
+                    Bitmap bmpSplash = new Bitmap(bgSplash, ClientSize);
                     BackgroundImage = bmpSplash;
                 }
             }
@@ -1012,15 +1011,15 @@ namespace XiboClient
                     break;
 
                 case "Top Right":
-                    position = new Point(_clientSize.Width, 0);
+                    position = new Point(ClientSize.Width, 0);
                     break;
 
                 case "Bottom Left":
-                    position = new Point(0, _clientSize.Height);
+                    position = new Point(0, ClientSize.Height);
                     break;
 
                 case "Bottom Right":
-                    position = new Point(_clientSize.Width, _clientSize.Height);
+                    position = new Point(ClientSize.Width, ClientSize.Height);
                     break;
 
                 default:
@@ -1177,7 +1176,7 @@ namespace XiboClient
                     double layoutHeight = int.Parse(layoutAttributes["height"].Value, CultureInfo.InvariantCulture);
 
                     // Scaling factor, will be applied to all regions
-                    double scaleFactor = Math.Min(_clientSize.Width / layoutWidth, _clientSize.Height / layoutHeight);
+                    double scaleFactor = Math.Min(ClientSize.Width / layoutWidth, ClientSize.Height / layoutHeight);
 
                     // Want to be able to center this shiv - therefore work out which one of these is going to have left overs
                     int backgroundWidth = (int)(layoutWidth * scaleFactor);
@@ -1188,8 +1187,8 @@ namespace XiboClient
 
                     try
                     {
-                        leftOverX = Math.Abs(_clientSize.Width - backgroundWidth);
-                        leftOverY = Math.Abs(_clientSize.Height - backgroundHeight);
+                        leftOverX = Math.Abs(ClientSize.Width - backgroundWidth);
+                        leftOverY = Math.Abs(ClientSize.Height - backgroundHeight);
 
                         if (leftOverX != 0) leftOverX = leftOverX / 2;
                         if (leftOverY != 0) leftOverY = leftOverY / 2;
@@ -1296,9 +1295,13 @@ namespace XiboClient
         /// </summary>
         private void SetMainWindowSize()
         {
+            Debug.WriteLine("SetMainWindowSize: IN");
+
             // Override the default size if necessary
             if (ApplicationSettings.Default.SizeX != 0 || ApplicationSettings.Default.SizeY != 0)
             {
+                Debug.WriteLine("SetMainWindowSize: Use Settings Size");
+
                 // Determine the client size
                 int sizeX = (int)ApplicationSettings.Default.SizeX;
                 if (sizeX <= 0)
@@ -1312,22 +1315,27 @@ namespace XiboClient
                     sizeY = SystemInformation.PrimaryMonitorSize.Height;
                 }
 
-                _clientSize = new Size(sizeX, sizeY);
-
-                Size = _clientSize;
-                WindowState = FormWindowState.Normal;
-                Location = new Point((int)ApplicationSettings.Default.OffsetX, (int)ApplicationSettings.Default.OffsetY);
+                ClientSize = new Size(sizeX, sizeY);
                 StartPosition = FormStartPosition.Manual;
+                Location = new Point((int)ApplicationSettings.Default.OffsetX, (int)ApplicationSettings.Default.OffsetY);
             }
             else
             {
+                Debug.WriteLine("SetMainWindowSize: Use Monitor Size");
+
                 // Use the primary monitor size
-                _clientSize = SystemInformation.PrimaryMonitorSize;
-                ApplicationSettings.Default.SizeX = _clientSize.Width;
-                ApplicationSettings.Default.SizeY = _clientSize.Height;
+                ClientSize = SystemInformation.PrimaryMonitorSize;
             }
+
+            Debug.WriteLine("SetMainWindowSize: Setting Size to " + ClientSize.Width + "x" + ClientSize.Height);
+
+            // Use the client size we've calculated to set the actual size of the form
+            WindowState = FormWindowState.Normal;
+            Size = ClientSize;
+
+            Debug.WriteLine("SetMainWindowSize: OUT");
         }
-        
+
         /// <summary>
         /// Display Settings Changed
         /// </summary>
@@ -1335,7 +1343,7 @@ namespace XiboClient
         /// <param name="e"></param>
         private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
         {
-            Trace.WriteLine(new LogMessage("SystemEvents_DisplaySettingsChanged", "Display Settings have changed, resizing the Player window and moving on to the next Layout"), LogType.Info.ToString());
+            Trace.WriteLine(new LogMessage("SystemEvents_DisplaySettingsChanged", "Display Settings have changed, resizing the Player window and moving on to the next Layout. W=" + SystemInformation.PrimaryMonitorSize.Width.ToString() + ", H=" + SystemInformation.PrimaryMonitorSize.Height.ToString()), LogType.Info.ToString());
 
             // Reassert the size of our client (should resize if necessary)
             SetMainWindowSize();
