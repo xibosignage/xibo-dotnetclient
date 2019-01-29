@@ -112,7 +112,9 @@ namespace XiboClient
 
                 // Load the hardware key
                 if (File.Exists(_instance.LibraryPath + "\\hardwarekey"))
+                {
                     _instance.HardwareKey = File.ReadAllText(_instance.LibraryPath + "\\hardwarekey");
+                }
 
                 // Load the player settings
                 _instance.AppendConfigFile(_instance.LibraryPath + "\\config.xml");
