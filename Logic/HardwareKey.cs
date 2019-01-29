@@ -1,6 +1,6 @@
 /*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-1017 Daniel Garner
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Copyright (C) 2019 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -66,6 +66,12 @@ namespace XiboClient
         {
             get
             {
+                if (string.IsNullOrEmpty(_macAddress))
+                {
+                    // Get the Mac Address
+                    _macAddress = GetMacAddress();
+                }
+
                 return _macAddress;
             }
         }
@@ -74,29 +80,13 @@ namespace XiboClient
         {
             Debug.WriteLine("[IN]", "HardwareKey");
 
-            // Get the Mac Address
-            _macAddress = GetMacAddress();
-
             // Get the key from the Settings
             _hardwareKey = ApplicationSettings.Default.HardwareKey;
 
             // Is the key empty?
-            if (_hardwareKey == "")
+            if (string.IsNullOrEmpty(_hardwareKey))
             {
-                try
-                {
-                    string systemDriveLetter = Path.GetPathRoot(Environment.SystemDirectory);
-
-                    // Calculate the Hardware key from the CPUID and Volume Serial
-                    _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial(systemDriveLetter[0].ToString()) + _macAddress);
-                }
-                catch
-                {
-                    _hardwareKey = "Change for Unique Key";
-                }
-
-                // Store the key
-                ApplicationSettings.Default.HardwareKey = _hardwareKey;
+                Regenerate();
             }
 
             Debug.WriteLine("[OUT]", "HardwareKey");
@@ -121,7 +111,17 @@ namespace XiboClient
             lock (_locker)
             {
                 // Calculate the Hardware key from the CPUID and Volume Serial
-                _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial("C"));
+                try
+                {
+                    string systemDriveLetter = Path.GetPathRoot(Environment.SystemDirectory);
+
+                    // Calculate the Hardware key from the CPUID and Volume Serial
+                    _hardwareKey = Hashes.MD5(GetCPUId() + GetVolumeSerial(systemDriveLetter[0].ToString()) + MacAddress);
+                }
+                catch
+                {
+                    _hardwareKey = "Change for Unique Key";
+                }
 
                 // Store the key
                 ApplicationSettings.Default.HardwareKey = _hardwareKey;

@@ -112,7 +112,9 @@ namespace XiboClient
 
                 // Load the hardware key
                 if (File.Exists(_instance.LibraryPath + "\\hardwarekey"))
+                {
                     _instance.HardwareKey = File.ReadAllText(_instance.LibraryPath + "\\hardwarekey");
+                }
 
                 // Load the player settings
                 _instance.AppendConfigFile(_instance.LibraryPath + "\\config.xml");
@@ -513,6 +515,7 @@ namespace XiboClient
         public bool ClientInfomationCtrlKey { get; set; }
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
         public bool PreventSleep { get; set; }
+        public bool ScreenShotRequested { get; set; }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;
