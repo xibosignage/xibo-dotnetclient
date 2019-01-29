@@ -1,6 +1,6 @@
 /*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2011-14 Daniel Garner
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Copyright (C) 2019 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -342,7 +342,7 @@ namespace XiboClient
                     if (RequiredFileList[i].Id == id)
                     {
                         // We're complete, so we should assume that we're not downloading anything
-                        RequiredFileList[i].Downloading = true;
+                        RequiredFileList[i].Downloading = false;
 
                         // Complete and store MD5
                         RequiredFileList[i].Complete = true;
