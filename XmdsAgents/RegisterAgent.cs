@@ -1,6 +1,6 @@
 /*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006 - 2014 Daniel Garner
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Copyright (C) 2019 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -179,6 +179,13 @@ namespace XiboClient.XmdsAgents
                     // Store the MD5 hash and the save
                     ApplicationSettings.Default.Hash = md5;
                     ApplicationSettings.Default.Save();
+
+                    // If we have screenshot requested set, then take and send
+                    // we don't have a client info form here, so we can't send that data.
+                    if (ApplicationSettings.Default.ScreenShotRequested)
+                    {
+                        ScreenShot.TakeAndSend();
+                    }
                 }
                 else
                 {

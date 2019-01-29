@@ -513,6 +513,7 @@ namespace XiboClient
         public bool ClientInfomationCtrlKey { get; set; }
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
         public bool PreventSleep { get; set; }
+        public bool ScreenShotRequested { get; set; }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;
