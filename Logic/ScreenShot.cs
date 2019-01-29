@@ -14,6 +14,9 @@ namespace XiboClient.Logic
     {
         public static void TakeAndSend()
         {
+            // Immediately clear the request for a screenshot
+            ApplicationSettings.Default.ScreenShotRequested = false;
+
             Rectangle bounds;
 
             // Override the default size if necessary

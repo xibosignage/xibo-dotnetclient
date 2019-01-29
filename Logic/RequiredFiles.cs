@@ -1,6 +1,6 @@
 /*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2011-14 Daniel Garner
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Copyright (C) 2019 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -341,29 +341,11 @@ namespace XiboClient
                 {
                     if (RequiredFileList[i].Id == id)
                     {
+                        // We're complete, so we should assume that we're not downloading anything
+                        RequiredFileList[i].Downloading = false;
+
+                        // Complete and store MD5
                         RequiredFileList[i].Complete = true;
-                        RequiredFileList[i].Md5 = md5;
-
-                        break;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Mark a RequiredFile as incomplete
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="md5"></param>
-        public void MarkIncomplete(int id, string md5)
-        {
-            lock (_locker)
-            {
-                for (int i = 0; i < RequiredFileList.Count; i++)
-                {
-                    if (RequiredFileList[i].Id == id)
-                    {
-                        RequiredFileList[i].Complete = false;
                         RequiredFileList[i].Md5 = md5;
 
                         break;
