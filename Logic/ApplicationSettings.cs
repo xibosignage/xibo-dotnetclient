@@ -1,13 +1,14 @@
-﻿/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-18 Spring Signage Ltd
+﻿/**
+ * Copyright (C) 2019 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -40,9 +41,9 @@ namespace XiboClient
         private List<string> _globalProperties;
 
         // Application Specific Settings we want to protect
-        private string _clientVersion = "1.8.12";
-        private string _version = "5";
-        private int _clientCodeVersion = 133;
+        private readonly string _clientVersion = "2 R200";
+        private readonly string _version = "5";
+        private readonly int _clientCodeVersion = 200;
 
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }

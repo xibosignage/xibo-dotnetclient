@@ -1,13 +1,14 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2016 Daniel Garner
+/**
+ * Copyright (C) 2019 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -45,6 +46,7 @@ namespace XiboClient
         private RegionOptions _options;
         private bool _hasExpired = false;
         private bool _layoutExpired = false;
+        private bool _sizeResetRequired = false;
         private int _currentSequence = -1;
 
         /// <summary>
@@ -128,6 +130,21 @@ namespace XiboClient
             return _hasExpired;
         }
 
+        private void SetDimensions(int left, int top, int width, int height)
+        {
+            // Evaluate the width, etc
+            Location = new System.Drawing.Point(left, top);
+            Size = new System.Drawing.Size(width, height);
+        }
+
+        private void SetDimensions(System.Drawing.Point location, System.Drawing.Size size)
+        {
+            Debug.WriteLine("Setting Dimensions to " + size.ToString() + ", " + location.ToString());
+            // Evaluate the width, etc
+            Size = size;
+            Location = location;
+        }
+
         ///<summary>
         /// Evaulates the change in options
         ///</summary>
@@ -139,8 +156,7 @@ namespace XiboClient
             if (initialMedia)
             {
                 // Evaluate the width, etc
-                Location = new System.Drawing.Point(_options.left, _options.top);
-                Size = new System.Drawing.Size(_options.width, _options.height);
+                SetDimensions(_options.left, _options.top, _options.width, _options.height);
             }
 
             // Try to populate a new media object for this region
@@ -214,6 +230,18 @@ namespace XiboClient
                 // Start the new media
                 try
                 {
+                    // See if we need to change our Region Dimensions
+                    if (newMedia.RegionSizeChangeRequired())
+                    {
+                        SetDimensions(newMedia.GetRegionLocation(), newMedia.GetRegionSize());
+                        _sizeResetRequired = true;
+                    }
+                    else if (_sizeResetRequired)
+                    {
+                        SetDimensions(_options.left, _options.top, _options.width, _options.height);
+                        _sizeResetRequired = false;
+                    }
+
                     StartMedia(newMedia);
                 }
                 catch (Exception ex)
