@@ -25,6 +25,7 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Diagnostics;
 using XiboClient.Properties;
+using System.Globalization;
 
 namespace XiboClient
 {
@@ -291,6 +292,8 @@ namespace XiboClient
             _options.uri = "";
             _options.direction = "none";
             _options.javaScript = "";
+            _options.FromDt = DateTime.MinValue;
+            _options.ToDt = DateTime.MaxValue;
             _options.Dictionary = new MediaDictionary();
 
             // Tidy up old audio if necessary
@@ -348,6 +351,12 @@ namespace XiboClient
                 if (nodeAttributes["id"].Value != null) 
                     _options.mediaid = nodeAttributes["id"].Value;
 
+                // Set the file id
+                if (nodeAttributes["fileId"] != null)
+                {
+                    _options.FileId = int.Parse(nodeAttributes["fileId"].Value);
+                }
+
                 // Check isnt blacklisted
                 if (_blackList.BlackListed(_options.mediaid))
                 {
@@ -366,8 +375,19 @@ namespace XiboClient
                 // Parse the options for this media node
                 ParseOptionsForMediaNode(mediaNode, nodeAttributes);
 
+                // Is this widget inside the from/to date?
+                if (!(_options.FromDt <= DateTime.Now && _options.ToDt > DateTime.Now)) {
+                    Trace.WriteLine(new LogMessage("Region", "SetNextMediaNode: Widget outside from/to date."), LogType.Audit.ToString());
+
+                    // Increment the number of attempts and try again
+                    numAttempts++;
+
+                    // Carry on
+                    continue;
+                }
+
                 // Is this a file based media node?
-                if (_options.type == "video" || _options.type == "flash" || _options.type == "image" || _options.type == "powerpoint" || _options.type == "audio")
+                if (_options.type == "video" || _options.type == "flash" || _options.type == "image" || _options.type == "powerpoint" || _options.type == "audio" || _options.type == "htmlpackage")
                 {
                     // Use the cache manager to determine if the file is valid
                     validNode = _cacheManager.IsValidPath(_options.uri);
@@ -418,6 +438,24 @@ namespace XiboClient
             {
                 _options.duration = 60;
                 Trace.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
+            }
+
+            // Widget From/To dates (v2 onward)
+            try
+            {
+                if (nodeAttributes["fromDt"] != null)
+                {
+                    _options.FromDt = DateTime.Parse(nodeAttributes["fromDt"].Value, CultureInfo.InvariantCulture);
+                }
+
+                if (nodeAttributes["toDt"] != null)
+                {
+                    _options.ToDt = DateTime.Parse(nodeAttributes["toDt"].Value, CultureInfo.InvariantCulture);
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Region", "ParseOptionsForMediaNode: Unable to parse widget from/to dates."), LogType.Error.ToString());
             }
 
             // We cannot have a 0 duration here... not sure why we would... but
@@ -631,6 +669,10 @@ namespace XiboClient
 
                     case "shellcommand":
                         media = new ShellCommand(options);
+                        break;
+
+                    case "htmlpackage":
+                        media = new HtmlPackage(options);
                         break;
 
                     default:

@@ -40,6 +40,10 @@ namespace XiboClient
         public int originalWidth;
         public int originalHeight;
 
+        // Widget From/To dates
+        public DateTime FromDt { get; set; }
+        public DateTime ToDt { get; set; }
+
         public int backgroundLeft;
         public int backgroundTop;
 
@@ -69,6 +73,7 @@ namespace XiboClient
         public string regionId;
         public int scheduleId;
         public int CurrentIndex;
+        public int FileId { get; set; }
 
         //general options
         public string backgroundImage;

@@ -115,6 +115,8 @@
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Management" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.ServiceModel" />
@@ -159,6 +161,9 @@
     <Compile Include="Logic\ScreenShot.cs" />
     <Compile Include="Action\XmrSubscriber.cs" />
     <Compile Include="Media\Audio.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Media\HtmlPackage.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Media\IeWebMedia.cs">
