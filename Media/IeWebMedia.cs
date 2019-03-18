@@ -1,13 +1,14 @@
-﻿/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2014-2018 Spring Signage Ltd
+﻿/**
+ * Copyright (C) 2019 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -32,7 +33,7 @@ namespace XiboClient
     class IeWebMedia : Media
     {
         private bool _disposed = false;
-        private string _filePath;
+        protected string _filePath;
         private string _localWebPath;
         private RegionOptions _options;
         private WebBrowser _webBrowser;
@@ -46,14 +47,11 @@ namespace XiboClient
             // and store them in member variables.
             _options = options;
 
-            // Check to see if the mode option is present.
-            string modeId = options.Dictionary.Get("modeid");
-            bool nativeOpen = modeId != string.Empty && modeId == "1";
-
-            if (nativeOpen)
+            // Set the file path/local web path
+            if (IsNativeOpen())
             {
                 // If we are modeid == 1, then just open the webpage without adjusting the file path
-                _filePath = Uri.UnescapeDataString(options.uri).Replace('+', ' ');
+                _filePath = Uri.UnescapeDataString(_options.uri).Replace('+', ' ');
             }
             else
             {
@@ -61,7 +59,23 @@ namespace XiboClient
                 _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
                 _localWebPath = ApplicationSettings.Default.EmbeddedServerAddress + _options.mediaid + ".htm";
             }
+        }
 
+        /// <summary>
+        /// Is this a native open widget
+        /// </summary>
+        /// <returns></returns>
+        protected virtual bool IsNativeOpen()
+        {
+            string modeId = _options.Dictionary.Get("modeid");
+            return modeId != string.Empty && modeId == "1";
+        }
+
+        /// <summary>
+        /// Render Media
+        /// </summary>
+        public override void RenderMedia()
+        {
             // Create the web view we will use
             _webBrowser = new WebBrowser();
             _webBrowser.DocumentCompleted += _webBrowser_DocumentCompleted;
@@ -70,9 +84,9 @@ namespace XiboClient
             _webBrowser.ScriptErrorsSuppressed = true;
             _webBrowser.Visible = false;
 
-            if (nativeOpen)
+            if (IsNativeOpen())
             {
-                // Nativate directly
+                // Navigate directly
                 _webBrowser.Navigate(_filePath);
             }
             else if (HtmlReady())
@@ -90,8 +104,8 @@ namespace XiboClient
 
             Controls.Add(_webBrowser);
 
-            // Show the control
-            Show();
+            // Render media shows the controls and starts timers, etc
+            base.RenderMedia();
         }
 
         /// <summary>

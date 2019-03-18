@@ -24,6 +24,7 @@ using System.Windows.Forms;
 using XiboClient.Properties;
 using System.Management;
 using System.Diagnostics;
+using System.Drawing;
 
 namespace XiboClient
 {
@@ -252,6 +253,33 @@ namespace XiboClient
             }
 
             base.Dispose(disposing);
+        }
+
+        /// <summary>
+        /// Is a region size change required
+        /// </summary>
+        /// <returns></returns>
+        public virtual bool RegionSizeChangeRequired()
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Get Region Size
+        /// </summary>
+        /// <returns></returns>
+        public virtual Size GetRegionSize()
+        {
+            return new Size(_width, _height);
+        }
+
+        /// <summary>
+        /// Get Region Location
+        /// </summary>
+        /// <returns></returns>
+        public virtual Point GetRegionLocation()
+        {
+            return new Point(_top, _left);
         }
     }
 }

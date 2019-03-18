@@ -628,7 +628,6 @@ namespace XiboClient
             _layoutWidth = int.Parse(layoutAttributes["width"].Value, CultureInfo.InvariantCulture);
             _layoutHeight = int.Parse(layoutAttributes["height"].Value, CultureInfo.InvariantCulture);
 
-
             // Scaling factor, will be applied to all regions
             _scaleFactor = Math.Min(ClientSize.Width / _layoutWidth, ClientSize.Height / _layoutHeight);
 
@@ -657,6 +656,7 @@ namespace XiboClient
             _regions = new Collection<Region>();
             RegionOptions options = new RegionOptions();
             options.LayoutModifiedDate = layoutModifiedTime;
+            options.LayoutSize = ClientSize;
 
             // Deal with the color
             try

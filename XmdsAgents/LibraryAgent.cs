@@ -1,13 +1,14 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006 - 2016 Daniel Garner
+/**
+ * Copyright (C) 2019 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -136,6 +137,18 @@ namespace XiboClient.XmdsAgents
                                 {
                                     Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Deleting old file: " + fileInfo.Name), LogType.Info.ToString());
                                     File.Delete(fileInfo.FullName);
+
+                                    // Is this a HTZ file?
+                                    if (fileInfo.Extension.ToLower() == ".htz")
+                                    {
+                                        // Also delete the extracted version of this file
+                                        string pathToPackageFolder = Path.Combine(ApplicationSettings.Default.LibraryPath, "package_" + fileInfo.Name.Replace(fileInfo.Extension, ""));
+
+                                        if (Directory.Exists(pathToPackageFolder))
+                                        {
+                                            Directory.Delete(pathToPackageFolder, true);
+                                        }
+                                    }
                                 }
                             }
                         }
