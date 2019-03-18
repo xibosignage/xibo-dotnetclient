@@ -1,13 +1,14 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2013-16 Daniel Garner
+/**
+ * Copyright (C) 2019 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,6 +20,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using System.Xml;
 
@@ -37,6 +39,10 @@ namespace XiboClient
         public int left;
         public int originalWidth;
         public int originalHeight;
+
+        // Widget From/To dates
+        public DateTime FromDt { get; set; }
+        public DateTime ToDt { get; set; }
 
         public int backgroundLeft;
         public int backgroundTop;
@@ -67,6 +73,7 @@ namespace XiboClient
         public string regionId;
         public int scheduleId;
         public int CurrentIndex;
+        public int FileId { get; set; }
 
         //general options
         public string backgroundImage;
@@ -75,6 +82,8 @@ namespace XiboClient
         public MediaDictionary Dictionary;
 
         public DateTime LayoutModifiedDate { get; set; }
+
+        public Size LayoutSize { get; set; }
 
         /// <summary>
         /// Audio associated with the widget

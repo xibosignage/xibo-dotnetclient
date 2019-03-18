@@ -1,13 +1,14 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2015 Daniel Garner
+/**
+ * Copyright (C) 2019 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -37,6 +38,7 @@ namespace XiboClient
         private int _duration;
         private bool _expired = false;
         private bool _detectEnd = false;
+        private RegionOptions _options;
 
         /// <summary>
         /// Constructor
@@ -45,12 +47,27 @@ namespace XiboClient
         public Video(RegionOptions options)
             : base(options.width, options.height, options.top, options.left)
         {
+            _options = options;
             _filePath = Uri.UnescapeDataString(options.uri).Replace('+',' ');
             _duration = options.duration;
 
             _videoPlayer = new VideoPlayer();
-            _videoPlayer.Width = options.width;
-            _videoPlayer.Height = options.height;
+
+            // Should this video be full screen?
+            if (options.Dictionary.Get("showFullScreen", "0") == "1")
+            {
+                Width = options.LayoutSize.Width;
+                Height = options.LayoutSize.Height;
+                _videoPlayer.Width = options.LayoutSize.Width;
+                _videoPlayer.Height = options.LayoutSize.Height;
+            }
+            else
+            {
+                _videoPlayer.Width = options.width;
+                _videoPlayer.Height = options.height;
+            }
+
+            // Assert the location after setting the control size
             _videoPlayer.Location = new System.Drawing.Point(0, 0);
 
             // Should we loop?
@@ -165,6 +182,47 @@ namespace XiboClient
             }
 
             base.Dispose(disposing);
+        }
+
+        /// <summary>
+        /// Is a region size change required
+        /// </summary>
+        /// <returns></returns>
+        public override bool RegionSizeChangeRequired()
+        {
+            return (_options.Dictionary.Get("showFullScreen", "0") == "1");
+        }
+
+        /// <summary>
+        /// Get Region Size
+        /// </summary>
+        /// <returns></returns>
+        public override System.Drawing.Size GetRegionSize()
+        {
+            if (RegionSizeChangeRequired())
+            {
+                return new System.Drawing.Size(_videoPlayer.Width, _videoPlayer.Height);
+            }
+            else
+            {
+                return base.GetRegionSize();
+            }
+        }
+
+        /// <summary>
+        /// Get Region Location
+        /// </summary>
+        /// <returns></returns>
+        public override System.Drawing.Point GetRegionLocation()
+        {
+            if (RegionSizeChangeRequired())
+            {
+                return new System.Drawing.Point(0, 0);
+            }
+            else
+            {
+                return base.GetRegionLocation();
+            }
         }
     }
 }
