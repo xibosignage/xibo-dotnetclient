@@ -49,6 +49,15 @@ namespace XiboClient
             _options.Add(option);
         }
 
+        public void Replace(string name, string value)
+        {
+            int optIndex = _options.FindIndex(o => o.Name == name);
+            if (optIndex > -1)
+                _options.RemoveAt(optIndex);
+
+            Add(name, value);
+        }
+
         public void Clear()
         {
             _options.Clear();

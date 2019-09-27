@@ -1,47 +1,38 @@
-﻿/**
- * Copyright (C) 2019 Xibo Signage Ltd
- *
- * Xibo - Digital Signage - http://www.xibo.org.uk
- *
- * This file is part of Xibo.
- *
- * Xibo is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * Xibo is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
- */
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Configuration;
+using System.IO;
+using System.IO.Compression;
 
 namespace XiboClient
 {
-    class HtmlPackage : IeWebMedia
+    static class WebMedia
     {
-        public HtmlPackage(RegionOptions options)
-            : base(options)
+        /// <summary>
+        /// Get WebMedia object
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public static Media GetWebMedia(RegionOptions options)
+        {
+            if (UsingChrome())
+                return new CefWebMedia(options);
+            else
+                return new IeWebMedia(options);
+        }
+
+        public static Media GetHtmlPackage(RegionOptions options)
         {
             string pathToMediaFile = Path.Combine(ApplicationSettings.Default.LibraryPath, options.uri);
             string pathToPackageFolder = Path.Combine(ApplicationSettings.Default.LibraryPath, "package_" + options.FileId);
             string pathToStatusFile = Path.Combine(pathToPackageFolder, "_updated");
 
             // Configure the file path to indicate which file should be opened by the browser
-            _filePath = ApplicationSettings.Default.EmbeddedServerAddress + "package_" + options.FileId + "/" + options.Dictionary.Get("nominatedFile", "index.html");
+            var _filePath = ApplicationSettings.Default.EmbeddedServerAddress + "package_" + options.FileId + "/" + options.Dictionary.Get("nominatedFile", "index.html");
 
             // Check to see if our package has been extracted already
             // if not, then extract it
@@ -53,18 +44,29 @@ namespace XiboClient
                 // Add in our extraction date.
                 WriteUpdatedFlag(pathToStatusFile);
             }
+
+            //Set URI to file path
+            options.uri = _filePath;
+            //Set modeid =  1
+            options.Dictionary.Replace("modeid", "1");
+
+            return GetWebMedia(options);
         }
 
-        protected override bool IsNativeOpen()
+        /// <summary>
+        /// Check whether to use chrome
+        /// </summary>
+        /// <returns></returns>
+        public static bool UsingChrome()
         {
-            return true;
+            return ApplicationSettings.Default.BrowserType.Equals("chrome", StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>
         /// Updated Flag
         /// </summary>
         /// <param name="path"></param>
-        private void WriteUpdatedFlag(string path)
+        private static void WriteUpdatedFlag(string path)
         {
             try
             {
@@ -82,7 +84,7 @@ namespace XiboClient
         /// <param name="path"></param>
         /// <param name="lastModified"></param>
         /// <returns></returns>
-        private bool IsUpdated(string path, DateTime lastModified)
+        private static bool IsUpdated(string path, DateTime lastModified)
         {
             // Check that it is up to date by looking for our special file.
             try

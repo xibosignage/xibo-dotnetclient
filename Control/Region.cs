@@ -610,7 +610,7 @@ namespace XiboClient
             
             if (options.render == "html")
             {
-                media = new IeWebMedia(options);
+                media = WebMedia.GetWebMedia(options);
             }
             else
             {
@@ -658,7 +658,7 @@ namespace XiboClient
                     case "ticker":
                     case "text":
                     case "webpage":
-                        media = new IeWebMedia(options);
+                        media = WebMedia.GetWebMedia(options);
 
                         break;
 
@@ -672,7 +672,7 @@ namespace XiboClient
                         break;
 
                     case "htmlpackage":
-                        media = new HtmlPackage(options);
+                        media = WebMedia.GetHtmlPackage(options);
                         break;
 
                     default:
