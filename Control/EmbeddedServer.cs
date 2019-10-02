@@ -54,9 +54,9 @@ namespace XiboClient.Control
                 {
                     Dictionary<string, string> headers = new Dictionary<string, string>()
                     {
-                        { Constants.HeaderCacheControl, "no-cache, no-store, must-revalidate" },
-                        { Constants.HeaderPragma, "no-cache" },
-                        { Constants.HeaderExpires, "0" }
+                        { "Cache-Control", "no-cache, no-store, must-revalidate" },
+                        { "Pragma", "no-cache" },
+                        { "Expires", "0" }
                     };
 
                     server.RegisterModule(new StaticFilesModule(ApplicationSettings.Default.LibraryPath, headers));

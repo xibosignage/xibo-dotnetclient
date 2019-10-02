@@ -502,6 +502,7 @@ namespace XiboClient
         public int MaxConcurrentDownloads { get; set; }
         public int ScreenShotRequestInterval { get; set; }
         public int ScreenShotSize { get; set; }
+        public string BrowserType { get; set; }
 
         private int _maxLogFileUploads;
         public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 10 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }

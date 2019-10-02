@@ -18,23 +18,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Microsoft.Toolkit.Forms.UI.Controls;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace XiboClient
 {
-    class IeWebMedia : WebMedia
+    class EdgeWebMedia : WebMedia
     {
         private bool _disposed;
 
-        private WebBrowser _webBrowser;
+        private WebView mWebView;
 
-        public IeWebMedia(RegionOptions options)
+        public EdgeWebMedia(RegionOptions options)
             : base(options)
         {
         }
@@ -45,19 +46,29 @@ namespace XiboClient
         public override void RenderMedia()
         {
             // Create the web view we will use
-            _webBrowser = new WebBrowser();
-            _webBrowser.DocumentCompleted += _webBrowser_DocumentCompleted;
-            _webBrowser.Size = Size;
-            _webBrowser.ScrollBarsEnabled = false;
-            _webBrowser.ScriptErrorsSuppressed = true;
-            _webBrowser.Visible = false;
+            mWebView = new WebView();
+
+            ((ISupportInitialize)mWebView).BeginInit();
+
+            mWebView.Dock = System.Windows.Forms.DockStyle.Fill;
+            mWebView.Size = Size;
+            mWebView.Visible = false;
+            mWebView.IsPrivateNetworkClientServerCapabilityEnabled = true;
+            mWebView.NavigationCompleted += MWebView_NavigationCompleted;
+
+            Controls.Add(mWebView);
+
+            ((ISupportInitialize)mWebView).EndInit();
+
+            // _webBrowser.ScrollBarsEnabled = false;
+            // _webBrowser.ScriptErrorsSuppressed = true;
 
             HtmlUpdatedEvent += IeWebMedia_HtmlUpdatedEvent;
 
             if (IsNativeOpen())
             {
                 // Navigate directly
-                _webBrowser.Navigate(_filePath);
+                mWebView.Navigate(_filePath);
             }
             else if (HtmlReady())
             {
@@ -65,40 +76,47 @@ namespace XiboClient
                 ReadControlMeta();
 
                 // Navigate to temp file
-                _webBrowser.Navigate(_localWebPath);
+                mWebView.Navigate(_localWebPath);
             }
             else
             {
                 Debug.WriteLine("HTML Resource is not ready to be shown (meaning the file doesn't exist at all) - wait for the download the occur and then show");
             }
 
-            Controls.Add(_webBrowser);
-
             // Render media shows the controls and starts timers, etc
             base.RenderMedia();
         }
 
-        /// <summary>
-        /// Web Browser finished loading document
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void _webBrowser_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        private void MWebView_NavigationCompleted(object sender, Microsoft.Toolkit.Win32.UI.Controls.Interop.WinRT.WebViewControlNavigationCompletedEventArgs e)
         {
-            DocumentCompleted();
 
-            if (!IsDisposed)
+            Debug.WriteLine("Navigate Completed to " + e.Uri + " " + e.WebErrorStatus.ToString(), "EdgeWebView");
+
+            if (e.IsSuccess)
             {
-                // Show the browser
-                _webBrowser.Visible = true;
+                DocumentCompleted();
+
+                if (!IsDisposed)
+                {
+                    // Show the browser
+                    mWebView.Visible = true;
+                }
+            }
+            else
+            {
+                Trace.WriteLine(new LogMessage("EdgeWebMedia", "Cannot navigate to " + e.Uri + ". e = " + e.WebErrorStatus.ToString()), LogType.Error.ToString());
+
+                // This should exipre the media
+                Duration = 5;
+                base.RenderMedia();
             }
         }
 
         private void IeWebMedia_HtmlUpdatedEvent(string url)
         {
-            if (_webBrowser != null)
+            if (mWebView != null)
             {
-                _webBrowser.Navigate(url);
+                mWebView.Navigate(url);
             }
         }
 
@@ -116,17 +134,16 @@ namespace XiboClient
                 try
                 {
                     // Remove the web browser control
-                    Controls.Remove(_webBrowser);
+                    Controls.Remove(mWebView);
 
                     // Workaround to remove COM object
                     PerformLayout();
 
                     // Detatch event and remove
-                    if (_webBrowser != null && !_disposed)
+                    if (mWebView != null && !_disposed)
                     {
-                        _webBrowser.DocumentCompleted -= _webBrowser_DocumentCompleted;
-                        _webBrowser.Navigate("about:blank");
-                        _webBrowser.Dispose();
+                        mWebView.NavigationCompleted -= MWebView_NavigationCompleted;
+                        mWebView.Dispose();
 
                         _disposed = true;
                     }
