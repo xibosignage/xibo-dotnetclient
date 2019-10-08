@@ -547,16 +547,24 @@ namespace XiboClient
                 if (!(ex is DefaultLayoutException))
                     Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
 
-                if (!_showingSplash)
-                    ShowSplashScreen();
+                // Do we have more than one Layout in our schedule?
+                if (_schedule.ActiveLayouts > 1)
+                {
+                    _schedule.NextLayout();
+                }
+                else
+                {
+                    if (!_showingSplash)
+                        ShowSplashScreen();
 
-                // In 10 seconds fire the next layout
-                System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-                timer.Interval = 10000;
-                timer.Tick += new EventHandler(splashScreenTimer_Tick);
+                    // In 10 seconds fire the next layout
+                    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+                    timer.Interval = 10000;
+                    timer.Tick += new EventHandler(splashScreenTimer_Tick);
 
-                // Start the timer
-                timer.Start();
+                    // Start the timer
+                    timer.Start();
+                }
             }
 
             // We have finished changing the layout
@@ -693,6 +701,9 @@ namespace XiboClient
                     BackgroundImage = null;
                     options.backgroundImage = "";
                 }
+
+                // We have loaded a layout background and therefore are no longer showing the splash screen
+                _showingSplash = false;
             }
             catch (Exception ex)
             {
@@ -806,9 +817,6 @@ namespace XiboClient
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
             }
-
-            // We have loaded a layout and therefore are no longer showing the splash screen
-            _showingSplash = false;
 
             // Null stuff
             listRegions = null;

@@ -369,9 +369,6 @@ namespace XiboClient
                     continue;
                 }
 
-                // Assume we have a valid node at this point
-                validNode = true;
-
                 // Parse the options for this media node
                 ParseOptionsForMediaNode(mediaNode, nodeAttributes);
 
@@ -385,6 +382,9 @@ namespace XiboClient
                     // Carry on
                     continue;
                 }
+
+                // Assume we have a valid node at this point
+                validNode = true;
 
                 // Is this a file based media node?
                 if (_options.type == "video" || _options.type == "flash" || _options.type == "image" || _options.type == "powerpoint" || _options.type == "audio" || _options.type == "htmlpackage")
