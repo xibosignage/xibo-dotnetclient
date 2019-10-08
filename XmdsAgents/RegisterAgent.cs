@@ -159,7 +159,7 @@ namespace XiboClient.XmdsAgents
                                     callRegister(xmds, key);
 
                                     // If that worked (no errors), update our setting
-                                    ApplicationSettings.Default.ServerUri = ApplicationSettings.Default.ServerUri.Replace("http", "https");
+                                    ApplicationSettings.Default.ServerUri = ApplicationSettings.Default.ServerUri.Replace("http://", "https://");
                                     ApplicationSettings.Default.Save();
                                 }
                                 catch (Exception e)
