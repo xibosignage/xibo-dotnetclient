@@ -154,17 +154,17 @@ namespace XiboClient.XmdsAgents
                                 // Try it and see.
                                 try
                                 {
-                                    xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
-                                    xmds.Url.Replace("http", "https");
+                                    string url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
+                                    xmds.Url = url.Replace("http://", "https://");
                                     callRegister(xmds, key);
 
                                     // If that worked (no errors), update our setting
                                     ApplicationSettings.Default.ServerUri = ApplicationSettings.Default.ServerUri.Replace("http", "https");
                                     ApplicationSettings.Default.Save();
                                 }
-                                catch
+                                catch (Exception e)
                                 {
-                                    Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Error swapping to HTTPS"), LogType.Error.ToString());
+                                    Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Error swapping to HTTPS. E = " + e.Message.ToString()), LogType.Error.ToString());
                                 }
                             }
                         }
