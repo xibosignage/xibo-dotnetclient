@@ -369,6 +369,9 @@ namespace XiboClient
                     continue;
                 }
 
+                // Stats enabled?
+                _options.isStatEnabled = (nodeAttributes["enableStat"] == null) ? true : (int.Parse(nodeAttributes["enableStat"].Value) == 1);
+
                 // Parse the options for this media node
                 ParseOptionsForMediaNode(mediaNode, nodeAttributes);
 
@@ -798,6 +801,7 @@ namespace XiboClient
             _stat.scheduleID = _options.scheduleId;
             _stat.layoutID = _options.layoutId;
             _stat.mediaID = _options.mediaid;
+            _stat.isEnabled = _options.isStatEnabled;
         }
 
         /// <summary>

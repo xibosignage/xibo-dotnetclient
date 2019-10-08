@@ -639,6 +639,9 @@ namespace XiboClient
             _layoutWidth = int.Parse(layoutAttributes["width"].Value, CultureInfo.InvariantCulture);
             _layoutHeight = int.Parse(layoutAttributes["height"].Value, CultureInfo.InvariantCulture);
 
+            // Are stats enabled for this Layout?
+            bool isStatEnabled = (layoutAttributes["enableStat"] == null) ? true : (int.Parse(layoutAttributes["enableStat"].Value) == 1);
+
             // Scaling factor, will be applied to all regions
             _scaleFactor = Math.Min(ClientSize.Width / _layoutWidth, ClientSize.Height / _layoutHeight);
 
@@ -755,6 +758,7 @@ namespace XiboClient
             _stat.scheduleID = _scheduleId;
             _stat.layoutID = _layoutId;
             _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            _stat.isEnabled = isStatEnabled;
 
             foreach (XmlNode region in listRegions)
             {
@@ -789,6 +793,7 @@ namespace XiboClient
                 options.height = (int)(Convert.ToDouble(nodeAttibutes["height"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
                 options.left = (int)(Convert.ToDouble(nodeAttibutes["left"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
                 options.top = (int)(Convert.ToDouble(nodeAttibutes["top"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
+
                 options.scaleFactor = _scaleFactor;
 
                 // Store the original width and original height for scaling
