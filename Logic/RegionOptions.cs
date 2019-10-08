@@ -104,6 +104,11 @@ namespace XiboClient
         }
         private List<Media> _audio;
 
+        /// <summary>
+        /// Are statistics enabled
+        /// </summary>
+        public bool isStatEnabled;
+
         public override string ToString()
         {
             return String.Format("({0},{1},{2},{3},{4},{5})", width, height, top, left, type, uri);
