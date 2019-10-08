@@ -241,6 +241,9 @@ namespace XiboClient
             // An empty set of overlay regions
             _overlays = new Collection<Region>();
 
+            // Switch to TLS 2.1
+            System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
         }
 
