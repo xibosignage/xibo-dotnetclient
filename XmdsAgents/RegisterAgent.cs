@@ -113,6 +113,39 @@ namespace XiboClient.XmdsAgents
                             {
                                 reportTimezone();
                             }
+
+                            // Have we been asked to move CMS instance?
+
+                            // Have we been asked to switch to HTTPS?
+                            if (ApplicationSettings.Default.ForceHttps && xmds.Url.ToLowerInvariant().StartsWith("http://"))
+                            {
+                                Trace.WriteLine(new LogMessage("RegisterAgent - Run", "We have been asked to move to HTTPS from our current HTTP."), LogType.Info.ToString());
+
+                                // Try it and see.
+                                try
+                                {
+                                    xmds.Url = xmds.Url.Replace("http", "https");
+                                    xmds.RegisterDisplay(
+                                        ApplicationSettings.Default.ServerKey,
+                                        key.Key,
+                                        ApplicationSettings.Default.DisplayName,
+                                        "windows",
+                                        ApplicationSettings.Default.ClientVersion,
+                                        ApplicationSettings.Default.ClientCodeVersion,
+                                        Environment.OSVersion.ToString(),
+                                        key.MacAddress,
+                                        key.Channel,
+                                        key.getXmrPublicKey());
+
+                                    // If that worked (no errors), update our setting
+                                    ApplicationSettings.Default.ServerUri = ApplicationSettings.Default.ServerUri.Replace("http", "https");
+                                    ApplicationSettings.Default.Save();
+                                }
+                                catch
+                                {
+                                    Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Error swapping to HTTPS"), LogType.Error.ToString());
+                                }
+                            }
                         }
                     }
                     catch (WebException webEx)

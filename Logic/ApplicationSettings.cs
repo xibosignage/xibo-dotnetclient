@@ -322,6 +322,7 @@ namespace XiboClient
         public decimal EmptyLayoutDuration { get; set; }
 
         public bool EnableExpiredFileDeletion { get; set; }
+        public bool ForceHttps { get; set; }
 
         public int LibraryAgentInterval { get; set; }
 
