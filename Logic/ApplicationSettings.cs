@@ -322,6 +322,7 @@ namespace XiboClient
         public decimal EmptyLayoutDuration { get; set; }
 
         public bool EnableExpiredFileDeletion { get; set; }
+        public bool ForceHttps { get; set; }
 
         public int LibraryAgentInterval { get; set; }
 
@@ -331,6 +332,8 @@ namespace XiboClient
         public string CacheManagerFile { get; set; }
         public string RequiredFilesFile { get; set; }
         public string VideoRenderingEngine { get; set; }
+        public string NewCmsAddress { get; set; }
+        public string NewCmsKey { get; set; }
 
         private string _libraryPath;
         public string LibraryPath 
