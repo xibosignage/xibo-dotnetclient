@@ -369,8 +369,8 @@ namespace XiboClient
                     continue;
                 }
 
-                // Assume we have a valid node at this point
-                validNode = true;
+                // Stats enabled?
+                _options.isStatEnabled = (nodeAttributes["enableStat"] == null) ? true : (int.Parse(nodeAttributes["enableStat"].Value) == 1);
 
                 // Parse the options for this media node
                 ParseOptionsForMediaNode(mediaNode, nodeAttributes);
@@ -385,6 +385,9 @@ namespace XiboClient
                     // Carry on
                     continue;
                 }
+
+                // Assume we have a valid node at this point
+                validNode = true;
 
                 // Is this a file based media node?
                 if (_options.type == "video" || _options.type == "flash" || _options.type == "image" || _options.type == "powerpoint" || _options.type == "audio" || _options.type == "htmlpackage")
@@ -798,6 +801,7 @@ namespace XiboClient
             _stat.scheduleID = _options.scheduleId;
             _stat.layoutID = _options.layoutId;
             _stat.mediaID = _options.mediaid;
+            _stat.isEnabled = _options.isStatEnabled;
         }
 
         /// <summary>
