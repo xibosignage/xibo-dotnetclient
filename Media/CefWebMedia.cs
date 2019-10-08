@@ -19,12 +19,8 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using CefSharp;
@@ -63,10 +59,6 @@ namespace XiboClient
                 _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
                 _localWebPath = ApplicationSettings.Default.EmbeddedServerAddress + _options.mediaid + ".htm";
             }
-
-            CefSettings settings = new CefSettings();
-            // Initialize cef with the provided settings
-            Cef.Initialize(settings);
         }
 
         /// <summary>
@@ -431,13 +423,14 @@ namespace XiboClient
         /// <param name="disposing"></param>
         protected override void Dispose(bool disposing)
         {
-            Debug.WriteLine("Disposing of " + _filePath, "IeWebMedia - Dispose");
+            Debug.WriteLine("Disposing of " + _filePath, "CefWebMedia - Dispose");
 
             if (disposing)
             {
                 // Remove the webbrowser control
                 try
                 {
+                    
                     // Remove the web browser control
                     Controls.Remove(_webBrowser);
 
@@ -447,18 +440,15 @@ namespace XiboClient
                     // Detatch event and remove
                     if (_webBrowser != null && !_disposed)
                     {
-                        _webBrowser.LoadingStateChanged -= OnLoadingStateChanged;
+                        //_webBrowser.LoadingStateChanged -= OnLoadingStateChanged;
                         _webBrowser.Load("about:blank");
                         _webBrowser.Dispose();
-
                         _disposed = true;
                     }
-
-                    Cef.Shutdown();
                 }
                 catch (Exception e)
                 {
-                    Trace.WriteLine(new LogMessage("IeWebMedia - Dispose", "Cannot dispose of web browser. E = " + e.Message), LogType.Info.ToString());
+                    Trace.WriteLine(new LogMessage("CefWebMedia - Dispose", "Cannot dispose of web browser. E = " + e.Message), LogType.Info.ToString());
                 }
             }
 

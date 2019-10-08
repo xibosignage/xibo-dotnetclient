@@ -40,6 +40,8 @@ using System.Globalization;
 using XiboClient.Logic;
 using XiboClient.Control;
 using XiboClient.Error;
+using CefSharp.WinForms;
+using CefSharp;
 
 namespace XiboClient
 {
@@ -154,6 +156,12 @@ namespace XiboClient
             InitializeXibo();
         }
 
+        private void InitializeCef()
+        {
+            CefSettings settings = new CefSettings();
+            // Initialize cef with the provided settings
+            Cef.Initialize(settings);
+        }
         private void InitializeXibo()
         {
             this.Text = Application.ProductName;
@@ -240,6 +248,8 @@ namespace XiboClient
 #endif
             // An empty set of overlay regions
             _overlays = new Collection<Region>();
+
+            InitializeCef();
 
             Trace.WriteLine(new LogMessage("MainForm", "Client Initialised"), LogType.Info.ToString());
         }
@@ -392,6 +402,8 @@ namespace XiboClient
                 // Write the CacheManager to disk
                 if (_cacheManager != null)
                     _cacheManager.WriteCacheManager();
+
+                Cef.Shutdown();
             }
             catch (NullReferenceException)
             {
