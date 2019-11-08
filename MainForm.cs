@@ -559,16 +559,24 @@ namespace XiboClient
                 if (!(ex is DefaultLayoutException))
                     Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
 
-                if (!_showingSplash)
-                    ShowSplashScreen();
+                // Do we have more than one Layout in our schedule?
+                if (_schedule.ActiveLayouts > 1)
+                {
+                    _schedule.NextLayout();
+                }
+                else
+                {
+                    if (!_showingSplash)
+                        ShowSplashScreen();
 
-                // In 10 seconds fire the next layout
-                System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-                timer.Interval = 10000;
-                timer.Tick += new EventHandler(splashScreenTimer_Tick);
+                    // In 10 seconds fire the next layout
+                    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+                    timer.Interval = 10000;
+                    timer.Tick += new EventHandler(splashScreenTimer_Tick);
 
-                // Start the timer
-                timer.Start();
+                    // Start the timer
+                    timer.Start();
+                }
             }
 
             // We have finished changing the layout
@@ -640,6 +648,9 @@ namespace XiboClient
             _layoutWidth = int.Parse(layoutAttributes["width"].Value, CultureInfo.InvariantCulture);
             _layoutHeight = int.Parse(layoutAttributes["height"].Value, CultureInfo.InvariantCulture);
 
+            // Are stats enabled for this Layout?
+            bool isStatEnabled = (layoutAttributes["enableStat"] == null) ? true : (int.Parse(layoutAttributes["enableStat"].Value) == 1);
+
             // Scaling factor, will be applied to all regions
             _scaleFactor = Math.Min(ClientSize.Width / _layoutWidth, ClientSize.Height / _layoutHeight);
 
@@ -705,6 +716,9 @@ namespace XiboClient
                     BackgroundImage = null;
                     options.backgroundImage = "";
                 }
+
+                // We have loaded a layout background and therefore are no longer showing the splash screen
+                _showingSplash = false;
             }
             catch (Exception ex)
             {
@@ -753,6 +767,7 @@ namespace XiboClient
             _stat.scheduleID = _scheduleId;
             _stat.layoutID = _layoutId;
             _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            _stat.isEnabled = isStatEnabled;
 
             foreach (XmlNode region in listRegions)
             {
@@ -787,6 +802,7 @@ namespace XiboClient
                 options.height = (int)(Convert.ToDouble(nodeAttibutes["height"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
                 options.left = (int)(Convert.ToDouble(nodeAttibutes["left"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
                 options.top = (int)(Convert.ToDouble(nodeAttibutes["top"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
+
                 options.scaleFactor = _scaleFactor;
 
                 // Store the original width and original height for scaling
@@ -818,9 +834,6 @@ namespace XiboClient
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
             }
-
-            // We have loaded a layout and therefore are no longer showing the splash screen
-            _showingSplash = false;
 
             // Null stuff
             listRegions = null;

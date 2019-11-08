@@ -87,17 +87,7 @@ namespace XiboClient.XmdsAgents
                             // Store the XMR address
                             string xmrAddress = ApplicationSettings.Default.XmrNetworkAddress;
 
-                            RegisterAgent.ProcessRegisterXml(xmds.RegisterDisplay(
-                                ApplicationSettings.Default.ServerKey, 
-                                key.Key, 
-                                ApplicationSettings.Default.DisplayName, 
-                                "windows", 
-                                ApplicationSettings.Default.ClientVersion, 
-                                ApplicationSettings.Default.ClientCodeVersion, 
-                                Environment.OSVersion.ToString(), 
-                                key.MacAddress,
-                                key.Channel,
-                                key.getXmrPublicKey()));
+                            RegisterAgent.ProcessRegisterXml(callRegister(xmds, key));
 
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
@@ -112,6 +102,70 @@ namespace XiboClient.XmdsAgents
                             if (string.IsNullOrEmpty(ApplicationSettings.Default.DisplayTimeZone))
                             {
                                 reportTimezone();
+                            }
+
+                            // Have we been asked to move CMS instance?
+                            // CMS MOVE
+                            // --------
+                            if (!string.IsNullOrEmpty(ApplicationSettings.Default.NewCmsAddress) 
+                                && !string.IsNullOrEmpty(ApplicationSettings.Default.NewCmsKey)
+                                && ApplicationSettings.Default.NewCmsAddress != ApplicationSettings.Default.ServerUri
+                                )
+                            {
+                                // Make a call using the new details, and see if it works.
+                                string oldUri = ApplicationSettings.Default.ServerUri;
+                                string oldKey = ApplicationSettings.Default.ServerKey;
+                                ApplicationSettings.Default.ServerUri = ApplicationSettings.Default.NewCmsAddress;
+                                ApplicationSettings.Default.ServerKey = ApplicationSettings.Default.NewCmsKey;
+
+                                Trace.WriteLine(new LogMessage("RegisterAgent - Run", "We have been asked to move to a new CMS. " + ApplicationSettings.Default.NewCmsAddress), LogType.Info.ToString());
+
+                                // Try it and see.
+                                try
+                                {
+                                    xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
+                                    string xml = callRegister(xmds, key);
+
+                                    // If that worked (no errors), update our settings
+                                    ApplicationSettings.Default.NewCmsAddress = "";
+                                    ApplicationSettings.Default.NewCmsKey = "";
+                                    // ServerUri/Key will be updated too.
+                                    ApplicationSettings.Default.Save();
+
+                                    ProcessRegisterXml(xml);
+                                }
+                                catch (Exception e)
+                                {
+                                    Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Error swapping to new CMS. E = " + e.Message.ToString()), LogType.Error.ToString());
+
+                                    // Switch back to the old values for subsequent tries
+                                    ApplicationSettings.Default.ServerUri = oldUri;
+                                    ApplicationSettings.Default.ServerKey = oldKey;
+                                }
+                            }
+
+                            // Have we been asked to switch to HTTPS?
+                            // HTTPS MOVE
+                            // ----------
+                            if (ApplicationSettings.Default.ForceHttps && xmds.Url.ToLowerInvariant().StartsWith("http://"))
+                            {
+                                Trace.WriteLine(new LogMessage("RegisterAgent - Run", "We have been asked to move to HTTPS from our current HTTP."), LogType.Info.ToString());
+
+                                // Try it and see.
+                                try
+                                {
+                                    string url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
+                                    xmds.Url = url.Replace("http://", "https://");
+                                    callRegister(xmds, key);
+
+                                    // If that worked (no errors), update our setting
+                                    ApplicationSettings.Default.ServerUri = ApplicationSettings.Default.ServerUri.Replace("http://", "https://");
+                                    ApplicationSettings.Default.Save();
+                                }
+                                catch (Exception e)
+                                {
+                                    Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Error swapping to HTTPS. E = " + e.Message.ToString()), LogType.Error.ToString());
+                                }
                             }
                         }
                     }
@@ -135,6 +189,21 @@ namespace XiboClient.XmdsAgents
             }
 
             Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Thread Stopped"), LogType.Info.ToString());
+        }
+
+        private string callRegister(xmds.xmds xmds, HardwareKey key)
+        {
+            return xmds.RegisterDisplay(
+                ApplicationSettings.Default.ServerKey,
+                key.Key,
+                ApplicationSettings.Default.DisplayName,
+                "windows",
+                ApplicationSettings.Default.ClientVersion,
+                ApplicationSettings.Default.ClientCodeVersion,
+                Environment.OSVersion.ToString(),
+                key.MacAddress,
+                key.Channel,
+                key.getXmrPublicKey());
         }
 
         public static string ProcessRegisterXml(string xml)

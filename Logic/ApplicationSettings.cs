@@ -41,9 +41,9 @@ namespace XiboClient
         private List<string> _globalProperties;
 
         // Application Specific Settings we want to protect
-        private readonly string _clientVersion = "2 R200";
+        private readonly string _clientVersion = "2 R201";
         private readonly string _version = "5";
-        private readonly int _clientCodeVersion = 200;
+        private readonly int _clientCodeVersion = 201;
 
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
@@ -322,6 +322,7 @@ namespace XiboClient
         public decimal EmptyLayoutDuration { get; set; }
 
         public bool EnableExpiredFileDeletion { get; set; }
+        public bool ForceHttps { get; set; }
 
         public int LibraryAgentInterval { get; set; }
 
@@ -331,6 +332,8 @@ namespace XiboClient
         public string CacheManagerFile { get; set; }
         public string RequiredFilesFile { get; set; }
         public string VideoRenderingEngine { get; set; }
+        public string NewCmsAddress { get; set; }
+        public string NewCmsKey { get; set; }
 
         private string _libraryPath;
         public string LibraryPath 

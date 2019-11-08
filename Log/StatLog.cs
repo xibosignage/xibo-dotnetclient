@@ -45,82 +45,12 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// Record a complete Layout Event
-        /// </summary>
-        /// <param name="fromDT"></param>
-        /// <param name="toDT"></param>
-        /// <param name="scheduleID"></param>
-        /// <param name="layoutID"></param>
-        public void RecordLayout(String fromDT, String toDT, int scheduleID, int layoutID)
-        {
-            if (!ApplicationSettings.Default.StatsEnabled) return;
-
-            Stat stat = new Stat();
-
-            stat.type = StatType.Layout;
-            stat.fromDate = fromDT;
-            stat.toDate = toDT;
-            stat.scheduleID = scheduleID;
-            stat.layoutID = layoutID;
-
-            _stats.Add(stat);
-
-            return;
-        }
-
-        /// <summary>
-        /// Record a complete Media Event
-        /// </summary>
-        /// <param name="fromDT"></param>
-        /// <param name="toDT"></param>
-        /// <param name="layoutID"></param>
-        /// <param name="mediaID"></param>
-        public void RecordMedia(String fromDT, String toDT, int layoutID, String mediaID)
-        {
-            if (!ApplicationSettings.Default.StatsEnabled) return;
-
-            Stat stat = new Stat();
-
-            stat.type = StatType.Media;
-            stat.fromDate = fromDT;
-            stat.toDate = toDT;
-            stat.layoutID = layoutID;
-            stat.mediaID = mediaID;
-
-            _stats.Add(stat);
-
-            return;
-        }
-
-        /// <summary>
-        /// Record a complete Event
-        /// </summary>
-        /// <param name="fromDT"></param>
-        /// <param name="toDT"></param>
-        /// <param name="tag"></param>
-        public void RecordEvent(String fromDT, String toDT, String tag)
-        {
-            if (!ApplicationSettings.Default.StatsEnabled) return;
-
-            Stat stat = new Stat();
-
-            stat.type = StatType.Event;
-            stat.fromDate = fromDT;
-            stat.toDate = toDT;
-            stat.tag = tag;
-
-            _stats.Add(stat);
-
-            return;
-        }
-
-        /// <summary>
         /// RecordStat
         /// </summary>
         /// <param name="stat"></param>
         public void RecordStat(Stat stat)
         {
-            if (!ApplicationSettings.Default.StatsEnabled) 
+            if (!ApplicationSettings.Default.StatsEnabled || !stat.isEnabled) 
                 return;
 
             Debug.WriteLine(String.Format("Recording a Stat Record. Current Count = {0}", _stats.Count.ToString()), LogType.Audit.ToString());
@@ -199,6 +129,11 @@ namespace XiboClient
         public int scheduleID;
         public String mediaID;
         public String tag;
+
+        /// <summary>
+        /// Is this Stat enabled (if false it will not be recorded)
+        /// </summary>
+        public bool isEnabled = true;
 
         public override string ToString()
         {

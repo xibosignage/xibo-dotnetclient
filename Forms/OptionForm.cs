@@ -75,6 +75,9 @@ namespace XiboClient
             // Appearance Tab
             splashOverride.Text = ApplicationSettings.Default.SplashOverride;
 
+            // Switch to TLS 2.1
+            System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+
             Debug.WriteLine("Loaded Options Form", "OptionForm");
         }
 
