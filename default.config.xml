@@ -53,5 +53,5 @@
   <XmrNetworkAddress></XmrNetworkAddress>
   <EmbeddedServerPort>9696</EmbeddedServerPort>
   <ScreenShotSize>0</ScreenShotSize>
-  <BrowserType>mshtml</BrowserType>
+  <BrowserType>edge</BrowserType>
 </ApplicationSettings>
