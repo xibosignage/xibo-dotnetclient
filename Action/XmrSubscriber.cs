@@ -43,18 +43,6 @@ namespace XiboClient.Logic
         private HardwareKey _hardwareKey;
 
         /// <summary>
-        /// Client Info Form
-        /// </summary>
-        public ClientInfo ClientInfoForm
-        {
-            set
-            {
-                _clientInfoForm = value;
-            }
-        }
-        private ClientInfo _clientInfoForm;
-
-        /// <summary>
         /// The MQ Poller
         /// </summary>
         private NetMQPoller _poller;
@@ -115,7 +103,7 @@ namespace XiboClient.Logic
                                 socket.ReceiveReady += _socket_ReceiveReady;
 
                                 // Notify
-                                _clientInfoForm.XmrSubscriberStatus = "Connected to " + ApplicationSettings.Default.XmrNetworkAddress + ". Waiting for messages.";
+                                ClientInfo.Instance.XmrSubscriberStatus = "Connected to " + ApplicationSettings.Default.XmrNetworkAddress + ". Waiting for messages.";
 
                                 // Sit and wait, processing messages, indefinitely or until we are interrupted.
                                 _poller.Run();
@@ -135,11 +123,11 @@ namespace XiboClient.Logic
                     catch (Exception e)
                     {
                         Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Unable to Subscribe: " + e.Message), LogType.Info.ToString());
-                        _clientInfoForm.XmrSubscriberStatus = e.Message;
+                        ClientInfo.Instance.XmrSubscriberStatus = e.Message;
                     }
 
                     // Update status
-                    _clientInfoForm.XmrSubscriberStatus = "Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString();
+                    ClientInfo.Instance.XmrSubscriberStatus = "Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString();
 
                     // Sleep for 60 seconds.
                     _manualReset.WaitOne(60 * 1000);
@@ -169,7 +157,7 @@ namespace XiboClient.Logic
                 // Log this message, but dont abort the thread
                 Trace.WriteLine(new LogMessage("XmrSubscriber - _socket_ReceiveReady", "Exception in Run: " + ex.Message), LogType.Error.ToString());
                 Trace.WriteLine(new LogMessage("XmrSubscriber - _socket_ReceiveReady", e.ToString()), LogType.Audit.ToString());
-                _clientInfoForm.XmrSubscriberStatus = "Error. " + ex.Message;
+                ClientInfo.Instance.XmrSubscriberStatus = "Error. " + ex.Message;
             }
         }
 
@@ -182,7 +170,7 @@ namespace XiboClient.Logic
             string statusMessage = "Connected (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + DateTime.Now.ToString();
 
             // Write this out to a log
-            _clientInfoForm.XmrSubscriberStatus = statusMessage;
+            ClientInfo.Instance.XmrSubscriberStatus = statusMessage;
             Trace.WriteLine(new LogMessage("XmrSubscriber - Run", statusMessage), LogType.Audit.ToString());
 
             // Deal with heart beat
@@ -254,7 +242,7 @@ namespace XiboClient.Logic
 
                 case "screenShot":
                     ScreenShot.TakeAndSend();
-                    _clientInfoForm.notifyStatusToXmds();
+                    ClientInfo.Instance.notifyStatusToXmds();
                     break;
 
                 default:

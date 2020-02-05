@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
- using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -57,6 +57,16 @@ namespace XiboClient.Rendering
                     FadeOut(item, dp, duration);
                     break;
             }
+        }
+
+        public static DoubleAnimation Get(string type, double duration)
+        {
+            return new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(duration)
+            };
         }
 
         /// <summary>

@@ -65,6 +65,8 @@ namespace XiboClient.Rendering
         protected DispatcherTimer _timer;
         private bool _timerStarted = false;
 
+        protected bool IsRenderCalled { get; set; }
+
         /// <summary>
         /// The Region Options
         /// </summary>

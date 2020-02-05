@@ -1,13 +1,14 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2016 Daniel Garner
+/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -32,10 +33,6 @@ using System.Threading;
 using XiboClient.Logic;
 using System.Globalization;
 using XiboClient.Action;
-
-/// 17/02/12 Dan Added a static method to get the schedule XML from disk into a string and to write it to the disk
-/// 20/02/12 Dan Tweaked log types on a few trace messages
-/// 24/03/12 Dan Move onto its own thread
 
 namespace XiboClient
 {
@@ -79,18 +76,6 @@ namespace XiboClient
         /// The currently playing layout Id
         /// </summary>
         private int _currenctLayoutId;
-
-        /// <summary>
-        /// Client Info Form
-        /// </summary>
-        public ClientInfo ClientInfoForm
-        {
-            set
-            {
-                _clientInfoForm = value;
-            }
-        }
-        private ClientInfo _clientInfoForm;
 
         /// <summary>
         /// Creates a new schedule Manager
@@ -218,7 +203,7 @@ namespace XiboClient
                             OnRefreshSchedule();
 
                         // Update the client info form
-                        _clientInfoForm.ScheduleManagerStatus = LayoutsInSchedule();
+                        ClientInfo.Instance.ScheduleManagerStatus = LayoutsInSchedule();
 
                         // Do we need to take a screenshot?
                         if (ApplicationSettings.Default.ScreenShotRequestInterval > 0 && DateTime.Now > _lastScreenShotDate.AddMinutes(ApplicationSettings.Default.ScreenShotRequestInterval))
@@ -230,7 +215,7 @@ namespace XiboClient
                             _lastScreenShotDate = DateTime.Now;
 
                             // Notify status to XMDS
-                            _clientInfoForm.notifyStatusToXmds();
+                            ClientInfo.Instance.notifyStatusToXmds();
                         }
 
                         // Run any commands that occur in the next 10 seconds.
@@ -260,13 +245,12 @@ namespace XiboClient
                     {
                         // Log this message, but dont abort the thread
                         Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());
-                        _clientInfoForm.ScheduleStatus = "Error. " + ex.Message;
+                        ClientInfo.Instance.ScheduleStatus = "Error. " + ex.Message;
                     }
                 }
 
                 // Completed this check
-                if (OnScheduleManagerCheckComplete != null)
-                    OnScheduleManagerCheckComplete();
+                OnScheduleManagerCheckComplete?.Invoke();
 
                 // Sleep this thread for 10 seconds
                 _manualReset.WaitOne(10 * 1000);

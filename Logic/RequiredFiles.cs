@@ -87,12 +87,12 @@ namespace XiboClient
             RequiredFileList = new Collection<RequiredFile>();
 
             // Create a webservice call
-            _report = new XiboClient.xmds.xmds();
-
-            // Start up the Xmds Service Object
-            _report.Credentials = null;
-            _report.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=mediaInventory";
-            _report.UseDefaultCredentials = false;
+            _report = new xmds.xmds
+            {
+                Credentials = null,
+                Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=mediaInventory",
+                UseDefaultCredentials = false
+            };
         }
 
         /// <summary>

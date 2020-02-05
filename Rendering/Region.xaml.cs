@@ -188,6 +188,8 @@ namespace XiboClient.Rendering
                         _sizeResetRequired = false;
                     }
 
+                    Debug.WriteLine("Calling start on media in regionId " + this.options.regionId, "Region");
+
                     StartMedia(newMedia);
                 }
                 catch (Exception ex)
@@ -654,11 +656,11 @@ namespace XiboClient.Rendering
         {
             Trace.WriteLine(new LogMessage("Region - StartMedia", "Starting media"), LogType.Audit.ToString());
 
-            // Render the media, this adds the child controls to the Media UserControls grid
-            media.RenderMedia();
-
             // Add to this scene
             this.RegionScene.Children.Add(media);
+
+            // Render the media, this adds the child controls to the Media UserControls grid
+            media.RenderMedia();
 
             // Reset the audio sequence and start
             _audioSequence = 1;

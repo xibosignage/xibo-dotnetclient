@@ -316,7 +316,7 @@ namespace XiboClient.Rendering
                     string cachedFile = e.Result;
 
                     // Handle the background
-                    String bodyStyle;
+                    /*String bodyStyle;
                     String backgroundColor = _options.Dictionary.Get("backgroundColor", _options.backgroundColor);
 
                     if (_options.backgroundImage == null || _options.backgroundImage == "")
@@ -326,9 +326,9 @@ namespace XiboClient.Rendering
                     else
                     {
                         bodyStyle = "background-image: url('" + _options.backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
-                    }
+                    }*/
 
-                    string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body {" + bodyStyle + " }</style><!--END_STYLE_ADJUST--></head>");
+                    string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body { background: transparent; }</style><!--END_STYLE_ADJUST--></head>");
                     html = html.Replace("[[ViewPortWidth]]", Width.ToString());
                     html += "<!--VIEWPORT=" + Width.ToString() + "x" + Height.ToString() + "-->";
                     html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
@@ -397,20 +397,7 @@ namespace XiboClient.Rendering
                 cachedFile = Regex.Replace(cachedFile, "<!--VIEWPORT=(.*)-->", "");
                 cachedFile = Regex.Replace(cachedFile, "<!--CACHEDATE=(.*)-->", "");
 
-                // Handle the background
-                String bodyStyle;
-                String backgroundColor = _options.Dictionary.Get("backgroundColor", _options.backgroundColor);
-
-                if (_options.backgroundImage == null || _options.backgroundImage == "")
-                {
-                    bodyStyle = "background-color:" + backgroundColor + " ;";
-                }
-                else
-                {
-                    bodyStyle = "background-image: url('" + _options.backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
-                }
-
-                string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body {" + bodyStyle + " }</style><!--END_STYLE_ADJUST--></head>");
+                string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body { background: transparent; }</style><!--END_STYLE_ADJUST--></head>");
                 html = html.Replace("[[ViewPortWidth]]", Width.ToString());
                 html += "<!--VIEWPORT=" + Width.ToString() + "x" + Height.ToString() + "-->";
                 html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
@@ -463,7 +450,7 @@ namespace XiboClient.Rendering
             WebMedia media;
             if (ApplicationSettings.Default.BrowserType.Equals("edge", StringComparison.InvariantCultureIgnoreCase))
             {
-                media = new WebEdge(options);
+                media = new WebCef(options);
             }
             else
             {

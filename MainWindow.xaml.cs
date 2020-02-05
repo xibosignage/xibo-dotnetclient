@@ -52,6 +52,7 @@ using System.Drawing.Imaging;
 using System.Windows.Threading;
 using XiboClient.Rendering;
 using XiboClient.Stats;
+using System.Windows.Media.Animation;
 
 namespace XiboClient
 {
@@ -82,7 +83,12 @@ namespace XiboClient
         private int _scheduleId;
         private int _layoutId;
         private bool _screenSaver = false;
+
+        /// <summary>
+        /// Splash Screen Logic
+        /// </summary>
         private bool _showingSplash = false;
+        private System.Windows.Controls.Image splashScreen;
 
         /// <summary>
         /// Delegates to Invoke various actions after yielding 
@@ -174,8 +180,6 @@ namespace XiboClient
         {
             // Set the title
             Title = ApplicationSettings.GetProductNameFromAssembly();
-
-            Thread.CurrentThread.Name = "UI Thread";
 
             // Check the directories exist
             if (!Directory.Exists(ApplicationSettings.Default.LibraryPath + @"\backgrounds\"))
@@ -489,9 +493,11 @@ namespace XiboClient
                 // Destroy the Current Layout
                 try
                 {
-                    currentLayout.Stop();
-
-                    DestroyLayout();
+                    if (this.currentLayout != null)
+                    {
+                        this.currentLayout.Stop();
+                        DestroyLayout();
+                    }
                 }
                 catch (Exception e)
                 {
@@ -508,11 +514,16 @@ namespace XiboClient
                     currentLayout = PrepareLayout(layoutPath, false);
 
                     // We have loaded a layout background and therefore are no longer showing the splash screen
-                    _showingSplash = false;
+                    // Remove the Splash Screen Image
+                    RemoveSplashScreen();
 
                     // Add this Layout to our controls
                     this.Scene.Children.Add(currentLayout);
 
+                    // Start
+                    currentLayout.Start();
+
+                    // Update client info
                     ClientInfo.Instance.CurrentLayoutId = layoutPath;
                     _schedule.CurrentLayoutId = _layoutId;
                 }
@@ -590,6 +601,7 @@ namespace XiboClient
             DispatcherTimer timer = (DispatcherTimer)sender;
             timer.Stop();
 
+            // Put the next Layout up
             _schedule.NextLayout();
         }
 
@@ -663,12 +675,23 @@ namespace XiboClient
         private void ShowDefaultSplashScreen()
         {
             Uri path = new Uri("pack://application:,,,/Resources/splash.jpg");
-            System.Windows.Controls.Image img = new System.Windows.Controls.Image()
+            this.splashScreen = new System.Windows.Controls.Image()
             {
-                Name = "Splash"
+                Name = "Splash",
+                Source = new BitmapImage(path)
             };
-            img.Source = new BitmapImage(path);
-            this.Scene.Children.Add(img);
+            this.Scene.Children.Add(this.splashScreen);
+        }
+
+        /// <summary>
+        /// Remove the Splash Screen
+        /// </summary>
+        private void RemoveSplashScreen()
+        {
+            this.Scene.Children.Remove(this.splashScreen);
+
+            // We've removed it
+            this._showingSplash = false;
         }
 
         /// <summary>
@@ -835,6 +858,9 @@ namespace XiboClient
 
                         // Add to the Scene
                         OverlayScene.Children.Add(layout);
+
+                        // Start
+                        currentLayout.Start();
                     }
                     catch (DefaultLayoutException)
                     {

@@ -261,14 +261,7 @@ namespace XiboClient.Rendering
                 }
             }
 
-            // Create a start record for this layout
-            _stat = new Stat();
-            _stat.type = StatType.Layout;
-            _stat.scheduleID = _scheduleId;
-            _stat.layoutID = _layoutId;
-            _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            _stat.isEnabled = isStatEnabled;
-
+            // Parse the regions
             foreach (XmlNode region in listRegions)
             {
                 // Is there any media
@@ -340,6 +333,22 @@ namespace XiboClient.Rendering
             // Null stuff
             listRegions = null;
             listMedia = null;
+        }
+
+        public void Start()
+        {
+            // Create a start record for this layout
+            _stat = new Stat();
+            _stat.type = StatType.Layout;
+            _stat.scheduleID = _scheduleId;
+            _stat.layoutID = _layoutId;
+            _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            _stat.isEnabled = isStatEnabled;
+
+            foreach (Region region in _regions)
+            {
+                region.Start();
+            }
         }
 
         public void Stop()
