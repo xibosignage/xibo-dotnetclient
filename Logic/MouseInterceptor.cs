@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Drawing;
+using System.Windows;
 
 namespace XiboClient.Logic
 {
@@ -20,7 +20,7 @@ namespace XiboClient.Logic
         // The KeyPressed Event
         public event MouseInterceptorEventHandler MouseEvent;
 
-        private static Point _mouseLocation;
+        private static System.Drawing.Point _mouseLocation;
 
         public static IntPtr SetHook()
         {
@@ -53,7 +53,7 @@ namespace XiboClient.Logic
                             MouseInterceptor.s_instance.MouseEvent();
                     }
 
-                    _mouseLocation = new Point(hookStruct.pt.x, hookStruct.pt.y);
+                    _mouseLocation = new System.Drawing.Point(hookStruct.pt.x, hookStruct.pt.y);
                 }
             }
 

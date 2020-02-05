@@ -73,7 +73,6 @@ namespace XiboClient
         private Collection<ScheduleItem> _currentOverlaySchedule;
 
         private bool _refreshSchedule;
-        private CacheManager _cacheManager;
         private DateTime _lastScreenShotDate;
         
         /// <summary>
@@ -97,9 +96,8 @@ namespace XiboClient
         /// Creates a new schedule Manager
         /// </summary>
         /// <param name="scheduleLocation"></param>
-        public ScheduleManager(CacheManager cacheManager, string scheduleLocation)
+        public ScheduleManager(string scheduleLocation)
         {
-            _cacheManager = cacheManager;
             _location = scheduleLocation;
 
             // Create an empty layout schedule
@@ -445,7 +443,7 @@ namespace XiboClient
                     // Is the layout valid in the cachemanager?
                     try
                     {
-                        if (!_cacheManager.IsValidPath(layout.id + ".xlf"))
+                        if (!CacheManager.Instance.IsValidPath(layout.id + ".xlf"))
                         {
                             invalidLayouts.Add(layout.id);
                             Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());
@@ -464,7 +462,7 @@ namespace XiboClient
                     bool validDependents = true;
                     foreach (string dependent in layout.Dependents)
                     {
-                        if (!string.IsNullOrEmpty(dependent) && !_cacheManager.IsValidPath(dependent))
+                        if (!string.IsNullOrEmpty(dependent) && !CacheManager.Instance.IsValidPath(dependent))
                         {
                             invalidLayouts.Add(layout.id);
                             Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
@@ -568,7 +566,7 @@ namespace XiboClient
                     // Is the layout valid in the cachemanager?
                     try
                     {
-                        if (!_cacheManager.IsValidPath(layout.id + ".xlf"))
+                        if (!CacheManager.Instance.IsValidPath(layout.id + ".xlf"))
                         {
                             invalidLayouts.Add(layout.id);
                             Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewOverlaySchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());
@@ -586,7 +584,7 @@ namespace XiboClient
                     // Check dependents
                     foreach (string dependent in layout.Dependents)
                     {
-                        if (!_cacheManager.IsValidPath(dependent))
+                        if (!CacheManager.Instance.IsValidPath(dependent))
                         {
                             invalidLayouts.Add(layout.id);
                             Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewOverlaySchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());

@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2019 Xibo Signage Ltd
+ * Copyright (C) 2020 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -26,7 +26,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
 using XiboClient.Logic;
@@ -41,9 +40,9 @@ namespace XiboClient
         private List<string> _globalProperties;
 
         // Application Specific Settings we want to protect
-        private readonly string _clientVersion = "2 R201-edge";
+        private readonly string _clientVersion = "2 R202 WPF";
         private readonly string _version = "5";
-        private readonly int _clientCodeVersion = 201;
+        private readonly int _clientCodeVersion = 202;
 
         public string ClientVersion { get { return _clientVersion; } }
         public string Version { get { return _version; } }
@@ -73,10 +72,13 @@ namespace XiboClient
                 if (_instance != null)
                     return _instance;
 
+                // What is our executable path?
+                string executablePath = Process.GetCurrentProcess().MainModule.FileName;
+
                 // Check to see if we need to migrate
                 XmlDocument document;
                 string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
+                string fileName = Path.GetFileNameWithoutExtension(executablePath);
 
                 // Create a new application settings instance.
                 _instance = new ApplicationSettings();
@@ -106,7 +108,7 @@ namespace XiboClient
                 }
 
                 // Populate it with the default.config.xml
-                _instance.AppendConfigFile(Path.GetDirectoryName(Application.ExecutablePath) + Path.DirectorySeparatorChar + _default + ".config.xml");
+                _instance.AppendConfigFile(Path.GetDirectoryName(executablePath) + Path.DirectorySeparatorChar + _default + ".config.xml");
 
                 // Load the global settings.
                 _instance.AppendConfigFile(path + Path.DirectorySeparatorChar + fileName + ".xml");
@@ -154,8 +156,9 @@ namespace XiboClient
             if (_instance == null)
                 return;
 
+            string executablePath = Process.GetCurrentProcess().MainModule.FileName;
             string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
+            string fileName = Path.GetFileNameWithoutExtension(executablePath);
 
             // Write the global settings file
             using (XmlWriter writer = XmlWriter.Create(path + Path.DirectorySeparatorChar + fileName + ".xml"))
@@ -343,7 +346,7 @@ namespace XiboClient
                 if (_libraryPath == "DEFAULT")
                 {
                     // Get the users document space for a library
-                    _libraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + Application.ProductName + " Library";
+                    _libraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + GetProductNameFromAssembly() + " Library";
                 }
 
                 // Check the path exists
@@ -550,5 +553,18 @@ namespace XiboClient
 
         // Settings HASH
         public string Hash { get; set; }
+
+
+        /// <summary>
+        /// Gets the product name from the Assembly
+        /// </summary>
+        /// <returns>Product Name</returns>
+        public static string GetProductNameFromAssembly()
+        {
+            return Assembly.GetEntryAssembly()
+                                .GetCustomAttributes(typeof(AssemblyProductAttribute))
+                                .OfType<AssemblyProductAttribute>()
+                                .FirstOrDefault().Product;
+        }
     }
 }

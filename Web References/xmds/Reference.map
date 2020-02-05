@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DiscoveryClientResultsFile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Results>
-    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.ContractReference" url="http://192.168.0.28/xmds.php?v=5&amp;WSDL" filename="xmds.wsdl" />
+    <DiscoveryClientResult referenceType="System.Web.Services.Discovery.ContractReference" url="https://raw.githubusercontent.com/xibosignage/xibo-cms/develop/lib/Xmds/service_v5.wsdl" filename="service_v5.wsdl" />
   </Results>
 </DiscoveryClientResultsFile>

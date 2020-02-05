@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2019 Xibo Signage Ltd
+ * Copyright (C) 2020 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 using System.Xml;
+using XiboClient.Rendering;
 
 namespace XiboClient
 {
@@ -30,7 +31,7 @@ namespace XiboClient
     /// The options specific to a region
     ///     NOTE: Don't change this to a class
     /// </summary>
-    struct RegionOptions
+    public struct RegionOptions
     {
         public double scaleFactor;
         public int width;

@@ -1,39 +1,24 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2015 Daniel Garner and the Xibo Developers
- *
- * This file is part of Xibo.
- *
- * Xibo is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
- *
- * Xibo is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
- */
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
+using System.Configuration;
+using System.Data;
 using System.Diagnostics;
-using XiboClient.Logic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows;
+using XiboClient.Logic;
 
 namespace XiboClient
 {
-    static class Program
+    /// <summary>
+    /// Interaction logic for App.xaml
+    /// </summary>
+    public partial class App : Application
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [STAThread]
-        static int Main(string[] args)
+        protected override void OnStartup(StartupEventArgs e)
         {
             NativeMethods.SetErrorMode(NativeMethods.SetErrorMode(0) |
                            ErrorModes.SEM_NOGPFAULTERRORBOX |
@@ -43,8 +28,6 @@ namespace XiboClient
 
             // Ensure our process has the highest priority
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
-
-            Application.SetCompatibleTextRenderingDefault(false);
 
 #if !DEBUG
             // Catch unhandled exceptions
@@ -59,22 +42,22 @@ namespace XiboClient
             try
             {
                 // Check for any passed arguments
-                if (args.Length > 0)
+                if (e.Args.Length > 0)
                 {
-                    if (args[0].ToString() == "o")
+                    if (e.Args[0].ToString() == "o")
                     {
                         RunSettings();
                     }
                     else
                     {
-                        switch (args[0].ToLower().Trim().Substring(0, 2))
+                        switch (e.Args[0].ToLower().Trim().Substring(0, 2))
                         {
                             // Preview the screen saver
                             case "/p":
                                 // args[1] is the handle to the preview window
                                 KeyInterceptor.SetHook();
                                 MouseInterceptor.SetHook();
-                                RunClient(new IntPtr(long.Parse(args[1])));
+                                RunClient(new IntPtr(long.Parse(e.Args[1])));
                                 KeyInterceptor.UnsetHook();
                                 MouseInterceptor.UnsetHook();
                                 break;
@@ -107,10 +90,6 @@ namespace XiboClient
                 }
                 else
                 {
-                    // Add a message filter
-                    Application.AddMessageFilter(KeyStore.Instance);
-
-                    // No arguments were passed - we run the usual client
                     RunClient();
                 }
             }
@@ -122,35 +101,30 @@ namespace XiboClient
             // Always flush at the end
             Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
             Trace.Flush();
-
-            return 0;
         }
 
         private static void RunClient()
         {
             Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
-            Application.Run(new MainForm());
-        }
-
-        private static void RunClient(bool screenSaver)
-        {
-            Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
-            Application.Run(new MainForm(screenSaver));
-        }
-
-        private static void RunClient(IntPtr previewWindow)
-        {
-            Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
-            Application.Run(new MainForm(previewWindow));
+            MainWindow windowMain = new MainWindow();
+            windowMain.ShowDialog();
         }
 
         private static void RunSettings()
         {
             // If we are showing the options form, enable visual styles
-            Application.EnableVisualStyles();
+            OptionsForm windowMain = new OptionsForm();
+            windowMain.ShowDialog();
+        }
 
-            Trace.WriteLine(new LogMessage("Main", "Options Started"), LogType.Info.ToString());
-            Application.Run(new OptionForm());
+        private static void RunClient(bool screenSaver)
+        {
+            Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
+        }
+
+        private static void RunClient(IntPtr previewWindow)
+        {
+            Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
         }
 
         static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
@@ -182,12 +156,17 @@ namespace XiboClient
 
             try
             {
+                string productName = ApplicationSettings.GetProductNameFromAssembly();
+
                 // Also write to the event log
                 try
                 {
-                    if (!EventLog.SourceExists(Application.ProductName))
-                        EventLog.CreateEventSource(Application.ProductName, "Xibo");
-                    EventLog.WriteEntry(Application.ProductName, e.ToString(), EventLogEntryType.Error);
+                    if (!EventLog.SourceExists(productName))
+                    {
+                        EventLog.CreateEventSource(productName, "Xibo");
+                    }
+
+                    EventLog.WriteEntry(productName, e.ToString(), EventLogEntryType.Error);
                 }
                 catch (Exception ex)
                 {
@@ -202,11 +181,11 @@ namespace XiboClient
             }
 
             // Exit the application and allow it to be restarted by the Watchdog.
-            Application.Exit();
+            Environment.Exit(0);
         }
 
         [DllImport("User32.dll")]
-        public static extern int ShowWindowAsync(IntPtr hWnd , int swCommand);
+        public static extern int ShowWindowAsync(IntPtr hWnd, int swCommand);
 
         internal static class NativeMethods
         {

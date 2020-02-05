@@ -267,7 +267,7 @@
   </binding>
   <service name="xmds">
     <port name="xmdsPort" binding="tns:xmdsBinding">
-      <soap:address location="http://192.168.0.28/xmds.php?v=5" />
+      <soap:address location="{{XMDS_LOCATION}}" />
     </port>
   </service>
 </definitions>

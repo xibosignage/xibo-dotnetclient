@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2016 Daniel Garner, Spring Signage Ltd
+ * Copyright (C) 2006-2016 Daniel Garner, Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *

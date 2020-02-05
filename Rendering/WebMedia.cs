@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2019 Xibo Signage Ltd
+ * Copyright (C) 2020 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -21,15 +21,14 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
+using System.Threading.Tasks;
 
-namespace XiboClient
+namespace XiboClient.Rendering
 {
     abstract class WebMedia : Media
     {
@@ -69,7 +68,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="options"></param>
         public WebMedia(RegionOptions options)
-            : base(options.width, options.height, options.top, options.left)
+            : base(options)
         {
             // Collect some options from the Region Options passed in
             // and store them in member variables.
@@ -229,7 +228,7 @@ namespace XiboClient
 
             // Refresh the local file cache with any new dimensions, etc.
             UpdateCacheIfNecessary();
-            
+
             return true;
         }
 
@@ -330,8 +329,8 @@ namespace XiboClient
                     }
 
                     string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body {" + bodyStyle + " }</style><!--END_STYLE_ADJUST--></head>");
-                    html = html.Replace("[[ViewPortWidth]]", _width.ToString());
-                    html += "<!--VIEWPORT=" + _width.ToString() + "x" + _height.ToString() + "-->";
+                    html = html.Replace("[[ViewPortWidth]]", Width.ToString());
+                    html += "<!--VIEWPORT=" + Width.ToString() + "x" + Height.ToString() + "-->";
                     html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
 
                     // Comment in to write out the update date at the end of the file (in the body)
@@ -390,7 +389,7 @@ namespace XiboClient
 
             // Compare the cached dimensions in the file with the dimensions now, and 
             // regenerate if they are different.
-            if (cachedFile.Contains("[[ViewPortWidth]]") || !ReadCachedViewPort(cachedFile).Equals(_width.ToString() + "x" + _height.ToString()))
+            if (cachedFile.Contains("[[ViewPortWidth]]") || !ReadCachedViewPort(cachedFile).Equals(Width.ToString() + "x" + Height.ToString()))
             {
                 // Regex out the existing replacement if present
                 cachedFile = Regex.Replace(cachedFile, "<!--START_STYLE_ADJUST-->(.*)<!--END_STYLE_ADJUST-->", "");
@@ -412,8 +411,8 @@ namespace XiboClient
                 }
 
                 string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body {" + bodyStyle + " }</style><!--END_STYLE_ADJUST--></head>");
-                html = html.Replace("[[ViewPortWidth]]", _width.ToString());
-                html += "<!--VIEWPORT=" + _width.ToString() + "x" + _height.ToString() + "-->";
+                html = html.Replace("[[ViewPortWidth]]", Width.ToString());
+                html += "<!--VIEWPORT=" + Width.ToString() + "x" + Height.ToString() + "-->";
                 html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
 
                 // Write to the library
@@ -464,11 +463,11 @@ namespace XiboClient
             WebMedia media;
             if (ApplicationSettings.Default.BrowserType.Equals("edge", StringComparison.InvariantCultureIgnoreCase))
             {
-                media = new EdgeWebMedia(options);
+                media = new WebEdge(options);
             }
             else
             {
-                media = new IeWebMedia(options);
+                media = new WebIe(options);
             }
             return media;
         }

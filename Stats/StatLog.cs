@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2009-2015 Spring Signage Ltd
+ * Copyright (C) 2020 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -22,26 +22,27 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.IO;
-using System.Windows.Forms;
 using System.Xml;
 using System.Diagnostics;
 using System.Threading;
 using System.Net;
 
-namespace XiboClient
+namespace XiboClient.Stats
 {
-    class StatLog
+    public sealed class StatLog
     {
-        public static object _locker = new object();
-        private Collection<Stat> _stats;
-        private HardwareKey _hardwareKey;
+        private static readonly Lazy<StatLog>
+            lazy =
+            new Lazy<StatLog>
+            (() => new StatLog());
 
-        public StatLog()
+        public static StatLog Instance { get { return lazy.Value; } }
+
+        private Collection<Stat> _stats;
+
+        private StatLog()
         {
             _stats = new Collection<Stat>();
-            
-            // Get the key for this display
-            _hardwareKey = new HardwareKey();
         }
 
         /// <summary>
@@ -119,33 +120,4 @@ namespace XiboClient
             Debug.WriteLine(new LogMessage("FlushToFile", String.Format("OUT")), LogType.Audit.ToString());
         }
     }
-
-    class Stat 
-    {
-        public StatType type;
-        public String fromDate;
-        public String toDate;
-        public int layoutID;
-        public int scheduleID;
-        public String mediaID;
-        public String tag;
-
-        /// <summary>
-        /// Is this Stat enabled (if false it will not be recorded)
-        /// </summary>
-        public bool isEnabled = true;
-
-        public override string ToString()
-        {
-            // Format the message into the expected XML sub nodes.
-            // Just do this with a string builder rather than an XML builder.
-            String theMessage;
-
-            theMessage = String.Format("<stat type=\"{0}\" fromdt=\"{1}\" todt=\"{2}\" layoutid=\"{3}\" scheduleid=\"{4}\" mediaid=\"{5}\"></stat>", type, fromDate, toDate, layoutID.ToString(), scheduleID.ToString(), mediaID);
-            
-            return theMessage;
-        }
-    }
-
-    public enum StatType { Layout, Media, Event };
 }

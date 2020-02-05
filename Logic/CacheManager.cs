@@ -1,13 +1,14 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2009 Daniel Garner
+/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,14 +30,56 @@ using System.Xml;
 
 namespace XiboClient
 {
-    public class CacheManager
+    public sealed class CacheManager
     {
-        public static object _locker = new object();
+        private static readonly Lazy<CacheManager>
+            lazy =
+            new Lazy<CacheManager>
+            (() => new CacheManager());
+
+        public static CacheManager Instance { get { return lazy.Value; } }
+
+        private static readonly object _locker = new object();
         public Collection<Md5Resource> _files;
 
-        public CacheManager()
+        private CacheManager()
         {
             _files = new Collection<Md5Resource>();
+
+            SetCacheManager();
+        }
+
+        /// <summary>
+        /// Sets the CacheManager
+        /// </summary>
+        private void SetCacheManager()
+        {
+            try
+            {
+                // Deserialise a saved cache manager, and use its files to set our instance.
+                using (FileStream fileStream = File.Open(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.CacheManagerFile, FileMode.Open))
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
+
+                    CacheManager manager = (CacheManager)xmlSerializer.Deserialize(fileStream);
+
+                    // Set its files on ourselves
+                    Instance._files = manager._files;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("CacheManager", "Unable to reuse the Cache Manager because: " + ex.Message));
+            }
+
+            try
+            {
+                Instance.Regenerate();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("CacheManager", "Regenerate failed because: " + ex.Message));
+            }
         }
 
         /// <summary>

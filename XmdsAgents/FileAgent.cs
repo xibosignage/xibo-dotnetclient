@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006 - 2018 Spring Signage Ltd
+ * Copyright (C) 2006 - 2018 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -26,11 +26,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Mime;
-
-/// 17/02/12 Dan Created
-/// 21/02/12 Dan Added OnComplete Delegate and Event
-/// 28/02/12 Dan Added OnPartComplete Delegate and Event
-/// 22/04/12 Dan Dispose of XMDS between each request
 
 namespace XiboClient.XmdsAgents
 {

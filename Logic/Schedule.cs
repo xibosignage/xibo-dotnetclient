@@ -23,7 +23,6 @@ using System.Collections.ObjectModel;
 using System.Security.Cryptography;
 using System.IO;
 using System.Text;
-using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
 using System.Diagnostics;
@@ -43,7 +42,7 @@ namespace XiboClient
     /// <summary>
     /// Reads the schedule
     /// </summary>
-    class Schedule
+    public class Schedule
     {
         public delegate void ScheduleChangeDelegate(string layoutPath, int scheduleId, int layoutId);
         public event ScheduleChangeDelegate ScheduleChangeEvent;
@@ -93,9 +92,6 @@ namespace XiboClient
         // Key
         private HardwareKey _hardwareKey;
 
-        // Cache Manager
-        private CacheManager _cacheManager;
-
         // Schedule Manager
         private ScheduleManager _scheduleManager;
         Thread _scheduleManagerThread;
@@ -125,15 +121,10 @@ namespace XiboClient
         Thread _serverThread;
 
         /// <summary>
-        /// Client Info Form
-        /// </summary>
-        private ClientInfo _clientInfoForm;
-
-        /// <summary>
         /// Create a schedule
         /// </summary>
         /// <param name="scheduleLocation"></param>
-        public Schedule(string scheduleLocation, ref CacheManager cacheManager, ref ClientInfo clientInfoForm)
+        public Schedule(string scheduleLocation)
         {
             Trace.WriteLine(string.Format("XMDS Location: {0}", ApplicationSettings.Default.XiboClient_xmds_xmds));
 
@@ -145,12 +136,6 @@ namespace XiboClient
 
             // Create a new collection for the layouts in the schedule
             _layoutSchedule = new Collection<ScheduleItem>();
-            
-            // Set cachemanager
-            _cacheManager = cacheManager;
-
-            // Set client info form
-            _clientInfoForm = clientInfoForm;
 
             // Create a Register Agent
             _registerAgent = new RegisterAgent();
@@ -159,11 +144,10 @@ namespace XiboClient
             _registerAgentThread.Name = "RegisterAgentThread";
 
             // Create a schedule manager
-            _scheduleManager = new ScheduleManager(_cacheManager, scheduleLocation);
+            _scheduleManager = new ScheduleManager(scheduleLocation);
             _scheduleManager.OnNewScheduleAvailable += new ScheduleManager.OnNewScheduleAvailableDelegate(_scheduleManager_OnNewScheduleAvailable);
             _scheduleManager.OnRefreshSchedule += new ScheduleManager.OnRefreshScheduleDelegate(_scheduleManager_OnRefreshSchedule);
             _scheduleManager.OnScheduleManagerCheckComplete += _scheduleManager_OnScheduleManagerCheckComplete;
-            _scheduleManager.ClientInfoForm = _clientInfoForm;
 
             // Create a schedule manager thread
             _scheduleManagerThread = new Thread(new ThreadStart(_scheduleManager.Run));
@@ -171,12 +155,11 @@ namespace XiboClient
 
             // Create a RequiredFilesAgent
             _scheduleAndRfAgent = new ScheduleAndFilesAgent();
-            _scheduleAndRfAgent.CurrentCacheManager = cacheManager;
+            _scheduleAndRfAgent.CurrentCacheManager = CacheManager.Instance;
             _scheduleAndRfAgent.CurrentScheduleManager = _scheduleManager;
             _scheduleAndRfAgent.ScheduleLocation = scheduleLocation;
             _scheduleAndRfAgent.HardwareKey = _hardwareKey.Key;
             _scheduleAndRfAgent.OnFullyProvisioned += _requiredFilesAgent_OnFullyProvisioned;
-            _scheduleAndRfAgent.ClientInfoForm = _clientInfoForm;
             _scheduleAndRfAgent.OnComplete += new ScheduleAndFilesAgent.OnCompleteDelegate(LayoutFileModified);
 
             // Create a thread for the RequiredFiles Agent to run in - but dont start it up yet.
@@ -185,7 +168,7 @@ namespace XiboClient
 
             // Library Agent
             _libraryAgent = new LibraryAgent();
-            _libraryAgent.CurrentCacheManager = _cacheManager;
+            _libraryAgent.CurrentCacheManager = CacheManager.Instance;
             
             // Create a thread for the Library Agent to run in - but dont start it up yet.
             _libraryAgentThread = new Thread(new ThreadStart(_libraryAgent.Run));
@@ -199,7 +182,6 @@ namespace XiboClient
             // XMR Subscriber
             _xmrSubscriber = new XmrSubscriber();
             _xmrSubscriber.HardwareKey = _hardwareKey;
-            _xmrSubscriber.ClientInfoForm = _clientInfoForm;
             _xmrSubscriber.OnAction += _xmrSubscriber_OnAction;
 
             // Thread start
@@ -208,7 +190,6 @@ namespace XiboClient
 
             // Embedded Server
             _server = new EmbeddedServer();
-            _server.ClientInfoForm = _clientInfoForm;
             _server.OnServerClosed += _server_OnServerClosed;
             _serverThread = new Thread(new ThreadStart(_server.Run));
             _serverThread.Name = "EmbeddedServer";
@@ -284,7 +265,7 @@ namespace XiboClient
             if (agentThreadsAlive())
             {
                 // Update status marker on the main thread.
-                _clientInfoForm.UpdateStatusMarkerFile();
+                ClientInfo.Instance.UpdateStatusMarkerFile();
             }
             else
             {
@@ -294,7 +275,7 @@ namespace XiboClient
             // Log for overdue XMR
             if (xmrShouldBeRunning && _xmrSubscriber.LastHeartBeat < DateTime.Now.AddHours(-1))
             {
-                _clientInfoForm.XmrSubscriberStatus = "Long term Inactive (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
+                ClientInfo.Instance.XmrSubscriberStatus = "Long term Inactive (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
                 Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over an hour ago."));
 
                 // Issue an XMR restart if we've gone this long without connecting
@@ -303,7 +284,7 @@ namespace XiboClient
             }
             else if (xmrShouldBeRunning && _xmrSubscriber.LastHeartBeat < DateTime.Now.AddMinutes(-5))
             {
-                _clientInfoForm.XmrSubscriberStatus = "Inactive (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
+                ClientInfo.Instance.XmrSubscriberStatus = "Inactive (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
                 Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over 5 minutes ago."), LogType.Audit.ToString());
             }
         }
@@ -519,14 +500,14 @@ namespace XiboClient
                 if (_layoutSchedule[_currentLayout].layoutFile == ApplicationSettings.Default.LibraryPath + @"\" + layoutPath)
                 {
                     // What happens if the action of downloading actually invalidates this layout?
-                    bool valid = _cacheManager.IsValidPath(layoutPath);
+                    bool valid = CacheManager.Instance.IsValidPath(layoutPath);
 
                     if (valid)
                     {
                         // Check dependents
                         foreach (string dependent in _layoutSchedule[_currentLayout].Dependents)
                         {
-                            if (!string.IsNullOrEmpty(dependent) && !_cacheManager.IsValidPath(dependent))
+                            if (!string.IsNullOrEmpty(dependent) && !CacheManager.Instance.IsValidPath(dependent))
                             {
                                 valid = false;
                                 break;
