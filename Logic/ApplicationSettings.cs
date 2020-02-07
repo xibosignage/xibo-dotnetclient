@@ -21,13 +21,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Xml;
-using System.Xml.Serialization;
 using XiboClient.Logic;
 
 namespace XiboClient
@@ -339,9 +336,9 @@ namespace XiboClient
         public string NewCmsKey { get; set; }
 
         private string _libraryPath;
-        public string LibraryPath 
-        { 
-            get 
+        public string LibraryPath
+        {
+            get
             {
                 if (_libraryPath == "DEFAULT")
                 {
@@ -357,11 +354,11 @@ namespace XiboClient
                 }
 
                 return _libraryPath;
-            } 
-            set 
+            }
+            set
             {
-                _libraryPath = value; 
-            } 
+                _libraryPath = value;
+            }
         }
 
         /// <summary>
@@ -374,7 +371,7 @@ namespace XiboClient
                 return ServerUri.TrimEnd('\\') + @"/xmds.php?v=" + ApplicationSettings.Default.Version;
             }
         }
-        
+
         public string ServerKey { get; set; }
 
         private string _displayName;
@@ -384,8 +381,8 @@ namespace XiboClient
         /// Server Address
         /// </summary>
         private string _serverUri;
-        public string ServerUri 
-        { 
+        public string ServerUri
+        {
             get
             {
                 return (string.IsNullOrEmpty(_serverUri)) ? "http://localhost" : _serverUri;
@@ -417,9 +414,9 @@ namespace XiboClient
 
         // Embedded web server config
         public int EmbeddedServerPort { get; set; }
-        public string EmbeddedServerAddress 
-        { 
-            get 
+        public string EmbeddedServerAddress
+        {
+            get
             {
                 return "http://localhost:" + ((EmbeddedServerPort == 0) ? 9696 : EmbeddedServerPort) + "/";
             }

@@ -18,10 +18,8 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -114,7 +112,7 @@ namespace XiboClient.XmdsAgents
         {
             // Test for old files
             DateTime testDate = DateTime.Now.AddDays(ApplicationSettings.Default.LibraryAgentInterval * -1);
-            
+
             // Track processed files
             int filesProcessed = 0;
 

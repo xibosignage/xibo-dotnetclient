@@ -18,16 +18,10 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Xml;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Windows.Forms;
-using System.Security;
-using System.Threading;
-using System.Net;
 
 /// 17/02/12 Dan Changed to always Log audit if no category is given
 
@@ -47,9 +41,9 @@ namespace XiboClient
 
         public XiboTraceListener(string r_strListenerName)
             : base(r_strListenerName)
-		{
-			InitializeListener() ;
-		}
+        {
+            InitializeListener();
+        }
 
         private void InitializeListener()
         {
@@ -95,7 +89,7 @@ namespace XiboClient
 
             if (ApplicationSettings.Default.LogLevel == "info" && (logtype != LogType.Error && logtype != LogType.Info))
                 return;
-            
+
             _traceMessages.Add(new TraceMessage
             {
                 category = category,
@@ -110,7 +104,7 @@ namespace XiboClient
 
         private void FlushToFile()
         {
-            if (_traceMessages.Count < 1) 
+            if (_traceMessages.Count < 1)
                 return;
 
             try
@@ -207,7 +201,7 @@ namespace XiboClient
         public override void Close()
         {
             // Determine if there is anything to flush
-            if (_traceMessages.Count < 1) 
+            if (_traceMessages.Count < 1)
                 return;
 
             // Flush to file (we will send these next time we start up)
@@ -220,7 +214,7 @@ namespace XiboClient
         public override void Flush()
         {
             // Determine if there is anything to flush
-            if (_traceMessages.Count < 1) 
+            if (_traceMessages.Count < 1)
                 return;
 
             FlushToFile();

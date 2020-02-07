@@ -18,13 +18,10 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using XiboClient.Properties;
 using System.Diagnostics;
-using XiboClient.Log;
 using System.Net;
+using System.Threading;
+using XiboClient.Log;
 
 /// 17/02/12 Dan Created
 /// 20/02/12 Dan Added ClientInfo

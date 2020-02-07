@@ -19,12 +19,10 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Xml;
-using System.Windows.Forms;
-using System.Diagnostics;
 
 namespace XiboClient.Logic
 {
@@ -61,7 +59,7 @@ namespace XiboClient.Logic
         {
             // Do some validation
             if (reason == "") reason = "No reason provided";
-            
+
             int mediaId;
             if (!int.TryParse(id, out mediaId))
             {
@@ -174,7 +172,7 @@ namespace XiboClient.Logic
                     using (StreamReader sr = new StreamReader(fileStream))
                     {
                         string listed = sr.ReadToEnd();
-                        
+
                         return listed.Contains(String.Format("[{0}]", fileId));
                     }
                 }

@@ -18,17 +18,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Security.Cryptography;
-using System.IO;
-using System.Text;
-using System.Windows.Forms;
-using System.Xml;
-using System.Xml.Serialization;
-using System.Diagnostics;
-using System.Collections;
 
 namespace XiboClient
 {

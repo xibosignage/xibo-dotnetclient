@@ -18,16 +18,11 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
-using System.IO;
-using System.Security.Cryptography;
-using System.Xml;
 using System.Diagnostics;
-using System.Windows.Forms;
+using System.IO;
+using System.Xml;
 using System.Xml.Serialization;
-using XiboClient.Properties;
 
 /// 17/02/12 Dan Enriched to also manage currently downloading files
 /// 28/02/12 Dan Changed the way RequiredFiles are updated
@@ -105,8 +100,8 @@ namespace XiboClient
 
             foreach (XmlNode file in fileNodes)
             {
-                RequiredFile rf = new RequiredFile(); 
-                
+                RequiredFile rf = new RequiredFile();
+
                 XmlAttributeCollection attributes = file.Attributes;
 
                 rf.FileType = attributes["type"].Value;
@@ -140,7 +135,7 @@ namespace XiboClient
                         rf.Path = rf.Path + ".xlf";
                         rf.SaveAs = rf.Path;
                     }
-                    
+
                     rf.ChunkSize = rf.Size;
                 }
                 else if (rf.FileType == "resource")
@@ -155,7 +150,7 @@ namespace XiboClient
                         rf.MediaId = attributes["mediaid"].Value;
                         rf.Path = rf.MediaId + ".htm";
                         rf.SaveAs = rf.Path;
-                        
+
                         // Set the size to something arbitary
                         rf.Size = 10000;
 

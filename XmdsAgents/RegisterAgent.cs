@@ -18,14 +18,11 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using System.Diagnostics;
-using XiboClient.Log;
+using System.Net;
+using System.Threading;
 using System.Xml;
 using XiboClient.Logic;
-using System.Net;
 
 namespace XiboClient.XmdsAgents
 {
@@ -107,7 +104,7 @@ namespace XiboClient.XmdsAgents
                             // Have we been asked to move CMS instance?
                             // CMS MOVE
                             // --------
-                            if (!string.IsNullOrEmpty(ApplicationSettings.Default.NewCmsAddress) 
+                            if (!string.IsNullOrEmpty(ApplicationSettings.Default.NewCmsAddress)
                                 && !string.IsNullOrEmpty(ApplicationSettings.Default.NewCmsKey)
                                 && ApplicationSettings.Default.NewCmsAddress != ApplicationSettings.Default.ServerUri
                                 )
@@ -215,7 +212,7 @@ namespace XiboClient.XmdsAgents
                 // Load the result into an XML document
                 XmlDocument result = new XmlDocument();
                 result.LoadXml(xml);
-                
+
                 // Test the XML
                 if (result.DocumentElement.Attributes["code"].Value == "READY")
                 {

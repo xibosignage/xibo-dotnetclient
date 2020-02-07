@@ -1,9 +1,6 @@
 ﻿using EmbedIO;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using XiboClient.Log;
 
@@ -56,7 +53,7 @@ namespace XiboClient.Control
                     // Wait
                     _manualReset.WaitOne();
                 }
-                
+
                 Trace.WriteLine(new LogMessage("EmbeddedServer - Run", "Server Stopped"), LogType.Info.ToString());
             }
             catch (Exception e)

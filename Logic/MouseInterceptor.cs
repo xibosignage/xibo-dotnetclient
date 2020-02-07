@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Drawing;
-using System.Windows;
 
 namespace XiboClient.Logic
 {
@@ -15,7 +13,7 @@ namespace XiboClient.Logic
     {
         private static LowLevelMouseProc _proc = HookCallback;
         private static IntPtr _hookID = IntPtr.Zero;
-        
+
         private static MouseInterceptor s_instance = null;
         // The KeyPressed Event
         public event MouseInterceptorEventHandler MouseEvent;

@@ -1,19 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Xml;
 using XiboClient.Logic;
 using XiboClient.Stats;
@@ -34,6 +23,11 @@ namespace XiboClient.Rendering
         /// Has this Region Expired?
         /// </summary>
         public bool IsExpired = false;
+
+        /// <summary>
+        /// This Regions zIndex
+        /// </summary>
+        public int ZIndex { get; set; }
 
         /// <summary>
         /// The Region Options
@@ -66,6 +60,7 @@ namespace XiboClient.Rendering
         public Region()
         {
             InitializeComponent();
+            ZIndex = 0;
         }
 
         public void loadFromOptions(RegionOptions options)
@@ -571,35 +566,21 @@ namespace XiboClient.Rendering
                     media = new Image(options);
                     break;
 
-                /*case "powerpoint":
+                case "powerpoint":
                     options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                     media = new PowerPoint(options);
-                    break;*/
-
-                /*case "video":
-                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
-
-                    // Which video engine are we using?
-                    if (ApplicationSettings.Default.VideoRenderingEngine == "DirectShow")
-                        media = new VideoDS(options);
-                    else
-                        media = new Video(options);
-
                     break;
 
+                case "video":
                 case "localvideo":
-                    // Which video engine are we using?
-                    if (ApplicationSettings.Default.VideoRenderingEngine == "DirectShow")
-                        media = new VideoDS(options);
-                    else
-                        media = new Video(options);
-
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Video(options);
                     break;
 
                 case "audio":
                     options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                     media = new Audio(options);
-                    break;*/
+                    break;
 
                 case "datasetview":
                 case "embedded":
@@ -610,14 +591,14 @@ namespace XiboClient.Rendering
 
                     break;
 
-                /*case "flash":
+                case "flash":
                     options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
                     media = new Flash(options);
                     break;
 
                 case "shellcommand":
                     media = new ShellCommand(options);
-                    break;*/
+                    break;
 
                 case "htmlpackage":
                     media = WebMedia.GetConfiguredWebMedia(options);
@@ -790,12 +771,21 @@ namespace XiboClient.Rendering
             Trace.WriteLine(new LogMessage("Region - DurationElapsedEvent", string.Format("Media Elapsed: {0}", this.options.uri)), LogType.Audit.ToString());
 
             if (filesPlayed > 1)
+            {
                 // Increment the _current sequence by the number of filesPlayed (minus 1)
                 this.currentSequence = this.currentSequence + (filesPlayed - 1);
+            }
 
             // If this layout has been expired we know that everything will soon be torn down, so do nothing
             if (IsLayoutExpired)
+            {
                 return;
+            }
+
+            // TODO:
+            // Animate out at this point if we need to
+            // the result of the animate out complete event should then move us on.
+            // this.currentMedia.TransitionOut();
 
             // make some decisions about what to do next
             try

@@ -20,13 +20,9 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using XiboClient.Properties;
 using System.Diagnostics;
-using System.Xml;
-using XiboClient.Log;
 using System.IO;
+using System.Threading;
 
 /// 09/04/12 Dan Created
 
@@ -110,14 +106,14 @@ namespace XiboClient.XmdsAgents
 
                         // Build a list of files in the library
                         DirectoryInfo directory = new DirectoryInfo(ApplicationSettings.Default.LibraryPath);
-                        
+
                         // Check each one and see if it is in required files
                         foreach (FileInfo fileInfo in directory.GetFiles())
                         {
                             // Never delete certain system files
                             // Also do not delete log/stat files as they are managed by their respective agents
-                            if (_persistentFiles.Contains(fileInfo.Name) || 
-                                fileInfo.Name.Contains(ApplicationSettings.Default.LogLocation) || 
+                            if (_persistentFiles.Contains(fileInfo.Name) ||
+                                fileInfo.Name.Contains(ApplicationSettings.Default.LogLocation) ||
                                 fileInfo.Name.Contains(ApplicationSettings.Default.StatsLogFile)
                                 )
                                 continue;

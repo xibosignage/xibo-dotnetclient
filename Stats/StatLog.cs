@@ -18,14 +18,10 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
-using System.IO;
-using System.Xml;
 using System.Diagnostics;
-using System.Threading;
-using System.Net;
+using System.IO;
+using System.Text;
 
 namespace XiboClient.Stats
 {
@@ -51,7 +47,7 @@ namespace XiboClient.Stats
         /// <param name="stat"></param>
         public void RecordStat(Stat stat)
         {
-            if (!ApplicationSettings.Default.StatsEnabled || !stat.isEnabled) 
+            if (!ApplicationSettings.Default.StatsEnabled || !stat.isEnabled)
                 return;
 
             Debug.WriteLine(String.Format("Recording a Stat Record. Current Count = {0}", _stats.Count.ToString()), LogType.Audit.ToString());
@@ -75,7 +71,7 @@ namespace XiboClient.Stats
             Debug.WriteLine(new LogMessage("Flush", String.Format("IN")), LogType.Audit.ToString());
 
             // Determine if there is anything to flush
-            if (_stats.Count < 1) 
+            if (_stats.Count < 1)
                 return;
 
             // Flush to File

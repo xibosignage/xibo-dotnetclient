@@ -19,14 +19,11 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using XiboClient.Properties;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Mime;
+using System.Text;
+using System.Threading;
 
 namespace XiboClient.XmdsAgents
 {
@@ -111,7 +108,7 @@ namespace XiboClient.XmdsAgents
         /// </summary>
         public FileAgent()
         {
-            
+
         }
 
         /// <summary>

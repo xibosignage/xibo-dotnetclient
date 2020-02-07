@@ -18,18 +18,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using XiboClient.Properties;
 using System.Diagnostics;
-using System.Xml;
-using XiboClient.Log;
-using System.Net;
 using System.Globalization;
 using System.IO;
-using Newtonsoft.Json;
+using System.Net;
+using System.Text;
+using System.Threading;
+using System.Xml;
+using XiboClient.Log;
 
 /// 17/02/12 Dan Created
 /// 20/02/12 Dan Added ClientInfo
@@ -136,7 +135,7 @@ namespace XiboClient.XmdsAgents
                 {
                     // Run the schedule Agent thread
                     scheduleAgent();
-                
+
                     if (ApplicationSettings.Default.InDownloadWindow)
                     {
                         try
@@ -360,7 +359,7 @@ namespace XiboClient.XmdsAgents
                         break;
                     }
                 }
-                
+
                 writer.WriteEndObject();
 
                 // Report

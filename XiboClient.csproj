@@ -129,11 +129,15 @@
     <Compile Include="Log\ClientInfoTraceListener.cs" />
     <Compile Include="Log\LogMessage.cs" />
     <Compile Include="Rendering\Audio.cs" />
+    <Compile Include="Rendering\Flash.cs" />
     <Compile Include="Rendering\Image.cs" />
     <Compile Include="Rendering\Media.xaml.cs">
       <DependentUpon>Media.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Rendering\PowerPoint.cs" />
+    <Compile Include="Rendering\ShellCommand.cs" />
     <Compile Include="Rendering\Transitions.cs" />
+    <Compile Include="Rendering\Video.cs" />
     <Compile Include="Rendering\WebCef.cs" />
     <Compile Include="Rendering\WebIe.cs" />
     <Compile Include="Rendering\WebMedia.cs" />
@@ -230,7 +234,6 @@
   <ItemGroup>
     <Resource Include="default.config.xml" />
     <Resource Include="new-icon.ico" />
-    <Content Include="Resources\HtmlTemplate.htm" />
     <Resource Include="Resources\licence.txt" />
     <Resource Include="Resources\logo.png" />
     <Resource Include="Resources\splash.jpg" />

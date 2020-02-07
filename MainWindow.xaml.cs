@@ -19,40 +19,23 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data;
-using System.Xml;
-using System.Net;
-using System.IO;
-using System.Xml.Serialization;
 using System.Diagnostics;
-using XiboClient.Log;
-using System.Threading;
-using XiboClient.Properties;
-using System.Globalization;
-using XiboClient.Logic;
-using XiboClient.Error;
-using System.Drawing.Imaging;
+using System.IO;
+using System.Net;
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using System.Windows.Threading;
+using XiboClient.Error;
+using XiboClient.Log;
+using XiboClient.Logic;
 using XiboClient.Rendering;
 using XiboClient.Stats;
-using System.Windows.Media.Animation;
 
 namespace XiboClient
 {
@@ -207,7 +190,7 @@ namespace XiboClient
             Loaded += MainWindow_Loaded;
             Closing += MainForm_FormClosing;
             ContentRendered += MainForm_Shown;
-            
+
             // Define the hotkey
             /*Keys key;
             try
@@ -596,13 +579,16 @@ namespace XiboClient
         /// <param name="e"></param>
         void splashScreenTimer_Tick(object sender, EventArgs e)
         {
-            Debug.WriteLine(new LogMessage("timer_Tick", "Loading next layout after splashscreen"));
-
             DispatcherTimer timer = (DispatcherTimer)sender;
             timer.Stop();
 
-            // Put the next Layout up
-            _schedule.NextLayout();
+            if (_showingSplash)
+            {
+                Debug.WriteLine(new LogMessage("timer_Tick", "Loading next layout after splashscreen"));
+
+                // Put the next Layout up
+                _schedule.NextLayout();
+            }
         }
 
         /// <summary>
@@ -620,7 +606,7 @@ namespace XiboClient
             }
             else
             {
-                try 
+                try
                 {
                     // Construct a new Current Layout
                     Layout layout = new Layout();
@@ -688,7 +674,10 @@ namespace XiboClient
         /// </summary>
         private void RemoveSplashScreen()
         {
-            this.Scene.Children.Remove(this.splashScreen);
+            if (this.splashScreen != null)
+            {
+                this.Scene.Children.Remove(this.splashScreen);
+            }
 
             // We've removed it
             this._showingSplash = false;
@@ -860,7 +849,7 @@ namespace XiboClient
                         OverlayScene.Children.Add(layout);
 
                         // Start
-                        currentLayout.Start();
+                        layout.Start();
                     }
                     catch (DefaultLayoutException)
                     {
@@ -929,9 +918,9 @@ namespace XiboClient
         /// <param name="e"></param>
         private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
         {
-            Trace.WriteLine(new LogMessage("SystemEvents_DisplaySettingsChanged", 
-                "Display Settings have changed, resizing the Player window and moving on to the next Layout. W=" 
-                + SystemParameters.PrimaryScreenWidth.ToString() + ", H=" 
+            Trace.WriteLine(new LogMessage("SystemEvents_DisplaySettingsChanged",
+                "Display Settings have changed, resizing the Player window and moving on to the next Layout. W="
+                + SystemParameters.PrimaryScreenWidth.ToString() + ", H="
                 + SystemParameters.PrimaryScreenHeight.ToString()), LogType.Info.ToString());
 
             // Reassert the size of our client (should resize if necessary)

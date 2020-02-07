@@ -2,8 +2,6 @@
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace XiboClient.Logic

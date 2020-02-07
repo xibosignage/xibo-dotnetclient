@@ -19,21 +19,14 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Security.Cryptography;
-using System.IO;
-using System.Text;
-using System.Xml;
-using System.Xml.Serialization;
 using System.Diagnostics;
-using XiboClient.XmdsAgents;
 using System.Threading;
-using XiboClient.Properties;
-using XiboClient.Log;
-using XiboClient.Logic;
 using XiboClient.Action;
 using XiboClient.Control;
+using XiboClient.Log;
+using XiboClient.Logic;
+using XiboClient.XmdsAgents;
 
 namespace XiboClient
 {
@@ -166,7 +159,7 @@ namespace XiboClient
             // Library Agent
             _libraryAgent = new LibraryAgent();
             _libraryAgent.CurrentCacheManager = CacheManager.Instance;
-            
+
             // Create a thread for the Library Agent to run in - but dont start it up yet.
             _libraryAgentThread = new Thread(new ThreadStart(_libraryAgent.Run));
             _libraryAgentThread.Name = "LibraryAgent";
@@ -195,7 +188,7 @@ namespace XiboClient
         /// <summary>
         /// Initialize the Schedule components
         /// </summary>
-        public void InitializeComponents() 
+        public void InitializeComponents()
         {
             // Start the RegisterAgent thread
             _registerAgentThread.Start();
@@ -285,7 +278,7 @@ namespace XiboClient
                 Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over 5 minutes ago."), LogType.Audit.ToString());
             }
         }
-        
+
         /// <summary>
         /// Are all the required agent threads alive?
         /// </summary>
@@ -330,7 +323,8 @@ namespace XiboClient
                     {
                         _scheduleManager.ReplaceLayoutChangeActions(((LayoutChangePlayerAction)action));
                     }
-                    else {
+                    else
+                    {
                         _scheduleManager.AddLayoutChangeAction(((LayoutChangePlayerAction)action));
                     }
 
@@ -450,7 +444,7 @@ namespace XiboClient
             // Raise the event
             ScheduleChangeEvent(_layoutSchedule[_currentLayout].layoutFile, _layoutSchedule[_currentLayout].scheduleid, _layoutSchedule[_currentLayout].id);
         }
-        
+
         /// <summary>
         /// The number of active layouts in the current schedule
         /// </summary>

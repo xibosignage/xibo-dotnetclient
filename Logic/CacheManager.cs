@@ -19,14 +19,11 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
-using System.IO;
-using System.Windows.Forms;
-using System.Xml.Serialization;
 using System.Diagnostics;
+using System.IO;
 using System.Xml;
+using System.Xml.Serialization;
 
 namespace XiboClient
 {
@@ -108,7 +105,7 @@ namespace XiboClient
                         Remove(path);
 
                         Add(path, md5);
-                        
+
                         // Return the new MD5
                         return md5;
                     }
@@ -138,7 +135,7 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("CalcMD5", "Unable to calc the MD5 because: " + ex.Message), LogType.Error.ToString());
-                
+
                 // Return a 0 MD5 which will immediately invalidate the file
                 return "0";
             }

@@ -19,20 +19,10 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
 namespace XiboClient.Rendering
@@ -52,6 +42,11 @@ namespace XiboClient.Rendering
         protected int _filesPlayed = 1;
 
         /// <summary>
+        /// The Id of this Media
+        /// </summary>
+        public string Id { get; set; }
+
+        /// <summary>
         /// Gets or Sets the duration of this media. Will be 0 if ""
         /// </summary>
         public int Duration { get; set; }
@@ -65,7 +60,15 @@ namespace XiboClient.Rendering
         protected DispatcherTimer _timer;
         private bool _timerStarted = false;
 
-        protected bool IsRenderCalled { get; set; }
+        /// <summary>
+        /// The Intended Width of this Media
+        /// </summary>
+        public int WidthIntended { get { return options.width; } }
+        
+        /// <summary>
+        /// The Intended Height of this Media
+        /// </summary>
+        public int HeightIntended { get { return options.width; } }
 
         /// <summary>
         /// The Region Options
@@ -78,6 +81,7 @@ namespace XiboClient.Rendering
 
             // Store the options.
             this.options = options;
+            this.Id = options.mediaid;
         }
 
         /// <summary>
@@ -172,7 +176,7 @@ namespace XiboClient.Rendering
         /// Is a region size change required
         /// </summary>
         /// <returns></returns>
-        public virtual bool RegionSizeChangeRequired()
+        public bool RegionSizeChangeRequired()
         {
             return false;
         }
@@ -181,7 +185,7 @@ namespace XiboClient.Rendering
         /// Get Region Size
         /// </summary>
         /// <returns></returns>
-        public virtual Size GetRegionSize()
+        public Size GetRegionSize()
         {
             return new Size(Width, Height);
         }
@@ -190,31 +194,47 @@ namespace XiboClient.Rendering
         /// Get Region Location
         /// </summary>
         /// <returns></returns>
-        public virtual Point GetRegionLocation()
+        public Point GetRegionLocation()
         {
             return new Point(this.options.top, this.options.left);
         }
 
-        public void transitionIn()
+        public void TransitionIn()
         {
-            /*if (this.options.tr != null)
+            DoubleAnimation animation = new DoubleAnimation
             {
+                From = 0,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(1500)
+            };
+            BeginAnimation(OpacityProperty, animation);
+
+            /*string transIn = this.options.Dictionary.Get("transIn");
+            if (!string.IsNullOrEmpty(transIn))
+            {
+                switch (transIn)
+                {
+                    case "fadeIn":
+
+                }
                 Transitions.MoveAnimation(medaiElemnt, OpacityProperty, transIn, transInDirection, transInDuration, "in", _top, _left);
-            }   */         
+            } else
+            {
+                return null;
+            }*/
         }
 
-        public void transitionOut()
+        public void TransitionOut()
         {
-            /*if (transOut != null)
+            // Transition out?
+            DoubleAnimation animation = new DoubleAnimation
             {
-                var timerTransition = new DispatcherTimer { Interval = TimeSpan.FromSeconds(transOutStartTime) };
-                timerTransition.Start();
-                timerTransition.Tick += (sender1, args) =>
-                {
-                    timerTransition.Stop();
-                    Transitions.MoveAnimation(medaiElemnt, OpacityProperty, transOut, transOutDirection, transOutDuration, "out", _top, _left);
-                };
-            }*/
+                From = 1,
+                To = 0,
+                Duration = TimeSpan.FromMilliseconds(1500)
+            };
+            //animation.Completed += Animation_Completed;
+            BeginAnimation(OpacityProperty, animation);
         }
     }
 }

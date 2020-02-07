@@ -18,12 +18,9 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using System.Diagnostics;
-using System.Threading;
 using System.Security;
+using System.Threading;
+using System.Xml;
 
 namespace XiboClient
 {

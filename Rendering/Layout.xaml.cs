@@ -25,18 +25,9 @@ using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Xml;
 using XiboClient.Stats;
 
@@ -64,7 +55,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Regions for this Layout
         /// </summary>
-        private Collection<Region> _regions;
+        private List<Region> _regions;
 
         /// <summary>
         /// Last updated time of this Layout
@@ -81,14 +72,13 @@ namespace XiboClient.Rendering
         /// Event to signify that this Layout's duration has elapsed
         /// </summary>
         public delegate void DurationElapsedDelegate();
-        public event DurationElapsedDelegate DurationElapsedEvent;
 
         public Layout()
         {
             InitializeComponent();
 
             // Create a new empty collection of Regions
-            _regions = new Collection<Region>();
+            _regions = new List<Region>();
         }
 
         /// <summary>
@@ -315,6 +305,12 @@ namespace XiboClient.Rendering
 
                 Region temp = new Region();
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(Region_DurationElapsedEvent);
+                
+                // ZIndex
+                if (nodeAttibutes["zindex"] != null)
+                {
+                    temp.ZIndex = int.Parse(nodeAttibutes["zindex"].Value);
+                }
 
                 Debug.WriteLine("Created new region", "MainForm - Prepare Layout");
 
@@ -323,11 +319,18 @@ namespace XiboClient.Rendering
 
                 // Add to our list of Regions
                 _regions.Add(temp);
-                
-                // Add this Region to our Scene
-                LayoutScene.Children.Add(temp);
 
                 Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
+            }
+
+            // Order all Regions by their ZIndex
+            _regions.Sort((l, r) => l.ZIndex < r.ZIndex ? -1 : 1);
+
+            // Add all Regions to the Scene
+            foreach (Region temp in _regions)
+            {
+                // Add this Region to our Scene
+                LayoutScene.Children.Add(temp);
             }
 
             // Null stuff

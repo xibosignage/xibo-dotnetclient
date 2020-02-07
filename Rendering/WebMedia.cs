@@ -19,14 +19,10 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace XiboClient.Rendering
 {
@@ -316,22 +312,7 @@ namespace XiboClient.Rendering
                     string cachedFile = e.Result;
 
                     // Handle the background
-                    /*String bodyStyle;
-                    String backgroundColor = _options.Dictionary.Get("backgroundColor", _options.backgroundColor);
-
-                    if (_options.backgroundImage == null || _options.backgroundImage == "")
-                    {
-                        bodyStyle = "background-color:" + backgroundColor + " ;";
-                    }
-                    else
-                    {
-                        bodyStyle = "background-image: url('" + _options.backgroundImage + "'); background-attachment:fixed; background-color:" + backgroundColor + "; background-repeat: no-repeat; background-position: " + _options.backgroundLeft + "px " + _options.backgroundTop + "px;";
-                    }*/
-
-                    string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body { background: transparent; }</style><!--END_STYLE_ADJUST--></head>");
-                    html = html.Replace("[[ViewPortWidth]]", Width.ToString());
-                    html += "<!--VIEWPORT=" + Width.ToString() + "x" + Height.ToString() + "-->";
-                    html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
+                    string html = MakeHtmlSubstitutions(cachedFile);
 
                     // Comment in to write out the update date at the end of the file (in the body)
                     // This is useful if you want to check how frequently the file is updating
@@ -396,11 +377,9 @@ namespace XiboClient.Rendering
                 cachedFile = Regex.Replace(cachedFile, "<meta name=\"viewport\" content=\"width=(.*)\" />", "<meta name=\"viewport\" content=\"width=[[ViewPortWidth]]\" />");
                 cachedFile = Regex.Replace(cachedFile, "<!--VIEWPORT=(.*)-->", "");
                 cachedFile = Regex.Replace(cachedFile, "<!--CACHEDATE=(.*)-->", "");
-
-                string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body { background: transparent; }</style><!--END_STYLE_ADJUST--></head>");
-                html = html.Replace("[[ViewPortWidth]]", Width.ToString());
-                html += "<!--VIEWPORT=" + Width.ToString() + "x" + Height.ToString() + "-->";
-                html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
+                
+                /// File should be back to its original form, ready to run through the subs again
+                string html = MakeHtmlSubstitutions(cachedFile);
 
                 // Write to the library
                 using (FileStream fileStream = File.Open(_filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
@@ -413,6 +392,13 @@ namespace XiboClient.Rendering
                 }
             }
         }
+
+        /// <summary>
+        /// Make Substitutions to the Cached File
+        /// </summary>
+        /// <param name="cachedFile"></param>
+        /// <returns></returns>
+        protected abstract string MakeHtmlSubstitutions(string cachedFile);
 
         /// <summary>
         /// Pulls the duration out of the temporary file and sets the media Duration to the same

@@ -1,12 +1,27 @@
-﻿using CefSharp.Wpf;
+﻿/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+using CefSharp.Wpf;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Threading;
+using System.Windows.Media.Animation;
 
 namespace XiboClient.Rendering
 {
@@ -79,6 +94,8 @@ namespace XiboClient.Rendering
             {
                 // Show the browser after some time
                 webView.Visibility = System.Windows.Visibility.Visible;
+
+                //this.TransitionIn();
             }
         }
 
@@ -110,6 +127,21 @@ namespace XiboClient.Rendering
             this.webView.Dispose();
 
             base.Stop();
+        }
+
+        /// <summary>
+        /// Override for Make File Substitutions
+        /// For CEF we set Background to Transparent
+        /// </summary>
+        /// <param name="cachedFile"></param>
+        /// <returns></returns>
+        protected override string MakeHtmlSubstitutions(string cachedFile)
+        {
+            string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body { background: transparent; }</style><!--END_STYLE_ADJUST--></head>");
+            html = html.Replace("[[ViewPortWidth]]", WidthIntended.ToString());
+            html += "<!--VIEWPORT=" + WidthIntended.ToString() + "x" + HeightIntended.ToString() + "-->";
+            html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
+            return html;
         }
     }
 }
