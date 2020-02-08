@@ -340,7 +340,7 @@ namespace XiboClient
         {
             get
             {
-                if (_libraryPath == "DEFAULT")
+                if (string.IsNullOrEmpty(_libraryPath) || _libraryPath == "DEFAULT")
                 {
                     // Get the users document space for a library
                     _libraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + GetProductNameFromAssembly() + " Library";
