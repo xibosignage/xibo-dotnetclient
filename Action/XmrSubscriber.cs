@@ -240,7 +240,7 @@ namespace XiboClient.Logic
 
                 case "screenShot":
                     ScreenShot.TakeAndSend();
-                    ClientInfo.Instance.notifyStatusToXmds();
+                    ClientInfo.Instance.NotifyStatusToXmds();
                     break;
 
                 default:

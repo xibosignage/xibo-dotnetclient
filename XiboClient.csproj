@@ -109,6 +109,9 @@
     <Compile Include="Control\EmbeddedServer.cs" />
     <Compile Include="Control\WatchDogManager.cs" />
     <Compile Include="Error\DefaultLayoutException.cs" />
+    <Compile Include="InfoScreen.xaml.cs">
+      <DependentUpon>InfoScreen.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Logic\ApplicationSettings.cs" />
     <Compile Include="Logic\BlackList.cs" />
     <Compile Include="Logic\CacheManager.cs" />
@@ -127,6 +130,7 @@
     <Compile Include="Logic\ScreenShot.cs" />
     <Compile Include="Log\ClientInfo.cs" />
     <Compile Include="Log\ClientInfoTraceListener.cs" />
+    <Compile Include="Log\ConcurrentCircularBuffer.cs" />
     <Compile Include="Log\LogMessage.cs" />
     <Compile Include="Rendering\Audio.cs" />
     <Compile Include="Rendering\Flash.cs" />
@@ -164,6 +168,10 @@
     <Compile Include="XmdsAgents\RegisterAgent.cs" />
     <Compile Include="XmdsAgents\ScheduleAgent.cs" />
     <Compile Include="XmdsAgents\ScheduleAndFilesAgent.cs" />
+    <Page Include="InfoScreen.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

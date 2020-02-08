@@ -212,7 +212,7 @@ namespace XiboClient
                             _lastScreenShotDate = DateTime.Now;
 
                             // Notify status to XMDS
-                            ClientInfo.Instance.notifyStatusToXmds();
+                            ClientInfo.Instance.NotifyStatusToXmds();
                         }
 
                         // Run any commands that occur in the next 10 seconds.

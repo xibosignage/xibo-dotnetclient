@@ -1,4 +1,24 @@
-﻿using Newtonsoft.Json;
+﻿/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -27,6 +47,11 @@ namespace XiboClient.Log
         public string RequiredFilesStatus;
 
         /// <summary>
+        /// Set the required files List
+        /// </summary>
+        public string RequiredFilesList;
+
+        /// <summary>
         /// Set the schedule manager status
         /// </summary>
         public string ScheduleManagerStatus;
@@ -47,26 +72,21 @@ namespace XiboClient.Log
         public int ControlCount;
 
         /// <summary>
-        /// The title
+        /// What is currently playing
         /// </summary>
-        private string Title;
+        public string CurrentlyPlaying { get; set; }
+
+        /// <summary>
+        /// Log messages
+        /// </summary>
+        public ConcurrentCircularBuffer LogMessages;
 
         /// <summary>
         /// Client Info Object
         /// </summary>
         private ClientInfo()
         {
-            // Put the XMDS url on the title window
-            Title = "Player Information and Status - " + ApplicationSettings.Default.ServerUri;
-        }
-
-        /// <summary>
-        /// Sets the currently playing layout name
-        /// </summary>
-        /// <param name="layoutName"></param>
-        public void SetCurrentlyPlaying(string layoutName)
-        {
-            Title = "Client Information and Status - " + ApplicationSettings.Default.ServerUri + " - Currently Showing: " + layoutName;
+            this.LogMessages = new ConcurrentCircularBuffer(10);
         }
 
         /// <summary>
@@ -75,20 +95,7 @@ namespace XiboClient.Log
         /// <param name="message"></param>
         public void AddToLogGrid(string message, LogType logType)
         {
-            /*if (InvokeRequired)
-            {
-                BeginInvoke(new AddLogMessage(AddToLogGrid), new object[] { message, logType });
-                return;
-            }
-
-            // Prevent the log grid getting too large (clear at 500 messages)
-            if (logDataGridView.RowCount > 500)
-                logDataGridView.Rows.Clear();
-
-            int newRow = logDataGridView.Rows.Add();
-
             LogMessage logMessage;
-
             try
             {
                 logMessage = new LogMessage(message);
@@ -98,11 +105,7 @@ namespace XiboClient.Log
                 logMessage = new LogMessage("Unknown", message);
             }
 
-            logDataGridView.Rows[newRow].Cells[0].Value = logMessage._thread;
-            logDataGridView.Rows[newRow].Cells[1].Value = logMessage.LogDate.ToString();
-            logDataGridView.Rows[newRow].Cells[2].Value = logType.ToString();
-            logDataGridView.Rows[newRow].Cells[3].Value = logMessage._method;
-            logDataGridView.Rows[newRow].Cells[4].Value = logMessage._message;*/
+            this.LogMessages.Put(logMessage);
         }
 
         /// <summary>
@@ -110,7 +113,7 @@ namespace XiboClient.Log
         /// </summary>
         public void UpdateRequiredFiles(string requiredFilesString)
         {
-            RequiredFilesStatus = requiredFilesString;
+            RequiredFilesList = requiredFilesString;
         }
 
         /// <summary>
@@ -129,7 +132,10 @@ namespace XiboClient.Log
             }
         }
 
-        public void notifyStatusToXmds()
+        /// <summary>
+        /// Notify Status to XMDS
+        /// </summary>
+        public void NotifyStatusToXmds()
         {
             try
             {

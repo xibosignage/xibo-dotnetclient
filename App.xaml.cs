@@ -50,20 +50,12 @@ namespace XiboClient
                             // Preview the screen saver
                             case "/p":
                                 // args[1] is the handle to the preview window
-                                KeyInterceptor.SetHook();
-                                MouseInterceptor.SetHook();
                                 RunClient(new IntPtr(long.Parse(e.Args[1])));
-                                KeyInterceptor.UnsetHook();
-                                MouseInterceptor.UnsetHook();
                                 break;
 
                             // Show the screen saver
                             case "/s":
-                                KeyInterceptor.SetHook();
-                                MouseInterceptor.SetHook();
                                 RunClient(true);
-                                KeyInterceptor.UnsetHook();
-                                MouseInterceptor.UnsetHook();
                                 break;
 
                             // Configure the screesaver's settings
@@ -74,11 +66,7 @@ namespace XiboClient
 
                             // Show the screen saver
                             default:
-                                KeyInterceptor.SetHook();
-                                MouseInterceptor.SetHook();
                                 RunClient(true);
-                                KeyInterceptor.UnsetHook();
-                                MouseInterceptor.UnsetHook();
                                 break;
                         }
                     }
@@ -98,13 +86,6 @@ namespace XiboClient
             Trace.Flush();
         }
 
-        private static void RunClient()
-        {
-            Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
-            MainWindow windowMain = new MainWindow();
-            windowMain.ShowDialog();
-        }
-
         private static void RunSettings()
         {
             // If we are showing the options form, enable visual styles
@@ -112,11 +93,42 @@ namespace XiboClient
             windowMain.ShowDialog();
         }
 
+        /// <summary>
+        /// Run the Player
+        /// </summary>
+        private static void RunClient()
+        {
+            RunClient(false);
+        }
+
+        /// <summary>
+        /// Run the Player
+        /// </summary>
+        /// <param name="screenSaver"></param>
         private static void RunClient(bool screenSaver)
         {
             Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
+
+            KeyInterceptor.SetHook();
+            if (screenSaver)
+            {
+                MouseInterceptor.SetHook();
+            }
+
+            MainWindow windowMain = new MainWindow(screenSaver);
+            windowMain.ShowDialog();
+
+            KeyInterceptor.UnsetHook();
+            if (screenSaver)
+            {
+                MouseInterceptor.UnsetHook();
+            }
         }
 
+        /// <summary>
+        /// Run the Player
+        /// </summary>
+        /// <param name="previewWindow"></param>
         private static void RunClient(IntPtr previewWindow)
         {
             Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());

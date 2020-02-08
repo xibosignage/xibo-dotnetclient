@@ -26,13 +26,13 @@ namespace XiboClient
 {
     public class LogMessage
     {
-        public string _thread;
-        public string _method;
-        public string _message;
-        public int _scheduleId;
-        public int _layoutId;
-        public int _mediaId;
-        public DateTime LogDate;
+        public string _thread { get; set; }
+        public string _method { get; set; }
+        public string _message { get; set; }
+        public int _scheduleId { get; set; }
+        public int _layoutId { get; set; }
+        public int _mediaId { get; set; }
+        public DateTime LogDate { get; set; }
 
         public LogMessage(String method, String message)
         {

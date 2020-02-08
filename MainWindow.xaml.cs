@@ -26,6 +26,7 @@ using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -79,6 +80,11 @@ namespace XiboClient
         /// <param name="layoutPath"></param>
         private delegate void ChangeToNextLayoutDelegate(string layoutPath);
         private delegate void ManageOverlaysDelegate(Collection<ScheduleItem> overlays);
+
+        /// <summary>
+        /// The InfoScreen
+        /// </summary>
+        private InfoScreen infoScreen;
 
         #region DLL Imports
 
@@ -153,12 +159,6 @@ namespace XiboClient
             InitializeXibo();
         }
 
-        public MainWindow()
-        {
-            InitializeComponent();
-            InitializeXibo();
-        }
-
         private void InitializeXibo()
         {
             // Set the title
@@ -183,34 +183,16 @@ namespace XiboClient
             // Show in taskbar
             ShowInTaskbar = ApplicationSettings.Default.ShowInTaskbar;
 
-            // Setup the proxy information
-            OptionsForm.SetGlobalProxy();
-
             // Events
             Loaded += MainWindow_Loaded;
             Closing += MainForm_FormClosing;
             ContentRendered += MainForm_Shown;
 
-            // Define the hotkey
-            /*Keys key;
-            try
-            {
-                key = (Keys)Enum.Parse(typeof(Keys), ApplicationSettings.Default.ClientInformationKeyCode.ToUpper());
-            }
-            catch
-            {
-                // Default back to I
-                key = Keys.I;
-            }
-
-            KeyStore.Instance.AddKeyDefinition("ClientInfo", key, ((ApplicationSettings.Default.ClientInfomationCtrlKey) ? Keys.Control : Keys.None));
-
-            // Register a handler for the key event
-            KeyStore.Instance.KeyPress += Instance_KeyPress;*/
-
             // Trace listener for Client Info
-            ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener(ClientInfo.Instance);
-            clientInfoTraceListener.Name = "ClientInfo TraceListener";
+            ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener
+            {
+                Name = "ClientInfo TraceListener"
+            };
             Trace.Listeners.Add(clientInfoTraceListener);
 
             // Log to disk?
@@ -270,28 +252,35 @@ namespace XiboClient
         /// Handle the Key Event
         /// </summary>
         /// <param name="name"></param>
-        /*void Instance_KeyPress(string name)
+        void Instance_KeyPress(string name)
         {
             Debug.WriteLine("KeyPress " + name);
             if (name == "ClientInfo")
             {
-                // Toggle
-                if (_clientInfoForm.Visible)
+                if (this.infoScreen == null)
                 {
-                    _clientInfoForm.Hide();
+                    this.infoScreen = new InfoScreen();
+                    this.infoScreen.Closed += InfoScreen_Closed;
+                    this.infoScreen.Show();
+
 #if !DEBUG
+                    // Make our window not topmost so that we can see the info screen
                     if (!_screenSaver)
-                        TopMost = true;
+                    {
+                        TopMost = False;
+                    }
 #endif
                 }
                 else
                 {
+                    this.infoScreen.Close();
+
 #if !DEBUG
                     if (!_screenSaver)
-                        TopMost = false;
+                    {
+                        TopMost = true;
+                    }
 #endif
-                    _clientInfoForm.Show();
-                    _clientInfoForm.BringToFront();
                 }
             }
             else if (name == "ScreenSaver")
@@ -302,7 +291,18 @@ namespace XiboClient
 
                 Close();
             }
-        }*/
+        }
+
+        /// <summary>
+        /// InfoScreen Closed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void InfoScreen_Closed(object sender, EventArgs e)
+        {
+            this.infoScreen.Closed -= InfoScreen_Closed;
+            this.infoScreen = null;
+        }
 
         /// <summary>
         /// main window loding event
@@ -328,6 +328,23 @@ namespace XiboClient
 
             // Change the default Proxy class
             OptionsForm.SetGlobalProxy();
+
+            // Define the hotkey
+            Keys key;
+            try
+            {
+                key = (Keys)Enum.Parse(typeof(Keys), ApplicationSettings.Default.ClientInformationKeyCode.ToUpper());
+            }
+            catch
+            {
+                // Default back to I
+                key = Keys.I;
+            }
+
+            KeyStore.Instance.AddKeyDefinition("ClientInfo", key, ((ApplicationSettings.Default.ClientInfomationCtrlKey) ? Keys.Control : Keys.None));
+
+            // Register a handler for the key event
+            KeyStore.Instance.KeyPress += Instance_KeyPress;
 
             // UserApp data
             Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + ApplicationSettings.Default.LibraryPath), LogType.Info.ToString());
@@ -363,7 +380,7 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message, LogType.Error.ToString());
-                MessageBox.Show("Fatal Error initialising the application. " + ex.Message, "Fatal Error");
+                System.Windows.MessageBox.Show("Fatal Error initialising the application. " + ex.Message, "Fatal Error");
                 Close();
             }
         }
@@ -379,7 +396,7 @@ namespace XiboClient
             if (!ApplicationSettings.Default.EnableMouse)
             {
                 // Hide the cursor
-                Mouse.OverrideCursor = Cursors.None;
+                Mouse.OverrideCursor = System.Windows.Input.Cursors.None;
             }
 
             // Move the cursor to the starting place
@@ -507,7 +524,8 @@ namespace XiboClient
                     currentLayout.Start();
 
                     // Update client info
-                    ClientInfo.Instance.CurrentLayoutId = layoutPath;
+                    ClientInfo.Instance.CurrentLayoutId = _layoutId + "";
+                    ClientInfo.Instance.CurrentlyPlaying = layoutPath;
                     _schedule.CurrentLayoutId = _layoutId;
                 }
                 catch (DefaultLayoutException)

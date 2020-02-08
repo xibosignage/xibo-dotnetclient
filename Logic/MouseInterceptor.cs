@@ -43,7 +43,6 @@ namespace XiboClient.Logic
                 if (MouseMessages.WM_LBUTTONDOWN == (MouseMessages)wParam || MouseMessages.WM_MOUSEMOVE == (MouseMessages)wParam)
                 {
                     MSLLHOOKSTRUCT hookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
-                    Console.WriteLine(hookStruct.pt.x + ", " + hookStruct.pt.y);
 
                     if (Math.Abs(_mouseLocation.X - hookStruct.pt.x) > 5 || Math.Abs(_mouseLocation.Y - hookStruct.pt.y) > 5)
                     {
