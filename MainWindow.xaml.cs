@@ -32,6 +32,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using XiboClient.Control;
 using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -209,7 +210,7 @@ namespace XiboClient
                 try
                 {
                     // Update/write the status.json file
-                    File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
+                    File.WriteAllText(System.IO.Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
 
                     // Start watchdog
                     WatchDogManager.Start();
@@ -267,7 +268,7 @@ namespace XiboClient
                     // Make our window not topmost so that we can see the info screen
                     if (!_screenSaver)
                     {
-                        TopMost = False;
+                        Topmost = false;
                     }
 #endif
                 }
@@ -278,7 +279,7 @@ namespace XiboClient
 #if !DEBUG
                     if (!_screenSaver)
                     {
-                        TopMost = true;
+                        Topmost = true;
                     }
 #endif
                 }
@@ -374,7 +375,7 @@ namespace XiboClient
                 // Set this form to topmost
 #if !DEBUG
                 if (!_screenSaver)
-                    TopMost = true;
+                    Topmost = true;
 #endif
             }
             catch (Exception ex)
