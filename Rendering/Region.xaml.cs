@@ -605,6 +605,10 @@ namespace XiboClient.Rendering
                     ((WebMedia)media).ConfigureForHtmlPackage();
                     break;
 
+                case "spacer":
+                    media = new Spacer(options);
+                    break;
+
                 default:
                     if (options.render == "html")
                     {

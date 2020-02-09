@@ -231,12 +231,19 @@ namespace XiboClient
             get
             {
                 PropertyInfo property = GetType().GetProperty(propertyName);
-                return property.GetValue(this, null);
+                return property?.GetValue(this, null);
             }
             set
             {
                 PropertyInfo property = GetType().GetProperty(propertyName);
-                property.SetValue(this, value, null);
+
+                if (property != null)
+                {
+                    property.SetValue(this, value, null);
+                } else
+                {
+                    Debug.WriteLine("Null Property: " + propertyName, "ApplicationSettings");
+                }
             }
         }
 
@@ -257,8 +264,8 @@ namespace XiboClient
                     {
                         Command command = new Command();
                         command.Code = commandNode.Name;
-                        command.CommandString = commandNode.SelectSingleNode("commandString").InnerText;
-                        command.Validation = commandNode.SelectSingleNode("validationString").InnerText;
+                        command.CommandString = XmlHelper.SelectNodeInnerTextOrDefault(commandNode, "commandString", "");
+                        command.Validation = XmlHelper.SelectNodeInnerTextOrDefault(commandNode, "validationString", "");
 
                         commands.Add(command);
                     }

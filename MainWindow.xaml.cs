@@ -150,6 +150,9 @@ namespace XiboClient
 
         public MainWindow(bool screenSaver)
         {
+            // Set the Cache Manager
+            CacheManager.Instance.SetCacheManager();
+
             InitializeComponent();
 
             if (screenSaver)
@@ -316,6 +319,7 @@ namespace XiboClient
             if (!ApplicationSettings.Default.EnableMouse)
             {
                 // Hide the cursor
+                Mouse.OverrideCursor = System.Windows.Input.Cursors.None;
             }
 
             // Move the cursor to the starting place
@@ -349,6 +353,13 @@ namespace XiboClient
 
             // UserApp data
             Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + ApplicationSettings.Default.LibraryPath), LogType.Info.ToString());
+
+            // Initialise CEF
+            CefSharp.Wpf.CefSettings settings = new CefSharp.Wpf.CefSettings();
+            settings.CachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
+            settings.LogFile = ApplicationSettings.Default.LibraryPath + @"\cef.log";
+            settings.LogSeverity = CefSharp.LogSeverity.Error;
+            CefSharp.Cef.Initialize(settings);
         }
 
         /// <summary>
@@ -387,34 +398,6 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// Called before the form has loaded for the first time
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MainForm_Load(object sender, EventArgs e)
-        {
-            // Is the mouse enabled?
-            if (!ApplicationSettings.Default.EnableMouse)
-            {
-                // Hide the cursor
-                Mouse.OverrideCursor = System.Windows.Input.Cursors.None;
-            }
-
-            // Move the cursor to the starting place
-            if (!_screenSaver)
-                SetCursorStartPosition();
-
-            // Show the splash screen
-            ShowSplashScreen();
-
-            // Change the default Proxy class
-            OptionsForm.SetGlobalProxy();
-
-            // UserApp data
-            Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + ApplicationSettings.Default.LibraryPath), LogType.Info.ToString());
-        }
-
-        /// <summary>
         /// Called as the Main Form starts to close
         /// </summary>
         /// <param name="sender"></param>
@@ -427,8 +410,10 @@ namespace XiboClient
             try
             {
                 // Close the client info screen
-                //if (_clientInfoForm != null)
-                //    _clientInfoForm.Hide();
+                if (this.infoScreen != null)
+                {
+                    this.infoScreen.Close();
+                }
 
                 // Stop the schedule object
                 if (_schedule != null)

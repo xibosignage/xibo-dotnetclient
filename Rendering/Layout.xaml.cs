@@ -377,11 +377,11 @@ namespace XiboClient.Rendering
                 {
                     try
                     {
-                        // Remove the region from the list of controls
-                        this.LayoutScene.Children.Remove(region);
-
                         // Clear the region
                         region.Clear();
+
+                        // Remove the region from the list of controls
+                        this.LayoutScene.Children.Remove(region);
                     }
                     catch (Exception e)
                     {
@@ -423,7 +423,8 @@ namespace XiboClient.Rendering
             }
 
             // If we are sure we have expired after checking all regions, then set the layout expired flag on them all
-            if (isExpired)
+            // if we are an overlay, then don't raise this event
+            if (isExpired && !this.isOverlay)
             {
                 // Inform each region that the layout containing it has expired
                 foreach (Region temp in _regions)

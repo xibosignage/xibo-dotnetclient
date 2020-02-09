@@ -21,6 +21,7 @@ using System;
 using System.Security;
 using System.Threading;
 using System.Xml;
+using XiboClient.Logic;
 
 namespace XiboClient
 {
@@ -74,10 +75,10 @@ namespace XiboClient
 
             try
             {
-                LogDate = DateTime.Parse(xml.GetElementsByTagName("logdate").Item(0).InnerText.ToString());
-                _message = xml.GetElementsByTagName("message").Item(0).InnerText.ToString();
-                _method = xml.GetElementsByTagName("method").Item(0).InnerText.ToString();
-                _thread = xml.GetElementsByTagName("thread").Item(0).InnerText.ToString();
+                LogDate = DateTime.Parse(XmlHelper.SelectFirstElementInnerTextOrDefault(xml, "logdate", "1970-01-01"));
+                _message = XmlHelper.SelectFirstElementInnerTextOrDefault(xml, "message", "");
+                _method = XmlHelper.SelectFirstElementInnerTextOrDefault(xml, "method", "");
+                _thread = XmlHelper.SelectFirstElementInnerTextOrDefault(xml, "thread", "");
             }
             catch (NullReferenceException)
             {

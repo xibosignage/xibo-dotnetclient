@@ -65,6 +65,9 @@
     <Prefer32Bit>true</Prefer32Bit>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -129,6 +132,7 @@
     <Compile Include="Logic\ScheduleItem.cs" />
     <Compile Include="Logic\ScheduleManager.cs" />
     <Compile Include="Logic\ScreenShot.cs" />
+    <Compile Include="Logic\XmlHelper.cs" />
     <Compile Include="Log\ClientInfo.cs" />
     <Compile Include="Log\ClientInfoTraceListener.cs" />
     <Compile Include="Log\ConcurrentCircularBuffer.cs" />
@@ -141,6 +145,7 @@
     </Compile>
     <Compile Include="Rendering\PowerPoint.cs" />
     <Compile Include="Rendering\ShellCommand.cs" />
+    <Compile Include="Rendering\Spacer.cs" />
     <Compile Include="Rendering\Transitions.cs" />
     <Compile Include="Rendering\Video.cs" />
     <Compile Include="Rendering\WebCef.cs" />
@@ -221,6 +226,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include=".gitignore" />
+    <None Include="app.manifest" />
     <None Include="CONTRIBUTING.md" />
     <None Include="LICENSE" />
     <None Include="Properties\Settings.settings">

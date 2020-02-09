@@ -21,7 +21,6 @@
 using CefSharp.Wpf;
 using System;
 using System.Diagnostics;
-using System.Windows.Media.Animation;
 
 namespace XiboClient.Rendering
 {
@@ -41,6 +40,8 @@ namespace XiboClient.Rendering
         /// </summary>
         public override void RenderMedia()
         {
+            Debug.WriteLine("Created CEF Renderer for " + this.regionId, "WebCef");
+
             // Create the web view we will use
             webView = new ChromiumWebBrowser()
             {
