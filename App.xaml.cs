@@ -48,8 +48,7 @@ namespace XiboClient
                         {
                             // Preview the screen saver
                             case "/p":
-                                // args[1] is the handle to the preview window
-                                RunClient(new IntPtr(long.Parse(e.Args[1])));
+                                // Do nothing
                                 break;
 
                             // Show the screen saver
@@ -72,7 +71,7 @@ namespace XiboClient
                 }
                 else
                 {
-                    RunClient();
+                    RunClient(true);
                 }
             }
             catch (Exception ex)
@@ -85,6 +84,9 @@ namespace XiboClient
             Trace.Flush();
         }
 
+        /// <summary>
+        /// Run the Settings Window
+        /// </summary>
         private static void RunSettings()
         {
             // If we are showing the options form, enable visual styles
@@ -124,15 +126,7 @@ namespace XiboClient
             }
         }
 
-        /// <summary>
-        /// Run the Player
-        /// </summary>
-        /// <param name="previewWindow"></param>
-        private static void RunClient(IntPtr previewWindow)
-        {
-            Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
-        }
-
+        #region Exception Handlers
         static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
             HandleUnhandledException(e.Exception);
@@ -190,9 +184,6 @@ namespace XiboClient
             Environment.Exit(0);
         }
 
-        [DllImport("User32.dll")]
-        public static extern int ShowWindowAsync(IntPtr hWnd, int swCommand);
-
         internal static class NativeMethods
         {
             [DllImport("kernel32.dll")]
@@ -208,5 +199,7 @@ namespace XiboClient
             SEM_NOGPFAULTERRORBOX = 0x0002,
             SEM_NOOPENFILEERRORBOX = 0x8000
         }
+
+        #endregion
     }
 }

@@ -61,8 +61,7 @@ namespace XiboClient.Control
                 Trace.WriteLine(new LogMessage("EmbeddedServer - Run", "Exception running server: " + e.Message), LogType.Error.ToString());
             }
 
-            if (OnServerClosed != null)
-                OnServerClosed();
+            OnServerClosed?.Invoke();
         }
 
         /// <summary>

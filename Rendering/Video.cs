@@ -19,12 +19,8 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -90,7 +86,8 @@ namespace XiboClient.Rendering
             this.mediaElement = new MediaElement();
             this.mediaElement.Volume = this.volume;
 
-            if (!this.ShouldBeVisible) {
+            if (!this.ShouldBeVisible)
+            {
                 this.mediaElement.Width = 0;
                 this.mediaElement.Height = 0;
                 this.mediaElement.Visibility = Visibility.Hidden;

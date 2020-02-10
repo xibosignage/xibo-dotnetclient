@@ -377,7 +377,7 @@ namespace XiboClient.Rendering
                 cachedFile = Regex.Replace(cachedFile, "<meta name=\"viewport\" content=\"width=(.*)\" />", "<meta name=\"viewport\" content=\"width=[[ViewPortWidth]]\" />");
                 cachedFile = Regex.Replace(cachedFile, "<!--VIEWPORT=(.*)-->", "");
                 cachedFile = Regex.Replace(cachedFile, "<!--CACHEDATE=(.*)-->", "");
-                
+
                 /// File should be back to its original form, ready to run through the subs again
                 string html = MakeHtmlSubstitutions(cachedFile);
 

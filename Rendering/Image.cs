@@ -21,7 +21,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
 namespace XiboClient.Rendering
@@ -90,7 +89,7 @@ namespace XiboClient.Rendering
             };
 
             this.image.Source = new BitmapImage(filePath);
-            
+
             // Handle the different scale types supported
             if (this.scaleType == "stretch")
             {

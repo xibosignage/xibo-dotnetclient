@@ -240,7 +240,8 @@ namespace XiboClient
                 if (property != null)
                 {
                     property.SetValue(this, value, null);
-                } else
+                }
+                else
                 {
                     Debug.WriteLine("Null Property: " + propertyName, "ApplicationSettings");
                 }

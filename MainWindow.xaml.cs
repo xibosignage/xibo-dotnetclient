@@ -28,11 +28,8 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
-using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-using XiboClient.Control;
 using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -101,53 +98,15 @@ namespace XiboClient
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
 
-        // Changes the parent window of the specified child window
-        [DllImport("user32.dll")]
-        private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
-
-        // Changes an attribute of the specified window
-        [DllImport("user32.dll")]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-
-        // Retrieves information about the specified window
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-
-        // Retrieves the coordinates of a window's client area
-        [DllImport("user32.dll")]
-        private static extern bool GetClientRect(IntPtr hWnd, out Rectangle lpRect);
-
         [DllImport("User32.dll")]
         private static extern bool SetCursorPos(int X, int Y);
 
         #endregion
 
-        /*public MainWindow(IntPtr previewHandle)
-        {
-            InitializeComponent();
-
-            // Set the preview window of the screen saver selection 
-            // dialog in Windows as the parent of this form.
-            SetParent(this.Handle, previewHandle);
-
-            // Set this form to a child form, so that when the screen saver selection 
-            // dialog in Windows is closed, this form will also close.
-            SetWindowLong(this.Handle, -16, new IntPtr(GetWindowLong(this.Handle, -16) | 0x40000000));
-
-            // Set the size of the screen saver to the size of the screen saver 
-            // preview window in the screen saver selection dialog in Windows.
-            Rectangle ParentRect;
-            GetClientRect(previewHandle, out ParentRect);
-
-            ApplicationSettings.Default.SizeX = ParentRect.Size.Width;
-            ApplicationSettings.Default.SizeY = ParentRect.Size.Height;
-            ApplicationSettings.Default.OffsetX = 0;
-            ApplicationSettings.Default.OffsetY = 0;
-
-            InitializeScreenSaver(true);
-            InitializeXibo();
-        }*/
-
+        /// <summary>
+        /// Initialise Player
+        /// </summary>
+        /// <param name="screenSaver"></param>
         public MainWindow(bool screenSaver)
         {
             // Set the Cache Manager
@@ -157,12 +116,15 @@ namespace XiboClient
 
             if (screenSaver)
             {
-                InitializeScreenSaver(false);
+                InitializeScreenSaver();
             }
 
             InitializeXibo();
         }
 
+        /// <summary>
+        /// Initialise Xibo
+        /// </summary>
         private void InitializeXibo()
         {
             // Set the title
@@ -234,20 +196,22 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("MainForm", "Player Initialised"), LogType.Info.ToString());
         }
 
-        private void InitializeScreenSaver(bool preview)
+        /// <summary>
+        /// Initialise the Screen Saver
+        /// </summary>
+        private void InitializeScreenSaver()
         {
             _screenSaver = true;
 
             // Configure some listeners for the mouse (to quit)
-            if (!preview)
-            {
-                KeyStore.Instance.ScreenSaver = true;
-
-                MouseInterceptor.Instance.MouseEvent += Instance_MouseEvent;
-            }
+            KeyStore.Instance.ScreenSaver = true;
+            MouseInterceptor.Instance.MouseEvent += Instance_MouseEvent;
         }
 
-        void Instance_MouseEvent()
+        /// <summary>
+        /// Handle Mouse Events
+        /// </summary>
+        private void Instance_MouseEvent()
         {
             Close();
         }
@@ -263,10 +227,6 @@ namespace XiboClient
             {
                 if (this.infoScreen == null)
                 {
-                    this.infoScreen = new InfoScreen();
-                    this.infoScreen.Closed += InfoScreen_Closed;
-                    this.infoScreen.Show();
-
 #if !DEBUG
                     // Make our window not topmost so that we can see the info screen
                     if (!_screenSaver)
@@ -274,12 +234,17 @@ namespace XiboClient
                         Topmost = false;
                     }
 #endif
+
+                    this.infoScreen = new InfoScreen();
+                    this.infoScreen.Closed += InfoScreen_Closed;
+                    this.infoScreen.Show();
                 }
                 else
                 {
                     this.infoScreen.Close();
 
 #if !DEBUG
+                    // Bring the window back to Topmost if we need to
                     if (!_screenSaver)
                     {
                         Topmost = true;
@@ -695,6 +660,8 @@ namespace XiboClient
             Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
 
             this.currentLayout.Remove();
+
+            this.Scene.Children.Remove(this.currentLayout);
         }
 
         /// <summary>
@@ -903,6 +870,8 @@ namespace XiboClient
                 Debug.WriteLine("SetMainWindowSize: Use Monitor Size");
 
                 // Use the primary monitor size
+                Top = 0;
+                Left = 0;
                 Width = SystemParameters.PrimaryScreenWidth;
                 Height = SystemParameters.PrimaryScreenHeight;
             }

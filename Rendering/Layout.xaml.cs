@@ -20,7 +20,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Globalization;
@@ -305,7 +304,7 @@ namespace XiboClient.Rendering
 
                 Region temp = new Region();
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(Region_DurationElapsedEvent);
-                
+
                 // ZIndex
                 if (nodeAttibutes["zindex"] != null)
                 {
