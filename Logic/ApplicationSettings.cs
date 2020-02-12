@@ -513,7 +513,6 @@ namespace XiboClient
         public int MaxConcurrentDownloads { get; set; }
         public int ScreenShotRequestInterval { get; set; }
         public int ScreenShotSize { get; set; }
-        public string BrowserType { get; set; }
 
         private int _maxLogFileUploads;
         public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 10 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }
@@ -529,6 +528,7 @@ namespace XiboClient
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
         public bool PreventSleep { get; set; }
         public bool ScreenShotRequested { get; set; }
+        public bool FallbackToInternetExplorer { get; set; }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;

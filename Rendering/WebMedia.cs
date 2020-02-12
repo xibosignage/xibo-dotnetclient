@@ -434,13 +434,13 @@ namespace XiboClient.Rendering
         public static WebMedia GetConfiguredWebMedia(RegionOptions options)
         {
             WebMedia media;
-            if (ApplicationSettings.Default.BrowserType.Equals("edge", StringComparison.InvariantCultureIgnoreCase))
+            if (ApplicationSettings.Default.FallbackToInternetExplorer)
             {
-                media = new WebCef(options);
+                media = new WebIe(options);
             }
             else
             {
-                media = new WebIe(options);
+                media = new WebCef(options);
             }
             return media;
         }

@@ -20,6 +20,7 @@
  */
 using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Windows.Controls;
 
 namespace XiboClient.Rendering
@@ -87,6 +88,16 @@ namespace XiboClient.Rendering
         /// <param name="e"></param>
         private void _webBrowser_Navigated(object sender, System.Windows.Navigation.NavigationEventArgs e)
         {
+            dynamic activeX = this._webBrowser.GetType().InvokeMember(
+                "ActiveXInstance", 
+                BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.NonPublic, 
+                null, 
+                this._webBrowser, 
+                new object[] { }
+            );
+
+            activeX.Silent = true;
+
             DocumentCompleted();
 
             if (!Expired)

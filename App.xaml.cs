@@ -71,7 +71,7 @@ namespace XiboClient
                 }
                 else
                 {
-                    RunClient(true);
+                    RunClient(false);
                 }
             }
             catch (Exception ex)
@@ -92,14 +92,6 @@ namespace XiboClient
             // If we are showing the options form, enable visual styles
             OptionsForm windowMain = new OptionsForm();
             windowMain.ShowDialog();
-        }
-
-        /// <summary>
-        /// Run the Player
-        /// </summary>
-        private static void RunClient()
-        {
-            RunClient(false);
         }
 
         /// <summary>

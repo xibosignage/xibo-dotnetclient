@@ -113,6 +113,7 @@
     <Compile Include="Control\EmbeddedServer.cs" />
     <Compile Include="Control\WatchDogManager.cs" />
     <Compile Include="Error\DefaultLayoutException.cs" />
+    <Compile Include="Helpers\CefJsDialogHandler.cs" />
     <Compile Include="InfoScreen.xaml.cs">
       <DependentUpon>InfoScreen.xaml</DependentUpon>
     </Compile>

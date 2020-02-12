@@ -21,6 +21,7 @@
 using CefSharp.Wpf;
 using System;
 using System.Diagnostics;
+using XiboClient.Helpers;
 
 namespace XiboClient.Rendering
 {
@@ -51,6 +52,7 @@ namespace XiboClient.Rendering
             webView.Visibility = System.Windows.Visibility.Hidden;
             webView.Loaded += WebView_Loaded;
             webView.LoadError += WebView_LoadError;
+            webView.JsDialogHandler = new CefJsDialogHandler();
 
             this.MediaScene.Children.Add(webView);
 
