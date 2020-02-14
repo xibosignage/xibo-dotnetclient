@@ -582,13 +582,15 @@ namespace XiboClient.Rendering
                     media = new Audio(options);
                     break;
 
-                case "datasetview":
                 case "embedded":
+                    media = WebMedia.GetConfiguredWebMedia(options, WebMedia.ReadBrowserType(this.options.text));
+                    break;
+
+                case "datasetview":
                 case "ticker":
                 case "text":
                 case "webpage":
                     media = WebMedia.GetConfiguredWebMedia(options);
-
                     break;
 
                 case "flash":

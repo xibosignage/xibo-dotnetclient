@@ -18,8 +18,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Microsoft.Win32;
 using System;
+using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using XiboClient.Log;
 
@@ -88,6 +91,33 @@ namespace XiboClient
             foreach (LogMessage message in ClientInfo.Instance.LogMessages.Read())
             {
                 logDataGridView.Items.Add(message);
+            }
+        }
+
+        private void Button_SaveLog_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.InitialDirectory = ApplicationSettings.Default.LibraryPath;
+            dialog.ShowDialog();
+
+
+            // Display OpenFileDialog by calling ShowDialog method 
+            Nullable<bool> result = dialog.ShowDialog();
+
+            // Get the selected file name and display in a TextBox 
+            if (result == true)
+            {
+                // Open document
+                using (StreamWriter wrt = new StreamWriter(dialog.FileName))
+                {
+                    foreach (LogMessage row in logDataGridView.Items)
+                    {
+                        wrt.Write(row.ToString());
+                        wrt.WriteLine();
+                    }
+                }
+
+                MessageBox.Show("Log saved as " + dialog.FileName, "Log Saved");
             }
         }
     }

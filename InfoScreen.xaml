@@ -22,16 +22,16 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Path=LogDate}" Width="170" IsReadOnly="True" Header="Date"/>
                 <DataGridTextColumn Binding="{Binding Path=_thread}" Width="100" IsReadOnly="True" Header="Thread"/>
-                <DataGridTextColumn Binding="{Binding Path=_method}" Width="200" IsReadOnly="True" Header="Method"/>
+                <DataGridTextColumn Binding="{Binding Path=_method}" Width="100" IsReadOnly="True" Header="Method"/>
                 <DataGridTextColumn Binding="{Binding Path=_message}" Width="300" IsReadOnly="True" Header="Message">
                     <DataGridTextColumn.ElementStyle>
                         <Style>
                             <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
-                            <Setter Property="TextBlock.TextAlignment" Value="Center"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
+        <Button x:Name="buttonSaveLog" Content="Save Log" HorizontalAlignment="Left" Height="20" Margin="679,386,0,0" VerticalAlignment="Top" Width="103" Click="Button_SaveLog_Click"/>
     </Grid>
 </Window>

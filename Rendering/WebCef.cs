@@ -108,7 +108,7 @@ namespace XiboClient.Rendering
 
             // This should exipre the media
             Duration = 5;
-            base.RenderMedia();
+            base.RestartTimer();
         }
 
         /// <summary>
@@ -125,6 +125,7 @@ namespace XiboClient.Rendering
 
         public override void Stop()
         {
+            HtmlUpdatedEvent -= WebMediaHtmlUdatedEvent;
             this.webView.Loaded -= WebView_Loaded;
             this.webView.LoadError -= WebView_LoadError;
             this.webView.Dispose();

@@ -427,6 +427,30 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
+        /// Pulls the browser type from the provided string
+        /// </summary>
+        public static string ReadBrowserType(string template)
+        {
+            try
+            {
+                Match match = Regex.Match(template, "<!-- BROWSER=(.*?) -->");
+
+                if (match.Success)
+                {
+                    return match.Groups[1].Value;
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
         /// Get the configured web media engine
         /// </summary>
         /// <param name="options"></param>
@@ -441,6 +465,33 @@ namespace XiboClient.Rendering
             else
             {
                 media = new WebCef(options);
+            }
+            return media;
+        }
+
+        /// <summary>
+        /// Get the configured web media engine
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public static WebMedia GetConfiguredWebMedia(RegionOptions options, string type)
+        {
+            WebMedia media;
+            if (type == "ie")
+            {
+                media = new WebIe(options);
+            }
+            else if (type == "edge")
+            {
+                media = new WebIe(options);
+            }
+            else if (type == "cef")
+            {
+                media = new WebIe(options);
+            }
+            else
+            {
+                media = GetConfiguredWebMedia(options);
             }
             return media;
         }
