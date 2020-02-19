@@ -67,52 +67,60 @@ namespace XiboClient.Logic
                         _manualReset.Reset();
 
                         // Check we have an address to connect to.
-                        if (string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress))
-                            throw new Exception("Empty XMR Network Address");
-
-                        // Cache the address for this socket (the setting may change outside).
-                        _address = ApplicationSettings.Default.XmrNetworkAddress;
-
-                        // Get the Private Key
-                        AsymmetricCipherKeyPair rsaKey = _hardwareKey.getXmrKey();
-
-                        // Connect to XMR
-                        try
+                        if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && ApplicationSettings.Default.XmrNetworkAddress != "DISABLED")
                         {
-                            // Create a Poller
-                            _poller = new NetMQPoller();
 
-                            // Create a Socket
-                            using (SubscriberSocket socket = new SubscriberSocket())
+                            // Cache the address for this socket (the setting may change outside).
+                            _address = ApplicationSettings.Default.XmrNetworkAddress;
+
+                            // Get the Private Key
+                            AsymmetricCipherKeyPair rsaKey = _hardwareKey.getXmrKey();
+
+                            // Connect to XMR
+                            try
                             {
-                                // Options
-                                socket.Options.ReconnectInterval = TimeSpan.FromSeconds(5);
-                                socket.Options.Linger = TimeSpan.FromSeconds(0);
+                                // Create a Poller
+                                _poller = new NetMQPoller();
 
-                                // Bind
-                                socket.Connect(ApplicationSettings.Default.XmrNetworkAddress);
-                                socket.Subscribe("H");
-                                socket.Subscribe(_hardwareKey.Channel);
+                                // Create a Socket
+                                using (SubscriberSocket socket = new SubscriberSocket())
+                                {
+                                    // Options
+                                    socket.Options.ReconnectInterval = TimeSpan.FromSeconds(5);
+                                    socket.Options.Linger = TimeSpan.FromSeconds(0);
 
-                                // Add Socket to Poller
-                                _poller.Add(socket);
+                                    // Bind
+                                    socket.Connect(ApplicationSettings.Default.XmrNetworkAddress);
+                                    socket.Subscribe("H");
+                                    socket.Subscribe(_hardwareKey.Channel);
 
-                                // Bind to the receive ready event
-                                socket.ReceiveReady += _socket_ReceiveReady;
+                                    // Add Socket to Poller
+                                    _poller.Add(socket);
 
-                                // Notify
-                                ClientInfo.Instance.XmrSubscriberStatus = "Connected to " + ApplicationSettings.Default.XmrNetworkAddress + ". Waiting for messages.";
+                                    // Bind to the receive ready event
+                                    socket.ReceiveReady += _socket_ReceiveReady;
 
-                                // Sit and wait, processing messages, indefinitely or until we are interrupted.
-                                _poller.Run();
+                                    // Notify
+                                    ClientInfo.Instance.XmrSubscriberStatus = "Connected to " + ApplicationSettings.Default.XmrNetworkAddress + ". Waiting for messages.";
+
+                                    // Sit and wait, processing messages, indefinitely or until we are interrupted.
+                                    _poller.Run();
+                                }
                             }
-                        }
-                        finally
-                        {
-                            _poller.Dispose();
-                        }
+                            finally
+                            {
+                                _poller.Dispose();
+                            }
 
-                        Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Socket Disconnected, waiting to reconnect."), LogType.Info.ToString());
+                            Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Socket Disconnected, waiting to reconnect."), LogType.Info.ToString());
+
+                            // Update status
+                            ClientInfo.Instance.XmrSubscriberStatus = "Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString();
+                        } 
+                        else
+                        {
+                            ClientInfo.Instance.XmrSubscriberStatus = "Not configured or Disabled";
+                        }
                     }
                     catch (TerminatingException terminatingEx)
                     {
@@ -123,9 +131,6 @@ namespace XiboClient.Logic
                         Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Unable to Subscribe: " + e.Message), LogType.Info.ToString());
                         ClientInfo.Instance.XmrSubscriberStatus = e.Message;
                     }
-
-                    // Update status
-                    ClientInfo.Instance.XmrSubscriberStatus = "Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString();
 
                     // Sleep for 60 seconds.
                     _manualReset.WaitOne(60 * 1000);
