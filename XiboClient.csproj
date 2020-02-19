@@ -249,7 +249,9 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="default.config.xml" />
+    <None Include="default.config.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Resource Include="new-icon.ico" />
     <Resource Include="Resources\licence.txt" />
     <Resource Include="Resources\logo.png" />

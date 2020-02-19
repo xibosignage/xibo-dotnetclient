@@ -323,8 +323,8 @@ namespace XiboClient
             // Initialise CEF
             CefSharp.Wpf.CefSettings settings = new CefSharp.Wpf.CefSettings();
             settings.CachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
-            settings.LogFile = ApplicationSettings.Default.LibraryPath + @"\cef.log";
-            settings.LogSeverity = CefSharp.LogSeverity.Error;
+            settings.LogFile = ApplicationSettings.Default.LibraryPath + @"\CEF\cef.log";
+            settings.LogSeverity = CefSharp.LogSeverity.Fatal;
             CefSharp.Cef.Initialize(settings);
         }
 
