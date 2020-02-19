@@ -212,7 +212,7 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                System.Diagnostics.Process.Start(ApplicationSettings.Default.ServerUri + @"/index.php?p=display");
+                System.Diagnostics.Process.Start(ApplicationSettings.Default.ServerUri + @"/display/view");
             }
             catch
             {
