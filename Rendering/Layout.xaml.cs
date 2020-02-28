@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -60,6 +61,12 @@ namespace XiboClient.Rendering
         /// Last updated time of this Layout
         /// </summary>
         private DateTime layoutModifiedTime;
+
+        /// <summary>
+        /// The Background Color
+        /// </summary>
+        public Brush BackgroundColor { get { return backgroundColor; } }
+        private Brush backgroundColor;
 
         private int _layoutId;
         private int _scheduleId;
@@ -155,27 +162,25 @@ namespace XiboClient.Rendering
                 leftOverY = 0;
             }
 
+            // We know know what our Layout controls dimensions should be
+            SetDimensions((int)leftOverX, (int)leftOverY, backgroundWidth, backgroundHeight);
+
             // New region and region options objects
             RegionOptions options = new RegionOptions();
 
             options.LayoutModifiedDate = layoutModifiedTime;
-            options.LayoutSize = new System.Drawing.Size()
-            {
-                Width = (int)this.Width,
-                Height = (int)this.Height
-            };
 
             // Deal with the color
             // unless we are an overlay, in which case don't put up a background at all
             if (!isOverlay)
             {
-                Brush backgroundColour = Brushes.Black;
+                this.backgroundColor = Brushes.Black;
                 try
                 {
                     if (layoutAttributes["bgcolor"] != null && layoutAttributes["bgcolor"].Value != "")
                     {
                         var bc = new BrushConverter();
-                        backgroundColour = (Brush)bc.ConvertFrom(layoutAttributes["bgcolor"].Value);
+                        this.backgroundColor = (Brush)bc.ConvertFrom(layoutAttributes["bgcolor"].Value);
                         options.backgroundColor = layoutAttributes["bgcolor"].Value;
                     }
                 }
@@ -205,7 +210,7 @@ namespace XiboClient.Rendering
                     {
                         // Assume there is no background image
                         options.backgroundImage = "";
-                        Background = backgroundColour;
+                        Background = this.backgroundColor;
                     }
                 }
                 catch (Exception ex)
@@ -213,7 +218,7 @@ namespace XiboClient.Rendering
                     Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "Unable to set background: " + ex.Message), LogType.Error.ToString());
 
                     // Assume there is no background image
-                    Background = backgroundColour;
+                    Background = this.backgroundColor;
                     options.backgroundImage = "";
                 }
             }
@@ -294,10 +299,6 @@ namespace XiboClient.Rendering
                 // Set the backgrounds (used for Web content offsets)
                 options.backgroundLeft = options.left * -1;
                 options.backgroundTop = options.top * -1;
-
-                // Account for scaling
-                options.left = options.left + (int)leftOverX;
-                options.top = options.top + (int)leftOverY;
 
                 // All the media nodes for this region / layout combination
                 options.mediaNodes = region.SelectNodes("media");
@@ -480,6 +481,35 @@ namespace XiboClient.Rendering
                 if (codecs[i].MimeType == mimeType)
                     return codecs[i];
             return null;
+        }
+
+        /// <summary>
+        /// Set Dimeniosn of this Control 
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="top"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        private void SetDimensions(int left, int top, int width, int height)
+        {
+            Debug.WriteLine("Setting Dimensions to W:" + width + ", H:" + height + ", (" + left + "," + top + ")");
+
+            // Evaluate the width, etc
+            Width = width;
+            Height = height;
+            HorizontalAlignment = HorizontalAlignment.Left;
+            VerticalAlignment = VerticalAlignment.Top;
+            Margin = new Thickness(left, top, 0, 0);
+        }
+
+        /// <summary>
+        /// Set Dimeniosn of this Control
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="size"></param>
+        private void SetDimensions(Point location, Size size)
+        {
+            SetDimensions((int)location.X, (int)location.Y, (int)size.Width, (int)size.Height);
         }
     }
 }

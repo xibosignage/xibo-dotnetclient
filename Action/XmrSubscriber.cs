@@ -69,7 +69,6 @@ namespace XiboClient.Logic
                         // Check we have an address to connect to.
                         if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && ApplicationSettings.Default.XmrNetworkAddress != "DISABLED")
                         {
-
                             // Cache the address for this socket (the setting may change outside).
                             _address = ApplicationSettings.Default.XmrNetworkAddress;
 
@@ -116,7 +115,7 @@ namespace XiboClient.Logic
 
                             // Update status
                             ClientInfo.Instance.XmrSubscriberStatus = "Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString();
-                        } 
+                        }
                         else
                         {
                             ClientInfo.Instance.XmrSubscriberStatus = "Not configured or Disabled";

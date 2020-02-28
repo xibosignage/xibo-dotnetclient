@@ -83,8 +83,6 @@ namespace XiboClient
 
         public DateTime LayoutModifiedDate { get; set; }
 
-        public Size LayoutSize { get; set; }
-
         /// <summary>
         /// Audio associated with the widget
         /// </summary>

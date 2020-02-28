@@ -141,7 +141,8 @@ namespace XiboClient.Rendering
             }
             else
             {
-                bodyStyle = "background-image: url('" + this.backgroundImage + "'); background-attachment:fixed; background-color:" + this.backgroundColor + "; background-repeat: no-repeat; background-position: " + this.backgroundLeft + "px " + this.backgroundTop + "px;";
+                bodyStyle = "background-image: url('" + this.backgroundImage + "'); background-attachment:fixed; background-color:" + this.backgroundColor 
+                    + "; background-repeat: no-repeat; background-position: " + this.backgroundLeft + "px " + this.backgroundTop + "px;";
             }
 
             string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body {" + bodyStyle + " }</style><!--END_STYLE_ADJUST--></head>");

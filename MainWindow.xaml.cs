@@ -469,6 +469,9 @@ namespace XiboClient
                     // Remove the Splash Screen Image
                     RemoveSplashScreen();
 
+                    // Match Background Colors
+                    this.Background = currentLayout.BackgroundColor;
+
                     // Add this Layout to our controls
                     this.Scene.Children.Add(currentLayout);
 
