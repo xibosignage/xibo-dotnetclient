@@ -214,7 +214,7 @@ namespace XiboClient
         /// </summary>
         private void Instance_MouseEvent()
         {
-            Close();
+            System.Windows.Application.Current.Shutdown();
         }
 
         /// <summary>
@@ -259,7 +259,7 @@ namespace XiboClient
                 if (!_screenSaver)
                     return;
 
-                Close();
+                System.Windows.Application.Current.Shutdown();
             }
         }
 
