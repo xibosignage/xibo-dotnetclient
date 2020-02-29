@@ -29,11 +29,13 @@ namespace XiboClient.Rendering
     {
         private ChromiumWebBrowser webView;
         private string regionId;
+        private bool hasBackgroundColor = false;
 
         public WebCef(RegionOptions options)
             : base(options)
         {
             this.regionId = options.regionId;
+            this.hasBackgroundColor = !string.IsNullOrEmpty(options.Dictionary.Get("backgroundColor", ""));
         }
 
         /// <summary>
@@ -141,7 +143,12 @@ namespace XiboClient.Rendering
         /// <returns></returns>
         protected override string MakeHtmlSubstitutions(string cachedFile)
         {
-            string html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body { background: transparent; }</style><!--END_STYLE_ADJUST--></head>");
+            // Check to see if the document already has a background-color, and if it does, leave it alone.
+            string html = cachedFile;
+            if (!this.hasBackgroundColor)
+            {
+                html = cachedFile.Replace("</head>", "<!--START_STYLE_ADJUST--><style type='text/css'>body { background: transparent; }</style><!--END_STYLE_ADJUST--></head>");
+            }
             html = html.Replace("[[ViewPortWidth]]", WidthIntended.ToString());
             html += "<!--VIEWPORT=" + WidthIntended.ToString() + "x" + HeightIntended.ToString() + "-->";
             html += "<!--CACHEDATE=" + DateTime.Now.ToString() + "-->";
