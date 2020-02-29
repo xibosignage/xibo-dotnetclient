@@ -83,6 +83,9 @@ namespace XiboClient
 
         public DateTime LayoutModifiedDate { get; set; }
 
+        public int PlayerWidth { get; set; }
+        public int PlayerHeight { get; set; }
+
         /// <summary>
         /// Audio associated with the widget
         /// </summary>

@@ -125,13 +125,13 @@ namespace XiboClient.Rendering
             }
         }
 
-        public override void Stop()
+        public override void Stop(bool regionStopped)
         {
             HtmlUpdatedEvent -= IeWebMedia_HtmlUpdatedEvent;
             this._webBrowser.Navigated -= _webBrowser_Navigated;
             this._webBrowser.Dispose();
 
-            base.Stop();
+            base.Stop(regionStopped);
         }
 
         /// <summary>

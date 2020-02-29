@@ -85,6 +85,7 @@ namespace XiboClient.Rendering
             // Create a Media Element
             this.mediaElement = new MediaElement();
             this.mediaElement.Volume = this.volume;
+            this.mediaElement.LoadedBehavior = MediaState.Manual;
 
             if (!this.ShouldBeVisible)
             {
@@ -94,6 +95,7 @@ namespace XiboClient.Rendering
             }
 
             // Events
+            this.mediaElement.Loaded += MediaElement_Loaded;
             this.mediaElement.MediaEnded += MediaElement_MediaEnded;
             this.mediaElement.MediaFailed += MediaElement_MediaFailed;
 
@@ -128,13 +130,27 @@ namespace XiboClient.Rendering
             }
         }
 
-        public override void Stop()
+        /// <summary>
+        /// Media is loaded
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MediaElement_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.mediaElement.Play();
+        }
+
+        /// <summary>
+        /// Stop
+        /// </summary>
+        public override void Stop(bool regionStopped)
         {
             // Remove the event handlers
+            this.mediaElement.Loaded -= MediaElement_Loaded;
             this.mediaElement.MediaEnded -= MediaElement_MediaEnded;
             this.mediaElement.MediaFailed -= MediaElement_MediaFailed;
 
-            base.Stop();
+            base.Stop(regionStopped);
         }
 
         /// <summary>

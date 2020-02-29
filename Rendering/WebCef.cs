@@ -125,14 +125,14 @@ namespace XiboClient.Rendering
             }
         }
 
-        public override void Stop()
+        public override void Stop(bool regionStopped)
         {
             HtmlUpdatedEvent -= WebMediaHtmlUdatedEvent;
             this.webView.Loaded -= WebView_Loaded;
             this.webView.LoadError -= WebView_LoadError;
             this.webView.Dispose();
 
-            base.Stop();
+            base.Stop(regionStopped);
         }
 
         /// <summary>

@@ -147,7 +147,6 @@
     <Compile Include="Rendering\PowerPoint.cs" />
     <Compile Include="Rendering\ShellCommand.cs" />
     <Compile Include="Rendering\Spacer.cs" />
-    <Compile Include="Rendering\Transitions.cs" />
     <Compile Include="Rendering\Video.cs" />
     <Compile Include="Rendering\WebCef.cs" />
     <Compile Include="Rendering\WebEdge.cs" />

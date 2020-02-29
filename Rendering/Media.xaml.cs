@@ -22,6 +22,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
@@ -40,6 +41,17 @@ namespace XiboClient.Rendering
         public delegate void DurationElapsedDelegate(int filesPlayed);
         public event DurationElapsedDelegate DurationElapsedEvent;
         protected int _filesPlayed = 1;
+
+        /// <summary>
+        /// Media has stopped
+        /// </summary>
+        public delegate void MediaStoppedDelegate(Media media);
+        public event MediaStoppedDelegate MediaStoppedEvent;
+
+        /// <summary>
+        /// Have we stopped?
+        /// </summary>
+        private bool _stopped = false;
 
         /// <summary>
         /// The Id of this Media
@@ -123,8 +135,14 @@ namespace XiboClient.Rendering
         /// </summary>
         public virtual void RenderMedia()
         {
+            // We haven't stopped
+            this._stopped = false;
+
             // Start the timer for this media
             StartTimer();
+
+            // Transition In
+            TransitionIn();
         }
 
         /// <summary>
@@ -157,9 +175,20 @@ namespace XiboClient.Rendering
 
         /// <summary>
         /// Stop this Media
+        /// <param name="regionStopped"/>
         /// </summary>
-        public virtual void Stop()
+        public virtual void Stop(bool regionStopped)
         {
+            if (regionStopped)
+            {
+                this._stopped = true;
+                this.MediaStoppedEvent?.Invoke(this);
+            }
+            else
+            {
+                TransitionOut();
+            }
+
             // Initiate any tidy up that is needed in here.
             // Dispose of the Timer
             if (_timer != null)
@@ -199,42 +228,262 @@ namespace XiboClient.Rendering
             return new Point(this.options.top, this.options.left);
         }
 
+        /// <summary>
+        /// TransitionIn if necessary
+        /// </summary>
         public void TransitionIn()
         {
-            DoubleAnimation animation = new DoubleAnimation
-            {
-                From = 0,
-                To = 1,
-                Duration = TimeSpan.FromMilliseconds(1500)
-            };
-            BeginAnimation(OpacityProperty, animation);
-
-            /*string transIn = this.options.Dictionary.Get("transIn");
+            // Does this Media item have an inbound transition?
+            string transIn = options.Dictionary.Get("transIn");
             if (!string.IsNullOrEmpty(transIn))
             {
+                // Yes we do have one.
+                int duration = options.Dictionary.Get("transInDuration", 1000);
+
                 switch (transIn)
                 {
+                    case "fly":
+                        FlyAnimation(options.Dictionary.Get("transInDirection", "W"), duration, true);
+                        break;
                     case "fadeIn":
-
+                        DoubleAnimation animation = new DoubleAnimation
+                        {
+                            From = 0,
+                            To = 1,
+                            Duration = TimeSpan.FromMilliseconds(duration)
+                        };
+                        BeginAnimation(OpacityProperty, animation);
+                        break;
                 }
-                Transitions.MoveAnimation(medaiElemnt, OpacityProperty, transIn, transInDirection, transInDuration, "in", _top, _left);
-            } else
-            {
-                return null;
-            }*/
+            }
         }
 
+        /// <summary>
+        /// Transition Out
+        /// </summary>
         public void TransitionOut()
         {
-            // Transition out?
-            DoubleAnimation animation = new DoubleAnimation
+            // Does this Media item have an outbound transition?
+            string transOut = options.Dictionary.Get("transOut");
+            if (!string.IsNullOrEmpty(transOut))
             {
-                From = 1,
-                To = 0,
-                Duration = TimeSpan.FromMilliseconds(1500)
-            };
-            //animation.Completed += Animation_Completed;
-            BeginAnimation(OpacityProperty, animation);
+                // Yes we do have one.
+                int duration = options.Dictionary.Get("transOutDuration", 1000);
+
+                switch (transOut)
+                {
+                    case "fly":
+                        FlyAnimation(options.Dictionary.Get("transOutDirection", "E"), duration, false);
+                        break;
+                    case "fadeOut":
+                        DoubleAnimation animation = new DoubleAnimation
+                        {
+                            From = 1,
+                            To = 0,
+                            Duration = TimeSpan.FromMilliseconds(duration)
+                        };
+                        animation.Completed += Animation_Completed;
+                        BeginAnimation(OpacityProperty, animation);
+                        break;
+                }
+            }
+            else if(!this._stopped)
+            {
+                this._stopped = true;
+                this.MediaStoppedEvent?.Invoke(this);
+            }
+        }
+
+        /// <summary>
+        /// Animation completed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Animation_Completed(object sender, EventArgs e)
+        {
+            // Indicate we have stopped (only once)
+            if (!this._stopped)
+            {
+                this._stopped = true;
+                this.MediaStoppedEvent?.Invoke(this);
+            }
+        }
+
+        /// <summary>
+        /// Fly Animation
+        /// </summary>
+        /// <param name="direction"></param>
+        /// <param name="duration"></param>
+        /// <param name="isInbound"></param>
+        private void FlyAnimation(string direction, double duration, bool isInbound)
+        {
+            // We might not need both of these, but we add them just in case we have a mid-way compass point
+            var trans = new TranslateTransform();
+
+            DoubleAnimation doubleAnimationX = new DoubleAnimation();
+            doubleAnimationX.Duration = TimeSpan.FromMilliseconds(duration);
+            doubleAnimationX.Completed += Animation_Completed;
+
+            DoubleAnimation doubleAnimationY = new DoubleAnimation();
+            doubleAnimationY.Duration = TimeSpan.FromMilliseconds(duration);
+            doubleAnimationY.Completed += Animation_Completed;
+
+            // Get the viewable window width and height
+            int screenWidth = options.PlayerWidth;
+            int screenHeight = options.PlayerHeight;
+
+            int top = options.top;
+            int left = options.left;
+
+            // Where should we end up once we are done?
+            if (isInbound)
+            {
+                // End up at the top/left
+                doubleAnimationX.To = left;
+                doubleAnimationY.To = top;
+            }
+            else
+            {
+                // End up off the screen
+                doubleAnimationX.To = screenWidth;
+                doubleAnimationY.To = screenHeight;
+            }
+
+            // Compass points
+            switch (direction)
+            {
+                case "N":
+                    if (isInbound)
+                    {
+                        // We come in from the bottom of the screen
+                        doubleAnimationY.From = (screenHeight - top);
+                    }
+                    else
+                    {
+                        // We go out across the top
+                        doubleAnimationY.From = top;
+                    }
+
+                    BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
+                    break;
+
+                case "NE":
+                    if (isInbound)
+                    {
+                        doubleAnimationX.From = (screenWidth - left);
+                        doubleAnimationY.From = (screenHeight - top);
+                    }
+                    else
+                    {
+                        doubleAnimationX.From = left;
+                        doubleAnimationY.From = top;
+                    }
+
+                    
+                    trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
+                    trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
+                    RenderTransform = trans;
+                    break;
+
+                case "E":
+                    if (isInbound)
+                    {
+                        doubleAnimationX.From = -(screenWidth - left);
+                    }
+                    else
+                    {
+                        if (left == 0)
+                        {
+                            doubleAnimationX.From = -left;
+                        }
+                        else
+                        {
+                            doubleAnimationX.From = -(screenWidth - left);
+                        }
+
+                    }
+
+                    BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
+                    break;
+
+                case "SE":
+                    if (isInbound)
+                    {
+                        doubleAnimationX.From = left;
+                        doubleAnimationY.From = -(screenHeight - top);
+                    }
+                    else
+                    {
+                        doubleAnimationX.From = (screenWidth - left);
+                        doubleAnimationY.From = -(screenHeight - top);
+                    }
+
+                    trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
+                    trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
+                    RenderTransform = trans;
+                    break;
+
+                case "S":
+                    if (isInbound)
+                    {
+                        doubleAnimationX.From = -(screenHeight - top);
+                    }
+                    else
+                    {
+                        doubleAnimationX.From = -top;
+                    }
+
+                    BeginAnimation(TranslateTransform.YProperty, doubleAnimationX);
+                    break;
+
+                case "SW":
+                    if (isInbound)
+                    {
+                        doubleAnimationX.From = (screenWidth - left);
+                        doubleAnimationY.From = -top;
+                    }
+                    else
+                    {
+                        doubleAnimationX.From = left;
+                        doubleAnimationY.From = -(screenHeight - left);
+                    }
+
+                    trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
+                    trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
+                    RenderTransform = trans;
+                    break;
+
+                case "W":
+                    if (isInbound)
+                    {
+                        doubleAnimationX.From = (screenWidth - left);
+                    }
+                    else
+                    {
+                        doubleAnimationX.From = -left;
+                    }
+
+                    trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
+                    RenderTransform = trans;
+                    break;
+
+                case "NW":
+                    if (isInbound)
+                    {
+                        doubleAnimationX.From = (screenWidth - left);
+                        doubleAnimationY.From = (screenHeight - top);
+                    }
+                    else
+                    {
+                        doubleAnimationX.From = left;
+                        doubleAnimationY.From = top;
+                    }
+
+                    trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
+                    trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
+                    RenderTransform = trans;
+                    break;
+            }
         }
     }
 }

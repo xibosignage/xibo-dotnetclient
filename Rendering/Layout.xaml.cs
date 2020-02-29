@@ -168,6 +168,8 @@ namespace XiboClient.Rendering
             // New region and region options objects
             RegionOptions options = new RegionOptions();
 
+            options.PlayerWidth = (int)Width;
+            options.PlayerHeight = (int)Height;
             options.LayoutModifiedDate = layoutModifiedTime;
 
             // Deal with the color

@@ -245,7 +245,7 @@ namespace XiboClient.Rendering
                 {
                     // Unbind any events and dispose
                     audio.DurationElapsedEvent -= audio_DurationElapsedEvent;
-                    audio.Stop();
+                    audio.Stop(false);
                 }
                 catch
                 {
@@ -694,10 +694,20 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
-        /// Stop normal media node
+        /// Stop Media
         /// </summary>
         /// <param name="media"></param>
         private void StopMedia(Media media)
+        {
+            StopMedia(media, false);
+        }
+
+        /// <summary>
+        /// Stop normal media node
+        /// </summary>
+        /// <param name="media"></param>
+        /// <param name="regionStopped"></param>
+        private void StopMedia(Media media, bool regionStopped)
         {
             Trace.WriteLine(new LogMessage("Region - Stop Media", "Stopping media"), LogType.Audit.ToString());
 
@@ -705,13 +715,28 @@ namespace XiboClient.Rendering
             try
             {
                 // Tidy Up
-                media.Stop();
+                media.MediaStoppedEvent += Media_MediaStoppedEvent;
+                media.Stop(regionStopped);
+
+                // Wait for the Stopped event to actually remove the children from the scene
             }
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("Region - Stop Media", "Unable to dispose. Ex = " + ex.Message), LogType.Audit.ToString());
+                
+                // Remove the controls
+                RegionScene.Children.Remove(media);
             }
+        }
 
+        /// <summary>
+        /// This media has stopped
+        /// </summary>
+        /// <param name="media"></param>
+        private void Media_MediaStoppedEvent(Media media)
+        {
+            media.MediaStoppedEvent -= Media_MediaStoppedEvent;
+            
             // Remove the controls
             RegionScene.Children.Remove(media);
         }
