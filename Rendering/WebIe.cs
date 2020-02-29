@@ -53,7 +53,9 @@ namespace XiboClient.Rendering
             _webBrowser.Navigated += _webBrowser_Navigated;
             _webBrowser.Width = Width;
             _webBrowser.Height = Height;
-            _webBrowser.Visibility = System.Windows.Visibility.Hidden;
+
+            // Start it visible so that WebBrowser actually renders the content inside it
+            _webBrowser.Visibility = System.Windows.Visibility.Visible;
 
             HtmlUpdatedEvent += IeWebMedia_HtmlUpdatedEvent;
 
@@ -77,6 +79,9 @@ namespace XiboClient.Rendering
 
             this.MediaScene.Children.Add(_webBrowser);
 
+            // Hide it again here, so that we don't see a "flash" of background as it loads.
+            _webBrowser.Visibility = System.Windows.Visibility.Hidden;
+
             // Render media shows the controls and starts timers, etc
             base.RenderMedia();
         }
@@ -88,6 +93,19 @@ namespace XiboClient.Rendering
         /// <param name="e"></param>
         private void _webBrowser_Navigated(object sender, System.Windows.Navigation.NavigationEventArgs e)
         {
+
+            DocumentCompleted();
+
+            if (!Expired)
+            {
+                // Show the browser
+                _webBrowser.Visibility = System.Windows.Visibility.Visible;
+            }
+            else
+            {
+                Debug.WriteLine("Expired by the time we've Navigated.", "WebIe");
+            }
+
             dynamic activeX = this._webBrowser.GetType().InvokeMember(
                 "ActiveXInstance", 
                 BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.NonPublic, 
@@ -97,14 +115,6 @@ namespace XiboClient.Rendering
             );
 
             activeX.Silent = true;
-
-            DocumentCompleted();
-
-            if (!Expired)
-            {
-                // Show the browser
-                _webBrowser.Visibility = System.Windows.Visibility.Visible;
-            }
         }
 
         private void IeWebMedia_HtmlUpdatedEvent(string url)
