@@ -37,7 +37,7 @@ namespace XiboClient
         private List<string> _globalProperties;
 
         // Application Specific Settings we want to protect
-        private readonly string _clientVersion = "2 R202 WPF";
+        private readonly string _clientVersion = "2 R252.4";
         private readonly string _version = "5";
         private readonly int _clientCodeVersion = 252;
 
