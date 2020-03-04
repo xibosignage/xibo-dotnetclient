@@ -141,9 +141,6 @@ namespace XiboClient
             // Default the XmdsConnection
             ApplicationSettings.Default.XmdsLastConnection = DateTime.MinValue;
 
-            // Set the Main Window Size
-            SetMainWindowSize();
-
             // Bind to the resize event
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
@@ -176,7 +173,7 @@ namespace XiboClient
                 try
                 {
                     // Update/write the status.json file
-                    File.WriteAllText(System.IO.Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
+                    ClientInfo.Instance.UpdateStatusMarkerFile();
 
                     // Start watchdog
                     WatchDogManager.Start();
@@ -281,6 +278,9 @@ namespace XiboClient
         /// <param name="e"></param>
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            // Set the Main Window Size
+            SetMainWindowSize();
+
             // Is the mouse enabled?
             if (!ApplicationSettings.Default.EnableMouse)
             {

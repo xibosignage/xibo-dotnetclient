@@ -123,8 +123,26 @@ namespace XiboClient.Log
         {
             try
             {
-                File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"),
-                    "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\",\"state\":\"" + Thread.CurrentThread.ThreadState.ToString() + "\",\"xmdsLastActivity\":\"" + ApplicationSettings.Default.XmdsLastConnection.ToString() + "\",\"xmdsCollectInterval\":\"" + ApplicationSettings.Default.CollectInterval.ToString() + "\"}");
+                using (FileStream file = new FileStream(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite))
+                {
+                    using (StreamWriter sw = new StreamWriter(file))
+                    {
+                        using (JsonWriter writer = new JsonTextWriter(sw))
+                        {
+                            writer.Formatting = Formatting.Indented;
+                            writer.WriteStartObject();
+                            writer.WritePropertyName("lastActivity");
+                            writer.WriteValue(DateTime.Now.ToString());
+                            writer.WritePropertyName("state");
+                            writer.WriteValue(App.Current.Dispatcher.Thread.ThreadState.ToString());
+                            writer.WritePropertyName("xmdsLastActivity");
+                            writer.WriteValue(ApplicationSettings.Default.XmdsLastConnection.ToString());
+                            writer.WritePropertyName("xmdsCollectInterval");
+                            writer.WriteValue(ApplicationSettings.Default.CollectInterval.ToString());
+                            writer.WriteEndObject();
+                        }
+                    }
+                }
             }
             catch (Exception e)
             {

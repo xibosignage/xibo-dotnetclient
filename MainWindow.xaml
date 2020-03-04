@@ -8,7 +8,10 @@
         Title="Player" 
         Height="450" 
         Width="800"
-        WindowStyle="None" ResizeMode="NoResize" Background="Black"
+        WindowStyle="None" 
+        ResizeMode="NoResize" 
+        Background="Black"
+        WindowStartupLocation="Manual"
         >
     <Grid>
         <!--layout grid-->
