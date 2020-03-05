@@ -30,6 +30,9 @@ namespace XiboClient
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
 #endif
 
+            // Load settings
+            ApplicationSettings.Default.Load();
+
             // Add the Xibo Tracelistener
             Trace.Listeners.Add(new XiboTraceListener());
 

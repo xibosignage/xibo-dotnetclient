@@ -297,7 +297,7 @@ namespace XiboClient
                 XmlDocument xml = new XmlDocument();
                 xml.Load(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.RequiredFilesFile);
 
-                XmlNodeList fileNodes = xml.SelectNodes("//RequiredFile/Path");
+                XmlNodeList fileNodes = xml.SelectNodes("//RequiredFile/SaveAs");
 
                 foreach (XmlNode file in fileNodes)
                 {

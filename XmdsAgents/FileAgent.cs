@@ -169,14 +169,14 @@ namespace XiboClient.XmdsAgents
                     file.Downloading = false;
 
                     // Check MD5
-                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.SaveAs);
+                    string md5 = CacheManager.Instance.GetMD5(file.SaveAs);
                     if (file.Md5 == md5)
                     {
                         // Mark it as complete
                         _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
 
                         // Add it to the cache manager
-                        _requiredFiles.CurrentCacheManager.Add(file.SaveAs, file.Md5);
+                        CacheManager.Instance.Add(file.SaveAs, file.Md5);
 
                         Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.SaveAs), LogType.Info.ToString());
                     }
@@ -265,14 +265,14 @@ namespace XiboClient.XmdsAgents
                     file.Downloading = false;
 
                     // Check MD5
-                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.SaveAs);
+                    string md5 = CacheManager.Instance.GetMD5(file.SaveAs);
                     if (file.Md5 == md5)
                     {
                         // Mark it as complete
                         _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
 
                         // Add it to the cache manager
-                        _requiredFiles.CurrentCacheManager.Add(file.SaveAs, file.Md5);
+                        CacheManager.Instance.Add(file.SaveAs, file.Md5);
 
                         Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.SaveAs), LogType.Info.ToString());
                     }
@@ -289,7 +289,7 @@ namespace XiboClient.XmdsAgents
             catch (WebException webEx)
             {
                 // Remove from the cache manager
-                _requiredFiles.CurrentCacheManager.Remove(file.SaveAs);
+                CacheManager.Instance.Remove(file.SaveAs);
 
                 // Log this message, but dont abort the thread
                 Trace.WriteLine(new LogMessage("FileAgent - Run", "Web Exception in Run: " + webEx.Message), LogType.Info.ToString());
@@ -300,7 +300,7 @@ namespace XiboClient.XmdsAgents
             catch (Exception ex)
             {
                 // Remove from the cache manager
-                _requiredFiles.CurrentCacheManager.Remove(file.SaveAs);
+                CacheManager.Instance.Remove(file.SaveAs);
 
                 // Log this message, but dont abort the thread
                 Trace.WriteLine(new LogMessage("FileAgent - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());

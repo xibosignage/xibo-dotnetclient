@@ -173,7 +173,6 @@ namespace XiboClient.XmdsAgents
 
                                     // Create a required files object and set it to contain the RF returned this tick
                                     _requiredFiles = new RequiredFiles();
-                                    _requiredFiles.CurrentCacheManager = CacheManager.Instance;
                                     _requiredFiles.RequiredFilesXml = xml;
 
                                     // List of Threads to start

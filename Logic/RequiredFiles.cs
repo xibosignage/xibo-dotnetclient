@@ -60,23 +60,6 @@ namespace XiboClient
             }
         }
 
-        /// <summary>
-        /// The Current CacheManager for this Xibo Client
-        /// </summary>
-        public CacheManager CurrentCacheManager
-        {
-            get
-            {
-                return _cacheManager;
-            }
-            set
-            {
-                lock (_locker)
-                    _cacheManager = value;
-            }
-        }
-        private CacheManager _cacheManager;
-
         public RequiredFiles()
         {
             RequiredFileList = new Collection<RequiredFile>();
@@ -224,12 +207,12 @@ namespace XiboClient
                 if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs))
                 {
                     // Compare MD5 of the file we currently have, to what we should have
-                    if (rf.Md5 != _cacheManager.GetMD5(rf.SaveAs))
+                    if (rf.Md5 != CacheManager.Instance.GetMD5(rf.SaveAs))
                     {
                         Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "MD5 different for existing file: " + rf.SaveAs), LogType.Info.ToString());
 
                         // They are different
-                        _cacheManager.Remove(rf.SaveAs);
+                        CacheManager.Instance.Remove(rf.SaveAs);
 
                         // TODO: Resume the file download under certain conditions. Make sure its not bigger than it should be. 
                         // Make sure it is fairly fresh
@@ -257,13 +240,13 @@ namespace XiboClient
                     {
                         // The MD5 is equal - we already have an up to date version of this file.
                         rf.Complete = true;
-                        _cacheManager.Add(rf.SaveAs, rf.Md5);
+                        CacheManager.Instance.Add(rf.SaveAs, rf.Md5);
                     }
                 }
                 else
                 {
                     // File does not exist, therefore remove it from the cache manager (on the off chance that it is in there for some reason)
-                    _cacheManager.Remove(rf.SaveAs);
+                    CacheManager.Instance.Remove(rf.SaveAs);
                 }
 
                 RequiredFileList.Add(rf);
