@@ -40,14 +40,17 @@ namespace XiboClient
         private static string _default = "default";
         private List<string> _globalProperties;
 
-        // Application Specific Settings we want to protect
-        private readonly string _clientVersion = "2 R201";
-        private readonly string _version = "5";
-        private readonly int _clientCodeVersion = 201;
+        private bool Loaded = false;
+        private static readonly object Locker = new object();
 
-        public string ClientVersion { get { return _clientVersion; } }
-        public string Version { get { return _version; } }
-        public int ClientCodeVersion { get { return _clientCodeVersion; } }
+        /// <summary>
+        /// Properties that should be excluded from and load/save operations
+        /// </summary>
+        private List<string> ExcludedProperties;
+
+        public string ClientVersion { get; } = "2 R202";
+        public string Version { get; } = "5";
+        public int ClientCodeVersion { get; } = 202;
 
         private ApplicationSettings()
         {
@@ -59,6 +62,13 @@ namespace XiboClient
             _globalProperties.Add("ProxyPassword");
             _globalProperties.Add("ProxyDomain");
             _globalProperties.Add("ProxyPort");
+
+            ExcludedProperties = new List<string>();
+            ExcludedProperties.Add("Default");
+            ExcludedProperties.Add("XiboClient_xmds_xmds");
+            ExcludedProperties.Add("ClientVersion");
+            ExcludedProperties.Add("Version");
+            ExcludedProperties.Add("ClientCodeVersion");
         }
 
         /// <summary>
@@ -73,13 +83,32 @@ namespace XiboClient
                 if (_instance != null)
                     return _instance;
 
+                // Create a new application settings instance.
+                _instance = new ApplicationSettings();
+                
+                // Return the instance
+                return _instance;
+            }
+        }
+
+        /// <summary>
+        /// Load settings
+        /// </summary>
+        public void Load()
+        {
+            lock (Locker)
+            {
+                if (_instance.Loaded)
+                {
+                    Debug.WriteLine("Settings already loaded, returning.", "ApplicationSettings");
+                    return;
+                }
+                Debug.WriteLine("Settings need to be loaded.", "ApplicationSettings");
+
                 // Check to see if we need to migrate
                 XmlDocument document;
                 string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
-
-                // Create a new application settings instance.
-                _instance = new ApplicationSettings();
 
                 if (File.Exists(path + Path.DirectorySeparatorChar + fileName + ".config.xml"))
                 {
@@ -120,8 +149,8 @@ namespace XiboClient
                 // Load the player settings
                 _instance.AppendConfigFile(_instance.LibraryPath + "\\config.xml");
 
-                // Return the instance
-                return _instance;
+                // We are loaded
+                _instance.Loaded = true;
             }
         }
 
@@ -151,73 +180,79 @@ namespace XiboClient
         /// </summary>
         public void Save()
         {
-            if (_instance == null)
+            if (_instance == null || !_instance.Loaded)
                 return;
 
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
-
-            // Write the global settings file
-            using (XmlWriter writer = XmlWriter.Create(path + Path.DirectorySeparatorChar + fileName + ".xml"))
+            lock (Locker)
             {
-                writer.WriteStartDocument();
-                writer.WriteStartElement("ApplicationSettings");
+                string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
 
-                foreach (PropertyInfo property in _instance.GetType().GetProperties())
+                // Write the global settings file
+                using (XmlWriter writer = XmlWriter.Create(path + Path.DirectorySeparatorChar + fileName + ".xml"))
                 {
-                    if (property.CanRead && _globalProperties.Contains(property.Name))
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("ApplicationSettings");
+
+                    foreach (PropertyInfo property in _instance.GetType().GetProperties())
                     {
-                        writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
-                    }
-                }
-
-                writer.WriteEndElement();
-                writer.WriteEndDocument();
-            }
-
-            // Write the hardware key file
-            File.WriteAllText(_instance.LibraryPath + "\\hardwarekey", _instance.HardwareKey);
-
-            // Write the player settings file
-            using (XmlWriter writer = XmlWriter.Create(_instance.LibraryPath + "\\config.xml"))
-            {
-                writer.WriteStartDocument();
-                writer.WriteStartElement("PlayerSettings");
-
-                foreach (PropertyInfo property in _instance.GetType().GetProperties())
-                {
-                    try
-                    {
-                        if (property.CanRead && !_globalProperties.Contains(property.Name) && property.Name != "HardwareKey")
+                        if (property.CanRead && _globalProperties.Contains(property.Name))
                         {
-                            if (property.Name == "Commands")
-                            {
-                                writer.WriteStartElement("commands");
-
-                                foreach (Command command in _instance.Commands)
-                                {
-                                    writer.WriteStartElement(command.Code);
-                                    writer.WriteElementString("commandString", command.CommandString);
-                                    writer.WriteElementString("commandValidation", command.Validation);
-                                    writer.WriteEndElement();
-                                }
-
-                                writer.WriteEndElement();
-                            }
-                            else
-                            {
-                                writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
-                            }
+                            writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
                         }
                     }
-                    catch
-                    {
-                        Trace.WriteLine(new LogMessage("PopulateFromXml", "Unable to write [" + property.Name + "]."), LogType.Info.ToString());
-                    }
+
+                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
                 }
 
-                writer.WriteEndElement();
-                writer.WriteEndDocument();
+                // Write the hardware key file
+                File.WriteAllText(_instance.LibraryPath + "\\hardwarekey", _instance.HardwareKey);
+
+                // Write the player settings file
+                using (XmlWriter writer = XmlWriter.Create(_instance.LibraryPath + "\\config.xml"))
+                {
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("PlayerSettings");
+
+                    foreach (PropertyInfo property in _instance.GetType().GetProperties())
+                    {
+                        try
+                        {
+                            if (property.CanRead 
+                                && !_globalProperties.Contains(property.Name)
+                                && !ExcludedProperties.Contains(property.Name)
+                                && property.Name != "HardwareKey")
+                            {
+                                if (property.Name == "Commands")
+                                {
+                                    writer.WriteStartElement("commands");
+
+                                    foreach (Command command in _instance.Commands)
+                                    {
+                                        writer.WriteStartElement(command.Code);
+                                        writer.WriteElementString("commandString", command.CommandString);
+                                        writer.WriteElementString("commandValidation", command.Validation);
+                                        writer.WriteEndElement();
+                                    }
+
+                                    writer.WriteEndElement();
+                                }
+                                else
+                                {
+                                    writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            Trace.WriteLine(new LogMessage("PopulateFromXml", "Unable to write [" + property.Name + "]."), LogType.Info.ToString());
+                        }
+                    }
+
+                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
+                }
             }
         }
 
@@ -249,7 +284,11 @@ namespace XiboClient
             foreach (XmlNode node in document.DocumentElement.ChildNodes)
             {
                 // Are we a commands node?
-                if (node.Name.ToLower() == "commands")
+                if (ExcludedProperties.Contains(node.Name))
+                {
+                    continue;
+                }
+                else if (node.Name.ToLower() == "commands")
                 {
                     List<Command> commands = new List<Command>();
 
