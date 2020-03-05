@@ -216,9 +216,6 @@ namespace XiboClient.XmdsAgents
                                     // Write the Cache Manager to Disk
                                     CacheManager.Instance.WriteCacheManager();
 
-                                    // Report the storage usage
-                                    reportStorage();
-
                                     // Set the status on the client info screen
                                     if (threadsToStart.Count == 0)
                                     {
@@ -331,44 +328,6 @@ namespace XiboClient.XmdsAgents
             {
                 // Raise an event to say it is completed
                 OnComplete?.Invoke(rf.SaveAs);
-            }
-        }
-
-        private void reportStorage()
-        {
-            StringBuilder sb = new StringBuilder();
-            StringWriter sw = new StringWriter(sb);
-
-            using (JsonWriter writer = new JsonTextWriter(sw))
-            {
-                writer.Formatting = Newtonsoft.Json.Formatting.None;
-                writer.WriteStartObject();
-                writer.WritePropertyName("deviceName");
-                writer.WriteValue(Environment.MachineName);
-
-                // Use Drive Info
-                foreach (DriveInfo drive in DriveInfo.GetDrives())
-                {
-                    if (drive.IsReady && ApplicationSettings.Default.LibraryPath.Contains(drive.RootDirectory.FullName))
-                    {
-                        writer.WritePropertyName("availableSpace");
-                        writer.WriteValue(drive.TotalFreeSpace);
-                        writer.WritePropertyName("totalSpace");
-                        writer.WriteValue(drive.TotalSize);
-                        break;
-                    }
-                }
-
-                writer.WriteEndObject();
-
-                // Report
-                using (xmds.xmds xmds = new xmds.xmds())
-                {
-                    xmds.Credentials = null;
-                    xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
-                    xmds.UseDefaultCredentials = false;
-                    xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
-                }
             }
         }
 

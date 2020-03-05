@@ -882,6 +882,10 @@ namespace XiboClient
 
             Debug.WriteLine("SetMainWindowSize: Setting Size to " + Width + "x" + Height);
 
+            // Store this in Client Info
+            ClientInfo.Instance.PlayerWidth = (int)Width;
+            ClientInfo.Instance.PlayerHeight = (int)Height;
+
             // Use the client size we've calculated to set the actual size of the form
             WindowState = WindowState.Normal;
 

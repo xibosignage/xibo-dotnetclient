@@ -82,6 +82,16 @@ namespace XiboClient.Log
         public ConcurrentCircularBuffer LogMessages;
 
         /// <summary>
+        /// Players current Width
+        /// </summary>
+        public int PlayerWidth { get; set; }
+
+        /// <summary>
+        /// Players current Height
+        /// </summary>
+        public int PlayerHeight { get; set; }
+
+        /// <summary>
         /// Client Info Object
         /// </summary>
         private ClientInfo()
