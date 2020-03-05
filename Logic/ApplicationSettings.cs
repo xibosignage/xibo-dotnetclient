@@ -216,7 +216,8 @@ namespace XiboClient
                         {
                             if (property.CanRead 
                                 && !_globalProperties.Contains(property.Name) 
-                                && !ExcludedProperties.Contains(property.Name))
+                                && !ExcludedProperties.Contains(property.Name)
+                                && property.Name != "HardwareKey")
                             {
                                 if (property.Name == "Commands" && lazy.Value.Commands != null)
                                 {
