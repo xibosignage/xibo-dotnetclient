@@ -1,6 +1,6 @@
 /*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2014 Daniel Garner
+ * Xibo - Digital Signage - http://xibo.org.uk
+ * Copyright (C) 2020 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -30,6 +30,11 @@ using XiboClient.Properties;
 using System.Diagnostics;
 using System.Xml;
 using XiboClient.XmdsAgents;
+using System.Threading.Tasks;
+using System.Net.Http;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.IO;
 
 namespace XiboClient
 {
@@ -37,6 +42,26 @@ namespace XiboClient
     {
         private HardwareKey _hardwareKey;
 
+        /// <summary>
+        /// Are we in the process or using an auth code
+        /// </summary>
+        private bool IsAuthCodeProcessing = false;
+
+        /// <summary>
+        /// The User Code assigned to this device by the Auth Code process
+        /// </summary>
+        private string UserCode;
+
+        /// <summary>
+        /// The device code assigned to this device by the Auth Code process
+        /// This is secret!
+        /// </summary>
+        private string DeviceCode;
+
+        /// <summary>
+        /// Auth Code Timer
+        /// </summary>
+        private System.Timers.Timer AuthCodeTimer;
 
         public OptionForm()
         {
@@ -112,7 +137,15 @@ namespace XiboClient
        /// <param name="e"></param>
         private void buttonSaveSettings_Click(object sender, EventArgs e)
         {
-            tbStatus.ResetText();
+            // State
+            this.tbStatus.ResetText();
+            this.buttonSaveSettings.Enabled = false;
+            this.IsAuthCodeProcessing = false;
+            this.buttonUseCode.Enabled = true;
+            this.buttonLaunchPlayer.Enabled = true;
+            this.tbStatus.Font = new Font("Arial", 12);
+            this.tbStatus.TextAlign = HorizontalAlignment.Left;
+
             try
             {
                 tbStatus.AppendText("Saving with CMS... Please wait...");
@@ -279,10 +312,221 @@ namespace XiboClient
             Close();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void Button_LaunchPlayer_Click(object sender, EventArgs e)
         {
             Close();
             Process.Start(Application.ExecutablePath);
+        }
+
+        private async void Button_UseCode_Click(object sender, EventArgs e)
+        {
+            this.IsAuthCodeProcessing = true;
+
+            // Disable the button
+            this.buttonUseCode.Enabled = false;
+            this.buttonLaunchPlayer.Enabled = false;
+
+            // Clear the text area
+            this.tbStatus.ResetText();
+
+            // Save local elements
+            ApplicationSettings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
+            ApplicationSettings.Default.HardwareKey = tbHardwareKey.Text;
+
+            // Proxy Settings
+            ApplicationSettings.Default.ProxyUser = textBoxProxyUser.Text;
+            ApplicationSettings.Default.ProxyPassword = maskedTextBoxProxyPass.Text;
+            ApplicationSettings.Default.ProxyDomain = textBoxProxyDomain.Text;
+
+            // Change the default Proxy class
+            SetGlobalProxy();
+
+            // Client settings
+            ApplicationSettings.Default.SplashOverride = splashOverride.Text;
+
+            // Commit these changes back to the user settings
+            ApplicationSettings.Default.Save();
+
+            // Show the code in the status window, and disable the other buttons.
+            try
+            {
+                JObject codes = await GenerateCode();
+
+                this.UserCode = codes["user_code"].ToString();
+                this.DeviceCode = codes["device_code"].ToString();
+
+                this.tbStatus.Text = this.UserCode;
+                this.tbStatus.Font = new Font("Consolas", 48);
+                this.tbStatus.TextAlign = HorizontalAlignment.Center;
+
+                // Start a timer
+                AuthCodeTimer = new System.Timers.Timer();
+                AuthCodeTimer.Elapsed += AuthCodeTimer_Elapsed;
+                AuthCodeTimer.Interval = 10000;
+                AuthCodeTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message, "Button_UseCode_Click");
+
+                this.tbStatus.Text = "Unable to get a code, please configure manually.";
+                this.buttonUseCode.Enabled = true;
+                this.buttonLaunchPlayer.Enabled = true;
+                this.IsAuthCodeProcessing = false;
+            }
+        }
+
+        private async void AuthCodeTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            // If the button has been made visible again, then cancel the check
+            if (!this.IsAuthCodeProcessing)
+            {
+                ((System.Timers.Timer)sender).Stop();
+                ((System.Timers.Timer)sender).Elapsed -= AuthCodeTimer_Elapsed;
+                ((System.Timers.Timer)sender).Dispose();
+
+                this.UserCode = string.Empty;
+                this.DeviceCode = string.Empty;
+                return;
+            }
+
+            if (await CheckCode(this.UserCode, this.DeviceCode))
+            {
+                // We have great success
+                ((System.Timers.Timer)sender).Stop();
+                ((System.Timers.Timer)sender).Elapsed -= AuthCodeTimer_Elapsed;
+                ((System.Timers.Timer)sender).Dispose();
+
+                // The task has already set our config, all we need to do is call Register
+                try
+                {
+                    // Assert the XMDS url
+                    this.xmds1.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
+
+                    var response = this.xmds1.RegisterDisplay(
+                        ApplicationSettings.Default.ServerKey,
+                        ApplicationSettings.Default.HardwareKey,
+                        ApplicationSettings.Default.DisplayName,
+                        "windows",
+                        ApplicationSettings.Default.ClientVersion,
+                        ApplicationSettings.Default.ClientCodeVersion,
+                        Environment.OSVersion.ToString(),
+                        this._hardwareKey.MacAddress,
+                        this._hardwareKey.Channel,
+                        this._hardwareKey.getXmrPublicKey());
+
+                    // Process the XML
+                    RegisterAgent.ProcessRegisterXml(response);
+
+                    // Launch
+                    BeginInvoke(new System.Action(
+                        () =>
+                        {
+                            Close();
+                            Process.Start(Process.GetCurrentProcess().MainModule.FileName);
+                        })
+                        );
+                }
+                catch (Exception ex)
+                {
+                    this.tbStatus.Text = "Problem Claiming Code, please try again.";
+                    Trace.WriteLine(new LogMessage("OptionsForm", "AuthCodeTimer_Elapsed: Problem claiming code: " + ex.Message), LogType.Error.ToString());
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        private static async Task<JObject> GenerateCode()
+        {
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage(HttpMethod.Post, "https://auth.signlicence.co.uk/generateCode"))
+            {
+                StringBuilder sb = new StringBuilder();
+                using (StringWriter sw = new StringWriter(sb))
+                {
+                    using (JsonWriter writer = new JsonTextWriter(sw))
+                    {
+                        writer.Formatting = Newtonsoft.Json.Formatting.None;
+                        writer.WriteStartObject();
+                        writer.WritePropertyName("hardwareId");
+                        writer.WriteValue(ApplicationSettings.Default.HardwareKey);
+                        writer.WritePropertyName("type");
+                        writer.WriteValue("windows");
+                        writer.WritePropertyName("version");
+                        writer.WriteValue("" + ApplicationSettings.Default.ClientCodeVersion);
+                        writer.WriteEndObject();
+                    }
+                }
+
+                using (var stringContent = new StringContent(sb.ToString(), Encoding.UTF8, "application/json"))
+                {
+                    request.Content = stringContent;
+
+                    using (var response = await client
+                        .SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+                        .ConfigureAwait(false))
+                    {
+                        response.EnsureSuccessStatusCode();
+                        var jsonString = await response.Content.ReadAsStringAsync();
+                        var json = JsonConvert.DeserializeObject<JObject>(jsonString);
+
+                        if (json.ContainsKey("message"))
+                        {
+                            throw new Exception("Request returned a message in the body, discard");
+                        }
+
+                        return json;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check Code
+        /// </summary>
+        /// <returns></returns>
+        private static async Task<bool> CheckCode(string UserCode, string DeviceCode)
+        {
+            Debug.WriteLine("Calling Auth Service", "CheckCode");
+
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage(HttpMethod.Get, "https://auth.signlicence.co.uk/getDetails?user_code=" + UserCode + "&device_code=" + DeviceCode))
+            {
+                using (var response = await client
+                        .SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+                        .ConfigureAwait(false))
+                {
+                    try
+                    {
+                        response.EnsureSuccessStatusCode();
+                        var jsonString = await response.Content.ReadAsStringAsync();
+                        var json = JsonConvert.DeserializeObject<JObject>(jsonString);
+
+                        if (json.ContainsKey("cmsAddress"))
+                        {
+                            // TODO: we are done! 
+                            ApplicationSettings.Default.ServerUri = json["cmsAddress"].ToString();
+                            ApplicationSettings.Default.ServerKey = json["cmsKey"].ToString();
+
+                            // Returning true stops the task and launches the player
+                            return true;
+                        }
+                        else
+                        {
+                            Debug.WriteLine(jsonString, "CheckCode");
+                            return false;
+                        }
+                    }
+                    catch
+                    {
+                        Debug.WriteLine("Non 200/300 status code", "CheckCode");
+                        return false;
+                    }
+                }
+            }
         }
     }
 }
