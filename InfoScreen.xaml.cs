@@ -22,7 +22,6 @@ using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Threading;
 using XiboClient.Log;
 

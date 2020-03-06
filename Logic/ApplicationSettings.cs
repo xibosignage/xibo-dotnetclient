@@ -50,7 +50,7 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "2 R252.4";
+        public string ClientVersion { get; } = "2 R252.6";
         public string Version { get; } = "5";
         public int ClientCodeVersion { get; } = 252;
 
@@ -214,8 +214,8 @@ namespace XiboClient
                     {
                         try
                         {
-                            if (property.CanRead 
-                                && !_globalProperties.Contains(property.Name) 
+                            if (property.CanRead
+                                && !_globalProperties.Contains(property.Name)
                                 && !ExcludedProperties.Contains(property.Name)
                                 && property.Name != "HardwareKey")
                             {

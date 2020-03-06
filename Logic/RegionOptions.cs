@@ -20,7 +20,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Xml;
 using XiboClient.Rendering;
 

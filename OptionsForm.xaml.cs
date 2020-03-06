@@ -29,7 +29,6 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using XiboClient.XmdsAgents;
@@ -444,7 +443,7 @@ namespace XiboClient
                         writer.WriteEndObject();
                     }
                 }
-            
+
                 using (var stringContent = new StringContent(sb.ToString(), Encoding.UTF8, "application/json"))
                 {
                     request.Content = stringContent;
@@ -456,7 +455,7 @@ namespace XiboClient
                         response.EnsureSuccessStatusCode();
                         var jsonString = await response.Content.ReadAsStringAsync();
                         var json = JsonConvert.DeserializeObject<JObject>(jsonString);
-                        
+
                         if (json.ContainsKey("message"))
                         {
                             throw new Exception("Request returned a message in the body, discard");
@@ -503,7 +502,7 @@ namespace XiboClient
                             Debug.WriteLine(jsonString, "CheckCode");
                             return false;
                         }
-                    } 
+                    }
                     catch
                     {
                         Debug.WriteLine("Non 200/300 status code", "CheckCode");

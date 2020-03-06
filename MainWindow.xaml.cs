@@ -30,7 +30,6 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using XiboClient.Control;
 using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;

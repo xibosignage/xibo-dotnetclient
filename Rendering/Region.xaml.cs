@@ -723,7 +723,7 @@ namespace XiboClient.Rendering
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("Region - Stop Media", "Unable to dispose. Ex = " + ex.Message), LogType.Audit.ToString());
-                
+
                 // Remove the controls
                 RegionScene.Children.Remove(media);
             }
@@ -736,7 +736,7 @@ namespace XiboClient.Rendering
         private void Media_MediaStoppedEvent(Media media)
         {
             media.MediaStoppedEvent -= Media_MediaStoppedEvent;
-            
+
             // Remove the controls
             RegionScene.Children.Remove(media);
         }

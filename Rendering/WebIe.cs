@@ -107,10 +107,10 @@ namespace XiboClient.Rendering
             }
 
             dynamic activeX = this._webBrowser.GetType().InvokeMember(
-                "ActiveXInstance", 
-                BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.NonPublic, 
-                null, 
-                this._webBrowser, 
+                "ActiveXInstance",
+                BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.NonPublic,
+                null,
+                this._webBrowser,
                 new object[] { }
             );
 
@@ -151,7 +151,7 @@ namespace XiboClient.Rendering
             }
             else
             {
-                bodyStyle = "background-image: url('" + this.backgroundImage + "'); background-attachment:fixed; background-color:" + this.backgroundColor 
+                bodyStyle = "background-image: url('" + this.backgroundImage + "'); background-attachment:fixed; background-color:" + this.backgroundColor
                     + "; background-repeat: no-repeat; background-position: " + this.backgroundLeft + "px " + this.backgroundTop + "px;";
             }
 

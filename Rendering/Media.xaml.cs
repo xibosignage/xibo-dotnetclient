@@ -287,7 +287,7 @@ namespace XiboClient.Rendering
                         break;
                 }
             }
-            else if(!this._stopped)
+            else if (!this._stopped)
             {
                 this._stopped = true;
                 this.MediaStoppedEvent?.Invoke(this);
@@ -379,7 +379,7 @@ namespace XiboClient.Rendering
                         doubleAnimationY.From = top;
                     }
 
-                    
+
                     trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
                     trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
                     RenderTransform = trans;
