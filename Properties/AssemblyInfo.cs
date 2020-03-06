@@ -30,6 +30,6 @@ using System.Resources;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("2.0.0.201")]
-[assembly: AssemblyFileVersion("2.0.0.201")]
+[assembly: AssemblyVersion("2.202.0.0")]
+[assembly: AssemblyFileVersion("2.202.0.0")]
 [assembly: NeutralResourcesLanguageAttribute("en-GB")]
