@@ -19,11 +19,18 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using Microsoft.Win32;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Ookii.Dialogs.Wpf;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using XiboClient.XmdsAgents;
 
@@ -38,6 +45,30 @@ namespace XiboClient
 
         private HardwareKey hardwareKey;
 
+        /// <summary>
+        /// Are we in the process or using an auth code
+        /// </summary>
+        private bool IsAuthCodeProcessing = false;
+
+        /// <summary>
+        /// The User Code assigned to this device by the Auth Code process
+        /// </summary>
+        private string UserCode;
+
+        /// <summary>
+        /// The device code assigned to this device by the Auth Code process
+        /// This is secret!
+        /// </summary>
+        private string DeviceCode;
+
+        /// <summary>
+        /// Auth Code Timer
+        /// </summary>
+        private System.Timers.Timer AuthCodeTimer;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public OptionsForm()
         {
             InitializeComponent();
@@ -136,11 +167,19 @@ namespace XiboClient
 
         private void Button_Connect_Click(object sender, RoutedEventArgs e)
         {
-            textBoxStatus.Clear();
+            // State
+            this.textBoxStatus.Clear();
+            this.buttonConnect.IsEnabled = false;
+            this.IsAuthCodeProcessing = false;
+            this.buttonUseCode.IsEnabled = true;
+            this.buttonLaunchPlayer.IsEnabled = true;
+            this.textBoxStatus.FontFamily = new System.Windows.Media.FontFamily("Segoe UI");
+            this.textBoxStatus.FontSize = 12;
+            this.textBoxStatus.TextAlignment = TextAlignment.Left;
+
             try
             {
                 textBoxStatus.AppendText("Saving with CMS... Please wait...");
-                buttonConnect.IsEnabled = false;
 
                 // Simple settings
                 ApplicationSettings.Default.ServerUri = textBoxCmsAddress.Text;
@@ -260,6 +299,218 @@ namespace XiboClient
         {
             Close();
             Process.Start(Process.GetCurrentProcess().MainModule.FileName);
+        }
+
+        private async void Button_UseCode_Click(object sender, RoutedEventArgs e)
+        {
+            this.IsAuthCodeProcessing = true;
+
+            // Disable the button
+            this.buttonUseCode.IsEnabled = false;
+            this.buttonLaunchPlayer.IsEnabled = false;
+
+            // Clear the text area
+            this.textBoxStatus.Clear();
+
+            // Save local elements
+            ApplicationSettings.Default.LibraryPath = textBoxLibraryPath.Text.TrimEnd('\\');
+            ApplicationSettings.Default.HardwareKey = textBoxHardwareKey.Text;
+
+            // Proxy Settings
+            ApplicationSettings.Default.ProxyUser = textBoxProxyUser.Text;
+            ApplicationSettings.Default.ProxyPassword = textBoxProxyPass.Password;
+            ApplicationSettings.Default.ProxyDomain = textBoxProxyDomain.Text;
+
+            // Change the default Proxy class
+            SetGlobalProxy();
+
+            // Client settings
+            ApplicationSettings.Default.SplashOverride = textBoxSplashScreenReplacement.Text;
+
+            // Commit these changes back to the user settings
+            ApplicationSettings.Default.Save();
+
+            // Show the code in the status window, and disable the other buttons.
+            try
+            {
+                JObject codes = await GenerateCode();
+
+                this.UserCode = codes["user_code"].ToString();
+                this.DeviceCode = codes["device_code"].ToString();
+
+                this.textBoxStatus.Text = this.UserCode;
+                this.textBoxStatus.FontFamily = new System.Windows.Media.FontFamily("Consolas");
+                this.textBoxStatus.FontSize = 48;
+                this.textBoxStatus.TextAlignment = TextAlignment.Center;
+
+                // Start a timer
+                AuthCodeTimer = new System.Timers.Timer();
+                AuthCodeTimer.Elapsed += AuthCodeTimer_Elapsed;
+                AuthCodeTimer.Interval = 10000;
+                AuthCodeTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message, "Button_UseCode_Click");
+
+                this.textBoxStatus.Text = "Unable to get a code, please configure manually.";
+                this.buttonUseCode.IsEnabled = true;
+                this.buttonLaunchPlayer.IsEnabled = true;
+                this.IsAuthCodeProcessing = false;
+            }
+        }
+
+        private async void AuthCodeTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            // If the button has been made visible again, then cancel the check
+            if (!this.IsAuthCodeProcessing)
+            {
+                ((System.Timers.Timer)sender).Stop();
+                ((System.Timers.Timer)sender).Elapsed -= AuthCodeTimer_Elapsed;
+                ((System.Timers.Timer)sender).Dispose();
+
+                this.UserCode = string.Empty;
+                this.DeviceCode = string.Empty;
+                return;
+            }
+
+            if (await CheckCode(this.UserCode, this.DeviceCode))
+            {
+                // We have great success
+                ((System.Timers.Timer)sender).Stop();
+                ((System.Timers.Timer)sender).Elapsed -= AuthCodeTimer_Elapsed;
+                ((System.Timers.Timer)sender).Dispose();
+
+                // The task has already set our config, all we need to do is call Register
+                try
+                {
+                    // Assert the XMDS url
+                    this.xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
+
+                    var response = this.xmds.RegisterDisplay(
+                        ApplicationSettings.Default.ServerKey,
+                        ApplicationSettings.Default.HardwareKey,
+                        ApplicationSettings.Default.DisplayName,
+                        "windows",
+                        ApplicationSettings.Default.ClientVersion,
+                        ApplicationSettings.Default.ClientCodeVersion,
+                        Environment.OSVersion.ToString(),
+                        this.hardwareKey.MacAddress,
+                        this.hardwareKey.Channel,
+                        this.hardwareKey.getXmrPublicKey());
+
+                    // Process the XML
+                    RegisterAgent.ProcessRegisterXml(response);
+
+                    // Launch
+                    Dispatcher.Invoke(new System.Action(
+                        () =>
+                        {
+                            Close();
+                            Process.Start(Process.GetCurrentProcess().MainModule.FileName);
+                        })
+                        );
+                }
+                catch (Exception ex)
+                {
+                    this.textBoxStatus.Text = "Problem Claiming Code, please try again.";
+                    Trace.WriteLine(new LogMessage("OptionsForm", "AuthCodeTimer_Elapsed: Problem claiming code: " + ex.Message), LogType.Error.ToString());
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        private static async Task<JObject> GenerateCode()
+        {
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage(HttpMethod.Post, "https://auth.signlicence.co.uk/generateCode"))
+            {
+                StringBuilder sb = new StringBuilder();
+                using (StringWriter sw = new StringWriter(sb))
+                {
+                    using (JsonWriter writer = new JsonTextWriter(sw))
+                    {
+                        writer.Formatting = Formatting.None;
+                        writer.WriteStartObject();
+                        writer.WritePropertyName("hardwareId");
+                        writer.WriteValue(ApplicationSettings.Default.HardwareKey);
+                        writer.WritePropertyName("type");
+                        writer.WriteValue("windows");
+                        writer.WritePropertyName("version");
+                        writer.WriteValue("" + ApplicationSettings.Default.ClientCodeVersion);
+                        writer.WriteEndObject();
+                    }
+                }
+            
+                using (var stringContent = new StringContent(sb.ToString(), Encoding.UTF8, "application/json"))
+                {
+                    request.Content = stringContent;
+
+                    using (var response = await client
+                        .SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+                        .ConfigureAwait(false))
+                    {
+                        response.EnsureSuccessStatusCode();
+                        var jsonString = await response.Content.ReadAsStringAsync();
+                        var json = JsonConvert.DeserializeObject<JObject>(jsonString);
+                        
+                        if (json.ContainsKey("message"))
+                        {
+                            throw new Exception("Request returned a message in the body, discard");
+                        }
+
+                        return json;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check Code
+        /// </summary>
+        /// <returns></returns>
+        private static async Task<bool> CheckCode(string UserCode, string DeviceCode)
+        {
+            Debug.WriteLine("Calling Auth Service", "CheckCode");
+
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage(HttpMethod.Get, "https://auth.signlicence.co.uk/getDetails?user_code=" + UserCode + "&device_code=" + DeviceCode))
+            {
+                using (var response = await client
+                        .SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+                        .ConfigureAwait(false))
+                {
+                    try
+                    {
+                        response.EnsureSuccessStatusCode();
+                        var jsonString = await response.Content.ReadAsStringAsync();
+                        var json = JsonConvert.DeserializeObject<JObject>(jsonString);
+
+                        if (json.ContainsKey("cmsAddress"))
+                        {
+                            // TODO: we are done! 
+                            ApplicationSettings.Default.ServerUri = json["cmsAddress"].ToString();
+                            ApplicationSettings.Default.ServerKey = json["cmsKey"].ToString();
+
+                            // Returning true stops the task and launches the player
+                            return true;
+                        }
+                        else
+                        {
+                            Debug.WriteLine(jsonString, "CheckCode");
+                            return false;
+                        }
+                    } 
+                    catch
+                    {
+                        Debug.WriteLine("Non 200/300 status code", "CheckCode");
+                        return false;
+                    }
+                }
+            }
         }
     }
 }

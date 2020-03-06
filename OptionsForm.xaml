@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:XiboClient"
         xmlns:Properties="clr-namespace:XiboClient.Properties" x:Class="XiboClient.OptionsForm"
         mc:Ignorable="d"
-        Title="Player Options" Height="450" Width="800" ResizeMode="NoResize">
+        Title="Player Options" Height="450" Width="800" ResizeMode="CanMinimize">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="185*"/>
@@ -59,11 +59,12 @@
 
         </TabControl>
         <TextBox x:Name="textBoxStatus" Grid.ColumnSpan="2" Margin="24,250,27,97" BorderThickness="0"/>
-        <Button x:Name="buttonConnect" Content="Connect" HorizontalAlignment="Left" Margin="10,342,0,0" VerticalAlignment="Top" Width="397" Height="67" IsDefault="True" Cursor="Hand" AutomationProperties.HelpText="Connect to your CMS using the details on the Connect Tab" Grid.ColumnSpan="2" Click="Button_Connect_Click"/>
+        <Button x:Name="buttonConnect" Content="Connect" HorizontalAlignment="Left" Margin="10,342,0,0" VerticalAlignment="Top" Width="272" Height="67" IsDefault="True" Cursor="Hand" AutomationProperties.HelpText="Connect to your CMS using the details on the Connect Tab" Click="Button_Connect_Click" Grid.ColumnSpan="2"/>
         <Button Content="Exit" HorizontalAlignment="Left" Margin="476.671,342,0,0" VerticalAlignment="Top" Width="120" Height="67" Grid.Column="1" Click="Button_Exit_Click"/>
         <Button Content="Display Admin" HorizontalAlignment="Left" Margin="352,342,0,0" VerticalAlignment="Top" Width="120" Height="67" Grid.Column="1" Click="Button_DisplayAdmin_Click"/>
-        <Button Content="Launch Player" HorizontalAlignment="Left" Margin="227,342,0,0" VerticalAlignment="Top" Width="120" Height="67" Grid.Column="1" Click="Button_LaunchPlayer_Click"/>
+        <Button x:Name="buttonLaunchPlayer" Content="Launch Player" HorizontalAlignment="Left" Margin="227,342,0,0" VerticalAlignment="Top" Width="120" Height="67" Grid.Column="1" Click="Button_LaunchPlayer_Click"/>
         <PasswordBox HorizontalAlignment="Left" Margin="-220,344,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="buttonUseCode" Content="Use Code" HorizontalAlignment="Left" Margin="102,342,0,0" VerticalAlignment="Top" Width="120" Height="67" Grid.Column="1" Click="Button_UseCode_Click"/>
 
     </Grid>
 </Window>
