@@ -30,9 +30,7 @@ We have a number of branches
 
 - master: our stable branch, currently on version 2
 - develop: our next release work in progress
-- feature/webview: a branch which tracks `develop` and is used to build the Microsoft Edge enabled version of the Player (Windows 10 onward)
-- feature/wpf: an experimental branch of the Player which uses WPF instead of WinForms (Windows 10 onward)
-
+- feature/wpf: v2 R252 onward, our WPF player
 
 # Issues
 
