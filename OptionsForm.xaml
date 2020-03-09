@@ -1,0 +1,70 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:XiboClient"
+        xmlns:Properties="clr-namespace:XiboClient.Properties" x:Class="XiboClient.OptionsForm"
+        mc:Ignorable="d"
+        Title="Player Options" Height="450" Width="800" ResizeMode="CanMinimize">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="185*"/>
+            <ColumnDefinition Width="607*"/>
+        </Grid.ColumnDefinitions>
+        <TabControl HorizontalAlignment="Left" Height="327" Margin="10,10,0,0" VerticalAlignment="Top" Width="772" Grid.ColumnSpan="2">
+            <TabItem Header="Connect">
+                <Grid Background="#FFE5E5E5" Margin="0,0,0,90">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="91*"/>
+                        <ColumnDefinition Width="675*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="textBoxCmsAddress" HorizontalAlignment="Left" Height="35" Margin="82.616,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="582" Grid.Column="1" FontSize="16" VerticalContentAlignment="Center"/>
+                    <Label Content="CMS Address" HorizontalAlignment="Left" Margin="59,44,0,0" VerticalAlignment="Top" Width="110" Height="34" FontSize="16" Grid.ColumnSpan="2"/>
+                    <TextBox x:Name="textBoxCmsKey" HorizontalAlignment="Left" Height="35" Margin="82.616,84,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="582" Grid.Column="1" FontSize="16" VerticalContentAlignment="Center"/>
+                    <Label Content="CMS Key" HorizontalAlignment="Left" Margin="59,85,0,0" VerticalAlignment="Top" Width="110" Height="34" FontSize="16" Grid.ColumnSpan="2"/>
+                    <TextBox x:Name="textBoxLibraryPath" HorizontalAlignment="Left" Height="35" Margin="82.616,124,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="446" Grid.Column="1" FontSize="16" VerticalContentAlignment="Center"/>
+                    <Button x:Name="buttonLibraryBrowse" Content="Browse" HorizontalAlignment="Left" Margin="533.616,124,0,0" VerticalAlignment="Top" Width="131" RenderTransformOrigin="0.053,-0.641" Height="35" Grid.Column="1" Click="Button_LibraryBrowse_Click"/>
+                    <Label Content="Local Library" HorizontalAlignment="Left" Margin="59,125,0,0" VerticalAlignment="Top" Width="110" Height="34" FontSize="16" Grid.ColumnSpan="2"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Advanced">
+                <Grid Background="#FFE5E5E5" Margin="0,0,0,85">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="91*"/>
+                        <ColumnDefinition Width="675*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="textBoxProxyUser" HorizontalAlignment="Left" Height="35" Margin="83,16,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="582" Grid.Column="1" FontSize="16" VerticalContentAlignment="Center"/>
+                    <Label Content="Proxy User" HorizontalAlignment="Left" Margin="54,16,0,0" VerticalAlignment="Top" Width="110" Height="34" FontSize="16" Grid.ColumnSpan="2"/>
+                    <PasswordBox x:Name="textBoxProxyPass" HorizontalAlignment="Left" Height="35" Margin="83,56,0,0" VerticalAlignment="Top" Width="582" Grid.Column="1" FontSize="16" VerticalContentAlignment="Center"/>
+                    <Label Content="Proxy Password" HorizontalAlignment="Left" Margin="54,56,0,0" VerticalAlignment="Top" Width="120" Height="34" FontSize="16" Grid.ColumnSpan="2"/>
+                    <TextBox x:Name="textBoxProxyDomain" HorizontalAlignment="Left" Height="35" Margin="83,96,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="582" Grid.Column="1" FontSize="16" VerticalContentAlignment="Center"/>
+                    <Label Content="Proxy Domain" HorizontalAlignment="Left" Margin="54,98,0,0" VerticalAlignment="Top" Width="110" Height="34" FontSize="16" Grid.ColumnSpan="2"/>
+                    <TextBox x:Name="textBoxHardwareKey" HorizontalAlignment="Left" Height="35" Margin="83,136,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="582" Grid.Column="1" FontSize="16" VerticalContentAlignment="Center"/>
+                    <Label Content="Hardware Key" HorizontalAlignment="Left" Margin="54,137,0,0" VerticalAlignment="Top" Width="110" Height="34" FontSize="16" Grid.ColumnSpan="2"/>
+                    <TextBox x:Name="textBoxSplashScreenReplacement" HorizontalAlignment="Left" Height="35" Margin="83,176,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="467" Grid.Column="1" FontSize="16" VerticalContentAlignment="Center"/>
+                    <Label Content="Splash Screen" HorizontalAlignment="Left" Margin="54,176,0,0" VerticalAlignment="Top" Width="110" Height="34" FontSize="16" Grid.ColumnSpan="2" RenderTransformOrigin="0.519,-1.218"/>
+                    <Button x:Name="buttonSplashScreenReplacement" Content="Browse" Grid.Column="1" HorizontalAlignment="Left" Margin="555,176,0,0" VerticalAlignment="Top" Width="110" Height="35" Click="Button_SplashScreenReplacement_Click"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="About">
+                <Grid Background="#FFE5E5E5" Margin="0,0,0,85">
+                    <Image Height="100" Width="100" Source="Resources/logo.png" Margin="656,10,10,104"/>
+                    <RichTextBox x:Name="textBoxLicence" HorizontalAlignment="Left" Height="194" Margin="10,10,0,0" VerticalAlignment="Top" Width="621" IsReadOnly="True" ScrollViewer.CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+
+                    </RichTextBox>
+                    <Label x:Name="labelPlayerVersion" Content="" HorizontalAlignment="Left" Margin="636,112,0,0" VerticalAlignment="Top" Width="120"/>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+        <TextBox x:Name="textBoxStatus" Grid.ColumnSpan="2" Margin="24,250,27,97" BorderThickness="0"/>
+        <Button x:Name="buttonConnect" Content="Connect" HorizontalAlignment="Left" Margin="10,342,0,0" VerticalAlignment="Top" Width="272" Height="67" IsDefault="True" Cursor="Hand" AutomationProperties.HelpText="Connect to your CMS using the details on the Connect Tab" Click="Button_Connect_Click" Grid.ColumnSpan="2"/>
+        <Button Content="Exit" HorizontalAlignment="Left" Margin="476.671,342,0,0" VerticalAlignment="Top" Width="120" Height="67" Grid.Column="1" Click="Button_Exit_Click"/>
+        <Button Content="Display Admin" HorizontalAlignment="Left" Margin="352,342,0,0" VerticalAlignment="Top" Width="120" Height="67" Grid.Column="1" Click="Button_DisplayAdmin_Click"/>
+        <Button x:Name="buttonLaunchPlayer" Content="Launch Player" HorizontalAlignment="Left" Margin="227,342,0,0" VerticalAlignment="Top" Width="120" Height="67" Grid.Column="1" Click="Button_LaunchPlayer_Click"/>
+        <PasswordBox HorizontalAlignment="Left" Margin="-220,344,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="buttonUseCode" Content="Use Code" HorizontalAlignment="Left" Margin="102,342,0,0" VerticalAlignment="Top" Width="120" Height="67" Grid.Column="1" Click="Button_UseCode_Click"/>
+
+    </Grid>
+</Window>

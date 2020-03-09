@@ -17,20 +17,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Management;
-using System.Text;
-using System.Diagnostics;
-using System.Net.NetworkInformation;
-using System.Security.Cryptography;
-using System.Windows.Forms;
-using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.OpenSsl;
-using System.IO;
 using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Security;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Management;
+using System.Net.NetworkInformation;
 
 namespace XiboClient
 {
@@ -97,9 +92,9 @@ namespace XiboClient
         /// </summary>
         public string Key
         {
-            get 
-            { 
-                return this._hardwareKey; 
+            get
+            {
+                return this._hardwareKey;
             }
         }
 

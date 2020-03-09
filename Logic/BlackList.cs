@@ -1,13 +1,14 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006,2007,2008 Daniel Garner and James Packer
+/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,17 +19,22 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Xml;
-using System.Windows.Forms;
-using System.Diagnostics;
 
-namespace XiboClient
+namespace XiboClient.Logic
 {
-    class BlackList : IDisposable
+    class BlackList
     {
+        private static readonly Lazy<BlackList>
+            lazy =
+            new Lazy<BlackList>
+            (() => new BlackList());
+
+        public static BlackList Instance { get { return lazy.Value; } }
+
         private xmds.xmds xmds1;
         private HardwareKey hardwareKey;
 
@@ -53,7 +59,7 @@ namespace XiboClient
         {
             // Do some validation
             if (reason == "") reason = "No reason provided";
-            
+
             int mediaId;
             if (!int.TryParse(id, out mediaId))
             {
@@ -166,7 +172,7 @@ namespace XiboClient
                     using (StreamReader sr = new StreamReader(fileStream))
                     {
                         string listed = sr.ReadToEnd();
-                        
+
                         return listed.Contains(String.Format("[{0}]", fileId));
                     }
                 }
@@ -178,33 +184,6 @@ namespace XiboClient
 
             return false;
         }
-
-        #region IDisposableMethods
-
-        private Boolean disposed;
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                if (disposing)
-                {
-                    // Dispose managed resources.
-                }
-
-                // There are no unmanaged resources to release, but
-                // if we add them, they need to be released here.
-            }
-            disposed = true;
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        #endregion
     }
 
     public enum BlackListType { Single, All }

@@ -1,18 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Diagnostics;
-using XiboClient.Properties;
 
 namespace XiboClient.Log
 {
     class ClientInfoTraceListener : TraceListener
     {
-        private ClientInfo _clientInfo;
-
-        public ClientInfoTraceListener(ClientInfo clientInfo)
+        public ClientInfoTraceListener()
         {
-            _clientInfo = clientInfo;
         }
 
         /// <summary>
@@ -42,7 +35,7 @@ namespace XiboClient.Log
             if (ApplicationSettings.Default.LogLevel != "audit")
                 return;
 
-            _clientInfo.AddToLogGrid(message, LogType.Audit);
+            ClientInfo.Instance.AddToLogGrid(message, LogType.Audit);
         }
 
         public override void Write(object o)
@@ -50,7 +43,7 @@ namespace XiboClient.Log
             if (ApplicationSettings.Default.LogLevel != "audit")
                 return;
 
-            _clientInfo.AddToLogGrid(o.ToString(), LogType.Audit);
+            ClientInfo.Instance.AddToLogGrid(o.ToString(), LogType.Audit);
         }
 
         public override void Write(string message, string category)
@@ -64,7 +57,7 @@ namespace XiboClient.Log
             if (ApplicationSettings.Default.LogLevel == "info" && (logtype != LogType.Error && logtype != LogType.Info))
                 return;
 
-            _clientInfo.AddToLogGrid(message, logtype);
+            ClientInfo.Instance.AddToLogGrid(message, logtype);
         }
 
         public override void Write(object o, string category)
@@ -78,7 +71,7 @@ namespace XiboClient.Log
             if (ApplicationSettings.Default.LogLevel == "info" && (logtype != LogType.Error && logtype != LogType.Info))
                 return;
 
-            _clientInfo.AddToLogGrid(o.ToString(), logtype);
+            ClientInfo.Instance.AddToLogGrid(o.ToString(), logtype);
         }
 
         public override void WriteLine(string message)

@@ -1,13 +1,14 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2009 Daniel Garner
+/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,25 +19,65 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
-using System.IO;
-using System.Windows.Forms;
-using System.Xml.Serialization;
 using System.Diagnostics;
+using System.IO;
 using System.Xml;
+using System.Xml.Serialization;
 
 namespace XiboClient
 {
-    public class CacheManager
+    public sealed class CacheManager
     {
-        public static object _locker = new object();
-        public Collection<Md5Resource> _files;
+        private static readonly Lazy<CacheManager>
+            lazy =
+            new Lazy<CacheManager>
+            (() => new CacheManager());
 
-        public CacheManager()
+        public static CacheManager Instance
+            => lazy.Value;
+
+        private readonly object _locker = new object();
+        public Collection<Md5Resource> _files = new Collection<Md5Resource>();
+
+        private CacheManager()
         {
-            _files = new Collection<Md5Resource>();
+        }
+
+        /// <summary>
+        /// Sets the CacheManager
+        /// </summary>
+        public void SetCacheManager()
+        {
+            lock (_locker)
+            {
+                try
+                {
+                    // Deserialise a saved cache manager, and use its files to set our instance.
+                    using (FileStream fileStream = File.Open(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.CacheManagerFile, FileMode.Open))
+                    {
+                        XmlSerializer xmlSerializer = new XmlSerializer(typeof(CacheManager));
+
+                        CacheManager manager = (CacheManager)xmlSerializer.Deserialize(fileStream);
+
+                        // Set its files on ourselves
+                        Instance._files = manager._files;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("CacheManager", "Unable to reuse the Cache Manager because: " + ex.Message));
+                }
+
+                try
+                {
+                    Instance.Regenerate();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("CacheManager", "Regenerate failed because: " + ex.Message));
+                }
+            }
         }
 
         /// <summary>
@@ -65,7 +106,7 @@ namespace XiboClient
                         Remove(path);
 
                         Add(path, md5);
-                        
+
                         // Return the new MD5
                         return md5;
                     }
@@ -95,7 +136,7 @@ namespace XiboClient
             catch (Exception ex)
             {
                 Trace.WriteLine(new LogMessage("CalcMD5", "Unable to calc the MD5 because: " + ex.Message), LogType.Error.ToString());
-                
+
                 // Return a 0 MD5 which will immediately invalidate the file
                 return "0";
             }
@@ -256,7 +297,7 @@ namespace XiboClient
                 XmlDocument xml = new XmlDocument();
                 xml.Load(ApplicationSettings.Default.LibraryPath + @"\" + ApplicationSettings.Default.RequiredFilesFile);
 
-                XmlNodeList fileNodes = xml.SelectNodes("//RequiredFile/Path");
+                XmlNodeList fileNodes = xml.SelectNodes("//RequiredFile/SaveAs");
 
                 foreach (XmlNode file in fileNodes)
                 {

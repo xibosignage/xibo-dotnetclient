@@ -19,7 +19,7 @@ namespace XiboClient.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -62,7 +62,7 @@ namespace XiboClient.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to Xibo - Digital Signage - http://www.xibo.org.uk
-        ///Copyright (C) 2006-2017 Spring Signage Ltd
+        ///Copyright (C) 2020 Xibo Signage Ltd
         ///
         ///Xibo is free software: you can redistribute it and/or modify
         ///it under the terms of the GNU Affero General Public License as published by
@@ -72,7 +72,7 @@ namespace XiboClient.Properties {
         ///Xibo is distributed in the hope that it will be useful,
         ///but WITHOUT ANY WARRANTY; without even the implied warranty of
         ///MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        ///GNU  [rest of string was truncated]&quot;;.
+        ///GNU Affero  [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string licence {
             get {
@@ -97,15 +97,6 @@ namespace XiboClient.Properties {
             get {
                 object obj = ResourceManager.GetObject("splash", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to http://xibo.org.uk/manual.
-        /// </summary>
-        internal static string SupportUrl {
-            get {
-                return ResourceManager.GetString("SupportUrl", resourceCulture);
             }
         }
     }

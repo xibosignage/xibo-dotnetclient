@@ -1,13 +1,14 @@
-/*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006 - 2018 Spring Signage Ltd
+/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,19 +19,11 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using XiboClient.Properties;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Mime;
-
-/// 17/02/12 Dan Created
-/// 21/02/12 Dan Added OnComplete Delegate and Event
-/// 28/02/12 Dan Added OnPartComplete Delegate and Event
-/// 22/04/12 Dan Dispose of XMDS between each request
+using System.Text;
+using System.Threading;
 
 namespace XiboClient.XmdsAgents
 {
@@ -115,7 +108,7 @@ namespace XiboClient.XmdsAgents
         /// </summary>
         public FileAgent()
         {
-            
+
         }
 
         /// <summary>
@@ -176,14 +169,14 @@ namespace XiboClient.XmdsAgents
                     file.Downloading = false;
 
                     // Check MD5
-                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.SaveAs);
+                    string md5 = CacheManager.Instance.GetMD5(file.SaveAs);
                     if (file.Md5 == md5)
                     {
                         // Mark it as complete
                         _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
 
                         // Add it to the cache manager
-                        _requiredFiles.CurrentCacheManager.Add(file.SaveAs, file.Md5);
+                        CacheManager.Instance.Add(file.SaveAs, file.Md5);
 
                         Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.SaveAs), LogType.Info.ToString());
                     }
@@ -272,14 +265,14 @@ namespace XiboClient.XmdsAgents
                     file.Downloading = false;
 
                     // Check MD5
-                    string md5 = _requiredFiles.CurrentCacheManager.GetMD5(file.SaveAs);
+                    string md5 = CacheManager.Instance.GetMD5(file.SaveAs);
                     if (file.Md5 == md5)
                     {
                         // Mark it as complete
                         _requiredFiles.MarkComplete(_requiredFileId, file.Md5);
 
                         // Add it to the cache manager
-                        _requiredFiles.CurrentCacheManager.Add(file.SaveAs, file.Md5);
+                        CacheManager.Instance.Add(file.SaveAs, file.Md5);
 
                         Trace.WriteLine(new LogMessage("FileAgent - Run", "File Downloaded Successfully. " + file.SaveAs), LogType.Info.ToString());
                     }
@@ -296,7 +289,7 @@ namespace XiboClient.XmdsAgents
             catch (WebException webEx)
             {
                 // Remove from the cache manager
-                _requiredFiles.CurrentCacheManager.Remove(file.SaveAs);
+                CacheManager.Instance.Remove(file.SaveAs);
 
                 // Log this message, but dont abort the thread
                 Trace.WriteLine(new LogMessage("FileAgent - Run", "Web Exception in Run: " + webEx.Message), LogType.Info.ToString());
@@ -307,7 +300,7 @@ namespace XiboClient.XmdsAgents
             catch (Exception ex)
             {
                 // Remove from the cache manager
-                _requiredFiles.CurrentCacheManager.Remove(file.SaveAs);
+                CacheManager.Instance.Remove(file.SaveAs);
 
                 // Log this message, but dont abort the thread
                 Trace.WriteLine(new LogMessage("FileAgent - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());

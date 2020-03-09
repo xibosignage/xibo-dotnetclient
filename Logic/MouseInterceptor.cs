@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
-using System.Drawing;
 
 namespace XiboClient.Logic
 {
@@ -15,12 +13,12 @@ namespace XiboClient.Logic
     {
         private static LowLevelMouseProc _proc = HookCallback;
         private static IntPtr _hookID = IntPtr.Zero;
-        
+
         private static MouseInterceptor s_instance = null;
         // The KeyPressed Event
         public event MouseInterceptorEventHandler MouseEvent;
 
-        private static Point _mouseLocation;
+        private static System.Drawing.Point _mouseLocation;
 
         public static IntPtr SetHook()
         {
@@ -45,7 +43,6 @@ namespace XiboClient.Logic
                 if (MouseMessages.WM_LBUTTONDOWN == (MouseMessages)wParam || MouseMessages.WM_MOUSEMOVE == (MouseMessages)wParam)
                 {
                     MSLLHOOKSTRUCT hookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
-                    Console.WriteLine(hookStruct.pt.x + ", " + hookStruct.pt.y);
 
                     if (Math.Abs(_mouseLocation.X - hookStruct.pt.x) > 5 || Math.Abs(_mouseLocation.Y - hookStruct.pt.y) > 5)
                     {
@@ -53,7 +50,7 @@ namespace XiboClient.Logic
                             MouseInterceptor.s_instance.MouseEvent();
                     }
 
-                    _mouseLocation = new Point(hookStruct.pt.x, hookStruct.pt.y);
+                    _mouseLocation = new System.Drawing.Point(hookStruct.pt.x, hookStruct.pt.y);
                 }
             }
 

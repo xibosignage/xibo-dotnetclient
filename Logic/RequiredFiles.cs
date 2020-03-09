@@ -18,16 +18,11 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
-using System.IO;
-using System.Security.Cryptography;
-using System.Xml;
 using System.Diagnostics;
-using System.Windows.Forms;
+using System.IO;
+using System.Xml;
 using System.Xml.Serialization;
-using XiboClient.Properties;
 
 /// 17/02/12 Dan Enriched to also manage currently downloading files
 /// 28/02/12 Dan Changed the way RequiredFiles are updated
@@ -65,34 +60,17 @@ namespace XiboClient
             }
         }
 
-        /// <summary>
-        /// The Current CacheManager for this Xibo Client
-        /// </summary>
-        public CacheManager CurrentCacheManager
-        {
-            get
-            {
-                return _cacheManager;
-            }
-            set
-            {
-                lock (_locker)
-                    _cacheManager = value;
-            }
-        }
-        private CacheManager _cacheManager;
-
         public RequiredFiles()
         {
             RequiredFileList = new Collection<RequiredFile>();
 
             // Create a webservice call
-            _report = new XiboClient.xmds.xmds();
-
-            // Start up the Xmds Service Object
-            _report.Credentials = null;
-            _report.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=mediaInventory";
-            _report.UseDefaultCredentials = false;
+            _report = new xmds.xmds
+            {
+                Credentials = null,
+                Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=mediaInventory",
+                UseDefaultCredentials = false
+            };
         }
 
         /// <summary>
@@ -105,8 +83,8 @@ namespace XiboClient
 
             foreach (XmlNode file in fileNodes)
             {
-                RequiredFile rf = new RequiredFile(); 
-                
+                RequiredFile rf = new RequiredFile();
+
                 XmlAttributeCollection attributes = file.Attributes;
 
                 rf.FileType = attributes["type"].Value;
@@ -140,7 +118,7 @@ namespace XiboClient
                         rf.Path = rf.Path + ".xlf";
                         rf.SaveAs = rf.Path;
                     }
-                    
+
                     rf.ChunkSize = rf.Size;
                 }
                 else if (rf.FileType == "resource")
@@ -155,7 +133,7 @@ namespace XiboClient
                         rf.MediaId = attributes["mediaid"].Value;
                         rf.Path = rf.MediaId + ".htm";
                         rf.SaveAs = rf.Path;
-                        
+
                         // Set the size to something arbitary
                         rf.Size = 10000;
 
@@ -229,12 +207,12 @@ namespace XiboClient
                 if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs))
                 {
                     // Compare MD5 of the file we currently have, to what we should have
-                    if (rf.Md5 != _cacheManager.GetMD5(rf.SaveAs))
+                    if (rf.Md5 != CacheManager.Instance.GetMD5(rf.SaveAs))
                     {
                         Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "MD5 different for existing file: " + rf.SaveAs), LogType.Info.ToString());
 
                         // They are different
-                        _cacheManager.Remove(rf.SaveAs);
+                        CacheManager.Instance.Remove(rf.SaveAs);
 
                         // TODO: Resume the file download under certain conditions. Make sure its not bigger than it should be. 
                         // Make sure it is fairly fresh
@@ -262,13 +240,13 @@ namespace XiboClient
                     {
                         // The MD5 is equal - we already have an up to date version of this file.
                         rf.Complete = true;
-                        _cacheManager.Add(rf.SaveAs, rf.Md5);
+                        CacheManager.Instance.Add(rf.SaveAs, rf.Md5);
                     }
                 }
                 else
                 {
                     // File does not exist, therefore remove it from the cache manager (on the off chance that it is in there for some reason)
-                    _cacheManager.Remove(rf.SaveAs);
+                    CacheManager.Instance.Remove(rf.SaveAs);
                 }
 
                 RequiredFileList.Add(rf);

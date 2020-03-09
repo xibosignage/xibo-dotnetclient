@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2019 Xibo Signage Ltd
+ * Copyright (C) 2020 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -21,33 +21,38 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Windows.Forms;
 using System.Xml;
-using System.Xml.Serialization;
 using XiboClient.Logic;
 
 namespace XiboClient
 {
     [Serializable()]
-    public class ApplicationSettings
+    public sealed class ApplicationSettings
     {
-        private static ApplicationSettings _instance;
-        private static string _default = "default";
+        private static readonly Lazy<ApplicationSettings>
+            lazy =
+            new Lazy<ApplicationSettings>
+            (() => new ApplicationSettings());
+
+        private bool Loaded = false;
+        private static readonly object Locker = new object();
+
+        /// <summary>
+        /// Properties that should live in the Global Settings file
+        /// </summary>
         private List<string> _globalProperties;
 
-        // Application Specific Settings we want to protect
-        private readonly string _clientVersion = "2 R201";
-        private readonly string _version = "5";
-        private readonly int _clientCodeVersion = 201;
+        /// <summary>
+        /// Properties that should be excluded from and load/save operations
+        /// </summary>
+        private List<string> ExcludedProperties;
 
-        public string ClientVersion { get { return _clientVersion; } }
-        public string Version { get { return _version; } }
-        public int ClientCodeVersion { get { return _clientCodeVersion; } }
+        public string ClientVersion { get; } = "2 R252.6";
+        public string Version { get; } = "5";
+        public int ClientCodeVersion { get; } = 252;
 
         private ApplicationSettings()
         {
@@ -59,71 +64,20 @@ namespace XiboClient
             _globalProperties.Add("ProxyPassword");
             _globalProperties.Add("ProxyDomain");
             _globalProperties.Add("ProxyPort");
+
+            ExcludedProperties = new List<string>();
+            ExcludedProperties.Add("Default");
+            ExcludedProperties.Add("XiboClient_xmds_xmds");
+            ExcludedProperties.Add("ClientVersion");
+            ExcludedProperties.Add("Version");
+            ExcludedProperties.Add("ClientCodeVersion");
         }
 
         /// <summary>
-        /// Access the application settings.
-        /// load()
+        /// Application settings.
         /// </summary>
         public static ApplicationSettings Default
-        {
-            get
-            {
-                // Return the settings instance if we've loaded already
-                if (_instance != null)
-                    return _instance;
-
-                // Check to see if we need to migrate
-                XmlDocument document;
-                string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
-
-                // Create a new application settings instance.
-                _instance = new ApplicationSettings();
-
-                if (File.Exists(path + Path.DirectorySeparatorChar + fileName + ".config.xml"))
-                {
-                    // Migrate to the new settings format
-                    //  player specific settings in %APPDATA%\<app_name>.config.json
-                    //  cms settings and run time info in <library>\config.json
-                    try
-                    {
-                        // Load the XML document
-                        document = new XmlDocument();
-                        document.Load(path + Path.DirectorySeparatorChar + fileName + ".config.xml");
-
-                        _instance.PopulateFromXml(document);
-                        _instance.Save();
-                    }
-                    catch
-                    {
-                        // Unable to load XML - consider the migration complete
-                    }
-
-                    // Take a backup and Delete the old config file
-                    File.Copy(path + Path.DirectorySeparatorChar + fileName + ".config.xml", path + Path.DirectorySeparatorChar + fileName + ".config.xml.bak", true);
-                    File.Delete(path + Path.DirectorySeparatorChar + fileName + ".config.xml");
-                }
-
-                // Populate it with the default.config.xml
-                _instance.AppendConfigFile(Path.GetDirectoryName(Application.ExecutablePath) + Path.DirectorySeparatorChar + _default + ".config.xml");
-
-                // Load the global settings.
-                _instance.AppendConfigFile(path + Path.DirectorySeparatorChar + fileName + ".xml");
-
-                // Load the hardware key
-                if (File.Exists(_instance.LibraryPath + "\\hardwarekey"))
-                {
-                    _instance.HardwareKey = File.ReadAllText(_instance.LibraryPath + "\\hardwarekey");
-                }
-
-                // Load the player settings
-                _instance.AppendConfigFile(_instance.LibraryPath + "\\config.xml");
-
-                // Return the instance
-                return _instance;
-            }
-        }
+            => lazy.Value;
 
         /// <summary>
         /// Append config file
@@ -147,77 +101,153 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Load settings
+        /// </summary>
+        public void Load()
+        {
+            lock (Locker)
+            {
+                // Return the settings instance if we've loaded already
+                if (lazy.Value.Loaded)
+                {
+                    Debug.WriteLine("Settings already loaded, returning.", "ApplicationSettings");
+                    return;
+                }
+                Debug.WriteLine("Settings need to be loaded.", "ApplicationSettings");
+
+                // What is our executable path?
+                string executablePath = Process.GetCurrentProcess().MainModule.FileName;
+
+                // Check to see if we need to migrate
+                XmlDocument document;
+                string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string fileName = Path.GetFileNameWithoutExtension(executablePath);
+
+                if (File.Exists(path + Path.DirectorySeparatorChar + fileName + ".config.xml"))
+                {
+                    // Migrate to the new settings format
+                    //  player specific settings in %APPDATA%\<app_name>.config.json
+                    //  cms settings and run time info in <library>\config.json
+                    try
+                    {
+                        // Load the XML document
+                        document = new XmlDocument();
+                        document.Load(path + Path.DirectorySeparatorChar + fileName + ".config.xml");
+
+                        lazy.Value.PopulateFromXml(document);
+                        lazy.Value.Save();
+                    }
+                    catch
+                    {
+                        // Unable to load XML - consider the migration complete
+                    }
+
+                    // Take a backup and Delete the old config file
+                    File.Copy(path + Path.DirectorySeparatorChar + fileName + ".config.xml", path + Path.DirectorySeparatorChar + fileName + ".config.xml.bak", true);
+                    File.Delete(path + Path.DirectorySeparatorChar + fileName + ".config.xml");
+                }
+
+                // Populate it with the default.config.xml
+                lazy.Value.AppendConfigFile(Path.GetDirectoryName(executablePath) + Path.DirectorySeparatorChar + "default.config.xml");
+
+                // Load the global settings.
+                lazy.Value.AppendConfigFile(path + Path.DirectorySeparatorChar + fileName + ".xml");
+
+                // Load the hardware key
+                if (File.Exists(lazy.Value.LibraryPath + "\\hardwarekey"))
+                {
+                    lazy.Value.HardwareKey = File.ReadAllText(lazy.Value.LibraryPath + "\\hardwarekey");
+                }
+
+                // Load the player settings
+                lazy.Value.AppendConfigFile(lazy.Value.LibraryPath + "\\config.xml");
+
+                // We are loaded
+                lazy.Value.Loaded = true;
+            }
+        }
+
+        /// <summary>
         /// Save settings
         /// </summary>
         public void Save()
         {
-            if (_instance == null)
-                return;
-
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string fileName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
-
-            // Write the global settings file
-            using (XmlWriter writer = XmlWriter.Create(path + Path.DirectorySeparatorChar + fileName + ".xml"))
+            if (!lazy.Value.Loaded)
             {
-                writer.WriteStartDocument();
-                writer.WriteStartElement("ApplicationSettings");
-
-                foreach (PropertyInfo property in _instance.GetType().GetProperties())
-                {
-                    if (property.CanRead && _globalProperties.Contains(property.Name))
-                    {
-                        writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
-                    }
-                }
-
-                writer.WriteEndElement();
-                writer.WriteEndDocument();
+                return;
             }
 
-            // Write the hardware key file
-            File.WriteAllText(_instance.LibraryPath + "\\hardwarekey", _instance.HardwareKey);
-
-            // Write the player settings file
-            using (XmlWriter writer = XmlWriter.Create(_instance.LibraryPath + "\\config.xml"))
+            lock (Locker)
             {
-                writer.WriteStartDocument();
-                writer.WriteStartElement("PlayerSettings");
+                string executablePath = Process.GetCurrentProcess().MainModule.FileName;
+                string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string fileName = Path.GetFileNameWithoutExtension(executablePath);
 
-                foreach (PropertyInfo property in _instance.GetType().GetProperties())
+                // Write the global settings file
+                using (XmlWriter writer = XmlWriter.Create(path + Path.DirectorySeparatorChar + fileName + ".xml"))
                 {
-                    try
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("ApplicationSettings");
+
+                    foreach (PropertyInfo property in lazy.Value.GetType().GetProperties())
                     {
-                        if (property.CanRead && !_globalProperties.Contains(property.Name) && property.Name != "HardwareKey")
+                        if (property.CanRead && _globalProperties.Contains(property.Name))
                         {
-                            if (property.Name == "Commands")
-                            {
-                                writer.WriteStartElement("commands");
-
-                                foreach (Command command in _instance.Commands)
-                                {
-                                    writer.WriteStartElement(command.Code);
-                                    writer.WriteElementString("commandString", command.CommandString);
-                                    writer.WriteElementString("commandValidation", command.Validation);
-                                    writer.WriteEndElement();
-                                }
-
-                                writer.WriteEndElement();
-                            }
-                            else
-                            {
-                                writer.WriteElementString(property.Name, "" + property.GetValue(_instance));
-                            }
+                            writer.WriteElementString(property.Name, "" + property.GetValue(lazy.Value));
                         }
                     }
-                    catch
-                    {
-                        Trace.WriteLine(new LogMessage("PopulateFromXml", "Unable to write [" + property.Name + "]."), LogType.Info.ToString());
-                    }
+
+                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
                 }
 
-                writer.WriteEndElement();
-                writer.WriteEndDocument();
+                // Write the hardware key file
+                File.WriteAllText(lazy.Value.LibraryPath + "\\hardwarekey", lazy.Value.HardwareKey);
+
+                // Write the player settings file
+                using (XmlWriter writer = XmlWriter.Create(lazy.Value.LibraryPath + "\\config.xml"))
+                {
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("PlayerSettings");
+
+                    foreach (PropertyInfo property in lazy.Value.GetType().GetProperties())
+                    {
+                        try
+                        {
+                            if (property.CanRead
+                                && !_globalProperties.Contains(property.Name)
+                                && !ExcludedProperties.Contains(property.Name)
+                                && property.Name != "HardwareKey")
+                            {
+                                if (property.Name == "Commands" && lazy.Value.Commands != null)
+                                {
+                                    writer.WriteStartElement("commands");
+
+                                    foreach (Command command in lazy.Value.Commands)
+                                    {
+                                        writer.WriteStartElement(command.Code);
+                                        writer.WriteElementString("commandString", command.CommandString);
+                                        writer.WriteElementString("commandValidation", command.Validation);
+                                        writer.WriteEndElement();
+                                    }
+
+                                    writer.WriteEndElement();
+                                }
+                                else
+                                {
+                                    writer.WriteElementString(property.Name, "" + property.GetValue(lazy.Value));
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            Trace.WriteLine(new LogMessage("PopulateFromXml", "Unable to write [" + property.Name + "]."), LogType.Info.ToString());
+                        }
+                    }
+
+                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
+                }
             }
         }
 
@@ -231,12 +261,21 @@ namespace XiboClient
             get
             {
                 PropertyInfo property = GetType().GetProperty(propertyName);
-                return property.GetValue(this, null);
+                return property?.GetValue(this, null);
             }
             set
             {
                 PropertyInfo property = GetType().GetProperty(propertyName);
-                property.SetValue(this, value, null);
+
+                if (property != null && property.SetMethod != null)
+                {
+                    Debug.WriteLine("Set Property: " + propertyName, "ApplicationSettings");
+                    property.SetValue(this, value, null);
+                }
+                else
+                {
+                    Debug.WriteLine("Null Property: " + propertyName, "ApplicationSettings");
+                }
             }
         }
 
@@ -249,7 +288,11 @@ namespace XiboClient
             foreach (XmlNode node in document.DocumentElement.ChildNodes)
             {
                 // Are we a commands node?
-                if (node.Name.ToLower() == "commands")
+                if (ExcludedProperties.Contains(node.Name))
+                {
+                    continue;
+                }
+                else if (node.Name.ToLower() == "commands")
                 {
                     List<Command> commands = new List<Command>();
 
@@ -257,14 +300,14 @@ namespace XiboClient
                     {
                         Command command = new Command();
                         command.Code = commandNode.Name;
-                        command.CommandString = commandNode.SelectSingleNode("commandString").InnerText;
-                        command.Validation = commandNode.SelectSingleNode("validationString").InnerText;
+                        command.CommandString = XmlHelper.SelectNodeInnerTextOrDefault(commandNode, "commandString", "");
+                        command.Validation = XmlHelper.SelectNodeInnerTextOrDefault(commandNode, "validationString", "");
 
                         commands.Add(command);
                     }
 
                     // Store commands
-                    ApplicationSettings.Default.Commands = commands;
+                    lazy.Value.Commands = commands;
                 }
                 else
                 {
@@ -297,12 +340,12 @@ namespace XiboClient
                     // Match these to settings
                     try
                     {
-                        if (ApplicationSettings.Default[node.Name] != null)
+                        if (lazy.Value[node.Name] != null)
                         {
-                            value = Convert.ChangeType(value, ApplicationSettings.Default[node.Name].GetType());
+                            value = Convert.ChangeType(value, lazy.Value[node.Name].GetType());
                         }
 
-                        ApplicationSettings.Default[node.Name] = value;
+                        lazy.Value[node.Name] = value;
                     }
                     catch
                     {
@@ -336,14 +379,14 @@ namespace XiboClient
         public string NewCmsKey { get; set; }
 
         private string _libraryPath;
-        public string LibraryPath 
-        { 
-            get 
+        public string LibraryPath
+        {
+            get
             {
-                if (_libraryPath == "DEFAULT")
+                if (string.IsNullOrEmpty(_libraryPath) || _libraryPath == "DEFAULT")
                 {
                     // Get the users document space for a library
-                    _libraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + Application.ProductName + " Library";
+                    _libraryPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\" + GetProductNameFromAssembly() + " Library";
                 }
 
                 // Check the path exists
@@ -354,11 +397,11 @@ namespace XiboClient
                 }
 
                 return _libraryPath;
-            } 
-            set 
+            }
+            set
             {
-                _libraryPath = value; 
-            } 
+                _libraryPath = value;
+            }
         }
 
         /// <summary>
@@ -368,10 +411,10 @@ namespace XiboClient
         {
             get
             {
-                return ServerUri.TrimEnd('\\') + @"/xmds.php?v=" + ApplicationSettings.Default.Version;
+                return lazy.Value.ServerUri.TrimEnd('\\') + @"/xmds.php?v=" + lazy.Value.Version;
             }
         }
-        
+
         public string ServerKey { get; set; }
 
         private string _displayName;
@@ -381,8 +424,8 @@ namespace XiboClient
         /// Server Address
         /// </summary>
         private string _serverUri;
-        public string ServerUri 
-        { 
+        public string ServerUri
+        {
             get
             {
                 return (string.IsNullOrEmpty(_serverUri)) ? "http://localhost" : _serverUri;
@@ -414,9 +457,9 @@ namespace XiboClient
 
         // Embedded web server config
         public int EmbeddedServerPort { get; set; }
-        public string EmbeddedServerAddress 
-        { 
-            get 
+        public string EmbeddedServerAddress
+        {
+            get
             {
                 return "http://localhost:" + ((EmbeddedServerPort == 0) ? 9696 : EmbeddedServerPort) + "/";
             }
@@ -520,6 +563,7 @@ namespace XiboClient
         public bool SendCurrentLayoutAsStatusUpdate { get; set; }
         public bool PreventSleep { get; set; }
         public bool ScreenShotRequested { get; set; }
+        public bool FallbackToInternetExplorer { get; set; }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;
@@ -549,5 +593,17 @@ namespace XiboClient
 
         // Settings HASH
         public string Hash { get; set; }
+
+        /// <summary>
+        /// Gets the product name from the Assembly
+        /// </summary>
+        /// <returns>Product Name</returns>
+        public static string GetProductNameFromAssembly()
+        {
+            return Assembly.GetEntryAssembly()
+                                .GetCustomAttributes(typeof(AssemblyProductAttribute))
+                                .OfType<AssemblyProductAttribute>()
+                                .FirstOrDefault().Product;
+        }
     }
 }

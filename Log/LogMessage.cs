@@ -18,24 +18,22 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using System.Diagnostics;
-using System.Threading;
 using System.Security;
+using System.Threading;
+using System.Xml;
+using XiboClient.Logic;
 
 namespace XiboClient
 {
     public class LogMessage
     {
-        public string _thread;
-        public string _method;
-        public string _message;
-        public int _scheduleId;
-        public int _layoutId;
-        public int _mediaId;
-        public DateTime LogDate;
+        public string _thread { get; set; }
+        public string _method { get; set; }
+        public string _message { get; set; }
+        public int _scheduleId { get; set; }
+        public int _layoutId { get; set; }
+        public int _mediaId { get; set; }
+        public DateTime LogDate { get; set; }
 
         public LogMessage(String method, String message)
         {
@@ -77,10 +75,10 @@ namespace XiboClient
 
             try
             {
-                LogDate = DateTime.Parse(xml.GetElementsByTagName("logdate").Item(0).InnerText.ToString());
-                _message = xml.GetElementsByTagName("message").Item(0).InnerText.ToString();
-                _method = xml.GetElementsByTagName("method").Item(0).InnerText.ToString();
-                _thread = xml.GetElementsByTagName("thread").Item(0).InnerText.ToString();
+                LogDate = DateTime.Parse(XmlHelper.SelectFirstElementInnerTextOrDefault(xml, "logdate", "1970-01-01"));
+                _message = XmlHelper.SelectFirstElementInnerTextOrDefault(xml, "message", "");
+                _method = XmlHelper.SelectFirstElementInnerTextOrDefault(xml, "method", "");
+                _thread = XmlHelper.SelectFirstElementInnerTextOrDefault(xml, "thread", "");
             }
             catch (NullReferenceException)
             {
