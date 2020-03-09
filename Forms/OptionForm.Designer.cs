@@ -61,12 +61,13 @@ namespace XiboClient
             this.tbStatus = new System.Windows.Forms.TextBox();
             this.xmds1 = new XiboClient.xmds.xmds();
             this.buttonExit = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
+            this.buttonLaunchPlayer = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.label5 = new System.Windows.Forms.Label();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.label4 = new System.Windows.Forms.Label();
+            this.buttonUseCode = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -108,7 +109,7 @@ namespace XiboClient
             this.buttonSaveSettings.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.buttonSaveSettings.Location = new System.Drawing.Point(12, 508);
             this.buttonSaveSettings.Name = "buttonSaveSettings";
-            this.buttonSaveSettings.Size = new System.Drawing.Size(387, 41);
+            this.buttonSaveSettings.Size = new System.Drawing.Size(291, 41);
             this.buttonSaveSettings.TabIndex = 6;
             this.buttonSaveSettings.Text = "Save";
             this.buttonSaveSettings.UseVisualStyleBackColor = true;
@@ -307,7 +308,7 @@ namespace XiboClient
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(93, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -367,16 +368,16 @@ namespace XiboClient
             this.buttonExit.UseVisualStyleBackColor = true;
             this.buttonExit.Click += new System.EventHandler(this.buttonExit_Click);
             // 
-            // button1
+            // buttonLaunchPlayer
             // 
-            this.button1.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(405, 508);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(90, 41);
-            this.button1.TabIndex = 17;
-            this.button1.Text = "Launch Client";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.buttonLaunchPlayer.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonLaunchPlayer.Location = new System.Drawing.Point(405, 508);
+            this.buttonLaunchPlayer.Name = "buttonLaunchPlayer";
+            this.buttonLaunchPlayer.Size = new System.Drawing.Size(90, 41);
+            this.buttonLaunchPlayer.TabIndex = 17;
+            this.buttonLaunchPlayer.Text = "Launch Client";
+            this.buttonLaunchPlayer.UseVisualStyleBackColor = true;
+            this.buttonLaunchPlayer.Click += new System.EventHandler(this.Button_LaunchPlayer_Click);
             // 
             // tabControl1
             // 
@@ -450,13 +451,25 @@ namespace XiboClient
             this.label4.TabIndex = 15;
             this.label4.Text = "Proxy Server Information";
             // 
+            // buttonUseCode
+            // 
+            this.buttonUseCode.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonUseCode.Location = new System.Drawing.Point(309, 508);
+            this.buttonUseCode.Name = "buttonUseCode";
+            this.buttonUseCode.Size = new System.Drawing.Size(90, 41);
+            this.buttonUseCode.TabIndex = 19;
+            this.buttonUseCode.Text = "Use Code";
+            this.buttonUseCode.UseVisualStyleBackColor = true;
+            this.buttonUseCode.Click += new System.EventHandler(this.Button_UseCode_Click);
+            // 
             // OptionForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(698, 561);
+            this.Controls.Add(this.buttonUseCode);
             this.Controls.Add(this.tabControl1);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.buttonLaunchPlayer);
             this.Controls.Add(this.buttonExit);
             this.Controls.Add(this.tbStatus);
             this.Controls.Add(this.buttonDisplayAdmin);
@@ -512,11 +525,12 @@ namespace XiboClient
         private System.Windows.Forms.TextBox splashOverride;
         private System.Windows.Forms.TextBox tbStatus;
         private System.Windows.Forms.Button buttonExit;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button buttonLaunchPlayer;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Button buttonUseCode;
     }
 }
