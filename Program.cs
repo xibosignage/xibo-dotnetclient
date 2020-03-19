@@ -1,6 +1,6 @@
 /*
  * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2006-2015 Daniel Garner and the Xibo Developers
+ * Copyright (C) 2020 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -52,6 +52,9 @@ namespace XiboClient
             Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
 #endif
+
+            // Load App Settings
+            ApplicationSettings.Default.Load();
 
             // Add the Xibo Tracelistener
             Trace.Listeners.Add(new XiboTraceListener());

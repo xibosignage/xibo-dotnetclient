@@ -227,7 +227,7 @@ namespace XiboClient
                 try
                 {
                     // Update/write the status.json file
-                    File.WriteAllText(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), "{\"lastActivity\":\"" + DateTime.Now.ToString() + "\"}");
+                    _clientInfoForm.UpdateStatusMarkerFile();
 
                     // Start watchdog
                     WatchDogManager.Start();

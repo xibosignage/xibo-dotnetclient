@@ -26,6 +26,9 @@ using XiboClient.Log;
 using System.Xml;
 using XiboClient.Logic;
 using System.Net;
+using System.IO;
+using Newtonsoft.Json;
+using System.Windows.Forms;
 
 namespace XiboClient.XmdsAgents
 {
@@ -98,11 +101,8 @@ namespace XiboClient.XmdsAgents
                                 OnXmrReconfigure();
                             }
 
-                            // Is the timezone empty?
-                            if (string.IsNullOrEmpty(ApplicationSettings.Default.DisplayTimeZone))
-                            {
-                                reportTimezone();
-                            }
+                            // Notify Status
+                            NotifyStatus();
 
                             // Have we been asked to move CMS instance?
                             // CMS MOVE
@@ -275,17 +275,81 @@ namespace XiboClient.XmdsAgents
         /// <summary>
         /// Report the timezone to XMDS
         /// </summary>
-        private void reportTimezone()
+        private void NotifyStatus()
         {
-            using (xmds.xmds xmds = new xmds.xmds())
+            StringBuilder sb = new StringBuilder();
+            using (StringWriter sw = new StringWriter(sb))
             {
-                string status = "{\"timeZone\":\"" + WindowsToIana(TimeZone.CurrentTimeZone.StandardName) + "\"}";
+                using (JsonWriter writer = new JsonTextWriter(sw))
+                {
+                    writer.Formatting = Newtonsoft.Json.Formatting.None;
+                    writer.WriteStartObject();
+                    writer.WritePropertyName("deviceName");
+                    writer.WriteValue(Environment.MachineName);
 
-                xmds.Credentials = null;
-                xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
-                xmds.UseDefaultCredentials = false;
-                xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, status);
+                    // Set Width and Height
+                    // Determine the client size
+                    int sizeX = (int)ApplicationSettings.Default.SizeX;
+                    if (sizeX <= 0)
+                    {
+                        sizeX = SystemInformation.PrimaryMonitorSize.Width;
+                    }
+
+                    int sizeY = (int)ApplicationSettings.Default.SizeY;
+                    if (sizeY <= 0)
+                    {
+                        sizeY = SystemInformation.PrimaryMonitorSize.Height;
+                    }
+
+                    writer.WritePropertyName("width");
+                    writer.WriteValue(sizeX);
+                    writer.WritePropertyName("height");
+                    writer.WriteValue(sizeY);
+
+                    try
+                    {
+                        // Use Drive Info
+                        foreach (DriveInfo drive in DriveInfo.GetDrives())
+                        {
+                            if (drive.IsReady && ApplicationSettings.Default.LibraryPath.Contains(drive.RootDirectory.FullName))
+                            {
+                                writer.WritePropertyName("availableSpace");
+                                writer.WriteValue(drive.TotalFreeSpace);
+                                writer.WritePropertyName("totalSpace");
+                                writer.WriteValue(drive.TotalSize);
+                                break;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        Trace.WriteLine(new LogMessage("NotifyStatus", "Unable to get drive info"), LogType.Info.ToString());
+                    }
+
+
+                    // Timezone
+                    // we only do the timezone if it is currently empty, otherwise we stick with whatever has been set.
+                    if (string.IsNullOrEmpty(ApplicationSettings.Default.DisplayTimeZone))
+                    {
+                        writer.WritePropertyName("timeZone");
+                        writer.WriteValue(WindowsToIana(TimeZone.CurrentTimeZone.StandardName));
+                    }
+
+                    // Finish
+                    writer.WriteEndObject();
+
+                    // Report
+                    using (xmds.xmds xmds = new xmds.xmds())
+                    {
+                        xmds.Credentials = null;
+                        xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
+                        xmds.UseDefaultCredentials = false;
+                        xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
+                    }
+                }
             }
+
+            sb.Clear();
         }
 
         /// <summary>
