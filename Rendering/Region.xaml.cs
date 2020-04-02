@@ -611,6 +611,10 @@ namespace XiboClient.Rendering
                     media = new Spacer(options);
                     break;
 
+                case "hls":
+                    media = new WebEdge(options);
+                    break;
+
                 default:
                     if (options.render == "html")
                     {
