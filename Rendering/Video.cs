@@ -34,6 +34,7 @@ namespace XiboClient.Rendering
         private bool _detectEnd = false;
         private bool isLooping = false;
         protected bool ShouldBeVisible { get; set; }
+        protected bool Muted { get; set; }
 
         private MediaElement mediaElement;
 
@@ -46,6 +47,13 @@ namespace XiboClient.Rendering
 
             // Handle Volume
             this.volume = options.Dictionary.Get("volume", 100);
+
+            // Mute - if not provided as an option, we keep the default.
+            string muteOption = options.Dictionary.Get("mute");
+            if (!string.IsNullOrEmpty(muteOption))
+            {
+                this.Muted = muteOption == "1";
+            }
 
             // Should we loop?
             this.isLooping = (options.Dictionary.Get("loop", "0") == "1" && _duration != 0);
@@ -106,6 +114,7 @@ namespace XiboClient.Rendering
             // Create a Media Element
             this.mediaElement = new MediaElement();
             this.mediaElement.Volume = this.volume;
+            this.mediaElement.IsMuted = this.Muted;
             this.mediaElement.LoadedBehavior = MediaState.Manual;
 
             if (!this.ShouldBeVisible)
