@@ -572,8 +572,12 @@ namespace XiboClient.Rendering
                     break;
 
                 case "video":
-                case "localvideo":
                     options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Video(options);
+                    break;
+
+                case "localvideo":
+                    // Local video does not update the URI with the library path, it just takes what has been provided in the Widget.
                     media = new Video(options);
                     break;
 

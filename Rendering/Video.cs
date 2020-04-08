@@ -54,7 +54,7 @@ namespace XiboClient.Rendering
         private void MediaElement_MediaFailed(object sender, ExceptionRoutedEventArgs e)
         {
             // Log and expire
-            Trace.WriteLine(new LogMessage("Audio", "MediaElement_MediaFailed: Media Failed. E = " + e.ErrorException.Message), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("Video", "MediaElement_MediaFailed: Media Failed. E = " + e.ErrorException.Message), LogType.Error.ToString());
 
             Expired = true;
         }
@@ -73,12 +73,33 @@ namespace XiboClient.Rendering
             }
         }
 
+        /// <summary>
+        /// Media is loaded
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MediaElement_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                this.mediaElement.Play();
+            }
+            catch (Exception ex)
+            {
+                // Problem calling play, we should expire.
+                Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: Media Failed. E = " + ex.Message), LogType.Error.ToString());
+            }
+        }
+
         public override void RenderMedia()
         {
             // Check to see if the video exists or not (if it doesnt say we are already expired)
-            if (!File.Exists(_filePath))
+            // we only do this if we aren't a stream
+            Uri uri = new Uri(_filePath);
+
+            if (uri.IsFile && !File.Exists(_filePath))
             {
-                Trace.WriteLine(new LogMessage("Audio - RenderMedia", "Local Video file " + _filePath + " not found."));
+                Trace.WriteLine(new LogMessage("Video", "RenderMedia: File " + _filePath + " not found."));
                 throw new FileNotFoundException();
             }
 
@@ -115,29 +136,19 @@ namespace XiboClient.Rendering
             try
             {
                 // Start Player
-                this.mediaElement.Source = new Uri(_filePath);
+                this.mediaElement.Source = uri;
 
                 this.MediaScene.Children.Add(this.mediaElement);
 
-                Trace.WriteLine(new LogMessage("Audio - RenderMedia", "Video Started"), LogType.Audit.ToString());
+                Trace.WriteLine(new LogMessage("Video", "RenderMedia: Video Started"), LogType.Audit.ToString());
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("Audio - RenderMedia", ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Video", "RenderMedia: "+ ex.Message), LogType.Error.ToString());
 
                 // Unable to start video - expire this media immediately
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Media is loaded
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MediaElement_Loaded(object sender, RoutedEventArgs e)
-        {
-            this.mediaElement.Play();
         }
 
         /// <summary>
