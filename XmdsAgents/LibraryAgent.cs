@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2019 Xibo Signage Ltd
+ * Copyright (C) 2020 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -62,6 +62,7 @@ namespace XiboClient.XmdsAgents
             _persistentFiles.Add("hardwarekey");
             _persistentFiles.Add("config.xml");
             _persistentFiles.Add("id_rsa");
+            _persistentFiles.Add("pop.db");
         }
 
         /// <summary>

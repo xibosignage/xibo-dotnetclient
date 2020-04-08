@@ -80,11 +80,6 @@ namespace XiboClient.XmdsAgents
 
                             // Log
                             ProcessFiles(xmds, key.Key, ApplicationSettings.Default.LogLocation);
-
-                            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=submitStats";
-
-                            // Stat
-                            ProcessFiles(xmds, key.Key, ApplicationSettings.Default.StatsLogFile);
                         }
                     }
                     catch (WebException webEx)

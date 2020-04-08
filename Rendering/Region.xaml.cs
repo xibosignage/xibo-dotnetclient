@@ -40,11 +40,6 @@ namespace XiboClient.Rendering
         private Media currentMedia;
 
         /// <summary>
-        /// A stat record for this Region
-        /// </summary>
-        private Stat stat;
-
-        /// <summary>
         /// Track the current sequence
         /// </summary>
         private int currentSequence = -1;
@@ -774,13 +769,7 @@ namespace XiboClient.Rendering
         private void OpenStatRecordForMedia()
         {
             // This media has started and is being replaced
-            this.stat = new Stat();
-            this.stat.type = StatType.Media;
-            this.stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            this.stat.scheduleID = this.options.scheduleId;
-            this.stat.layoutID = this.options.layoutId;
-            this.stat.mediaID = this.options.mediaid;
-            this.stat.isEnabled = this.options.isStatEnabled;
+            StatManager.Instance.WidgetStart(this.options.scheduleId, this.options.layoutId, this.options.mediaid);
         }
 
         /// <summary>
@@ -788,18 +777,8 @@ namespace XiboClient.Rendering
         /// </summary>
         private void CloseCurrentStatRecord()
         {
-            try
-            {
-                // Here we say that this media is expired
-                this.stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
-                // Record this stat event in the statLog object
-                StatLog.Instance.RecordStat(this.stat);
-            }
-            catch
-            {
-                Trace.WriteLine(new LogMessage("Region - StopMedia", "No Stat record when one was expected"), LogType.Error.ToString());
-            }
+            // Here we say that this media is expired
+            StatManager.Instance.WidgetStop(this.options.scheduleId, this.options.layoutId, this.options.mediaid, this.options.isStatEnabled);
         }
 
         /// <summary>
@@ -881,14 +860,7 @@ namespace XiboClient.Rendering
                 }
 
                 // What happens if we are disposing this region but we have not yet completed the stat event?
-                if (string.IsNullOrEmpty(this.stat.toDate))
-                {
-                    // Say that this media has ended
-                    this.stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
-                    // Record this stat event in the statLog object
-                    StatLog.Instance.RecordStat(this.stat);
-                }
+                CloseCurrentStatRecord();
             }
             catch
             {

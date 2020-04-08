@@ -54,4 +54,5 @@
   <EmbeddedServerPort>9696</EmbeddedServerPort>
   <ScreenShotSize>0</ScreenShotSize>
   <FallbackToInternetExplorer>false</FallbackToInternetExplorer>
+  <AggregationLevel>individual</AggregationLevel>
 </ApplicationSettings>

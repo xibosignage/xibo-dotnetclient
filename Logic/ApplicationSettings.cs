@@ -449,6 +449,7 @@ namespace XiboClient
         public string CursorStartPosition { get; set; }
         public string ClientInformationKeyCode { get; set; }
         public string XmrNetworkAddress { get; set; }
+        public string AggregationLevel { get; set; }
 
         // Download window
         public string DisplayTimeZone { get; set; }

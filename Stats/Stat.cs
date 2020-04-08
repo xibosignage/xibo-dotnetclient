@@ -24,29 +24,13 @@ namespace XiboClient.Stats
 {
     public class Stat
     {
-        public StatType type;
-        public String fromDate;
-        public String toDate;
-        public int layoutID;
-        public int scheduleID;
-        public String mediaID;
-        public String tag;
-
-        /// <summary>
-        /// Is this Stat enabled (if false it will not be recorded)
-        /// </summary>
-        public bool isEnabled = true;
-
-        public override string ToString()
-        {
-            // Format the message into the expected XML sub nodes.
-            // Just do this with a string builder rather than an XML builder.
-            String theMessage;
-
-            theMessage = String.Format("<stat type=\"{0}\" fromdt=\"{1}\" todt=\"{2}\" layoutid=\"{3}\" scheduleid=\"{4}\" mediaid=\"{5}\"></stat>", type, fromDate, toDate, layoutID.ToString(), scheduleID.ToString(), mediaID);
-
-            return theMessage;
-        }
+        public StatType Type;
+        public DateTime From;
+        public DateTime To;
+        public int LayoutId;
+        public int ScheduleId;
+        public String WidgetId;
+        public String Tag;
     }
 
     public enum StatType { Layout, Media, Event };
