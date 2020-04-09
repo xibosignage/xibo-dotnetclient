@@ -27,6 +27,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using XiboClient.XmdsAgents;
 
 namespace XiboClient.Stats
@@ -58,7 +59,7 @@ namespace XiboClient.Stats
         /// <summary>
         /// Last time we sent stats
         /// </summary>
-        private DateTime lastSendDate;
+        public DateTime LastSendDate { get; set; }
 
         /// <summary>
         /// A Stat Agent which we will maintain in a thread
@@ -282,55 +283,185 @@ namespace XiboClient.Stats
         }
 
         /// <summary>
-        /// TODO: Mark stat records to be sent if there are some to send
+        /// Mark stat records to be sent if there are some to send
         /// </summary>
+        /// <param name="marker"></param>
+        /// <param name="isBacklog"></param>
         /// <returns></returns>
-        public bool MarkRecordsForSend()
+        public bool MarkRecordsForSend(int marker, bool isBacklog)
         {
-            return false;
+            string aggregationLevel = ApplicationSettings.Default.AggregationLevel.ToLowerInvariant();
+            
+            // Run query
+            using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+            using (SqliteCommand cmd = new SqliteCommand())
+            {
+                connection.Open();
+
+                cmd.Connection = connection;
+                cmd.CommandText = "UPDATE stat SET processing = @processing WHERE _id IN (" +
+                    "SELECT _id FROM stat WHERE ifnull(processing, 0) = 0 " + ((aggregationLevel == "individual") ? "" : " AND todt < @todt ") + " ORDER BY _id LIMIT @limit" +
+                    ")";
+
+                // Set the marker
+                cmd.Parameters.AddWithValue("@processing", marker);
+
+                if (aggregationLevel == "hourly")
+                {
+                    // Hourly
+                    cmd.Parameters.AddWithValue("@todt", DateTime.Now.ToString("yyyy-MM-dd HH:") + ":00:00.0000000");
+
+                    // if we are in backlog mode, then take a days worth of worse case, otherwise an hours worth
+                    cmd.Parameters.AddWithValue("@limit", (isBacklog) ? 86400 : 3600);
+                }
+                else if (aggregationLevel == "daily")
+                {
+                    // Daily
+                    cmd.Parameters.AddWithValue("@todt", DateTime.Now.Date.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF"));
+
+                    // The maximum number of records we can get in one day (or at least a reasonable number is 1 per second)
+                    // gather at least that many, regardless of mode.
+                    cmd.Parameters.AddWithValue("@limit", 86400);
+                }
+                else
+                {
+                    // Individual
+                    cmd.Parameters.AddWithValue("@limit", (isBacklog) ? 300 : 50);
+                }
+
+                return cmd.ExecuteNonQuery() > 0;
+            }
         }
 
         /// <summary>
         /// Unmark records marked for send
         /// </summary>
-        public void UnmarkRecordsForSend()
+        /// <param name="marker"></param>
+        public void UnmarkRecordsForSend(int marker)
         {
-            
+            using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+            using (SqliteCommand cmd = new SqliteCommand())
+            {
+                connection.Open();
+                cmd.Connection = connection;
+                cmd.CommandText = "UPDATE stat SET processing = 0 WHERE processing = @processing";
+                cmd.Parameters.AddWithValue("processing", marker);
+                cmd.ExecuteScalar();
+            }
         }
 
         /// <summary>
         /// Delete stats that have been sent
         /// </summary>
-        public void DeleteSent()
+        /// <param name="marker"></param>
+        public void DeleteSent(int marker)
         {
-
+            using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+            using (SqliteCommand cmd = new SqliteCommand())
+            {
+                connection.Open();
+                cmd.Connection = connection;
+                cmd.CommandText = "DELETE FROM stat WHERE processing = @processing";
+                cmd.Parameters.AddWithValue("processing", marker);
+                cmd.ExecuteScalar();
+            }
         }
 
         /// <summary>
-        /// TODO: Get XML for the stats to send
+        /// Get XML for the stats to send
         /// </summary>
+        /// <param name="marker"></param>
         /// <returns></returns>
-        public string GetXmlForSend()
+        public string GetXmlForSend(int marker)
         {
-            return "";
+            StringBuilder builder = new StringBuilder();
+
+            using (XmlWriter writer = XmlWriter.Create(builder))
+            using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+            using (SqliteCommand cmd = new SqliteCommand())
+            {
+                // Start off our XML document
+                writer.WriteStartDocument();
+                writer.WriteStartElement("log");
+
+                connection.Open();
+                cmd.Connection = connection;
+                cmd.CommandText = "SELECT type, fromdt, todt, scheduleId, layoutId, widgetId, tag FROM stat WHERE processing = @processing";
+                cmd.Parameters.AddWithValue("processing", marker);
+
+                using (SqliteDataReader reader = cmd.ExecuteReader())
+                {
+                    // TODO: different handling for aggregates
+                    while (reader.Read())
+                    {
+                        DateTime from = reader.GetDateTime(1);
+                        DateTime to = reader.GetDateTime(2);
+                        writer.WriteStartElement("stat");
+                        writer.WriteAttributeString("type", reader.GetString(0));
+                        writer.WriteAttributeString("fromdt", from.ToString("yyyy-MM-dd HH:mm:ss"));
+                        writer.WriteAttributeString("todt", to.ToString("yyyy-MM-dd HH:mm:ss"));
+                        writer.WriteAttributeString("scheduleid", reader.GetString(3));
+                        writer.WriteAttributeString("layoutid", reader.GetString(4));
+                        writer.WriteAttributeString("mediaid", reader.GetString(5));
+                        writer.WriteAttributeString("tag", reader.GetString(6));
+                        writer.WriteAttributeString("duration", "" + (to - from).TotalSeconds);
+                        writer.WriteAttributeString("count", "1");
+                        writer.WriteEndElement();
+                    }
+                }
+
+                // Closing log element
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
+
+            return builder.ToString();
         }
 
         /// <summary>
-        /// TODO: Get the Total Number of Recorded Stats
+        /// Get the Total Number of Recorded Stats
         /// </summary>
         /// <returns></returns>
         public int TotalRecorded()
         {
-            return 0;
+            using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+            using (SqliteCommand cmd = new SqliteCommand("SELECT COUNT(*) FROM stat", connection))
+            {
+                connection.Open();
+                var result = cmd.ExecuteScalar();
+                return result == null ? 0 : Convert.ToInt32(result);
+            }
         }
 
         /// <summary>
-        /// TODO: Get the total number of stats ready to send
+        /// Get the total number of stats ready to send
         /// </summary>
         /// <returns></returns>
         public int TotalReady()
         {
-            return 0;
+            if (ApplicationSettings.Default.AggregationLevel.ToLowerInvariant() == "individual")
+            {
+                return TotalRecorded();
+            }
+
+            // Calculate a cut off date
+            string cutOff = ApplicationSettings.Default.AggregationLevel.ToLowerInvariant() == "daily"
+                ? DateTime.Now.Date.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF")
+                : DateTime.Now.ToString("yyyy-MM-dd HH:") + ":00:00.0000000";
+
+            // Run query
+            using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+            using (SqliteCommand cmd = new SqliteCommand())
+            {
+                connection.Open();
+
+                cmd.Connection = connection;
+                cmd.CommandText = "SELECT COUNT(*) FROM stat WHERE todt < @todt";
+                cmd.Parameters.AddWithValue("@todt", cutOff);
+
+                var result = cmd.ExecuteScalar();
+                return result == null ? 0 : Convert.ToInt32(result);
+            }
         }
     }
 }
