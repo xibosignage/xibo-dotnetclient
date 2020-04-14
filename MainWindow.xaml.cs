@@ -138,6 +138,9 @@ namespace XiboClient
                 Directory.CreateDirectory(ApplicationSettings.Default.LibraryPath + @"\backgrounds");
             }
 
+            // Initialise the database
+            StatManager.Instance.InitDatabase();
+
             // Default the XmdsConnection
             ApplicationSettings.Default.XmdsLastConnection = DateTime.MinValue;
 
@@ -384,9 +387,6 @@ namespace XiboClient
                 // Stop the schedule object
                 if (_schedule != null)
                     _schedule.Stop();
-
-                // Flush the stats
-                FlushStats();
 
                 // Write the CacheManager to disk
                 CacheManager.Instance.WriteCacheManager();
@@ -700,21 +700,6 @@ namespace XiboClient
             }
 
             SetCursorPos((int)position.X, (int)position.Y);
-        }
-
-        /// <summary>
-        /// Force a flush of the stats log
-        /// </summary>
-        public void FlushStats()
-        {
-            try
-            {
-                StatLog.Instance.Flush();
-            }
-            catch
-            {
-                Trace.WriteLine(new LogMessage("MainForm - FlushStats", "Unable to Flush Stats"), LogType.Error.ToString());
-            }
         }
 
         /// <summary>

@@ -29,6 +29,8 @@ namespace XiboClient.Log
 {
     public sealed class ClientInfo
     {
+        public static object _locker = new object();
+
         private static readonly Lazy<ClientInfo>
             lazy =
             new Lazy<ClientInfo>
@@ -131,32 +133,35 @@ namespace XiboClient.Log
         /// </summary>
         public void UpdateStatusMarkerFile()
         {
-            try
+            lock (_locker)
             {
-                using (FileStream file = new FileStream(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite))
+                try
                 {
-                    using (StreamWriter sw = new StreamWriter(file))
+                    using (FileStream file = new FileStream(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite))
                     {
-                        using (JsonWriter writer = new JsonTextWriter(sw))
+                        using (StreamWriter sw = new StreamWriter(file))
                         {
-                            writer.Formatting = Formatting.Indented;
-                            writer.WriteStartObject();
-                            writer.WritePropertyName("lastActivity");
-                            writer.WriteValue(DateTime.Now.ToString());
-                            writer.WritePropertyName("state");
-                            writer.WriteValue(App.Current.Dispatcher.Thread.ThreadState.ToString());
-                            writer.WritePropertyName("xmdsLastActivity");
-                            writer.WriteValue(ApplicationSettings.Default.XmdsLastConnection.ToString());
-                            writer.WritePropertyName("xmdsCollectInterval");
-                            writer.WriteValue(ApplicationSettings.Default.CollectInterval.ToString());
-                            writer.WriteEndObject();
+                            using (JsonWriter writer = new JsonTextWriter(sw))
+                            {
+                                writer.Formatting = Formatting.Indented;
+                                writer.WriteStartObject();
+                                writer.WritePropertyName("lastActivity");
+                                writer.WriteValue(DateTime.Now.ToString());
+                                writer.WritePropertyName("state");
+                                writer.WriteValue(App.Current.Dispatcher.Thread.ThreadState.ToString());
+                                writer.WritePropertyName("xmdsLastActivity");
+                                writer.WriteValue(ApplicationSettings.Default.XmdsLastConnection.ToString());
+                                writer.WritePropertyName("xmdsCollectInterval");
+                                writer.WriteValue(ApplicationSettings.Default.CollectInterval.ToString());
+                                writer.WriteEndObject();
+                            }
                         }
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(new LogMessage("ClientInfo - updateStatusFile", "Failed to update status file. e = " + e.Message), LogType.Error.ToString());
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("ClientInfo - updateStatusFile", "Failed to update status file. e = " + e.Message), LogType.Error.ToString());
+                }
             }
         }
 

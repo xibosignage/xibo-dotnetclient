@@ -31,6 +31,7 @@ namespace XiboClient.Rendering
             : base(options)
         {
             this.ShouldBeVisible = false;
+            this.Muted = false;
         }
     }
 }

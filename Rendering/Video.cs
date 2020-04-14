@@ -34,6 +34,7 @@ namespace XiboClient.Rendering
         private bool _detectEnd = false;
         private bool isLooping = false;
         protected bool ShouldBeVisible { get; set; }
+        protected bool Muted { get; set; }
 
         private MediaElement mediaElement;
 
@@ -47,6 +48,13 @@ namespace XiboClient.Rendering
             // Handle Volume
             this.volume = options.Dictionary.Get("volume", 100);
 
+            // Mute - if not provided as an option, we keep the default.
+            string muteOption = options.Dictionary.Get("mute");
+            if (!string.IsNullOrEmpty(muteOption))
+            {
+                this.Muted = muteOption == "1";
+            }
+
             // Should we loop?
             this.isLooping = (options.Dictionary.Get("loop", "0") == "1" && _duration != 0);
         }
@@ -54,7 +62,7 @@ namespace XiboClient.Rendering
         private void MediaElement_MediaFailed(object sender, ExceptionRoutedEventArgs e)
         {
             // Log and expire
-            Trace.WriteLine(new LogMessage("Audio", "MediaElement_MediaFailed: Media Failed. E = " + e.ErrorException.Message), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("Video", "MediaElement_MediaFailed: Media Failed. E = " + e.ErrorException.Message), LogType.Error.ToString());
 
             Expired = true;
         }
@@ -73,18 +81,40 @@ namespace XiboClient.Rendering
             }
         }
 
+        /// <summary>
+        /// Media is loaded
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MediaElement_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                this.mediaElement.Play();
+            }
+            catch (Exception ex)
+            {
+                // Problem calling play, we should expire.
+                Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: Media Failed. E = " + ex.Message), LogType.Error.ToString());
+            }
+        }
+
         public override void RenderMedia()
         {
             // Check to see if the video exists or not (if it doesnt say we are already expired)
-            if (!File.Exists(_filePath))
+            // we only do this if we aren't a stream
+            Uri uri = new Uri(_filePath);
+
+            if (uri.IsFile && !File.Exists(_filePath))
             {
-                Trace.WriteLine(new LogMessage("Audio - RenderMedia", "Local Video file " + _filePath + " not found."));
+                Trace.WriteLine(new LogMessage("Video", "RenderMedia: File " + _filePath + " not found."));
                 throw new FileNotFoundException();
             }
 
             // Create a Media Element
             this.mediaElement = new MediaElement();
             this.mediaElement.Volume = this.volume;
+            this.mediaElement.IsMuted = this.Muted;
             this.mediaElement.LoadedBehavior = MediaState.Manual;
 
             if (!this.ShouldBeVisible)
@@ -115,29 +145,19 @@ namespace XiboClient.Rendering
             try
             {
                 // Start Player
-                this.mediaElement.Source = new Uri(_filePath);
+                this.mediaElement.Source = uri;
 
                 this.MediaScene.Children.Add(this.mediaElement);
 
-                Trace.WriteLine(new LogMessage("Audio - RenderMedia", "Video Started"), LogType.Audit.ToString());
+                Trace.WriteLine(new LogMessage("Video", "RenderMedia: Video Started"), LogType.Audit.ToString());
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("Audio - RenderMedia", ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Video", "RenderMedia: "+ ex.Message), LogType.Error.ToString());
 
                 // Unable to start video - expire this media immediately
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Media is loaded
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MediaElement_Loaded(object sender, RoutedEventArgs e)
-        {
-            this.mediaElement.Play();
         }
 
         /// <summary>

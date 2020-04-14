@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2019 Xibo Signage Ltd
+ * Copyright (C) 2020 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -62,6 +62,7 @@ namespace XiboClient.XmdsAgents
             _persistentFiles.Add("hardwarekey");
             _persistentFiles.Add("config.xml");
             _persistentFiles.Add("id_rsa");
+            _persistentFiles.Add("pop.db");
         }
 
         /// <summary>
@@ -112,11 +113,10 @@ namespace XiboClient.XmdsAgents
                         {
                             // Never delete certain system files
                             // Also do not delete log/stat files as they are managed by their respective agents
-                            if (_persistentFiles.Contains(fileInfo.Name) ||
-                                fileInfo.Name.Contains(ApplicationSettings.Default.LogLocation) ||
-                                fileInfo.Name.Contains(ApplicationSettings.Default.StatsLogFile)
-                                )
+                            if (_persistentFiles.Contains(fileInfo.Name) || fileInfo.Name.Contains(ApplicationSettings.Default.LogLocation))
+                            {
                                 continue;
+                            }
 
                             // Delete files that were accessed over N days ago
                             try

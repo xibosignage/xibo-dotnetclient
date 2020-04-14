@@ -50,9 +50,9 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "2 R252.6";
+        public string ClientVersion { get; } = "2 R253.1";
         public string Version { get; } = "5";
-        public int ClientCodeVersion { get; } = 252;
+        public int ClientCodeVersion { get; } = 253;
 
         private ApplicationSettings()
         {
@@ -371,7 +371,6 @@ namespace XiboClient
 
         public string ScheduleFile { get; set; }
         public string LogLocation { get; set; }
-        public string StatsLogFile { get; set; }
         public string CacheManagerFile { get; set; }
         public string RequiredFilesFile { get; set; }
         public string VideoRenderingEngine { get; set; }
@@ -449,6 +448,7 @@ namespace XiboClient
         public string CursorStartPosition { get; set; }
         public string ClientInformationKeyCode { get; set; }
         public string XmrNetworkAddress { get; set; }
+        public string AggregationLevel { get; set; }
 
         // Download window
         public string DisplayTimeZone { get; set; }

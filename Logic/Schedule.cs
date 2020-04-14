@@ -26,6 +26,7 @@ using XiboClient.Action;
 using XiboClient.Control;
 using XiboClient.Log;
 using XiboClient.Logic;
+using XiboClient.Stats;
 using XiboClient.XmdsAgents;
 
 namespace XiboClient
@@ -205,6 +206,9 @@ namespace XiboClient
             // Start the LogAgent thread
             _logAgentThread.Start();
 
+            // Start the Proof of Play thread
+            StatManager.Instance.Start();
+
             // Start the subscriber thread
             _xmrSubscriberThread.Start();
 
@@ -231,8 +235,7 @@ namespace XiboClient
             ScheduleChangeEvent(_layoutSchedule[0].layoutFile, _layoutSchedule[0].scheduleid, _layoutSchedule[0].id);
 
             // Pass a new set of overlay's to subscribers
-            if (OverlayChangeEvent != null)
-                OverlayChangeEvent(_overlaySchedule);
+            OverlayChangeEvent?.Invoke(_overlaySchedule);
         }
 
         /// <summary>
@@ -566,6 +569,9 @@ namespace XiboClient
 
             // Stop the LogAgent Thread
             _logAgent.Stop();
+
+            // Stop the Proof of Play Thread
+            StatManager.Instance.Stop();
 
             // Stop the subsriber thread
             _xmrSubscriber.Stop();

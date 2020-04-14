@@ -10,7 +10,6 @@
   <LibraryAgentInterval>2</LibraryAgentInterval>
   <ScheduleFile>schedule.xml</ScheduleFile>
   <LogLocation>log.xml</LogLocation>
-  <StatsLogFile>stats.xml</StatsLogFile>
   <CacheManagerFile>cacheManager.xml</CacheManagerFile>
   <RequiredFilesFile>requiredFiles.xml</RequiredFilesFile>
   <VideoRenderingEngine>WindowsMediaPlayer</VideoRenderingEngine>
@@ -54,4 +53,5 @@
   <EmbeddedServerPort>9696</EmbeddedServerPort>
   <ScreenShotSize>0</ScreenShotSize>
   <FallbackToInternetExplorer>false</FallbackToInternetExplorer>
+  <AggregationLevel>individual</AggregationLevel>
 </ApplicationSettings>

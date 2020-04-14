@@ -45,7 +45,6 @@ namespace XiboClient.Rendering
         private double _scaleFactor;
 
         private bool isStatEnabled;
-        private Stat _stat;
 
         /// <summary>
         /// Is this Layout Changing?
@@ -342,14 +341,10 @@ namespace XiboClient.Rendering
 
         public void Start()
         {
-            // Create a start record for this layout
-            _stat = new Stat();
-            _stat.type = StatType.Layout;
-            _stat.scheduleID = _scheduleId;
-            _stat.layoutID = _layoutId;
-            _stat.fromDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            _stat.isEnabled = isStatEnabled;
+            // Stat Start
+            StatManager.Instance.LayoutStart(_scheduleId, _layoutId);
 
+            // Start all regions
             foreach (Region region in _regions)
             {
                 region.Start();
@@ -358,14 +353,8 @@ namespace XiboClient.Rendering
 
         public void Stop()
         {
-            if (_stat != null)
-            {
-                // Log the end of the currently running layout.
-                _stat.toDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
-                // Record this stat event in the statLog object
-                StatLog.Instance.RecordStat(_stat);
-            }
+            // Stat stop
+            StatManager.Instance.LayoutStop(_scheduleId, _layoutId, this.isStatEnabled);
         }
 
         public void Remove()

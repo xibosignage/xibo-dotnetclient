@@ -152,7 +152,6 @@
     <Compile Include="Rendering\WebEdge.cs" />
     <Compile Include="Rendering\WebIe.cs" />
     <Compile Include="Rendering\WebMedia.cs" />
-    <Compile Include="Stats\StatLog.cs" />
     <Compile Include="Log\XiboTraceListener.cs" />
     <Compile Include="Rendering\Layout.xaml.cs">
       <DependentUpon>Layout.xaml</DependentUpon>
@@ -161,6 +160,7 @@
       <DependentUpon>Region.xaml</DependentUpon>
     </Compile>
     <Compile Include="Stats\Stat.cs" />
+    <Compile Include="Stats\StatManager.cs" />
     <Compile Include="Web References\xmds\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -175,6 +175,7 @@
     <Compile Include="XmdsAgents\RegisterAgent.cs" />
     <Compile Include="XmdsAgents\ScheduleAgent.cs" />
     <Compile Include="XmdsAgents\ScheduleAndFilesAgent.cs" />
+    <Compile Include="XmdsAgents\StatAgent.cs" />
     <Page Include="InfoScreen.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -281,6 +282,9 @@
     </PackageReference>
     <PackageReference Include="EmbedIO">
       <Version>3.4.2</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Data.Sqlite">
+      <Version>3.1.3</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Toolkit.Wpf.UI.Controls.WebView">
       <Version>6.0.0</Version>
