@@ -31,6 +31,29 @@ namespace XiboClient.Stats
         public int ScheduleId;
         public String WidgetId;
         public String Tag;
+        public int Duration;
+        public int Count;
+
+        /// <summary>
+        /// Return a StatType for the string provided
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static StatType StatTypeFromString(string type)
+        {
+            if (type.ToLowerInvariant() == "layout")
+            {
+                return StatType.Layout;
+            } 
+            else if (type.ToLowerInvariant() == "media")
+            {
+                return StatType.Media;
+            }
+            else
+            {
+                return StatType.Event;
+            }
+        }
     }
 
     public enum StatType { Layout, Media, Event };

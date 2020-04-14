@@ -308,15 +308,15 @@ namespace XiboClient.Stats
 
                 if (aggregationLevel == "hourly")
                 {
-                    // Hourly
-                    cmd.Parameters.AddWithValue("@todt", DateTime.Now.ToString("yyyy-MM-dd HH:") + ":00:00.0000000");
+                    // Hourly (get only from last hour)
+                    cmd.Parameters.AddWithValue("@todt", DateTime.Now.ToString("yyyy-MM-dd HH:00:00.0000000"));
 
                     // if we are in backlog mode, then take a days worth of worse case, otherwise an hours worth
                     cmd.Parameters.AddWithValue("@limit", (isBacklog) ? 86400 : 3600);
                 }
                 else if (aggregationLevel == "daily")
                 {
-                    // Daily
+                    // Daily (get only from this day)
                     cmd.Parameters.AddWithValue("@todt", DateTime.Now.Date.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF"));
 
                     // The maximum number of records we can get in one day (or at least a reasonable number is 1 per second)
@@ -374,6 +374,7 @@ namespace XiboClient.Stats
         /// <returns></returns>
         public string GetXmlForSend(int marker)
         {
+            string aggregationLevel = ApplicationSettings.Default.AggregationLevel.ToLowerInvariant();
             StringBuilder builder = new StringBuilder();
 
             using (XmlWriter writer = XmlWriter.Create(builder))
@@ -391,22 +392,119 @@ namespace XiboClient.Stats
 
                 using (SqliteDataReader reader = cmd.ExecuteReader())
                 {
-                    // TODO: different handling for aggregates
-                    while (reader.Read())
+                    // Aggregate the records or not?
+                    if (aggregationLevel == "individual")
                     {
-                        DateTime from = reader.GetDateTime(1);
-                        DateTime to = reader.GetDateTime(2);
-                        writer.WriteStartElement("stat");
-                        writer.WriteAttributeString("type", reader.GetString(0));
-                        writer.WriteAttributeString("fromdt", from.ToString("yyyy-MM-dd HH:mm:ss"));
-                        writer.WriteAttributeString("todt", to.ToString("yyyy-MM-dd HH:mm:ss"));
-                        writer.WriteAttributeString("scheduleid", reader.GetString(3));
-                        writer.WriteAttributeString("layoutid", reader.GetString(4));
-                        writer.WriteAttributeString("mediaid", reader.GetString(5));
-                        writer.WriteAttributeString("tag", reader.GetString(6));
-                        writer.WriteAttributeString("duration", "" + (to - from).TotalSeconds);
-                        writer.WriteAttributeString("count", "1");
-                        writer.WriteEndElement();
+                        while (reader.Read())
+                        {
+                            DateTime from = reader.GetDateTime(1);
+                            DateTime to = reader.GetDateTime(2);
+                            writer.WriteStartElement("stat");
+                            writer.WriteAttributeString("type", reader.GetString(0));
+                            writer.WriteAttributeString("fromdt", from.ToString("yyyy-MM-dd HH:mm:ss"));
+                            writer.WriteAttributeString("todt", to.ToString("yyyy-MM-dd HH:mm:ss"));
+                            writer.WriteAttributeString("scheduleid", reader.GetString(3));
+                            writer.WriteAttributeString("layoutid", reader.GetString(4));
+                            writer.WriteAttributeString("mediaid", reader.GetString(5));
+                            writer.WriteAttributeString("tag", reader.GetString(6));
+                            writer.WriteAttributeString("duration", "" + (to - from).TotalSeconds);
+                            writer.WriteAttributeString("count", "1");
+                            writer.WriteEndElement();
+                        }
+                    }
+                    else
+                    {
+                        // Create a Dictionary to store our aggregates
+                        Dictionary<string, Stat> aggregates = new Dictionary<string, Stat>();
+
+                        while (reader.Read())
+                        {
+                            // Decide where our aggregate falls
+                            DateTime fromAggregate;
+                            DateTime toAggregate;
+                            DateTime from = reader.GetDateTime(1);
+                            DateTime to = reader.GetDateTime(2);
+                            int duration = Convert.ToInt32((to - from).TotalSeconds);
+
+                            if (aggregationLevel == "daily")
+                            {
+                                // This is the from date set to midnight, and the to date set to a day after
+                                fromAggregate = new DateTime(from.Year, from.Month, from.Day, 0, 0, 0);
+                                toAggregate = fromAggregate.AddDays(1);
+                            }
+                            else
+                            {
+                                // This is the date set to the top of the fromdt hour
+                                fromAggregate = new DateTime(from.Year, from.Month, from.Day, from.Hour, 0, 0);
+                                toAggregate = fromAggregate.AddHours(1);
+                            }
+
+                            // If the to date is actually outside this window, then treat the record as its own whole entry
+                            // don't split it
+                            if (to > toAggregate)
+                            {
+                                // Reset to the event dates.
+                                fromAggregate = from;
+                                toAggregate = to;
+                            }
+
+                            // Parse the other columns from the reader
+                            int layoutId = reader.GetInt32(4);
+                            int scheduleId = reader.GetInt32(3);
+
+                            string type = reader.GetString(0);
+                            string mediaId = reader.GetString(5);
+                            string tag = reader.GetString(6);
+
+                            // Create a Key to anchor the aggregate.
+                            string key = type + scheduleId + "-" + mediaId + tag + fromAggregate.ToString("yyyyMMddHHmm") + toAggregate.ToString("yyyyMMddHHmm");
+
+                            if (!aggregates.ContainsKey(key))
+                            {
+                                Stat stat = new Stat();
+                                stat.Type = Stat.StatTypeFromString(type);
+                                stat.ScheduleId = scheduleId;
+                                stat.LayoutId = layoutId;
+                                stat.WidgetId = mediaId;
+                                stat.Tag = tag;
+
+                                // Dates are our aggregate dates
+                                stat.From = fromAggregate;
+                                stat.To = toAggregate;
+
+                                // Duration
+                                stat.Count = 1;
+                                stat.Duration = duration;
+
+                                // Add to the dictionary
+                                aggregates.Add(key, stat);
+                            }
+                            else
+                            {
+                                Stat stat = new Stat();
+                                aggregates.TryGetValue(key, out stat);
+
+                                // Add the duration.
+                                stat.Count++;
+                                stat.Duration += duration;
+                            }
+                        }
+
+                        // Process the aggregates
+                        foreach (Stat stat in aggregates.Values)
+                        {
+                            writer.WriteStartElement("stat");
+                            writer.WriteAttributeString("type", stat.Type.ToString());
+                            writer.WriteAttributeString("fromdt", stat.From.ToString("yyyy-MM-dd HH:mm:ss"));
+                            writer.WriteAttributeString("todt", stat.To.ToString("yyyy-MM-dd HH:mm:ss"));
+                            writer.WriteAttributeString("scheduleid", stat.ScheduleId.ToString());
+                            writer.WriteAttributeString("layoutid", stat.LayoutId.ToString());
+                            writer.WriteAttributeString("mediaid", stat.WidgetId);
+                            writer.WriteAttributeString("tag", stat.Tag);
+                            writer.WriteAttributeString("duration", "" + stat.Duration);
+                            writer.WriteAttributeString("count", "" + stat.Count);
+                            writer.WriteEndElement();
+                        }
                     }
                 }
 

@@ -10,7 +10,6 @@
   <LibraryAgentInterval>2</LibraryAgentInterval>
   <ScheduleFile>schedule.xml</ScheduleFile>
   <LogLocation>log.xml</LogLocation>
-  <StatsLogFile>stats.xml</StatsLogFile>
   <CacheManagerFile>cacheManager.xml</CacheManagerFile>
   <RequiredFilesFile>requiredFiles.xml</RequiredFilesFile>
   <VideoRenderingEngine>WindowsMediaPlayer</VideoRenderingEngine>

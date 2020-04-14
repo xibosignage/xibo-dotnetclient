@@ -138,10 +138,8 @@ namespace XiboClient.XmdsAgents
 
                 builder.Append("</log>");
 
-                if (type == ApplicationSettings.Default.StatsLogFile)
-                    xmds.SubmitStats(ApplicationSettings.Default.ServerKey, key, builder.ToString());
-                else
-                    xmds.SubmitLog(ApplicationSettings.Default.ServerKey, key, builder.ToString());
+                // Send
+                xmds.SubmitLog(ApplicationSettings.Default.ServerKey, key, builder.ToString());
 
                 // Delete the file we are on
                 File.Delete(fileInfo.FullName);

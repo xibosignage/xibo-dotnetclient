@@ -113,11 +113,10 @@ namespace XiboClient.XmdsAgents
                         {
                             // Never delete certain system files
                             // Also do not delete log/stat files as they are managed by their respective agents
-                            if (_persistentFiles.Contains(fileInfo.Name) ||
-                                fileInfo.Name.Contains(ApplicationSettings.Default.LogLocation) ||
-                                fileInfo.Name.Contains(ApplicationSettings.Default.StatsLogFile)
-                                )
+                            if (_persistentFiles.Contains(fileInfo.Name) || fileInfo.Name.Contains(ApplicationSettings.Default.LogLocation))
+                            {
                                 continue;
+                            }
 
                             // Delete files that were accessed over N days ago
                             try

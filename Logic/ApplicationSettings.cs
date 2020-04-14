@@ -371,7 +371,6 @@ namespace XiboClient
 
         public string ScheduleFile { get; set; }
         public string LogLocation { get; set; }
-        public string StatsLogFile { get; set; }
         public string CacheManagerFile { get; set; }
         public string RequiredFilesFile { get; set; }
         public string VideoRenderingEngine { get; set; }
