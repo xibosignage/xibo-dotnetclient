@@ -18,9 +18,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using GeoJSON.Net.Contrib.MsSqlSpatial;
+using GeoJSON.Net.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Device.Location;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -182,6 +185,11 @@ namespace XiboClient
         {
             Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Thread Started"), LogType.Info.ToString());
 
+            // Create a GeoCoordinateWatcher
+            GeoCoordinateWatcher watcher = new GeoCoordinateWatcher(GeoPositionAccuracy.Default);
+            watcher.PositionChanged += Watcher_PositionChanged;
+            watcher.Start();
+
             while (!_forceStop)
             {
                 lock (_locker)
@@ -253,7 +261,79 @@ namespace XiboClient
                 _manualReset.WaitOne(10 * 1000);
             }
 
+            // Stop the watcher
+            watcher.PositionChanged -= Watcher_PositionChanged;
+            watcher.Stop();
+
             Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Thread Stopped"), LogType.Info.ToString());
+        }
+
+        /// <summary>
+        /// Watcher position has changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Watcher_PositionChanged(object sender, GeoPositionChangedEventArgs<GeoCoordinate> e)
+        {
+            GeoCoordinate coordinate = e.Position.Location;
+
+            if (coordinate.IsUnknown)
+            {
+                Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_PositionChanged: Position Unknown"), LogType.Audit.ToString());
+            }
+            else
+            {
+                // Is this more or less accurate than the one we have already?
+                Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_PositionChanged: H.Accuracy = " + coordinate.HorizontalAccuracy
+                    + ", V.Accuracy = " + coordinate.VerticalAccuracy
+                    + ". Lat = " + coordinate.Latitude
+                    + ", Long = " + coordinate.Longitude
+                    + ", Course = " + coordinate.Course
+                    + ", Altitude = " + coordinate.Altitude
+                    + ", Speed = " + coordinate.Speed), LogType.Info.ToString());
+
+                // Has it changed?
+                if (ClientInfo.Instance.CurrentGeoLocation == null 
+                    || ClientInfo.Instance.CurrentGeoLocation.IsUnknown
+                    || coordinate.Latitude != ClientInfo.Instance.CurrentGeoLocation.Latitude 
+                    || coordinate.Longitude != ClientInfo.Instance.CurrentGeoLocation.Longitude)
+                {
+                    // test the change in position
+                    bool acceptChange = true;
+
+                    // Do we have an existing geo location we can check our new location against
+                    if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+                    {
+                        Point currentPosition = new Point(new Position(ClientInfo.Instance.CurrentGeoLocation.Latitude, ClientInfo.Instance.CurrentGeoLocation.Longitude));
+                        Point newPosition = new Point(new Position(coordinate.Latitude, coordinate.Longitude));
+
+                        var distance = currentPosition.ToSqlGeometry().STDistance(newPosition.ToSqlGeometry());
+
+                        // If we've changed less than 500 meters, don't update
+                        if (distance < 500)
+                        {
+                            acceptChange = false;
+                        }
+                    }
+
+                    if (acceptChange)
+                    {
+                        // Take the new one.
+                        ClientInfo.Instance.CurrentGeoLocation = coordinate;
+
+                        // Wake up the schedule manager for another pass
+                        RefreshSchedule = true;
+                        RunNow();
+
+                        // Report to Notify Status
+                        ClientInfo.Instance.NotifyStatusToXmds();
+                    }
+                    else
+                    {
+                        Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_PositionChanged: Less accurate update ignored"), LogType.Audit.ToString());
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -472,6 +552,16 @@ namespace XiboClient
                 // Look at the Date/Time to see if it should be on the schedule or not
                 if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)
                 {
+                    // Is it GeoAware?
+                    if (layout.IsGeoAware)
+                    {
+                        // Check that it is inside the current location.
+                        if (!layout.SetIsGeoActive(ClientInfo.Instance.CurrentGeoLocation))
+                        {
+                            continue;
+                        }
+                    }
+
                     // Change Action and Priority layouts should generate their own list
                     if (layout.Override)
                     {
@@ -740,10 +830,17 @@ namespace XiboClient
 
                 // Pull out the scheduleid if there is one
                 string scheduleId = "";
-                if (attributes["scheduleid"] != null) scheduleId = attributes["scheduleid"].Value;
+                if (attributes["scheduleid"] != null)
+                {
+                    scheduleId = attributes["scheduleid"].Value;
+                }
 
                 // Add it to the layout schedule
-                if (scheduleId != "") temp.scheduleid = int.Parse(scheduleId);
+                if (scheduleId != "")
+                {
+                    temp.scheduleid = int.Parse(scheduleId);
+                }
+
                 // Dependents
                 if (attributes["dependents"] != null)
                 {
@@ -751,6 +848,13 @@ namespace XiboClient
                     {
                         temp.Dependents.Add(dependent);
                     }
+                }
+
+                // Geo Schedule
+                if (attributes["isGeoAware"] != null)
+                {
+                    temp.IsGeoAware = (attributes["isGeoAware"].Value == "1");
+                    temp.GeoLocation = attributes["geoLocation"] != null ? attributes["geoLocation"].Value : "";
                 }
             }
 
