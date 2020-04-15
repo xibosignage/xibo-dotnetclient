@@ -20,6 +20,7 @@
  */
 using Newtonsoft.Json;
 using System;
+using System.Device.Location;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -92,6 +93,11 @@ namespace XiboClient.Log
         /// Players current Height
         /// </summary>
         public int PlayerHeight { get; set; }
+
+        /// <summary>
+        /// Players current GeoCoordinate.
+        /// </summary>
+        public GeoCoordinate CurrentGeoLocation { get; set; }
 
         /// <summary>
         /// Client Info Object
@@ -191,6 +197,15 @@ namespace XiboClient.Log
                     writer.WriteValue(RequiredFilesStatus);
                     writer.WritePropertyName("xmrStatus");
                     writer.WriteValue(XmrSubscriberStatus);
+
+                    if (CurrentGeoLocation != null && !CurrentGeoLocation.IsUnknown)
+                    {
+                        writer.WritePropertyName("latitude");
+                        writer.WriteValue(CurrentGeoLocation.Latitude);
+                        writer.WritePropertyName("longitude");
+                        writer.WriteValue(CurrentGeoLocation.Longitude);
+                    }
+
                     writer.WriteEndObject();
                 }
 
