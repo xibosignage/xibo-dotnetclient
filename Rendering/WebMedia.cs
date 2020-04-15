@@ -483,11 +483,11 @@ namespace XiboClient.Rendering
             }
             else if (type == "edge")
             {
-                media = new WebIe(options);
+                media = new WebEdge(options);
             }
             else if (type == "cef")
             {
-                media = new WebIe(options);
+                media = new WebCef(options);
             }
             else
             {

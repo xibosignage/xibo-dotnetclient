@@ -89,7 +89,7 @@ namespace XiboClient.Rendering
         /// <param name="e"></param>
         private void WebView_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Navigate Completed", "EdgeWebView");
+            Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Navigate Completed", "CefWebView");
 
             // We've finished rendering the document
             DocumentCompleted();
