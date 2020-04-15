@@ -18,6 +18,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using GeoJSON.Net.Contrib.MsSqlSpatial;
+using GeoJSON.Net.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -292,12 +294,29 @@ namespace XiboClient
 
                 // Has it changed?
                 if (ClientInfo.Instance.CurrentGeoLocation == null 
+                    || ClientInfo.Instance.CurrentGeoLocation.IsUnknown
                     || coordinate.Latitude != ClientInfo.Instance.CurrentGeoLocation.Latitude 
                     || coordinate.Longitude != ClientInfo.Instance.CurrentGeoLocation.Longitude)
                 {
-                    // test accuracy
-                    if (ClientInfo.Instance.CurrentGeoLocation == null 
-                        || coordinate.HorizontalAccuracy > ClientInfo.Instance.CurrentGeoLocation.HorizontalAccuracy)
+                    // test the change in position
+                    bool acceptChange = true;
+
+                    // Do we have an existing geo location we can check our new location against
+                    if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+                    {
+                        Point currentPosition = new Point(new Position(ClientInfo.Instance.CurrentGeoLocation.Latitude, ClientInfo.Instance.CurrentGeoLocation.Longitude));
+                        Point newPosition = new Point(new Position(coordinate.Latitude, coordinate.Longitude));
+
+                        var distance = currentPosition.ToSqlGeometry().STDistance(newPosition.ToSqlGeometry());
+
+                        // If we've changed less than 500 meters, don't update
+                        if (distance < 500)
+                        {
+                            acceptChange = false;
+                        }
+                    }
+
+                    if (acceptChange)
                     {
                         // Take the new one.
                         ClientInfo.Instance.CurrentGeoLocation = coordinate;
