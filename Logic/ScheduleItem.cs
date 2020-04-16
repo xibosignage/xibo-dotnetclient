@@ -28,13 +28,25 @@ namespace XiboClient.Logic
         public DateTime FromDt;
         public DateTime ToDt;
 
+        /// <summary>
+        /// Share of Voice expressed in seconds per hour
+        /// Interrupt Layouts
+        /// </summary>
+        public int ShareOfVoice;
+
         // Geo Schedule
         public bool IsGeoAware = false;
         public bool IsGeoActive = false;
         public string GeoLocation = "";
 
+        /// <summary>
+        /// Dependent items
+        /// </summary>
         public List<string> Dependents = new List<string>();
 
+        /// <summary>
+        /// Refresh this item - used for Overlays
+        /// </summary>
         public bool Refresh = false;
 
         /// <summary>
@@ -69,6 +81,15 @@ namespace XiboClient.Logic
                 ToDt.Ticks == compare.ToDt.Ticks &&
                 actionId == compare.actionId
                 ;
+        }
+
+        /// <summary>
+        /// Is this an interrupt layout?
+        /// </summary>
+        /// <returns>true if shareOfVoice > 0</returns>
+        public bool IsInterrupt()
+        {
+            return this.ShareOfVoice > 0;
         }
 
         /// <summary>
