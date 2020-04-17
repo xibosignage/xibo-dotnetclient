@@ -44,7 +44,7 @@ namespace XiboClient.Stats
             if (type.ToLowerInvariant() == "layout")
             {
                 return StatType.Layout;
-            } 
+            }
             else if (type.ToLowerInvariant() == "media")
             {
                 return StatType.Media;

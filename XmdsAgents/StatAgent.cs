@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using XiboClient.Stats;
 
 namespace XiboClient.XmdsAgents
@@ -66,7 +62,8 @@ namespace XiboClient.XmdsAgents
                         isBacklog = (recordsReady >= 500);
 
                         // Check to see if we have anything to send
-                        if (StatManager.Instance.MarkRecordsForSend(processing, isBacklog)) {
+                        if (StatManager.Instance.MarkRecordsForSend(processing, isBacklog))
+                        {
 
                             HardwareKey key = new HardwareKey();
 

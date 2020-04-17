@@ -153,7 +153,7 @@ namespace XiboClient.Rendering
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("Video", "RenderMedia: "+ ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Video", "RenderMedia: " + ex.Message), LogType.Error.ToString());
 
                 // Unable to start video - expire this media immediately
                 throw;

@@ -23,10 +23,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 using XiboClient.XmdsAgents;
 
@@ -291,7 +289,7 @@ namespace XiboClient.Stats
         public bool MarkRecordsForSend(int marker, bool isBacklog)
         {
             string aggregationLevel = ApplicationSettings.Default.AggregationLevel.ToLowerInvariant();
-            
+
             // Run query
             using (var connection = new SqliteConnection("Filename=" + this.databasePath))
             using (SqliteCommand cmd = new SqliteCommand())

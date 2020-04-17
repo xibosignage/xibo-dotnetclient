@@ -19,7 +19,7 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using XiboClient.Action;
@@ -39,21 +39,19 @@ namespace XiboClient
         public delegate void ScheduleChangeDelegate(string layoutPath, int scheduleId, int layoutId);
         public event ScheduleChangeDelegate ScheduleChangeEvent;
 
-        public delegate void OverlayChangeDelegate(Collection<ScheduleItem> overlays);
+        public delegate void OverlayChangeDelegate(List<ScheduleItem> overlays);
         public event OverlayChangeDelegate OverlayChangeEvent;
 
         /// <summary>
         /// Current Schedule of Normal Layouts
         /// </summary>
-        private Collection<ScheduleItem> _layoutSchedule;
+        private List<ScheduleItem> _layoutSchedule;
         private int _currentLayout = 0;
 
         /// <summary>
         /// Current Schedule of Overlay Layouts
         /// </summary>
-        private Collection<ScheduleItem> _overlaySchedule;
-
-        private string _scheduleLocation;
+        private List<ScheduleItem> _overlaySchedule;
 
         /// <summary>
         /// The current layout id
@@ -123,11 +121,8 @@ namespace XiboClient
             // Get the key for this display
             _hardwareKey = new HardwareKey();
 
-            // Save the schedule location
-            _scheduleLocation = scheduleLocation;
-
             // Create a new collection for the layouts in the schedule
-            _layoutSchedule = new Collection<ScheduleItem>();
+            _layoutSchedule = new List<ScheduleItem>();
 
             // Create a Register Agent
             _registerAgent = new RegisterAgent();
@@ -225,7 +220,7 @@ namespace XiboClient
             Debug.WriteLine(_scheduleManager.CurrentOverlaySchedule.Count + " overlays", "Schedule");
             Debug.WriteLine(_scheduleManager.CurrentSchedule.Count + " normal schedules", "Schedule");
 
-            _overlaySchedule = new Collection<ScheduleItem>(_scheduleManager.CurrentOverlaySchedule);
+            _overlaySchedule = new List<ScheduleItem>(_scheduleManager.CurrentOverlaySchedule);
             _layoutSchedule = _scheduleManager.CurrentSchedule;
 
             // Set the current pointer to 0

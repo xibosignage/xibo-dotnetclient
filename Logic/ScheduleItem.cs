@@ -1,6 +1,6 @@
-﻿using GeoJSON.Net.Feature;
+﻿using GeoJSON.Net.Contrib.MsSqlSpatial;
+using GeoJSON.Net.Feature;
 using GeoJSON.Net.Geometry;
-using GeoJSON.Net.Contrib.MsSqlSpatial;
 using Microsoft.SqlServer.Types;
 using Newtonsoft.Json;
 using System;
@@ -33,6 +33,11 @@ namespace XiboClient.Logic
         /// Interrupt Layouts
         /// </summary>
         public int ShareOfVoice;
+
+        /// <summary>
+        /// Seconds Played
+        /// </summary>
+        public int SecondsPlayed;
 
         // Geo Schedule
         public bool IsGeoAware = false;
@@ -102,7 +107,7 @@ namespace XiboClient.Logic
             if (!IsGeoAware)
             {
                 IsGeoActive = false;
-            } 
+            }
             else if (geoCoordinate == null || geoCoordinate.IsUnknown)
             {
                 IsGeoActive = false;
@@ -136,6 +141,39 @@ namespace XiboClient.Logic
             }
 
             return IsGeoActive;
+        }
+
+        /// <summary>
+        /// Calculate a Rank for this Item
+        /// </summary>
+        /// <param name="secondsToPeriodEnd"></param>
+        /// <returns></returns>
+        public double CalculateRank(int secondsToPeriodEnd)
+        {
+            if (ShareOfVoice <= 0 || SecondsPlayed >= ShareOfVoice)
+            {
+                return 0;
+            }
+            else
+            {
+                double completeDifficulty = (ShareOfVoice - SecondsPlayed) / Convert.ToDouble(ShareOfVoice);
+                double scheduleDifficulty = (secondsToPeriodEnd - RemainingScheduledTime()) / secondsToPeriodEnd;
+
+                return completeDifficulty + scheduleDifficulty;
+            }
+        }
+
+        /// <summary>
+        /// Get remaining scheduled time in seconds
+        /// </summary>
+        /// <returns></returns>
+        public double RemainingScheduledTime()
+        {
+            DateTime now = DateTime.Now;
+            DateTime endOfHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddHours(1);
+            DateTime endOfScheduleOrHour = (endOfHour > ToDt) ? ToDt : endOfHour;
+
+            return (endOfScheduleOrHour - now).TotalSeconds;
         }
     }
 }

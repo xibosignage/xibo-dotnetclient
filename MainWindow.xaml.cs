@@ -19,6 +19,7 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -30,7 +31,6 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using XiboClient.Control;
 using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -78,7 +78,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="layoutPath"></param>
         private delegate void ChangeToNextLayoutDelegate(string layoutPath);
-        private delegate void ManageOverlaysDelegate(Collection<ScheduleItem> overlays);
+        private delegate void ManageOverlaysDelegate(List<ScheduleItem> overlays);
 
         /// <summary>
         /// The InfoScreen
@@ -706,7 +706,7 @@ namespace XiboClient
         /// Overlay change event.
         /// </summary>
         /// <param name="overlays"></param>
-        void ScheduleOverlayChangeEvent(Collection<ScheduleItem> overlays)
+        void ScheduleOverlayChangeEvent(List<ScheduleItem> overlays)
         {
             if (!Dispatcher.CheckAccess())
             {
@@ -721,7 +721,7 @@ namespace XiboClient
         /// Manage Overlays
         /// </summary>
         /// <param name="overlays"></param>
-        public void ManageOverlays(Collection<ScheduleItem> overlays)
+        public void ManageOverlays(List<ScheduleItem> overlays)
         {
             try
             {
