@@ -44,7 +44,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Render Media
         /// </summary>
-        public override void RenderMedia()
+        public override void RenderMedia(int position)
         {
             this.webView = new WebView();
             this.webView.Width = Width;
@@ -76,7 +76,7 @@ namespace XiboClient.Rendering
             }
 
             // Render media shows the controls and starts timers, etc
-            base.RenderMedia();
+            base.RenderMedia(position);
         }
 
         /// <summary>

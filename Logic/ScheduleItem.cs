@@ -25,6 +25,11 @@ namespace XiboClient.Logic
         public int Priority;
         public bool Override;
 
+        /// <summary>
+        /// Is this an Overlay?
+        /// </summary>
+        public bool IsOverlay = false;
+
         public DateTime FromDt;
         public DateTime ToDt;
 

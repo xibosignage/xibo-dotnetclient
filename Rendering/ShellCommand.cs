@@ -46,7 +46,7 @@ namespace XiboClient.Rendering
             _useTaskKill = (options.Dictionary.Get("useTaskkill") == "1");
         }
 
-        public override void RenderMedia()
+        public override void RenderMedia(int position)
         {
             if (!string.IsNullOrEmpty(_code))
             {
@@ -113,7 +113,7 @@ namespace XiboClient.Rendering
             }
 
             // All shell commands have a duration of 1
-            base.RenderMedia();
+            base.RenderMedia(position);
         }
 
         /// <summary>

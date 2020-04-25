@@ -87,6 +87,15 @@ namespace XiboClient.Rendering
         /// </summary>
         private RegionOptions options;
 
+        /// <summary>
+        /// The time we started
+        /// </summary>
+        protected DateTime _startTick;
+
+        /// <summary>
+        /// Media Object
+        /// </summary>
+        /// <param name="options"></param>
         public Media(RegionOptions options)
         {
             InitializeComponent();
@@ -99,13 +108,13 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Start the Timer for this Media
         /// </summary>
-        protected void StartTimer()
+        protected void StartTimer(int position)
         {
             //start the timer
             if (!_timerStarted && Duration != 0)
             {
                 _timer = new DispatcherTimer();
-                _timer.Interval = TimeSpan.FromSeconds(Duration);
+                _timer.Interval = TimeSpan.FromSeconds(Duration - position);
                 _timer.Start();
 
                 _timer.Tick += new EventHandler(timer_Tick);
@@ -126,20 +135,26 @@ namespace XiboClient.Rendering
             }
             else
             {
-                StartTimer();
+                StartTimer(0);
             }
         }
 
         /// <summary>
         /// Render Media call
         /// </summary>
-        public virtual void RenderMedia()
+        public virtual void RenderMedia(int position)
         {
+            // Record the start time.
+            if (position <= 0)
+            {
+                this._startTick = DateTime.Now;
+            }
+
             // We haven't stopped
             this._stopped = false;
 
             // Start the timer for this media
-            StartTimer();
+            StartTimer(position);
 
             // Transition In
             TransitionIn();
@@ -199,6 +214,15 @@ namespace XiboClient.Rendering
                 }
                 _timer = null;
             }
+        }
+
+        /// <summary>
+        /// Get the Current Tick
+        /// </summary>
+        /// <returns></returns>
+        public int CurrentPlaytime()
+        {
+            return Convert.ToInt32((DateTime.Now - this._startTick).TotalSeconds);
         }
 
         /// <summary>

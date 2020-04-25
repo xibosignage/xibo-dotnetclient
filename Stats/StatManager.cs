@@ -150,8 +150,11 @@ namespace XiboClient.Stats
         /// <param name="scheduleId"></param>
         /// <param name="layoutId"></param>
         /// <param name="statEnabled"></param>
-        public void LayoutStop(int scheduleId, int layoutId, bool statEnabled)
+        /// <returns>Duration</returns>
+        public int LayoutStop(int scheduleId, int layoutId, bool statEnabled)
         {
+            int duration = 0;
+
             lock (_locker)
             {
                 // Record we expect to already be open in the Dictionary
@@ -166,6 +169,9 @@ namespace XiboClient.Stats
                     // Set the to date
                     stat.To = DateTime.Now;
 
+                    // Work our the duration
+                    duration = Convert.ToInt32((stat.To - stat.From).TotalSeconds);
+
                     if (ApplicationSettings.Default.StatsEnabled && statEnabled)
                     {
                         // Record
@@ -178,6 +184,8 @@ namespace XiboClient.Stats
                     Trace.WriteLine(new LogMessage("StatManager", "LayoutStop: Closing stat record without an associated opening record."), LogType.Info.ToString());
                 }
             }
+
+            return duration;
         }
 
         /// <summary>
@@ -210,8 +218,11 @@ namespace XiboClient.Stats
         /// <param name="layoutId"></param>
         /// <param name="widgetId"></param>
         /// <param name="statEnabled"></param>
-        public void WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled)
+        /// <returns>Duration</returns>
+        public int WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled)
         {
+            int duration = 0;
+
             lock (_locker)
             {
                 // Record we expect to already be open in the Dictionary
@@ -226,6 +237,9 @@ namespace XiboClient.Stats
                     // Set the to date
                     stat.To = DateTime.Now;
 
+                    // Work our the duration
+                    duration = Convert.ToInt32((stat.To - stat.From).TotalSeconds);
+
                     if (ApplicationSettings.Default.StatsEnabled && statEnabled)
                     {
                         // Record
@@ -238,6 +252,8 @@ namespace XiboClient.Stats
                     Trace.WriteLine(new LogMessage("StatManager", "WidgetStop: Closing stat record without an associated opening record."), LogType.Info.ToString());
                 }
             }
+
+            return duration;
         }
 
         /// <summary>

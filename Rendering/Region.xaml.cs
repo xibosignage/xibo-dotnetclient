@@ -25,6 +25,11 @@ namespace XiboClient.Rendering
         public bool IsExpired = false;
 
         /// <summary>
+        /// Is Pause Pending?
+        /// </summary>
+        private bool IsPausePending = false;
+
+        /// <summary>
         /// This Regions zIndex
         /// </summary>
         public int ZIndex { get; set; }
@@ -45,12 +50,19 @@ namespace XiboClient.Rendering
         private int currentSequence = -1;
         private bool _sizeResetRequired;
         private int _audioSequence;
+        private int _currentPlaytime;
 
         /// <summary>
         /// Event to indicate that this Region's duration has elapsed
         /// </summary>
         public delegate void DurationElapsedDelegate();
         public event DurationElapsedDelegate DurationElapsedEvent;
+
+        /// <summary>
+        /// Event to indicate that some media has expired.
+        /// </summary>
+        public delegate void MediaExpiredDelegate();
+        public event MediaExpiredDelegate MediaExpiredEvent;
 
         public Region()
         {
@@ -180,7 +192,7 @@ namespace XiboClient.Rendering
 
                     Debug.WriteLine("Calling start on media in regionId " + this.options.regionId, "Region");
 
-                    StartMedia(newMedia);
+                    StartMedia(newMedia, 0);
                 }
                 catch (Exception ex)
                 {
@@ -642,7 +654,7 @@ namespace XiboClient.Rendering
         /// Start the provided media
         /// </summary>
         /// <param name="media"></param>
-        private void StartMedia(Media media)
+        private void StartMedia(Media media, int position)
         {
             Trace.WriteLine(new LogMessage("Region - StartMedia", "Starting media"), LogType.Audit.ToString());
 
@@ -650,7 +662,7 @@ namespace XiboClient.Rendering
             this.RegionScene.Children.Add(media);
 
             // Render the media, this adds the child controls to the Media UserControls grid
-            media.RenderMedia();
+            media.RenderMedia(position);
 
             // Reset the audio sequence and start
             _audioSequence = 1;
@@ -668,7 +680,7 @@ namespace XiboClient.Rendering
                 Media audio = this.options.Audio[_audioSequence - 1];
 
                 // call render media and add to controls
-                audio.RenderMedia();
+                audio.RenderMedia(0);
 
                 // Add to this scene
                 this.RegionScene.Children.Add(audio);
@@ -786,7 +798,7 @@ namespace XiboClient.Rendering
         /// </summary>
         private void media_DurationElapsedEvent(int filesPlayed)
         {
-            Trace.WriteLine(new LogMessage("Region - DurationElapsedEvent", string.Format("Media Elapsed: {0}", this.options.uri)), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("Region", string.Format("DurationElapsedEvent: Media Elapsed: {0}", this.options.uri)), LogType.Audit.ToString());
 
             if (filesPlayed > 1)
             {
@@ -794,8 +806,17 @@ namespace XiboClient.Rendering
                 this.currentSequence = this.currentSequence + (filesPlayed - 1);
             }
 
+            // Indicate that this media has expired.
+            MediaExpiredEvent?.Invoke();
+
             // If this layout has been expired we know that everything will soon be torn down, so do nothing
             if (IsLayoutExpired)
+            {
+                return;
+            }
+
+            // If Pause Pending, then stop here as we will be removed
+            if (IsPausePending)
             {
                 return;
             }
@@ -825,6 +846,13 @@ namespace XiboClient.Rendering
             }
         }
 
+        /// <summary>
+        /// Set Dimensions
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="top"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
         private void SetDimensions(int left, int top, int width, int height)
         {
             Debug.WriteLine("Setting Dimensions to W:" + width + ", H:" + height + ", (" + left + "," + top + ")");
@@ -837,9 +865,45 @@ namespace XiboClient.Rendering
             Margin = new Thickness(left, top, 0, 0);
         }
 
+        /// <summary>
+        /// Set Dimensions
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="size"></param>
         private void SetDimensions(Point location, Size size)
         {
             SetDimensions((int)location.X, (int)location.Y, (int)size.Width, (int)size.Height);
+        }
+
+        /// <summary>
+        /// Is Pause Pending?
+        /// </summary>
+        public void PausePending()
+        {
+            this.IsPausePending = true;
+        }
+
+        /// <summary>
+        /// Pause this Layout
+        /// </summary>
+        public void Pause()
+        {
+            // Pause the current media item.
+            this._currentPlaytime = this.currentMedia.CurrentPlaytime();
+            this.currentMedia.Stop(true);
+
+            this.IsPausePending = false;
+        }
+
+        /// <summary>
+        /// Resume this Layout
+        /// </summary>
+        public void Resume()
+        {
+            // Resume the current media item
+            StartMedia(currentMedia, this._currentPlaytime);
+
+            this.IsPausePending = false;
         }
 
         /// <summary>
