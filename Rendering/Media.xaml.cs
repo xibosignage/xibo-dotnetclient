@@ -111,10 +111,22 @@ namespace XiboClient.Rendering
         protected void StartTimer(int position)
         {
             //start the timer
-            if (!_timerStarted && Duration != 0)
+            if (!_timerStarted && Duration > 0)
             {
+                int remainingSeconds = (Duration - position);
+
+                Debug.WriteLine("StartTimer: duration = " + Duration + ", position = " + position + ", Delta = " + remainingSeconds, "Media");
+
+                // a timer must run for some time at least
+                // the fact we're here at all means that some other things on this Layout have time to run
+                // so expire after the minimum sensible time.
+                if (remainingSeconds <= 0)
+                {
+                    remainingSeconds = 1;
+                }
+
                 _timer = new DispatcherTimer();
-                _timer.Interval = TimeSpan.FromSeconds(Duration - position);
+                _timer.Interval = TimeSpan.FromSeconds(remainingSeconds);
                 _timer.Start();
 
                 _timer.Tick += new EventHandler(timer_Tick);

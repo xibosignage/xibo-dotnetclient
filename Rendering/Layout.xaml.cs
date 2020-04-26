@@ -39,6 +39,9 @@ namespace XiboClient.Rendering
     /// </summary>
     public partial class Layout : UserControl
     {
+        /// <summary>
+        /// The Schedule Object
+        /// </summary>
         public Schedule Schedule;
 
         private double _layoutWidth;
@@ -50,7 +53,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Is this Layout Changing?
         /// </summary>
-        public bool IsLayoutChanging = false;
+        private bool _isLayoutChanging = false;
 
         /// <summary>
         /// Regions for this Layout
@@ -81,6 +84,7 @@ namespace XiboClient.Rendering
         // Layout state
         public bool IsRunning { get; set; }
         public bool IsPaused { get; set; }
+        public bool IsExpired { get; private set; }
 
         // Interrupts
         private bool isPausePending = false;
@@ -326,7 +330,7 @@ namespace XiboClient.Rendering
                     temp.ZIndex = int.Parse(nodeAttibutes["zindex"].Value);
                 }
 
-                Debug.WriteLine("Created new region", "MainForm - Prepare Layout");
+                Debug.WriteLine("loadFromFile: Created new region", "Layout");
 
                 // Dont be fooled, this innocent little statement kicks everything off
                 temp.loadFromOptions(options);
@@ -334,7 +338,7 @@ namespace XiboClient.Rendering
                 // Add to our list of Regions
                 _regions.Add(temp);
 
-                Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
+                Debug.WriteLine("loadFromFile: Adding region", "Layout");
             }
 
             // Order all Regions by their ZIndex
@@ -485,9 +489,16 @@ namespace XiboClient.Rendering
             Trace.WriteLine(new LogMessage("Layout", "DurationElapsedEvent: Region Elapsed"), LogType.Audit.ToString());
 
             // Are we already changing the layout?
-            if (IsLayoutChanging)
+            if (_isLayoutChanging)
             {
                 Trace.WriteLine(new LogMessage("Layout", "DurationElapsedEvent: Already Changing Layout"), LogType.Audit.ToString());
+                return;
+            }
+
+            // If we are paused, don't do anything
+            if (IsPaused)
+            {
+                Debug.WriteLine("Region_DurationElapsedEvent: On Paused Layout, ignoring.", "Layout");
                 return;
             }
 
@@ -503,6 +514,12 @@ namespace XiboClient.Rendering
                 }
             }
 
+            // Set the Layout to expired
+            if (isExpired)
+            {
+                this.IsExpired = true;
+            }
+
             // If we are sure we have expired after checking all regions, then set the layout expired flag on them all
             // if we are an overlay, then don't raise this event
             if (isExpired && !this.isOverlay)
@@ -516,7 +533,7 @@ namespace XiboClient.Rendering
                 Trace.WriteLine(new LogMessage("Region", "DurationElapsedEvent: All Regions have expired. Raising a Next layout event."), LogType.Audit.ToString());
 
                 // We are changing the layout
-                IsLayoutChanging = true;
+                _isLayoutChanging = true;
 
                 // Yield and restart
                 Schedule.NextLayout();
@@ -587,7 +604,7 @@ namespace XiboClient.Rendering
         /// <param name="height"></param>
         private void SetDimensions(int left, int top, int width, int height)
         {
-            Debug.WriteLine("Setting Dimensions to W:" + width + ", H:" + height + ", (" + left + "," + top + ")");
+            Debug.WriteLine("Setting Dimensions to W:" + width + ", H:" + height + ", (" + left + "," + top + ")", "Layout");
 
             // Evaluate the width, etc
             Width = width;

@@ -1430,7 +1430,6 @@ namespace XiboClient
             this._interruptState.LastPlaytimeUpdate = DateTime.Now;
 
             // Update our tracker with these details.
-            int trackedSeconds = 0;
             if (!this._interruptState.InterruptTracking.ContainsKey(scheduleId))
             {
                 this._interruptState.InterruptTracking.Add(scheduleId, 0);
@@ -1441,7 +1440,7 @@ namespace XiboClient
 
             // Log
             Debug.WriteLine("InterruptRecordSecondsPlayed: Added " + seconds
-                + " seconds to eventId " + scheduleId + ", new total is " + trackedSeconds, "ScheduleManager");
+                + " seconds to eventId " + scheduleId + ", new total is " + this._interruptState.InterruptTracking[scheduleId], "ScheduleManager");
         }
 
         /// <summary>

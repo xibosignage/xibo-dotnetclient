@@ -342,7 +342,7 @@ namespace XiboClient
                 _schedule.ScheduleChangeEvent += ScheduleChangeEvent;
 
                 // Bind to the overlay change event
-                _schedule.OverlayChangeEvent += ManageOverlays;
+                _schedule.OverlayChangeEvent += ScheduleOverlayChangeEvent;
 
                 // Initialize the other schedule components
                 _schedule.InitializeComponents();
@@ -402,14 +402,24 @@ namespace XiboClient
         /// <param name="mode"></param>
         void ScheduleChangeEvent(ScheduleItem nextLayout, string mode)
         {
+            Debug.WriteLine("ScheduleChangeEvent: " + mode, "MainWindow");
+
             // What mode have we received.
             if (mode == "next")
             {
-                Trace.WriteLine(new LogMessage("MainForm - ScheduleChangeEvent", 
-                    string.Format("Schedule Changing to Schedule {0}, Layout {1}", nextLayout.scheduleid, nextLayout.id)), LogType.Audit.ToString());
+                Trace.WriteLine(new LogMessage("MainForm", 
+                    string.Format("ScheduleChangeEvent: Schedule Changing to Schedule {0}, Layout {1}", nextLayout.scheduleid, nextLayout.id)), LogType.Audit.ToString());
 
                 // Issue a change to the next Layout
                 Dispatcher.Invoke(new Action<ScheduleItem>(ChangeToNextLayout), nextLayout);
+            }
+            else if (mode == "interrupt-next")
+            {
+                Trace.WriteLine(new LogMessage("MainForm",
+                    string.Format("ScheduleChangeEvent: Interrupt Schedule Changing to Schedule {0}, Layout {1}", nextLayout.scheduleid, nextLayout.id)), LogType.Audit.ToString());
+
+                // Issue a change to the next Layout
+                Dispatcher.Invoke(new Action<ScheduleItem>(ChangeToNextInterruptLayout), nextLayout);
             }
             else if (mode == "interrupt")
             {
@@ -445,6 +455,8 @@ namespace XiboClient
         /// </summary>
         private void ChangeToNextLayout(ScheduleItem scheduleItem)
         {
+            Debug.WriteLine("ChangeToNextLayout: called", "MainWindow");
+
             if (ApplicationSettings.Default.PreventSleep)
             {
                 try
@@ -464,6 +476,8 @@ namespace XiboClient
                 {
                     if (this.currentLayout != null)
                     {
+                        Debug.WriteLine("ChangeToNextLayout: stopping the current Layout", "MainWindow");
+
                         this.currentLayout.Stop();
 
                         DestroyLayout(this.currentLayout);
@@ -474,7 +488,7 @@ namespace XiboClient
                     // Force collect all controls
                     this.Scene.Children.Clear();
 
-                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
                     throw e;
                 }
 
@@ -496,8 +510,10 @@ namespace XiboClient
                 }
                 catch (Exception e)
                 {
+                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Prepare/Start Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+
+                    // Remove the Layout again
                     DestroyLayout(this.currentLayout);
-                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Prepare Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
                     throw;
                 }
             }
@@ -532,11 +548,81 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Change to the next layout
+        /// <param name="scheduleItem"></param>
+        /// </summary>
+        private void ChangeToNextInterruptLayout(ScheduleItem scheduleItem)
+        {
+            Debug.WriteLine("ChangeToNextInterruptLayout: called", "MainWindow");
+
+            try
+            {
+                // Destroy the Current Layout
+                try
+                {
+                    if (this.interruptLayout != null)
+                    {
+                        Debug.WriteLine("ChangeToNextInterruptLayout: stopping the current Layout", "MainWindow");
+
+                        this.interruptLayout.Stop();
+
+                        DestroyLayout(this.interruptLayout);
+                    }
+                }
+                catch (Exception e)
+                {
+                    // Force collect all controls
+                    this.Scene.Children.Clear();
+
+                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextInterruptLayout: Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+                    throw e;
+                }
+
+                // Prepare the next layout
+                try
+                {
+                    this.interruptLayout = PrepareLayout(scheduleItem);
+
+                    // We have loaded a layout background and therefore are no longer showing the splash screen
+                    // Remove the Splash Screen Image
+                    RemoveSplashScreen();
+
+                    // Start the Layout.
+                    StartLayout(this.interruptLayout);
+                }
+                catch (Exception e)
+                {
+                    DestroyLayout(this.currentLayout);
+                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextInterruptLayout: Prepare Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+                    throw;
+                }
+            }
+            catch
+            {
+                // We have not been able to load the interrupt layout, move to the next if we can
+                if (_schedule.ActiveInterruptLayouts > 1)
+                {
+                    Debug.WriteLine("ChangeToNextInterruptLayout: More than one interrupt Layout, calling Next", "MainWindow");
+                    _schedule.NextLayout();
+                }
+                else
+                {
+                    // we assume here that the prior steps catch statements have tidied up this Layout
+                    Debug.WriteLine("ChangeToNextInterruptLayout: cannot start the only interrupt Layout, calling SetInterruptUnableToPlayAndEnd", "MainWindow");
+
+                    _schedule.SetInterruptUnableToPlayAndEnd();
+                }
+            }
+        }
+
+        /// <summary>
         /// Start a Layout
         /// </summary>
         /// <param name="layout"></param>
         private void StartLayout(Layout layout)
         {
+            Debug.WriteLine("StartLayout: Starting...", "MainWindow");
+
             // Match Background Colors
             this.Background = layout.BackgroundColor;
 
@@ -546,12 +632,21 @@ namespace XiboClient
             // Start
             if (layout.IsPaused)
             {
+                Debug.WriteLine("StartLayout: Resuming paused Layout", "MainWindow");
                 layout.Resume();
+            }
+            else if (!layout.IsRunning)
+            {
+                Debug.WriteLine("StartLayout: Starting Layout", "MainWindow");
+                layout.Start();
             }
             else
             {
-                layout.Start();
+                Trace.WriteLine(new LogMessage("MainForm", "StartLayout: Layout already running."), LogType.Error.ToString());
+                return;
             }
+
+            Debug.WriteLine("StartLayout: Started Layout", "MainWindow");
 
             // Update client info
             ClientInfo.Instance.CurrentLayoutId = layout.ScheduleItem.id + "";
@@ -572,7 +667,7 @@ namespace XiboClient
             }
             catch (Exception e)
             {
-                Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Notify Status Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+                Trace.WriteLine(new LogMessage("MainForm", "StartLayout: Notify Status Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
                 throw;
             }
         }
@@ -582,11 +677,18 @@ namespace XiboClient
         /// </summary>
         private void Interrupt(ScheduleItem scheduleItem)
         {
+            Debug.WriteLine("Interrupt: " + scheduleItem.scheduleid, "MainWindow");
+
             try
             {
                 if (this.currentLayout != null && this.currentLayout.IsRunning)
                 {
+                    Debug.WriteLine("Interrupt: Pausing current normal layout: " + this.currentLayout.ScheduleId, "MainWindow");
+
                     this.currentLayout.Pause();
+
+                    Debug.WriteLine("Interrupt: Paused, removing from Scene", "MainWindow");
+
                     this.Scene.Children.Remove(this.currentLayout);
                 }
 
@@ -607,6 +709,15 @@ namespace XiboClient
 
                 // We are interrupting
                 this._schedule.SetInterrupting();
+
+                // Are we expired?
+                if (this.interruptLayout.IsExpired)
+                {
+                    // The interrupt Layout is expired, so we ask for the next one
+                    Debug.WriteLine("Interrupt: Current Interrupt is Expired, so move on", "MainWindow");
+
+                    this._schedule.NextLayout();
+                }
             }
             catch (Exception ex)
             {
@@ -619,12 +730,20 @@ namespace XiboClient
         /// </summary>
         private void InterruptEnd()
         {
+            Debug.WriteLine("InterruptEnd: Ending...", "MainWindow");
+
             try
             {
                 // Stop the current interrupt
                 if (this.interruptLayout != null && this.interruptLayout.IsRunning)
                 {
+                    Debug.WriteLine("InterruptEnd: Pausing current interrupt", "MainWindow");
+
                     this.interruptLayout.Pause();
+
+                    Debug.WriteLine("InterruptEnd: Removing from the scene", "MainWindow");
+
+                    this.Scene.Children.Remove(this.interruptLayout);
                 }
 
                 if (this.currentLayout == null || !this.currentLayout.IsPaused)
