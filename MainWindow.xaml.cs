@@ -408,20 +408,6 @@ namespace XiboClient
         void ScheduleChangeEvent(ScheduleItem nextLayout, string mode)
         {
             // We can only process 1 schedule change at a time.
-            // unless this is a pause-pending message, in which case we execute it immediately as it might happen while we're
-            // coming out the stack of another schedule change event.
-            if (mode == "pause-pending")
-            {
-                // Set Pause Pending on the current interrupt layout
-                // so that when it finishes it will pause
-                if (this.interruptLayout != null)
-                {
-                    this.interruptLayout.PausePending();
-                }
-
-                return;
-            }
-
             lock (_scheduleLocker)
             {
                 Debug.WriteLine("ScheduleChangeEvent: " + mode, "MainWindow");
@@ -455,6 +441,17 @@ namespace XiboClient
                     {
                         Dispatcher.Invoke(InterruptEnd);
                     }
+                }
+                else if (mode == "pause-pending")
+                {
+                    // Set Pause Pending on the current interrupt layout
+                    // so that when it finishes it will pause
+                    if (this.interruptLayout != null)
+                    {
+                        this.interruptLayout.PausePending();
+                    }
+
+                    return;
                 }
                 else
                 {

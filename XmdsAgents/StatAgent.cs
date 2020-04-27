@@ -67,7 +67,7 @@ namespace XiboClient.XmdsAgents
 
                             HardwareKey key = new HardwareKey();
 
-                            Trace.WriteLine(new LogMessage("StatAgent", "Run: Thread Woken and Lock Obtained"), LogType.Audit.ToString());
+                            Trace.WriteLine(new LogMessage("StatAgent", "Run: Thread Woken and Lock Obtained, Key: " + processing), LogType.Audit.ToString());
 
                             using (xmds.xmds xmds = new xmds.xmds())
                             {

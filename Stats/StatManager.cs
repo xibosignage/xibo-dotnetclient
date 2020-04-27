@@ -391,12 +391,14 @@ namespace XiboClient.Stats
             string aggregationLevel = ApplicationSettings.Default.AggregationLevel.ToLowerInvariant();
             StringBuilder builder = new StringBuilder();
 
-            using (XmlWriter writer = XmlWriter.Create(builder))
+            using (XmlWriter writer = XmlWriter.Create(builder, new XmlWriterSettings {
+                OmitXmlDeclaration = true,
+                ConformanceLevel = ConformanceLevel.Fragment
+            }))
             using (var connection = new SqliteConnection("Filename=" + this.databasePath))
             using (SqliteCommand cmd = new SqliteCommand())
             {
                 // Start off our XML document
-                writer.WriteStartDocument();
                 writer.WriteStartElement("log");
 
                 connection.Open();
@@ -414,14 +416,14 @@ namespace XiboClient.Stats
                             DateTime from = reader.GetDateTime(1);
                             DateTime to = reader.GetDateTime(2);
                             writer.WriteStartElement("stat");
-                            writer.WriteAttributeString("type", reader.GetString(0));
+                            writer.WriteAttributeString("type", reader.GetString(0).ToLowerInvariant());
                             writer.WriteAttributeString("fromdt", from.ToString("yyyy-MM-dd HH:mm:ss"));
                             writer.WriteAttributeString("todt", to.ToString("yyyy-MM-dd HH:mm:ss"));
                             writer.WriteAttributeString("scheduleid", reader.GetString(3));
                             writer.WriteAttributeString("layoutid", reader.GetString(4));
                             writer.WriteAttributeString("mediaid", reader.GetString(5));
                             writer.WriteAttributeString("tag", reader.GetString(6));
-                            writer.WriteAttributeString("duration", "" + (to - from).TotalSeconds);
+                            writer.WriteAttributeString("duration", "" + Math.Floor((to - from).TotalSeconds));
                             writer.WriteAttributeString("count", "1");
                             writer.WriteEndElement();
                         }
@@ -438,7 +440,7 @@ namespace XiboClient.Stats
                             DateTime toAggregate;
                             DateTime from = reader.GetDateTime(1);
                             DateTime to = reader.GetDateTime(2);
-                            int duration = Convert.ToInt32((to - from).TotalSeconds);
+                            int duration = Convert.ToInt32(Math.Floor((to - from).TotalSeconds));
 
                             if (aggregationLevel == "daily")
                             {
@@ -466,7 +468,7 @@ namespace XiboClient.Stats
                             int layoutId = reader.GetInt32(4);
                             int scheduleId = reader.GetInt32(3);
 
-                            string type = reader.GetString(0);
+                            string type = reader.GetString(0).ToLowerInvariant();
                             string mediaId = reader.GetString(5);
                             string tag = reader.GetString(6);
 
@@ -524,7 +526,6 @@ namespace XiboClient.Stats
 
                 // Closing log element
                 writer.WriteEndElement();
-                writer.WriteEndDocument();
             }
 
             return builder.ToString();
