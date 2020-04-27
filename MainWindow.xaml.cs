@@ -492,6 +492,8 @@ namespace XiboClient
                         this.currentLayout.Stop();
 
                         DestroyLayout(this.currentLayout);
+
+                        Debug.WriteLine("ChangeToNextLayout: stopped and removed the current Layout", "MainWindow");
                     }
                 }
                 catch (Exception e)
@@ -900,7 +902,7 @@ namespace XiboClient
         /// </summary>
         private void DestroyLayout(Layout layout)
         {
-            Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
+            Debug.WriteLine("DestoryLayout: Destroying Layout", "MainForm");
 
             layout.Remove();
             layout.OnReportLayoutPlayDurationEvent -= CurrentLayout_OnReportLayoutPlayDurationEvent;

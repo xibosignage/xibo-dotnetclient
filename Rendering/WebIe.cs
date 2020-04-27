@@ -46,7 +46,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Render Media
         /// </summary>
-        public override void RenderMedia(int position)
+        public override void RenderMedia(double position)
         {
             // Create the web view we will use
             _webBrowser = new WebBrowser();

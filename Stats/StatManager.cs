@@ -202,6 +202,8 @@ namespace XiboClient.Stats
         /// <param name="widgetId"></param>
         public void WidgetStart(int scheduleId, int layoutId, string widgetId)
         {
+            Debug.WriteLine(string.Format("WidgetStart: scheduleId: {0}, layoutId: {1}, widgetId: {2}", scheduleId, layoutId, widgetId), "StatManager");
+
             lock (_locker)
             {
                 // New record, which we put in the dictionary
@@ -229,6 +231,8 @@ namespace XiboClient.Stats
         /// <returns>Duration</returns>
         public double WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled)
         {
+            Debug.WriteLine(string.Format("WidgetStop: scheduleId: {0}, layoutId: {1}, widgetId: {2}", scheduleId, layoutId, widgetId), "StatManager");
+
             double duration = 0;
 
             lock (_locker)

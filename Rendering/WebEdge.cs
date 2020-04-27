@@ -44,7 +44,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Render Media
         /// </summary>
-        public override void RenderMedia(int position)
+        public override void RenderMedia(double position)
         {
             this.webView = new WebView();
             this.webView.Width = Width;

@@ -33,6 +33,7 @@ namespace XiboClient.Rendering
         private int volume;
         private bool _detectEnd = false;
         private bool isLooping = false;
+        private readonly bool isFullScreenRequest = false;
         protected bool ShouldBeVisible { get; set; }
         protected bool Muted { get; set; }
 
@@ -57,6 +58,9 @@ namespace XiboClient.Rendering
 
             // Should we loop?
             this.isLooping = (options.Dictionary.Get("loop", "0") == "1" && _duration != 0);
+
+            // Full Screen?
+            this.isFullScreenRequest = options.Dictionary.Get("showFullScreen", "0") == "1";
         }
 
         private void MediaElement_MediaFailed(object sender, ExceptionRoutedEventArgs e)
@@ -99,7 +103,7 @@ namespace XiboClient.Rendering
             }
         }
 
-        public override void RenderMedia(int position)
+        public override void RenderMedia(double position)
         {
             // Check to see if the video exists or not (if it doesnt say we are already expired)
             // we only do this if we aren't a stream
@@ -191,6 +195,15 @@ namespace XiboClient.Rendering
                 // We're not end detect, so we pass the timer through
                 base.timer_Tick(sender, e);
             }
+        }
+
+        /// <summary>
+        /// Is a region size change required
+        /// </summary>
+        /// <returns></returns>
+        public override bool RegionSizeChangeRequired()
+        {
+            return this.isFullScreenRequest;
         }
     }
 }
