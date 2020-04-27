@@ -162,6 +162,7 @@
     <Compile Include="Rendering\Region.xaml.cs">
       <DependentUpon>Region.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Stats\Engagement.cs" />
     <Compile Include="Stats\Stat.cs" />
     <Compile Include="Stats\StatManager.cs" />
     <Compile Include="Web References\xmds\Reference.cs">
