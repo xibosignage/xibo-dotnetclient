@@ -18,11 +18,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace XiboClient.Logic
 {
@@ -37,8 +34,15 @@ namespace XiboClient.Logic
 
         public int Compare(ScheduleItem x, ScheduleItem y)
         {
+            // Calculate ranks
+            double rankX = x.CalculateRank(this.secondsToPeriodEnd);
+            double rankY = y.CalculateRank(this.secondsToPeriodEnd);
+
+            Debug.WriteLine("Compare: scheduleId " + x.scheduleid + " with rank " + rankX
+                + " / scheduleId " + y.scheduleid + " with rank " + rankY, "ScheduleItemComparer");
+
             // Calculate the rank for each item
-            return x.CalculateRank(this.secondsToPeriodEnd) > y.CalculateRank(this.secondsToPeriodEnd) ? 1 : -1;
+            return rankX > rankY ? 1 : -1;
         }
     }
 }

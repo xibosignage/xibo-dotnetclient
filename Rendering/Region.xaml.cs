@@ -25,6 +25,11 @@ namespace XiboClient.Rendering
         public bool IsExpired = false;
 
         /// <summary>
+        /// Is this region paused?
+        /// </summary>
+        private bool _isPaused = false;
+
+        /// <summary>
         /// Is Pause Pending?
         /// </summary>
         private bool IsPausePending = false;
@@ -740,9 +745,10 @@ namespace XiboClient.Rendering
             // Dispose of the current media
             try
             {
-                // Tidy Up
                 // Media Stopped Event removes the media from the scene
-                media.MediaStoppedEvent -= Media_MediaStoppedEvent;
+                media.MediaStoppedEvent += Media_MediaStoppedEvent;
+
+                // Tidy Up
                 media.DurationElapsedEvent -= media_DurationElapsedEvent;
                 media.Stop(regionStopped);
 
@@ -827,6 +833,13 @@ namespace XiboClient.Rendering
             if (IsLayoutExpired)
             {
                 Debug.WriteLine("DurationElapsedEvent: Layout Expired, therefore we don't StartNext", "Region");
+                return;
+            }
+
+            // If we are now paused, we don't start the next media
+            if (this._isPaused)
+            {
+                Debug.WriteLine("DurationElapsedEvent: Paused, therefore we don't StartNext", "Region");
                 return;
             }
 
@@ -919,21 +932,38 @@ namespace XiboClient.Rendering
             }
 
             // Paused
+            this._isPaused = true;
             this.IsPausePending = false;
         }
 
         /// <summary>
         /// Resume this Layout
         /// </summary>
-        public void Resume()
+        public void Resume(bool isInterrupt)
         {
-            // We have to dial back the current position here, because start next will straight away increment it
-            this.currentSequence--;
+            // If we are an interrupt, we should skip on to the next item
+            // and if there is only 1 item, we should replay it.
+            // if we are a normal layout, then we resume the current one.
+            if (isInterrupt)
+            {
+                if (this.options.mediaNodes.Count <= 1)
+                {
+                    this.currentSequence--;
+                }
 
-            // Resume the current media item
-            StartNext(this._currentPlaytime);
+                // Resume the current media item
+                StartNext(0);
+            }
+            else
+            {
+                // We have to dial back the current position here, because start next will straight away increment it
+                this.currentSequence--;
 
-            this.IsPausePending = false;
+                // Resume the current media item
+                StartNext(this._currentPlaytime);
+            }
+
+            this._isPaused = false;
         }
 
         /// <summary>

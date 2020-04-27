@@ -42,7 +42,7 @@ namespace XiboClient.Logic
         /// <summary>
         /// Seconds Played
         /// </summary>
-        public int SecondsPlayed;
+        public double SecondsPlayed;
 
         // Geo Schedule
         public bool IsGeoAware = false;
@@ -58,6 +58,11 @@ namespace XiboClient.Logic
         /// Refresh this item - used for Overlays
         /// </summary>
         public bool Refresh = false;
+
+        /// <summary>
+        /// Is this schedule item fulfilled - used for Interrupts
+        /// </summary>
+        public bool IsFulfilled = false;
 
         /// <summary>
         /// Point we have tested against for GeoSchedule

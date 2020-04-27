@@ -50,6 +50,11 @@ namespace XiboClient
         private Schedule _schedule;
 
         /// <summary>
+        /// Schedule Change Lock
+        /// </summary>
+        public static object _scheduleLocker = new object();
+
+        /// <summary>
         /// Overlay Regions
         /// </summary>
         private Collection<Layout> _overlays;
@@ -402,39 +407,10 @@ namespace XiboClient
         /// <param name="mode"></param>
         void ScheduleChangeEvent(ScheduleItem nextLayout, string mode)
         {
-            Debug.WriteLine("ScheduleChangeEvent: " + mode, "MainWindow");
-
-            // What mode have we received.
-            if (mode == "next")
-            {
-                Trace.WriteLine(new LogMessage("MainForm", 
-                    string.Format("ScheduleChangeEvent: Schedule Changing to Schedule {0}, Layout {1}", nextLayout.scheduleid, nextLayout.id)), LogType.Audit.ToString());
-
-                // Issue a change to the next Layout
-                Dispatcher.Invoke(new Action<ScheduleItem>(ChangeToNextLayout), nextLayout);
-            }
-            else if (mode == "interrupt-next")
-            {
-                Trace.WriteLine(new LogMessage("MainForm",
-                    string.Format("ScheduleChangeEvent: Interrupt Schedule Changing to Schedule {0}, Layout {1}", nextLayout.scheduleid, nextLayout.id)), LogType.Audit.ToString());
-
-                // Issue a change to the next Layout
-                Dispatcher.Invoke(new Action<ScheduleItem>(ChangeToNextInterruptLayout), nextLayout);
-            }
-            else if (mode == "interrupt")
-            {
-                // Pause the current layout, and start/resume the interrupt
-                Dispatcher.Invoke(new Action<ScheduleItem>(Interrupt), nextLayout);
-            }
-            else if (mode == "interrupt-end")
-            {
-                // End the current interrupt layout and resume the current normal layout
-                if (this.interruptLayout != null && this.interruptLayout.IsRunning)
-                {
-                    Dispatcher.Invoke(InterruptEnd);
-                }
-            }
-            else if (mode == "pause-pending")
+            // We can only process 1 schedule change at a time.
+            // unless this is a pause-pending message, in which case we execute it immediately as it might happen while we're
+            // coming out the stack of another schedule change event.
+            if (mode == "pause-pending")
             {
                 // Set Pause Pending on the current interrupt layout
                 // so that when it finishes it will pause
@@ -442,10 +418,48 @@ namespace XiboClient
                 {
                     this.interruptLayout.PausePending();
                 }
+
+                return;
             }
-            else
+
+            lock (_scheduleLocker)
             {
-                Trace.WriteLine(new LogMessage("MainForm", string.Format("ScheduleChangeEvent: Unknown Mode {0}", mode)), LogType.Error.ToString());
+                Debug.WriteLine("ScheduleChangeEvent: " + mode, "MainWindow");
+
+                // What mode have we received.
+                if (mode == "next")
+                {
+                    Trace.WriteLine(new LogMessage("MainForm",
+                        string.Format("ScheduleChangeEvent: Schedule Changing to Schedule {0}, Layout {1}", nextLayout.scheduleid, nextLayout.id)), LogType.Audit.ToString());
+
+                    // Issue a change to the next Layout
+                    Dispatcher.Invoke(new Action<ScheduleItem>(ChangeToNextLayout), nextLayout);
+                }
+                else if (mode == "interrupt-next")
+                {
+                    Trace.WriteLine(new LogMessage("MainForm",
+                        string.Format("ScheduleChangeEvent: Interrupt Schedule Changing to Schedule {0}, Layout {1}", nextLayout.scheduleid, nextLayout.id)), LogType.Audit.ToString());
+
+                    // Issue a change to the next Layout
+                    Dispatcher.Invoke(new Action<ScheduleItem>(ChangeToNextInterruptLayout), nextLayout);
+                }
+                else if (mode == "interrupt")
+                {
+                    // Pause the current layout, and start/resume the interrupt
+                    Dispatcher.Invoke(new Action<ScheduleItem>(Interrupt), nextLayout);
+                }
+                else if (mode == "interrupt-end")
+                {
+                    // End the current interrupt layout and resume the current normal layout
+                    if (this.interruptLayout != null && this.interruptLayout.IsRunning)
+                    {
+                        Dispatcher.Invoke(InterruptEnd);
+                    }
+                }
+                else
+                {
+                    Trace.WriteLine(new LogMessage("MainForm", string.Format("ScheduleChangeEvent: Unknown Mode {0}", mode)), LogType.Error.ToString());
+                }
             }
         }
 
@@ -768,7 +782,7 @@ namespace XiboClient
         /// <param name="scheduleId"></param>
         /// <param name="layoutId"></param>
         /// <param name="duration"></param>
-        private void CurrentLayout_OnReportLayoutPlayDurationEvent(int scheduleId, int layoutId, int duration)
+        private void CurrentLayout_OnReportLayoutPlayDurationEvent(int scheduleId, int layoutId, double duration)
         {
             this._schedule.CurrentLayout_OnReportLayoutPlayDurationEvent(scheduleId, layoutId, duration);
         }

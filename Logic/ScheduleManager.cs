@@ -1346,15 +1346,20 @@ namespace XiboClient
                 {
                     if (this._interruptState.InterruptTracking.ContainsKey(item.scheduleid))
                     {
-                        int secondsPlayed;
-                        this._interruptState.InterruptTracking.TryGetValue(item.scheduleid, out secondsPlayed);
+                        // Annotate this item with the existing seconds played
+                        this._interruptState.InterruptTracking.TryGetValue(item.scheduleid, out double secondsPlayed);
 
                         item.SecondsPlayed = secondsPlayed;
+
+                        // Is this item fulfilled
+                        item.IsFulfilled = (item.SecondsPlayed >= item.ShareOfVoice) ;
                     }
                     else
                     {
                         item.SecondsPlayed = 0;
                     }
+
+                    Debug.WriteLine("InterruptAssessAndUpdate: Updating scheduleId " + item.scheduleid + " with seconds played " + item.SecondsPlayed, "ScheduleManager");
                 }
                 catch
                 {
@@ -1380,7 +1385,7 @@ namespace XiboClient
 
             // Interrupt if the seconds we've interrupted this hour so far is less than the seconds we
             // should have interrupted.
-            if (this._interruptState.SecondsInterrutedThisHour < secondsShouldHaveInterrupted)
+            if (Math.Floor(this._interruptState.SecondsInterrutedThisHour) < secondsShouldHaveInterrupted)
             {
                 OnInterruptNow?.Invoke();
             }
@@ -1397,6 +1402,8 @@ namespace XiboClient
         {
             if (this._interruptState.LastPlaytimeUpdate < TopOfHour())
             {
+                Debug.WriteLine("InterruptResetSecondsIfNecessary: LastPlaytimeUpdate in prior hour, resetting play time.", "ScheduleManager");
+
                 this._interruptState.SecondsInterrutedThisHour = 0;
                 this._interruptState.InterruptTracking.Clear();
             }
@@ -1417,7 +1424,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="scheduleId"></param>
         /// <param name="seconds"></param>
-        public void InterruptRecordSecondsPlayed(int scheduleId, int seconds)
+        public void InterruptRecordSecondsPlayed(int scheduleId, double seconds)
         {
             Debug.WriteLine("InterruptRecordSecondsPlayed: scheduleId = " + scheduleId + ", seconds = " + seconds, "ScheduleManager");
 
@@ -1464,7 +1471,7 @@ namespace XiboClient
                         this._interruptState.LastInterruption = DateTime.Now.AddHours(-2);
                         this._interruptState.LastPlaytimeUpdate = DateTime.Now.AddHours(-2);
                         this._interruptState.LastInterruptScheduleChange = DateTime.Now.AddHours(-2);
-                        this._interruptState.InterruptTracking = new Dictionary<int, int>();
+                        this._interruptState.InterruptTracking = new Dictionary<int, double>();
                     }
                 }
             }
@@ -1485,7 +1492,7 @@ namespace XiboClient
                 {
                     using (StreamWriter sw = new StreamWriter(ApplicationSettings.Default.LibraryPath + @"\interrupt.json", false, Encoding.UTF8))
                     {
-                        sw.Write(JsonConvert.SerializeObject(this._interruptState));
+                        sw.Write(JsonConvert.SerializeObject(this._interruptState, Newtonsoft.Json.Formatting.Indented));
                     }
                 }
             }

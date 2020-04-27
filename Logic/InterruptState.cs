@@ -25,11 +25,11 @@ namespace XiboClient.Logic
 {
     class InterruptState
     {
-        public int SecondsInterrutedThisHour = 0;
+        public double SecondsInterrutedThisHour = 0;
         public int TargetHourlyInterruption = 0;
         public DateTime LastInterruption;
         public DateTime LastPlaytimeUpdate;
         public DateTime LastInterruptScheduleChange;
-        public Dictionary<int, int> InterruptTracking;
+        public Dictionary<int, double> InterruptTracking;
     }
 }

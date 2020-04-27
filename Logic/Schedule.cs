@@ -428,16 +428,38 @@ namespace XiboClient
             ScheduleItem nextLayout;
             if (this._interrupting)
             {
-                // increment the current layout
-                _currentInterruptLayout++;
-
-                // if the current layout is greater than the count of layouts, then reset to 0
-                if (_currentInterruptLayout >= _scheduleManager.CurrentInterruptSchedule.Count)
+                // We might have fulifilled items in the schedule.
+                List<ScheduleItem> notFulfilled = new List<ScheduleItem>();
+                foreach (ScheduleItem item in _scheduleManager.CurrentInterruptSchedule)
                 {
-                    _currentInterruptLayout = 0;
+                    if (!item.IsFulfilled)
+                    {
+                        notFulfilled.Add(item);
+                    }
                 }
 
-                nextLayout = _scheduleManager.CurrentInterruptSchedule[_currentInterruptLayout];
+                // What if we don't have any?
+                // pick the least worst option
+                if (notFulfilled.Count <= 0)
+                {
+                    Debug.WriteLine("NextLayout: Interrupting and have run out of not-fulfilled schedules, using the first one.", "Schedule");
+
+                    nextLayout = _scheduleManager.CurrentInterruptSchedule[0];
+                }
+                else
+                {
+                    // increment the current layout
+                    _currentInterruptLayout++;
+
+                    // if the current layout is greater than the count of layouts, then reset to 0
+                    if (_currentInterruptLayout >= notFulfilled.Count)
+                    {
+                        _currentInterruptLayout = 0;
+                    }
+
+                    // Pull out the next Layout
+                    nextLayout = notFulfilled[_currentInterruptLayout];
+                }
             }
             else
             {
@@ -698,7 +720,7 @@ namespace XiboClient
         /// <param name="scheduleId"></param>
         /// <param name="layoutId"></param>
         /// <param name="duration"></param>
-        public void CurrentLayout_OnReportLayoutPlayDurationEvent(int scheduleId, int layoutId, int duration)
+        public void CurrentLayout_OnReportLayoutPlayDurationEvent(int scheduleId, int layoutId, double duration)
         {
             this._scheduleManager.InterruptRecordSecondsPlayed(scheduleId, duration);
         }

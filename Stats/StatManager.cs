@@ -151,9 +151,9 @@ namespace XiboClient.Stats
         /// <param name="layoutId"></param>
         /// <param name="statEnabled"></param>
         /// <returns>Duration</returns>
-        public int LayoutStop(int scheduleId, int layoutId, bool statEnabled)
+        public double LayoutStop(int scheduleId, int layoutId, bool statEnabled)
         {
-            int duration = 0;
+            double duration = 0;
 
             lock (_locker)
             {
@@ -170,7 +170,7 @@ namespace XiboClient.Stats
                     stat.To = DateTime.Now;
 
                     // Work our the duration
-                    duration = Convert.ToInt32((stat.To - stat.From).TotalSeconds);
+                    duration = (stat.To - stat.From).TotalSeconds;
 
                     if (ApplicationSettings.Default.StatsEnabled && statEnabled)
                     {
@@ -219,9 +219,9 @@ namespace XiboClient.Stats
         /// <param name="widgetId"></param>
         /// <param name="statEnabled"></param>
         /// <returns>Duration</returns>
-        public int WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled)
+        public double WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled)
         {
-            int duration = 0;
+            double duration = 0;
 
             lock (_locker)
             {
@@ -238,7 +238,7 @@ namespace XiboClient.Stats
                     stat.To = DateTime.Now;
 
                     // Work our the duration
-                    duration = Convert.ToInt32((stat.To - stat.From).TotalSeconds);
+                    duration = (stat.To - stat.From).TotalSeconds;
 
                     if (ApplicationSettings.Default.StatsEnabled && statEnabled)
                     {

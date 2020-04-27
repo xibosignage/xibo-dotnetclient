@@ -89,7 +89,7 @@ namespace XiboClient.Rendering
         // Interrupts
         private bool isPausePending = false;
 
-        public delegate void OnReportLayoutPlayDuration(int scheduleId, int layoutId, int duration);
+        public delegate void OnReportLayoutPlayDuration(int scheduleId, int layoutId, double duration);
         public event OnReportLayoutPlayDuration OnReportLayoutPlayDurationEvent;
 
         /// <summary>
@@ -391,7 +391,7 @@ namespace XiboClient.Rendering
             IsPaused = true;
 
             // Close and dispatch any stat records
-            int duration = StatManager.Instance.LayoutStop(ScheduleId, _layoutId, this.isStatEnabled);
+            double duration = StatManager.Instance.LayoutStop(ScheduleId, _layoutId, this.isStatEnabled);
 
             // Report Play Duration
             if (this.isInterrupt)
@@ -423,7 +423,7 @@ namespace XiboClient.Rendering
             // Resume each region
             foreach (Region region in _regions)
             {
-                region.Resume();
+                region.Resume(this.isInterrupt);
             }
 
             IsPaused = false;
@@ -435,7 +435,7 @@ namespace XiboClient.Rendering
         public void Stop()
         {
             // Stat stop
-            int duration = StatManager.Instance.LayoutStop(ScheduleId, _layoutId, this.isStatEnabled);
+            double duration = StatManager.Instance.LayoutStop(ScheduleId, _layoutId, this.isStatEnabled);
 
             // If we are an interrupt layout, then report our duration.
             if (this.isInterrupt)
