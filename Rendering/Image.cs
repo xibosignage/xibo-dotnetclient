@@ -71,7 +71,7 @@ namespace XiboClient.Rendering
             }
         }
 
-        public override void RenderMedia()
+        public override void RenderMedia(int position)
         {
             // Check that the file path exists
             if (!File.Exists(this.filePath))
@@ -106,7 +106,7 @@ namespace XiboClient.Rendering
 
             this.MediaScene.Children.Add(this.image);
 
-            base.RenderMedia();
+            base.RenderMedia(position);
         }
     }
 }

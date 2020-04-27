@@ -20,9 +20,9 @@
  */
 using GeoJSON.Net.Contrib.MsSqlSpatial;
 using GeoJSON.Net.Geometry;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Device.Location;
 using System.Diagnostics;
 using System.Globalization;
@@ -61,14 +61,23 @@ namespace XiboClient
 
         // Member Varialbes
         private string _location;
-        private Collection<LayoutChangePlayerAction> _layoutChangeActions;
-        private Collection<OverlayLayoutPlayerAction> _overlayLayoutActions;
-        private Collection<ScheduleItem> _layoutSchedule;
-        private Collection<ScheduleItem> _currentSchedule;
-        private Collection<ScheduleCommand> _commands;
-        private Collection<ScheduleItem> _overlaySchedule;
-        private Collection<ScheduleItem> _currentOverlaySchedule;
+        private List<LayoutChangePlayerAction> _layoutChangeActions;
+        private List<OverlayLayoutPlayerAction> _overlayLayoutActions;
+        private List<ScheduleItem> _layoutSchedule;
+        private List<ScheduleCommand> _commands;
+        private List<ScheduleItem> _overlaySchedule;
+        private InterruptState _interruptState;
 
+        public delegate void OnInterruptNowDelegate();
+        public event OnInterruptNowDelegate OnInterruptNow;
+
+        public delegate void OnInterruptPausePendingDelegate();
+        public event OnInterruptPausePendingDelegate OnInterruptPausePending;
+
+        public delegate void OnInterruptEndDelegate();
+        public event OnInterruptEndDelegate OnInterruptEnd;
+
+        // State
         private bool _refreshSchedule;
         private DateTime _lastScreenShotDate;
 
@@ -86,16 +95,20 @@ namespace XiboClient
             _location = scheduleLocation;
 
             // Create an empty layout schedule
-            _layoutSchedule = new Collection<ScheduleItem>();
-            _currentSchedule = new Collection<ScheduleItem>();
-            _layoutChangeActions = new Collection<LayoutChangePlayerAction>();
-            _commands = new Collection<ScheduleCommand>();
+            _layoutSchedule = new List<ScheduleItem>();
+            CurrentSchedule = new List<ScheduleItem>();
+            _layoutChangeActions = new List<LayoutChangePlayerAction>();
+            _commands = new List<ScheduleCommand>();
 
             // Overlay schedules
-            _currentOverlaySchedule = new Collection<ScheduleItem>();
-            _overlaySchedule = new Collection<ScheduleItem>();
-            _overlayLayoutActions = new Collection<OverlayLayoutPlayerAction>();
+            CurrentOverlaySchedule = new List<ScheduleItem>();
+            _overlaySchedule = new List<ScheduleItem>();
+            _overlayLayoutActions = new List<OverlayLayoutPlayerAction>();
 
+            // Interrupts
+            CurrentInterruptSchedule = new List<ScheduleItem>();
+
+            // Screenshot
             _lastScreenShotDate = DateTime.MinValue;
         }
 
@@ -122,24 +135,18 @@ namespace XiboClient
         /// <summary>
         /// The current layout schedule
         /// </summary>
-        public Collection<ScheduleItem> CurrentSchedule
-        {
-            get
-            {
-                return _currentSchedule;
-            }
-        }
+        public List<ScheduleItem> CurrentSchedule { get; private set; }
 
         /// <summary>
         /// Get the current overlay schedule
         /// </summary>
-        public Collection<ScheduleItem> CurrentOverlaySchedule
-        {
-            get
-            {
-                return _currentOverlaySchedule;
-            }
-        }
+        public List<ScheduleItem> CurrentOverlaySchedule { get; private set; }
+
+
+        /// <summary>
+        /// Get the current interrupt schedule
+        /// </summary>
+        public List<ScheduleItem> CurrentInterruptSchedule { get; private set; }
 
         /// <summary>
         /// Get or Set the current layout id
@@ -158,8 +165,6 @@ namespace XiboClient
         }
 
         #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Stops the thread
@@ -190,6 +195,11 @@ namespace XiboClient
             watcher.PositionChanged += Watcher_PositionChanged;
             watcher.Start();
 
+            // Load the interrupt state
+            InterruptInitState();
+
+            // Run loop
+            // --------
             while (!_forceStop)
             {
                 lock (_locker)
@@ -202,10 +212,25 @@ namespace XiboClient
                         Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Schedule Timer Ticked"), LogType.Audit.ToString());
 
                         // Work out if there is a new schedule available, if so - raise the event
-                        if (IsNewScheduleAvailable())
+                        bool isNewScheduleAvailable = IsNewScheduleAvailable();
+
+                        // Interrupts
+                        // ----------
+                        // Handle interrupts to keep the list in order and fresh
+                        // this effectively sets the order of our interrupt layouts before they get updated on the main
+                        // thread.
+                        InterruptAssessAndUpdate();
+
+                        // Events
+                        // ------
+                        if (isNewScheduleAvailable)
+                        {
                             OnNewScheduleAvailable();
+                        }
                         else
+                        {
                             OnRefreshSchedule();
+                        }
 
                         // Update the client info form
                         ClientInfo.Instance.ScheduleManagerStatus = LayoutsInSchedule();
@@ -265,8 +290,13 @@ namespace XiboClient
             watcher.PositionChanged -= Watcher_PositionChanged;
             watcher.Stop();
 
+            // Save the interrupt state
+            InterruptPersistState();
+
             Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Thread Stopped"), LogType.Info.ToString());
         }
+
+        #region Methods
 
         /// <summary>
         /// Watcher position has changed
@@ -293,9 +323,9 @@ namespace XiboClient
                     + ", Speed = " + coordinate.Speed), LogType.Info.ToString());
 
                 // Has it changed?
-                if (ClientInfo.Instance.CurrentGeoLocation == null 
+                if (ClientInfo.Instance.CurrentGeoLocation == null
                     || ClientInfo.Instance.CurrentGeoLocation.IsUnknown
-                    || coordinate.Latitude != ClientInfo.Instance.CurrentGeoLocation.Latitude 
+                    || coordinate.Latitude != ClientInfo.Instance.CurrentGeoLocation.Latitude
                     || coordinate.Longitude != ClientInfo.Instance.CurrentGeoLocation.Longitude)
                 {
                     // test the change in position
@@ -387,24 +417,30 @@ namespace XiboClient
             }
 
             // Load the new Schedule
-            Collection<ScheduleItem> newSchedule = LoadNewSchedule();
+            List<ScheduleItem> newSchedule = LoadNewSchedule();
 
             // Load a new overlay schedule
-            Collection<ScheduleItem> overlaySchedule = LoadNewOverlaySchedule();
+            List<ScheduleItem> overlaySchedule = LoadNewOverlaySchedule();
 
+            // Load a new interrupt schedule
+            List<ScheduleItem> newInterruptSchedule = LoadNewSchedule(true);
+
+            // Should we force a change 
+            // (broadly this depends on whether or not the schedule has changed.)
             bool forceChange = false;
 
             // If the current schedule is empty, always overwrite
-            if (_currentSchedule.Count == 0)
+            if (CurrentSchedule.Count == 0)
                 forceChange = true;
 
             // Log
             List<string> currentScheduleString = new List<string>();
             List<string> newScheduleString = new List<string>();
             List<string> newOverlaysString = new List<string>();
+            List<string> newInterruptString = new List<string>();
 
             // Are all the items that were in the _currentSchedule still there?
-            foreach (ScheduleItem layout in _currentSchedule)
+            foreach (ScheduleItem layout in CurrentSchedule)
             {
                 if (!newSchedule.Contains(layout))
                 {
@@ -422,15 +458,19 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Layouts in Current Schedule: " + string.Join(Environment.NewLine, currentScheduleString)), LogType.Audit.ToString());
             Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Layouts in New Schedule: " + string.Join(Environment.NewLine, newScheduleString)), LogType.Audit.ToString());
 
-            // Old layout overlays
+            // Overlays
+            // --------
+            // Logging first
             foreach (ScheduleItem layout in overlaySchedule)
             {
                 newOverlaysString.Add(layout.ToString());
             }
 
+            Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Overlay Layouts: " + string.Join(Environment.NewLine, newOverlaysString)), LogType.Audit.ToString());
+
             // Try to work out whether the overlay schedule has changed or not.
             // easiest way to do this is to see if the sizes have changed
-            if (_currentOverlaySchedule.Count != overlaySchedule.Count)
+            if (CurrentOverlaySchedule.Count != overlaySchedule.Count)
             {
                 forceChange = true;
             }
@@ -438,7 +478,7 @@ namespace XiboClient
             {
                 // Compare them on an object by object level.
                 // Are all the items that were in the _currentOverlaySchedule still there?
-                foreach (ScheduleItem layout in _currentOverlaySchedule)
+                foreach (ScheduleItem layout in CurrentOverlaySchedule)
                 {
                     // New overlay schedule doesn't contain the layout?
                     if (!overlaySchedule.Contains(layout))
@@ -446,17 +486,42 @@ namespace XiboClient
                 }
             }
 
-            Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Overlay Layouts: " + string.Join(Environment.NewLine, newOverlaysString)), LogType.Audit.ToString());
+            // Interrupts
+            // ----------
+            // We don't want a change in interrupt schedule to forceChange, because we don't want to impact the usual running schedule.
+            // But we do want to know if its happened
+            foreach (ScheduleItem layout in CurrentInterruptSchedule)
+            {
+                if (!newInterruptSchedule.Contains(layout))
+                {
+                    this._interruptState.LastInterruptScheduleChange = DateTime.Now;
+                    Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Interrupt Schedule Change"), LogType.Audit.ToString());
+                }
+            }
 
+            // Logging
+            foreach (ScheduleItem layout in newInterruptSchedule)
+            {
+                newInterruptString.Add(layout.ToString());
+            }
+
+            Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Interrupt Layouts: " + string.Join(Environment.NewLine, newInterruptString)), LogType.Audit.ToString());
+
+            // Finalise
+            // --------
             // Set the new schedule
-            _currentSchedule = newSchedule;
+            CurrentSchedule = newSchedule;
 
             // Set the new Overlay schedule
-            _currentOverlaySchedule = overlaySchedule;
+            CurrentOverlaySchedule = overlaySchedule;
+
+            // Set the new interrupt schedule
+            this.CurrentInterruptSchedule = newInterruptSchedule;
 
             // Clear up
             newSchedule = null;
             overlaySchedule = null;
+            newInterruptSchedule = null;
 
             // Return True if we want to refresh the schedule OR false if we are OK to leave the current one.
             // We can update the current schedule and still return false - this will not trigger a schedule change event.
@@ -468,12 +533,22 @@ namespace XiboClient
         /// Loads a new schedule from _layoutSchedules
         /// </summary>
         /// <returns></returns>
-        private Collection<ScheduleItem> LoadNewSchedule()
+        private List<ScheduleItem> LoadNewSchedule()
+        {
+            return LoadNewSchedule(false);
+        }
+
+        /// <summary>
+        /// Loads a new schedule from _layoutSchedules
+        /// </summary>
+        /// <param name="isForInterrupt">Is this schedule for interrupt or normal</param>
+        /// <returns></returns>
+        private List<ScheduleItem> LoadNewSchedule(bool isForInterrupt)
         {
             // We need to build the current schedule from the layout schedule (obeying date/time)
-            Collection<ScheduleItem> newSchedule = new Collection<ScheduleItem>();
-            Collection<ScheduleItem> prioritySchedule = new Collection<ScheduleItem>();
-            Collection<ScheduleItem> layoutChangeSchedule = new Collection<ScheduleItem>();
+            List<ScheduleItem> newSchedule = new List<ScheduleItem>();
+            List<ScheduleItem> prioritySchedule = new List<ScheduleItem>();
+            List<ScheduleItem> layoutChangeSchedule = new List<ScheduleItem>();
 
             // Temporary default Layout incase we have no layout nodes.
             ScheduleItem defaultLayout = new ScheduleItem();
@@ -488,6 +563,14 @@ namespace XiboClient
             // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
             foreach (ScheduleItem layout in _layoutSchedule)
             {
+                // Pick only the ones we're interested in
+                if ((isForInterrupt && !layout.IsInterrupt())
+                    || (!isForInterrupt && layout.IsInterrupt()))
+                {
+                    // Skip
+                    continue;
+                }
+
                 // Is this already invalid
                 if (invalidLayouts.Contains(layout.id))
                     continue;
@@ -610,12 +693,12 @@ namespace XiboClient
         /// Loads a new schedule from _overlaySchedules
         /// </summary>
         /// <returns></returns>
-        private Collection<ScheduleItem> LoadNewOverlaySchedule()
+        private List<ScheduleItem> LoadNewOverlaySchedule()
         {
             // We need to build the current schedule from the layout schedule (obeying date/time)
-            Collection<ScheduleItem> newSchedule = new Collection<ScheduleItem>();
-            Collection<ScheduleItem> prioritySchedule = new Collection<ScheduleItem>();
-            Collection<ScheduleItem> overlayActionSchedule = new Collection<ScheduleItem>();
+            List<ScheduleItem> newSchedule = new List<ScheduleItem>();
+            List<ScheduleItem> prioritySchedule = new List<ScheduleItem>();
+            List<ScheduleItem> overlayActionSchedule = new List<ScheduleItem>();
 
             // Store the valid layout id's
             List<int> validLayoutIds = new List<int>();
@@ -627,6 +710,9 @@ namespace XiboClient
             // For each layout in the schedule determine if it is currently inside the _currentSchedule, and whether it should be
             foreach (ScheduleItem layout in _overlaySchedule)
             {
+                // Set to overlay
+                layout.IsOverlay = true;
+
                 // Is this already invalid
                 if (invalidLayouts.Contains(layout.id))
                     continue;
@@ -856,6 +942,19 @@ namespace XiboClient
                     temp.IsGeoAware = (attributes["isGeoAware"].Value == "1");
                     temp.GeoLocation = attributes["geoLocation"] != null ? attributes["geoLocation"].Value : "";
                 }
+
+                // Share of Voice
+                if (attributes["shareOfVoice"] != null)
+                {
+                    try
+                    {
+                        temp.ShareOfVoice = int.Parse(attributes["shareOfVoice"].Value);
+                    }
+                    catch
+                    {
+                        temp.ShareOfVoice = 0;
+                    }
+                }
             }
 
             // Look for dependents nodes
@@ -1060,6 +1159,11 @@ namespace XiboClient
                 layoutsInSchedule += "Overlay LayoutId: " + layoutSchedule.id + ". Runs from " + layoutSchedule.FromDt.ToString() + Environment.NewLine;
             }
 
+            foreach (ScheduleItem layoutSchedule in CurrentInterruptSchedule)
+            {
+                layoutsInSchedule += "Interrupt LayoutId: " + layoutSchedule.id + ", shareOfVoice: " + layoutSchedule.ShareOfVoice + ". Runs from " + layoutSchedule.FromDt.ToString() + Environment.NewLine;
+            }
+
             return layoutsInSchedule;
         }
 
@@ -1189,6 +1293,222 @@ namespace XiboClient
                     RefreshSchedule = true;
                 }
             }
+        }
+
+        #endregion
+
+        #region Interrupt Management
+
+        /// <summary>
+        /// Update our schedule according to current standings
+        /// </summary>
+        private void InterruptAssessAndUpdate()
+        {
+            if (this.CurrentInterruptSchedule.Count <= 0)
+            {
+                // Drop all current hashes
+                this._interruptState.InterruptTracking.Clear();
+
+                // Fire an end event
+                OnInterruptEnd?.Invoke();
+            }
+            else
+            {
+                // Recalculate the target hourly interruption
+                int targetHourlyInterruption = 0;
+                foreach (ScheduleItem item in CurrentInterruptSchedule)
+                {
+                    targetHourlyInterruption += item.ShareOfVoice;
+                }
+
+                // Did our schedule change last hour?
+                if (this._interruptState.LastInterruptScheduleChange < TopOfHour())
+                {
+                    // Just take the new figure
+                    this._interruptState.TargetHourlyInterruption = targetHourlyInterruption;
+                }
+                else
+                {
+                    this._interruptState.TargetHourlyInterruption = Math.Max(targetHourlyInterruption, this._interruptState.TargetHourlyInterruption);
+                }
+            }
+
+            // Order the schedule and determine if we need to interrupt
+            InterruptResetSecondsIfNecessary();
+
+            // How far through the hour are we?
+            int secondsIntoHour = (int)(DateTime.Now - TopOfHour()).TotalSeconds;
+
+            // Assess each Layout and update the item with current understanding of seconds played and rank
+            foreach (ScheduleItem item in CurrentInterruptSchedule)
+            {
+                try
+                {
+                    if (this._interruptState.InterruptTracking.ContainsKey(item.scheduleid))
+                    {
+                        // Annotate this item with the existing seconds played
+                        this._interruptState.InterruptTracking.TryGetValue(item.scheduleid, out double secondsPlayed);
+
+                        item.SecondsPlayed = secondsPlayed;
+
+                        // Is this item fulfilled
+                        item.IsFulfilled = (item.SecondsPlayed >= item.ShareOfVoice) ;
+                    }
+                    else
+                    {
+                        item.SecondsPlayed = 0;
+                    }
+
+                    Debug.WriteLine("InterruptAssessAndUpdate: Updating scheduleId " + item.scheduleid + " with seconds played " + item.SecondsPlayed, "ScheduleManager");
+                }
+                catch
+                {
+                    // If we have trouble getting it, then assume 0 to be safe
+                    item.SecondsPlayed = 0;
+                }
+            }
+
+            // Sort the interrupt layouts
+            CurrentInterruptSchedule.Sort(new ScheduleItemComparer(3600 - secondsIntoHour));
+            CurrentInterruptSchedule.Reverse();
+
+            // Do we need to interrupt at this moment, or not
+            double percentageThroughHour = secondsIntoHour / 3600.0;
+            int secondsShouldHaveInterrupted = Convert.ToInt32(Math.Floor(this._interruptState.TargetHourlyInterruption * percentageThroughHour));
+            int secondsSinceLastInterrupt = Convert.ToInt32((DateTime.Now - this._interruptState.LastInterruption).TotalSeconds);
+
+            Debug.WriteLine("InterruptAssessAndUpdate: Target = " + this._interruptState.TargetHourlyInterruption
+                + ", Required = " + secondsShouldHaveInterrupted
+                + ", Interrupted = " + this._interruptState.SecondsInterrutedThisHour
+                + ", Last Interrupt = " + secondsSinceLastInterrupt
+                , "ScheduleManager");
+
+            // Interrupt if the seconds we've interrupted this hour so far is less than the seconds we
+            // should have interrupted.
+            if (Math.Floor(this._interruptState.SecondsInterrutedThisHour) < secondsShouldHaveInterrupted)
+            {
+                OnInterruptNow?.Invoke();
+            }
+            else
+            {
+                OnInterruptPausePending?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// Reset interrupt seconds if we've gone into a new hour
+        /// </summary>
+        private void InterruptResetSecondsIfNecessary()
+        {
+            if (this._interruptState.LastPlaytimeUpdate < TopOfHour())
+            {
+                Debug.WriteLine("InterruptResetSecondsIfNecessary: LastPlaytimeUpdate in prior hour, resetting play time.", "ScheduleManager");
+
+                this._interruptState.SecondsInterrutedThisHour = 0;
+                this._interruptState.InterruptTracking.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Mark an interrupt as having happened
+        /// </summary>
+        public void InterruptSetActive()
+        {
+            this._interruptState.LastInterruption = DateTime.Now;
+
+            Debug.WriteLine("InterruptSetActive", "ScheduleManager");
+        }
+
+        /// <summary>
+        /// Record how many seconds we've just played from an event.
+        /// </summary>
+        /// <param name="scheduleId"></param>
+        /// <param name="seconds"></param>
+        public void InterruptRecordSecondsPlayed(int scheduleId, double seconds)
+        {
+            Debug.WriteLine("InterruptRecordSecondsPlayed: scheduleId = " + scheduleId + ", seconds = " + seconds, "ScheduleManager");
+
+            InterruptResetSecondsIfNecessary();
+
+            // Add to our overall interrupted seconds
+            this._interruptState.SecondsInterrutedThisHour += seconds;
+
+            // Record the last play time as not
+            this._interruptState.LastPlaytimeUpdate = DateTime.Now;
+
+            // Update our tracker with these details.
+            if (!this._interruptState.InterruptTracking.ContainsKey(scheduleId))
+            {
+                this._interruptState.InterruptTracking.Add(scheduleId, 0);
+            }
+
+            // Add new seconds to tracked seconds
+            this._interruptState.InterruptTracking[scheduleId] += seconds;
+
+            // Log
+            Debug.WriteLine("InterruptRecordSecondsPlayed: Added " + seconds
+                + " seconds to eventId " + scheduleId + ", new total is " + this._interruptState.InterruptTracking[scheduleId], "ScheduleManager");
+        }
+
+        /// <summary>
+        /// Initialise interrupt state from disk
+        /// </summary>
+        private void InterruptInitState()
+        {
+            try
+            {
+                lock (_locker)
+                {
+                    if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\interrupt.json"))
+                    {
+                        this._interruptState = JsonConvert.DeserializeObject<InterruptState>(File.ReadAllText(ApplicationSettings.Default.LibraryPath + @"\interrupt.json"));
+                    }
+                    else
+                    {
+                        // Create a new empty object
+                        // set the dates to just enough in the past for them to get reset.
+                        this._interruptState = new InterruptState();
+                        this._interruptState.LastInterruption = DateTime.Now.AddHours(-2);
+                        this._interruptState.LastPlaytimeUpdate = DateTime.Now.AddHours(-2);
+                        this._interruptState.LastInterruptScheduleChange = DateTime.Now.AddHours(-2);
+                        this._interruptState.InterruptTracking = new Dictionary<int, double>();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptInitState: Failed to read interrupt file. e = " + e.Message), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Persist state to disk
+        /// </summary>
+        private void InterruptPersistState()
+        {
+            try
+            {
+                lock (_locker)
+                {
+                    using (StreamWriter sw = new StreamWriter(ApplicationSettings.Default.LibraryPath + @"\interrupt.json", false, Encoding.UTF8))
+                    {
+                        sw.Write(JsonConvert.SerializeObject(this._interruptState, Newtonsoft.Json.Formatting.Indented));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptPersistState: Failed to update interrupt file. e = " + e.Message), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Return the top of the Hour
+        /// </summary>
+        /// <returns></returns>
+        private DateTime TopOfHour()
+        {
+            return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 0, 0);
         }
 
         #endregion

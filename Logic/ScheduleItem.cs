@@ -1,6 +1,6 @@
-﻿using GeoJSON.Net.Feature;
+﻿using GeoJSON.Net.Contrib.MsSqlSpatial;
+using GeoJSON.Net.Feature;
 using GeoJSON.Net.Geometry;
-using GeoJSON.Net.Contrib.MsSqlSpatial;
 using Microsoft.SqlServer.Types;
 using Newtonsoft.Json;
 using System;
@@ -25,17 +25,44 @@ namespace XiboClient.Logic
         public int Priority;
         public bool Override;
 
+        /// <summary>
+        /// Is this an Overlay?
+        /// </summary>
+        public bool IsOverlay = false;
+
         public DateTime FromDt;
         public DateTime ToDt;
+
+        /// <summary>
+        /// Share of Voice expressed in seconds per hour
+        /// Interrupt Layouts
+        /// </summary>
+        public int ShareOfVoice;
+
+        /// <summary>
+        /// Seconds Played
+        /// </summary>
+        public double SecondsPlayed;
 
         // Geo Schedule
         public bool IsGeoAware = false;
         public bool IsGeoActive = false;
         public string GeoLocation = "";
 
+        /// <summary>
+        /// Dependent items
+        /// </summary>
         public List<string> Dependents = new List<string>();
 
+        /// <summary>
+        /// Refresh this item - used for Overlays
+        /// </summary>
         public bool Refresh = false;
+
+        /// <summary>
+        /// Is this schedule item fulfilled - used for Interrupts
+        /// </summary>
+        public bool IsFulfilled = false;
 
         /// <summary>
         /// Point we have tested against for GeoSchedule
@@ -72,6 +99,15 @@ namespace XiboClient.Logic
         }
 
         /// <summary>
+        /// Is this an interrupt layout?
+        /// </summary>
+        /// <returns>true if shareOfVoice > 0</returns>
+        public bool IsInterrupt()
+        {
+            return this.ShareOfVoice > 0;
+        }
+
+        /// <summary>
         /// Set whether or not this GeoSchedule is active.
         /// </summary>
         /// <param name="geoCoordinate"></param>
@@ -81,7 +117,7 @@ namespace XiboClient.Logic
             if (!IsGeoAware)
             {
                 IsGeoActive = false;
-            } 
+            }
             else if (geoCoordinate == null || geoCoordinate.IsUnknown)
             {
                 IsGeoActive = false;
@@ -115,6 +151,39 @@ namespace XiboClient.Logic
             }
 
             return IsGeoActive;
+        }
+
+        /// <summary>
+        /// Calculate a Rank for this Item
+        /// </summary>
+        /// <param name="secondsToPeriodEnd"></param>
+        /// <returns></returns>
+        public double CalculateRank(int secondsToPeriodEnd)
+        {
+            if (ShareOfVoice <= 0 || SecondsPlayed >= ShareOfVoice)
+            {
+                return 0;
+            }
+            else
+            {
+                double completeDifficulty = (ShareOfVoice - SecondsPlayed) / Convert.ToDouble(ShareOfVoice);
+                double scheduleDifficulty = (secondsToPeriodEnd - RemainingScheduledTime()) / secondsToPeriodEnd;
+
+                return completeDifficulty + scheduleDifficulty;
+            }
+        }
+
+        /// <summary>
+        /// Get remaining scheduled time in seconds
+        /// </summary>
+        /// <returns></returns>
+        public double RemainingScheduledTime()
+        {
+            DateTime now = DateTime.Now;
+            DateTime endOfHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddHours(1);
+            DateTime endOfScheduleOrHour = (endOfHour > ToDt) ? ToDt : endOfHour;
+
+            return (endOfScheduleOrHour - now).TotalSeconds;
         }
     }
 }

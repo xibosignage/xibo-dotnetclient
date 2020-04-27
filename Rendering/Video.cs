@@ -99,7 +99,7 @@ namespace XiboClient.Rendering
             }
         }
 
-        public override void RenderMedia()
+        public override void RenderMedia(int position)
         {
             // Check to see if the video exists or not (if it doesnt say we are already expired)
             // we only do this if we aren't a stream
@@ -115,6 +115,12 @@ namespace XiboClient.Rendering
             this.mediaElement = new MediaElement();
             this.mediaElement.Volume = this.volume;
             this.mediaElement.IsMuted = this.Muted;
+
+            if (position > 0)
+            {
+                this.mediaElement.Position = TimeSpan.FromSeconds(position);
+            }
+
             this.mediaElement.LoadedBehavior = MediaState.Manual;
 
             if (!this.ShouldBeVisible)
@@ -140,7 +146,7 @@ namespace XiboClient.Rendering
             }
 
             // Render media as normal (starts the timer, shows the form, etc)
-            base.RenderMedia();
+            base.RenderMedia(position);
 
             try
             {
@@ -153,7 +159,7 @@ namespace XiboClient.Rendering
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("Video", "RenderMedia: "+ ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Video", "RenderMedia: " + ex.Message), LogType.Error.ToString());
 
                 // Unable to start video - expire this media immediately
                 throw;

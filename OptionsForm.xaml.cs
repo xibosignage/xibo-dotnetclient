@@ -132,21 +132,15 @@ namespace XiboClient
             // What if the URL for XMDS has a SSL certificate?
             ServicePointManager.ServerCertificateValidationCallback += delegate (object sender, X509Certificate certificate, X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
             {
-                Debug.WriteLine("[IN]", "ServerCertificateValidationCallback");
-                bool validationResult = false;
-
-                Debug.WriteLine(certificate.Subject);
-                Debug.WriteLine(certificate.Issuer);
-
+                // Log policy errors
                 if (sslPolicyErrors != System.Net.Security.SslPolicyErrors.None)
                 {
-                    Debug.WriteLine(sslPolicyErrors.ToString());
+                    Debug.WriteLine("ServerCertificateValidationCallback: SSL Policy Errors for " 
+                        + certificate.Subject + ", " + certificate.Issuer 
+                        + ". Errors: " + sslPolicyErrors.ToString(), "SetGlobalProxy");
                 }
 
-                validationResult = true;
-
-                Debug.WriteLine("[OUT]", "ServerCertificateValidationCallback");
-                return validationResult;
+                return true;
             };
 
             Debug.WriteLine("[OUT]", "SetGlobalProxy");

@@ -29,6 +29,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml;
+using XiboClient.Logic;
 using XiboClient.Stats;
 
 namespace XiboClient.Rendering
@@ -38,6 +39,9 @@ namespace XiboClient.Rendering
     /// </summary>
     public partial class Layout : UserControl
     {
+        /// <summary>
+        /// The Schedule Object
+        /// </summary>
         public Schedule Schedule;
 
         private double _layoutWidth;
@@ -49,7 +53,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Is this Layout Changing?
         /// </summary>
-        public bool IsLayoutChanging = false;
+        private bool _isLayoutChanging = false;
 
         /// <summary>
         /// Regions for this Layout
@@ -64,20 +68,33 @@ namespace XiboClient.Rendering
         /// <summary>
         /// The Background Color
         /// </summary>
-        public Brush BackgroundColor { get { return backgroundColor; } }
-        private Brush backgroundColor;
+        public Brush BackgroundColor { get; private set; }
 
         private int _layoutId;
-        private int _scheduleId;
         private bool isOverlay;
+        private bool isInterrupt;
 
-        public int ScheduleId { get { return _scheduleId; } }
+        public int ScheduleId { get; private set; }
 
         /// <summary>
-        /// Event to signify that this Layout's duration has elapsed
+        /// The schedule item representing this Layout
         /// </summary>
-        public delegate void DurationElapsedDelegate();
+        public ScheduleItem ScheduleItem { get; private set; }
 
+        // Layout state
+        public bool IsRunning { get; set; }
+        public bool IsPaused { get; set; }
+        public bool IsExpired { get; private set; }
+
+        // Interrupts
+        private bool isPausePending = false;
+
+        public delegate void OnReportLayoutPlayDuration(int scheduleId, int layoutId, double duration);
+        public event OnReportLayoutPlayDuration OnReportLayoutPlayDurationEvent;
+
+        /// <summary>
+        /// Layout
+        /// </summary>
         public Layout()
         {
             InitializeComponent();
@@ -89,16 +106,15 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Load this Layout from its File
         /// </summary>
-        /// <param name="layoutPath"></param>
-        /// <param name="layoutId"></param>
-        /// <param name="scheduleId"></param>
-        /// <param name="isOverlay"></param>
-        public void loadFromFile(string layoutPath, int layoutId, int scheduleId, bool isOverlay)
+        /// <param name="scheduleItem"></param>
+        public void loadFromFile(ScheduleItem scheduleItem)
         {
             // Store the Schedule and LayoutIds
-            this._scheduleId = scheduleId;
-            this._layoutId = layoutId;
-            this.isOverlay = isOverlay;
+            this.ScheduleItem = scheduleItem;
+            this.ScheduleId = scheduleItem.scheduleid;
+            this._layoutId = scheduleItem.id;
+            this.isOverlay = scheduleItem.IsOverlay;
+            this.isInterrupt = scheduleItem.IsInterrupt();
 
             // Get this layouts XML
             XmlDocument layoutXml = new XmlDocument();
@@ -106,7 +122,7 @@ namespace XiboClient.Rendering
             // try to open the layout file
             try
             {
-                using (FileStream fs = File.Open(layoutPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (FileStream fs = File.Open(scheduleItem.layoutFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
                     using (XmlReader reader = XmlReader.Create(fs))
                     {
@@ -123,7 +139,7 @@ namespace XiboClient.Rendering
                 throw;
             }
 
-            layoutModifiedTime = File.GetLastWriteTime(layoutPath);
+            layoutModifiedTime = File.GetLastWriteTime(scheduleItem.layoutFile);
 
             // Attributes of the main layout node
             XmlNode layoutNode = layoutXml.SelectSingleNode("/layout");
@@ -175,13 +191,13 @@ namespace XiboClient.Rendering
             // unless we are an overlay, in which case don't put up a background at all
             if (!isOverlay)
             {
-                this.backgroundColor = Brushes.Black;
+                this.BackgroundColor = Brushes.Black;
                 try
                 {
                     if (layoutAttributes["bgcolor"] != null && layoutAttributes["bgcolor"].Value != "")
                     {
                         var bc = new BrushConverter();
-                        this.backgroundColor = (Brush)bc.ConvertFrom(layoutAttributes["bgcolor"].Value);
+                        this.BackgroundColor = (Brush)bc.ConvertFrom(layoutAttributes["bgcolor"].Value);
                         options.backgroundColor = layoutAttributes["bgcolor"].Value;
                     }
                 }
@@ -211,7 +227,7 @@ namespace XiboClient.Rendering
                     {
                         // Assume there is no background image
                         options.backgroundImage = "";
-                        Background = this.backgroundColor;
+                        Background = this.BackgroundColor;
                     }
                 }
                 catch (Exception ex)
@@ -219,7 +235,7 @@ namespace XiboClient.Rendering
                     Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "Unable to set background: " + ex.Message), LogType.Error.ToString());
 
                     // Assume there is no background image
-                    Background = this.backgroundColor;
+                    Background = this.BackgroundColor;
                     options.backgroundImage = "";
                 }
             }
@@ -283,7 +299,7 @@ namespace XiboClient.Rendering
                 //each region
                 XmlAttributeCollection nodeAttibutes = region.Attributes;
 
-                options.scheduleId = _scheduleId;
+                options.scheduleId = ScheduleId;
                 options.layoutId = _layoutId;
                 options.regionId = nodeAttibutes["id"].Value.ToString();
                 options.width = (int)(Convert.ToDouble(nodeAttibutes["width"].Value, CultureInfo.InvariantCulture) * _scaleFactor);
@@ -306,6 +322,7 @@ namespace XiboClient.Rendering
 
                 Region temp = new Region();
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(Region_DurationElapsedEvent);
+                temp.MediaExpiredEvent += Region_MediaExpiredEvent;
 
                 // ZIndex
                 if (nodeAttibutes["zindex"] != null)
@@ -313,7 +330,7 @@ namespace XiboClient.Rendering
                     temp.ZIndex = int.Parse(nodeAttibutes["zindex"].Value);
                 }
 
-                Debug.WriteLine("Created new region", "MainForm - Prepare Layout");
+                Debug.WriteLine("loadFromFile: Created new region", "Layout");
 
                 // Dont be fooled, this innocent little statement kicks everything off
                 temp.loadFromOptions(options);
@@ -321,7 +338,7 @@ namespace XiboClient.Rendering
                 // Add to our list of Regions
                 _regions.Add(temp);
 
-                Debug.WriteLine("Adding region", "MainForm - Prepare Layout");
+                Debug.WriteLine("loadFromFile: Adding region", "Layout");
             }
 
             // Order all Regions by their ZIndex
@@ -339,24 +356,101 @@ namespace XiboClient.Rendering
             listMedia = null;
         }
 
+        /// <summary>
+        /// Start this Layout
+        /// </summary>
         public void Start()
         {
             // Stat Start
-            StatManager.Instance.LayoutStart(_scheduleId, _layoutId);
+            StatManager.Instance.LayoutStart(ScheduleId, _layoutId);
 
             // Start all regions
             foreach (Region region in _regions)
             {
                 region.Start();
             }
+
+            // We are running
+            IsRunning = true;
+            IsPaused = false;
         }
 
+        /// <summary>
+        /// Pause this Layout
+        /// </summary>
+        public void Pause()
+        {
+            // Pause each Region
+            foreach (Region region in _regions)
+            {
+                region.Pause();
+            }
+
+            // Pause no-longer pending
+            isPausePending = false;
+            IsPaused = true;
+
+            // Close and dispatch any stat records
+            double duration = StatManager.Instance.LayoutStop(ScheduleId, _layoutId, this.isStatEnabled);
+
+            // Report Play Duration
+            if (this.isInterrupt)
+            {
+                OnReportLayoutPlayDurationEvent?.Invoke(ScheduleId, _layoutId, duration);
+            }
+        }
+
+        /// <summary>
+        /// Set Pause Pending, so that next expiry we pause.
+        /// </summary>
+        public void PausePending()
+        {
+            isPausePending = true;
+
+            foreach(Region region in _regions)
+            {
+                region.PausePending();
+            }
+        }
+
+        /// <summary>
+        /// Resume this Layout
+        /// </summary>
+        public void Resume()
+        {
+            StatManager.Instance.LayoutStart(ScheduleId, _layoutId);
+
+            // Resume each region
+            foreach (Region region in _regions)
+            {
+                region.Resume(this.isInterrupt);
+            }
+
+            IsPaused = false;
+        }
+
+        /// <summary>
+        /// Stop Layout
+        /// </summary>
         public void Stop()
         {
             // Stat stop
-            StatManager.Instance.LayoutStop(_scheduleId, _layoutId, this.isStatEnabled);
+            double duration = StatManager.Instance.LayoutStop(ScheduleId, _layoutId, this.isStatEnabled);
+
+            // If we are an interrupt layout, then report our duration.
+            if (this.isInterrupt)
+            {
+                OnReportLayoutPlayDurationEvent?.Invoke(ScheduleId, this._layoutId, duration);
+            }
+
+            // Stop
+            IsPaused = false;
+            IsRunning = false;
         }
 
+        /// <summary>
+        /// Remove tidies everything up.
+        /// </summary>
         public void Remove()
         {
             if (_regions == null)
@@ -392,12 +486,19 @@ namespace XiboClient.Rendering
         /// </summary>
         private void Region_DurationElapsedEvent()
         {
-            Trace.WriteLine(new LogMessage("MainForm - DurationElapsedEvent", "Region Elapsed"), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("Layout", "DurationElapsedEvent: Region Elapsed"), LogType.Audit.ToString());
 
             // Are we already changing the layout?
-            if (IsLayoutChanging)
+            if (_isLayoutChanging)
             {
-                Trace.WriteLine(new LogMessage("MainForm - DurationElapsedEvent", "Already Changing Layout"), LogType.Audit.ToString());
+                Trace.WriteLine(new LogMessage("Layout", "DurationElapsedEvent: Already Changing Layout"), LogType.Audit.ToString());
+                return;
+            }
+
+            // If we are paused, don't do anything
+            if (IsPaused)
+            {
+                Debug.WriteLine("Region_DurationElapsedEvent: On Paused Layout, ignoring.", "Layout");
                 return;
             }
 
@@ -413,6 +514,12 @@ namespace XiboClient.Rendering
                 }
             }
 
+            // Set the Layout to expired
+            if (isExpired)
+            {
+                this.IsExpired = true;
+            }
+
             // If we are sure we have expired after checking all regions, then set the layout expired flag on them all
             // if we are an overlay, then don't raise this event
             if (isExpired && !this.isOverlay)
@@ -423,13 +530,27 @@ namespace XiboClient.Rendering
                     temp.IsLayoutExpired = true;
                 }
 
-                Trace.WriteLine(new LogMessage("MainForm - DurationElapsedEvent", "All Regions have expired. Raising a Next layout event."), LogType.Audit.ToString());
+                Trace.WriteLine(new LogMessage("Region", "DurationElapsedEvent: All Regions have expired. Raising a Next layout event."), LogType.Audit.ToString());
 
                 // We are changing the layout
-                IsLayoutChanging = true;
+                _isLayoutChanging = true;
 
                 // Yield and restart
                 Schedule.NextLayout();
+            }
+        }
+
+        /// <summary>
+        /// A media item has expired.
+        /// </summary>
+        private void Region_MediaExpiredEvent()
+        {
+            Trace.WriteLine(new LogMessage("Region", "MediaExpiredEvent: Media Elapsed"), LogType.Audit.ToString());
+
+            // Are we supposed to be pausing?
+            if (this.isPausePending)
+            {
+                Schedule.SetInterruptMediaPlayed();
             }
         }
 
@@ -483,7 +604,7 @@ namespace XiboClient.Rendering
         /// <param name="height"></param>
         private void SetDimensions(int left, int top, int width, int height)
         {
-            Debug.WriteLine("Setting Dimensions to W:" + width + ", H:" + height + ", (" + left + "," + top + ")");
+            Debug.WriteLine("Setting Dimensions to W:" + width + ", H:" + height + ", (" + left + "," + top + ")", "Layout");
 
             // Evaluate the width, etc
             Width = width;
@@ -491,16 +612,6 @@ namespace XiboClient.Rendering
             HorizontalAlignment = HorizontalAlignment.Left;
             VerticalAlignment = VerticalAlignment.Top;
             Margin = new Thickness(left, top, 0, 0);
-        }
-
-        /// <summary>
-        /// Set Dimeniosn of this Control
-        /// </summary>
-        /// <param name="location"></param>
-        /// <param name="size"></param>
-        private void SetDimensions(Point location, Size size)
-        {
-            SetDimensions((int)location.X, (int)location.Y, (int)size.Width, (int)size.Height);
         }
     }
 }

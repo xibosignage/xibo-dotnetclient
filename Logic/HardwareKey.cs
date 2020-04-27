@@ -73,8 +73,6 @@ namespace XiboClient
 
         public HardwareKey()
         {
-            Debug.WriteLine("[IN]", "HardwareKey");
-
             // Get the key from the Settings
             _hardwareKey = ApplicationSettings.Default.HardwareKey;
 
@@ -83,8 +81,6 @@ namespace XiboClient
             {
                 Regenerate();
             }
-
-            Debug.WriteLine("[OUT]", "HardwareKey");
         }
 
         /// <summary>

@@ -302,7 +302,7 @@ namespace XiboClient.Rendering
 
                             // Start the timer so that we expire
                             Duration = 2;
-                            base.RenderMedia();
+                            base.RenderMedia(0);
                         }
                     }
                 }
@@ -348,7 +348,7 @@ namespace XiboClient.Rendering
 
                 // This should exipre the media
                 Duration = 5;
-                base.RenderMedia();
+                base.RenderMedia(0);
             }
         }
 
@@ -483,11 +483,11 @@ namespace XiboClient.Rendering
             }
             else if (type == "edge")
             {
-                media = new WebIe(options);
+                media = new WebEdge(options);
             }
             else if (type == "cef")
             {
-                media = new WebIe(options);
+                media = new WebCef(options);
             }
             else
             {

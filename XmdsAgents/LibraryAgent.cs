@@ -63,6 +63,7 @@ namespace XiboClient.XmdsAgents
             _persistentFiles.Add("config.xml");
             _persistentFiles.Add("id_rsa");
             _persistentFiles.Add("pop.db");
+            _persistentFiles.Add("interrupt.json");
         }
 
         /// <summary>

@@ -46,7 +46,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Render Media
         /// </summary>
-        public override void RenderMedia()
+        public override void RenderMedia(int position)
         {
             // Create the web view we will use
             _webBrowser = new WebBrowser();
@@ -83,7 +83,7 @@ namespace XiboClient.Rendering
             _webBrowser.Visibility = System.Windows.Visibility.Hidden;
 
             // Render media shows the controls and starts timers, etc
-            base.RenderMedia();
+            base.RenderMedia(position);
         }
 
         /// <summary>

@@ -41,7 +41,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Render Media
         /// </summary>
-        public override void RenderMedia()
+        public override void RenderMedia(int position)
         {
             Debug.WriteLine("Created CEF Renderer for " + this.regionId, "WebCef");
 
@@ -79,7 +79,7 @@ namespace XiboClient.Rendering
             }
 
             // Render media shows the controls and starts timers, etc
-            base.RenderMedia();
+            base.RenderMedia(position);
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace XiboClient.Rendering
         /// <param name="e"></param>
         private void WebView_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Navigate Completed", "EdgeWebView");
+            Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Navigate Completed", "CefWebView");
 
             // We've finished rendering the document
             DocumentCompleted();

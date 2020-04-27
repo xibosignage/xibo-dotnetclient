@@ -19,6 +19,7 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -30,7 +31,6 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using XiboClient.Control;
 using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -50,6 +50,11 @@ namespace XiboClient
         private Schedule _schedule;
 
         /// <summary>
+        /// Schedule Change Lock
+        /// </summary>
+        public static object _scheduleLocker = new object();
+
+        /// <summary>
         /// Overlay Regions
         /// </summary>
         private Collection<Layout> _overlays;
@@ -60,11 +65,13 @@ namespace XiboClient
         private Layout currentLayout;
 
         /// <summary>
-        /// Some other misc state tracking things that need looking at
+        /// The Currently Running Interrupt Layout
         /// </summary>
-        private bool _changingLayout = false;
-        private int _scheduleId;
-        private int _layoutId;
+        private Layout interruptLayout;
+
+        /// <summary>
+        /// Are we in screensaver mode?
+        /// </summary>
         private bool _screenSaver = false;
 
         /// <summary>
@@ -72,13 +79,6 @@ namespace XiboClient
         /// </summary>
         private bool _showingSplash = false;
         private System.Windows.Controls.Image splashScreen;
-
-        /// <summary>
-        /// Delegates to Invoke various actions after yielding 
-        /// </summary>
-        /// <param name="layoutPath"></param>
-        private delegate void ChangeToNextLayoutDelegate(string layoutPath);
-        private delegate void ManageOverlaysDelegate(Collection<ScheduleItem> overlays);
 
         /// <summary>
         /// The InfoScreen
@@ -403,31 +403,71 @@ namespace XiboClient
         /// <summary>
         /// Handles the ScheduleChange event
         /// </summary>
-        /// <param name="layoutPath"></param>
-        void ScheduleChangeEvent(string layoutPath, int scheduleId, int layoutId)
+        /// <param name="nextLayout"></param>
+        /// <param name="mode"></param>
+        void ScheduleChangeEvent(ScheduleItem nextLayout, string mode)
         {
-            Trace.WriteLine(new LogMessage("MainForm - ScheduleChangeEvent", string.Format("Schedule Changing to {0}", layoutPath)), LogType.Audit.ToString());
-
-            // We are changing the layout
-            _changingLayout = true;
-
-            _scheduleId = scheduleId;
-            _layoutId = layoutId;
-
-            if (!Dispatcher.CheckAccess())
+            // We can only process 1 schedule change at a time.
+            lock (_scheduleLocker)
             {
-                Dispatcher.BeginInvoke(new ChangeToNextLayoutDelegate(ChangeToNextLayout), layoutPath);
-                return;
-            }
+                Debug.WriteLine("ScheduleChangeEvent: " + mode, "MainWindow");
 
-            ChangeToNextLayout(layoutPath);
+                // What mode have we received.
+                if (mode == "next")
+                {
+                    Trace.WriteLine(new LogMessage("MainForm",
+                        string.Format("ScheduleChangeEvent: Schedule Changing to Schedule {0}, Layout {1}", nextLayout.scheduleid, nextLayout.id)), LogType.Audit.ToString());
+
+                    // Issue a change to the next Layout
+                    Dispatcher.Invoke(new Action<ScheduleItem>(ChangeToNextLayout), nextLayout);
+                }
+                else if (mode == "interrupt-next")
+                {
+                    Trace.WriteLine(new LogMessage("MainForm",
+                        string.Format("ScheduleChangeEvent: Interrupt Schedule Changing to Schedule {0}, Layout {1}", nextLayout.scheduleid, nextLayout.id)), LogType.Audit.ToString());
+
+                    // Issue a change to the next Layout
+                    Dispatcher.Invoke(new Action<ScheduleItem>(ChangeToNextInterruptLayout), nextLayout);
+                }
+                else if (mode == "interrupt")
+                {
+                    // Pause the current layout, and start/resume the interrupt
+                    Dispatcher.Invoke(new Action<ScheduleItem>(Interrupt), nextLayout);
+                }
+                else if (mode == "interrupt-end")
+                {
+                    // End the current interrupt layout and resume the current normal layout
+                    if (this.interruptLayout != null && this.interruptLayout.IsRunning)
+                    {
+                        Dispatcher.Invoke(InterruptEnd);
+                    }
+                }
+                else if (mode == "pause-pending")
+                {
+                    // Set Pause Pending on the current interrupt layout
+                    // so that when it finishes it will pause
+                    if (this.interruptLayout != null)
+                    {
+                        this.interruptLayout.PausePending();
+                    }
+
+                    return;
+                }
+                else
+                {
+                    Trace.WriteLine(new LogMessage("MainForm", string.Format("ScheduleChangeEvent: Unknown Mode {0}", mode)), LogType.Error.ToString());
+                }
+            }
         }
 
         /// <summary>
         /// Change to the next layout
+        /// <param name="scheduleItem"></param>
         /// </summary>
-        private void ChangeToNextLayout(string layoutPath)
+        private void ChangeToNextLayout(ScheduleItem scheduleItem)
         {
+            Debug.WriteLine("ChangeToNextLayout: called", "MainWindow");
+
             if (ApplicationSettings.Default.PreventSleep)
             {
                 try
@@ -447,8 +487,11 @@ namespace XiboClient
                 {
                     if (this.currentLayout != null)
                     {
+                        Debug.WriteLine("ChangeToNextLayout: stopping the current Layout", "MainWindow");
+
                         this.currentLayout.Stop();
-                        DestroyLayout();
+
+                        DestroyLayout(this.currentLayout);
                     }
                 }
                 catch (Exception e)
@@ -456,32 +499,21 @@ namespace XiboClient
                     // Force collect all controls
                     this.Scene.Children.Clear();
 
-                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
                     throw e;
                 }
 
                 // Prepare the next layout
                 try
                 {
-                    currentLayout = PrepareLayout(layoutPath, false);
+                    this.currentLayout = PrepareLayout(scheduleItem);
 
                     // We have loaded a layout background and therefore are no longer showing the splash screen
                     // Remove the Splash Screen Image
                     RemoveSplashScreen();
 
-                    // Match Background Colors
-                    this.Background = currentLayout.BackgroundColor;
-
-                    // Add this Layout to our controls
-                    this.Scene.Children.Add(currentLayout);
-
-                    // Start
-                    currentLayout.Start();
-
-                    // Update client info
-                    ClientInfo.Instance.CurrentLayoutId = _layoutId + "";
-                    ClientInfo.Instance.CurrentlyPlaying = layoutPath;
-                    _schedule.CurrentLayoutId = _layoutId;
+                    // Start the Layout.
+                    StartLayout(this.currentLayout);
                 }
                 catch (DefaultLayoutException)
                 {
@@ -489,35 +521,19 @@ namespace XiboClient
                 }
                 catch (Exception e)
                 {
-                    DestroyLayout();
-                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Prepare Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
-                    throw;
-                }
+                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Prepare/Start Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
 
-                ClientInfo.Instance.ControlCount = this.Scene.Children.Count;
-
-                // Do we need to notify?
-                try
-                {
-                    if (ApplicationSettings.Default.SendCurrentLayoutAsStatusUpdate)
-                    {
-                        using (xmds.xmds statusXmds = new xmds.xmds())
-                        {
-                            statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
-                            statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"currentLayoutId\":" + _layoutId + "}");
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Notify Status Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+                    // Remove the Layout again
+                    DestroyLayout(this.currentLayout);
                     throw;
                 }
             }
             catch (Exception ex)
             {
                 if (!(ex is DefaultLayoutException))
-                    Trace.WriteLine(new LogMessage("MainForm - ChangeToNextLayout", "Layout Change to " + layoutPath + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
+                {
+                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Layout Change to " + scheduleItem.layoutFile + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
+                }
 
                 // Do we have more than one Layout in our schedule?
                 if (_schedule.ActiveLayouts > 1)
@@ -540,9 +556,232 @@ namespace XiboClient
                     timer.Start();
                 }
             }
+        }
 
-            // We have finished changing the layout
-            _changingLayout = false;
+        /// <summary>
+        /// Change to the next layout
+        /// <param name="scheduleItem"></param>
+        /// </summary>
+        private void ChangeToNextInterruptLayout(ScheduleItem scheduleItem)
+        {
+            Debug.WriteLine("ChangeToNextInterruptLayout: called", "MainWindow");
+
+            try
+            {
+                // Destroy the Current Layout
+                try
+                {
+                    if (this.interruptLayout != null)
+                    {
+                        Debug.WriteLine("ChangeToNextInterruptLayout: stopping the current Layout", "MainWindow");
+
+                        this.interruptLayout.Stop();
+
+                        DestroyLayout(this.interruptLayout);
+                    }
+                }
+                catch (Exception e)
+                {
+                    // Force collect all controls
+                    this.Scene.Children.Clear();
+
+                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextInterruptLayout: Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+                    throw e;
+                }
+
+                // Prepare the next layout
+                try
+                {
+                    this.interruptLayout = PrepareLayout(scheduleItem);
+
+                    // We have loaded a layout background and therefore are no longer showing the splash screen
+                    // Remove the Splash Screen Image
+                    RemoveSplashScreen();
+
+                    // Start the Layout.
+                    StartLayout(this.interruptLayout);
+                }
+                catch (Exception e)
+                {
+                    DestroyLayout(this.currentLayout);
+                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextInterruptLayout: Prepare Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+                    throw;
+                }
+            }
+            catch
+            {
+                // We have not been able to load the interrupt layout, move to the next if we can
+                if (_schedule.ActiveInterruptLayouts > 1)
+                {
+                    Debug.WriteLine("ChangeToNextInterruptLayout: More than one interrupt Layout, calling Next", "MainWindow");
+                    _schedule.NextLayout();
+                }
+                else
+                {
+                    // we assume here that the prior steps catch statements have tidied up this Layout
+                    Debug.WriteLine("ChangeToNextInterruptLayout: cannot start the only interrupt Layout, calling SetInterruptUnableToPlayAndEnd", "MainWindow");
+
+                    _schedule.SetInterruptUnableToPlayAndEnd();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Start a Layout
+        /// </summary>
+        /// <param name="layout"></param>
+        private void StartLayout(Layout layout)
+        {
+            Debug.WriteLine("StartLayout: Starting...", "MainWindow");
+
+            // Match Background Colors
+            this.Background = layout.BackgroundColor;
+
+            // Add this Layout to our controls
+            this.Scene.Children.Add(layout);
+
+            // Start
+            if (layout.IsPaused)
+            {
+                Debug.WriteLine("StartLayout: Resuming paused Layout", "MainWindow");
+                layout.Resume();
+            }
+            else if (!layout.IsRunning)
+            {
+                Debug.WriteLine("StartLayout: Starting Layout", "MainWindow");
+                layout.Start();
+            }
+            else
+            {
+                Trace.WriteLine(new LogMessage("MainForm", "StartLayout: Layout already running."), LogType.Error.ToString());
+                return;
+            }
+
+            Debug.WriteLine("StartLayout: Started Layout", "MainWindow");
+
+            // Update client info
+            ClientInfo.Instance.CurrentLayoutId = layout.ScheduleItem.id + "";
+            ClientInfo.Instance.CurrentlyPlaying = layout.ScheduleItem.layoutFile;
+            ClientInfo.Instance.ControlCount = this.Scene.Children.Count;
+
+            // Do we need to notify?
+            try
+            {
+                if (ApplicationSettings.Default.SendCurrentLayoutAsStatusUpdate)
+                {
+                    using (xmds.xmds statusXmds = new xmds.xmds())
+                    {
+                        statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
+                        statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, "{\"currentLayoutId\":" + this.currentLayout.ScheduleItem.id + "}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("MainForm", "StartLayout: Notify Status Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Interrupt
+        /// </summary>
+        private void Interrupt(ScheduleItem scheduleItem)
+        {
+            Debug.WriteLine("Interrupt: " + scheduleItem.scheduleid, "MainWindow");
+
+            try
+            {
+                if (this.currentLayout != null && this.currentLayout.IsRunning)
+                {
+                    Debug.WriteLine("Interrupt: Pausing current normal layout: " + this.currentLayout.ScheduleId, "MainWindow");
+
+                    this.currentLayout.Pause();
+
+                    Debug.WriteLine("Interrupt: Paused, removing from Scene", "MainWindow");
+
+                    this.Scene.Children.Remove(this.currentLayout);
+                }
+
+                if (this.interruptLayout == null)
+                {
+                    // Prepare the interrupt Layout
+                    this.interruptLayout = PrepareLayout(scheduleItem);
+                }
+                else if (this.interruptLayout.ScheduleId != scheduleItem.scheduleid)
+                {
+                    this.interruptLayout.Stop();
+                    DestroyLayout(this.interruptLayout);
+
+                    this.interruptLayout = PrepareLayout(scheduleItem);
+                }
+
+                StartLayout(this.interruptLayout);
+
+                // We are interrupting
+                this._schedule.SetInterrupting();
+
+                // Are we expired?
+                if (this.interruptLayout.IsExpired)
+                {
+                    // The interrupt Layout is expired, so we ask for the next one
+                    Debug.WriteLine("Interrupt: Current Interrupt is Expired, so move on", "MainWindow");
+
+                    this._schedule.NextLayout();
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("MainForm", "Interrupt: Exception raised was: " + ex.Message), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Interrupt End
+        /// </summary>
+        private void InterruptEnd()
+        {
+            Debug.WriteLine("InterruptEnd: Ending...", "MainWindow");
+
+            try
+            {
+                // Stop the current interrupt
+                if (this.interruptLayout != null && this.interruptLayout.IsRunning)
+                {
+                    Debug.WriteLine("InterruptEnd: Pausing current interrupt", "MainWindow");
+
+                    this.interruptLayout.Pause();
+
+                    Debug.WriteLine("InterruptEnd: Removing from the scene", "MainWindow");
+
+                    this.Scene.Children.Remove(this.interruptLayout);
+                }
+
+                if (this.currentLayout == null || !this.currentLayout.IsPaused)
+                {
+                    // Call schedule change
+                    this._schedule.NextLayout();
+                }
+                else
+                {
+                    StartLayout(this.currentLayout);
+                }
+            } 
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("MainForm", "InterruptEnd: Exception raised was: " + ex.Message), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Report current Layout Play Duration.
+        /// </summary>
+        /// <param name="scheduleId"></param>
+        /// <param name="layoutId"></param>
+        /// <param name="duration"></param>
+        private void CurrentLayout_OnReportLayoutPlayDurationEvent(int scheduleId, int layoutId, double duration)
+        {
+            this._schedule.CurrentLayout_OnReportLayoutPlayDurationEvent(scheduleId, layoutId, duration);
         }
 
         /// <summary>
@@ -567,13 +806,12 @@ namespace XiboClient
         /// <summary>
         /// Prepares the Layout.. rendering all the necessary controls
         /// </summary>
-        /// <param name="layoutPath"></param>
-        /// <param name="isOverlay"></param>
+        /// <param name="scheduleItem"></param>
         /// <returns></returns>
-        private Layout PrepareLayout(string layoutPath, bool isOverlay)
+        private Layout PrepareLayout(ScheduleItem scheduleItem)
         {
             // Default or not
-            if (layoutPath == ApplicationSettings.Default.LibraryPath + @"\Default.xml" || String.IsNullOrEmpty(layoutPath))
+            if (scheduleItem.layoutFile == ApplicationSettings.Default.LibraryPath + @"\Default.xml" || string.IsNullOrEmpty(scheduleItem.layoutFile))
             {
                 throw new DefaultLayoutException();
             }
@@ -586,12 +824,13 @@ namespace XiboClient
                     layout.Width = Width;
                     layout.Height = Height;
                     layout.Schedule = _schedule;
-                    layout.loadFromFile(layoutPath, _layoutId, _scheduleId, isOverlay);
+                    layout.loadFromFile(scheduleItem);
+                    layout.OnReportLayoutPlayDurationEvent += CurrentLayout_OnReportLayoutPlayDurationEvent;
                     return layout;
                 }
                 catch (IOException)
                 {
-                    CacheManager.Instance.Remove(layoutPath);
+                    CacheManager.Instance.Remove(scheduleItem.layoutFile);
 
                     throw new DefaultLayoutException();
                 }
@@ -659,13 +898,14 @@ namespace XiboClient
         /// <summary>
         /// Disposes Layout - removes the controls
         /// </summary>
-        private void DestroyLayout()
+        private void DestroyLayout(Layout layout)
         {
             Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
 
-            this.currentLayout.Remove();
+            layout.Remove();
+            layout.OnReportLayoutPlayDurationEvent -= CurrentLayout_OnReportLayoutPlayDurationEvent;
 
-            this.Scene.Children.Remove(this.currentLayout);
+            this.Scene.Children.Remove(layout);
         }
 
         /// <summary>
@@ -706,22 +946,16 @@ namespace XiboClient
         /// Overlay change event.
         /// </summary>
         /// <param name="overlays"></param>
-        void ScheduleOverlayChangeEvent(Collection<ScheduleItem> overlays)
+        void ScheduleOverlayChangeEvent(List<ScheduleItem> overlays)
         {
-            if (!Dispatcher.CheckAccess())
-            {
-                Dispatcher.BeginInvoke(new ManageOverlaysDelegate(ManageOverlays), overlays);
-                return;
-            }
-
-            ManageOverlays(overlays);
+            Dispatcher.BeginInvoke(new Action<List<ScheduleItem>>(ManageOverlays), overlays);
         }
 
         /// <summary>
         /// Manage Overlays
         /// </summary>
         /// <param name="overlays"></param>
-        public void ManageOverlays(Collection<ScheduleItem> overlays)
+        public void ManageOverlays(List<ScheduleItem> overlays)
         {
             try
             {
@@ -800,7 +1034,7 @@ namespace XiboClient
                     // Parse the layout for regions, and create them.
                     try
                     {
-                        Layout layout = PrepareLayout(item.layoutFile, true);
+                        Layout layout = PrepareLayout(item);
 
                         // Add to our collection of Overlays
                         _overlays.Add(layout);
@@ -891,9 +1125,6 @@ namespace XiboClient
 
             // Reassert the size of our client (should resize if necessary)
             SetMainWindowSize();
-
-            // Expire the current layout and move on
-            _changingLayout = true;
 
             // Yield and restart
             _schedule.NextLayout();
