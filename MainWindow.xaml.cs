@@ -139,9 +139,6 @@ namespace XiboClient
                 Directory.CreateDirectory(ApplicationSettings.Default.LibraryPath + @"\backgrounds");
             }
 
-            // Initialise the database
-            StatManager.Instance.InitDatabase();
-
             // Default the XmdsConnection
             ApplicationSettings.Default.XmdsLastConnection = DateTime.MinValue;
 
@@ -194,6 +191,9 @@ namespace XiboClient
 
             // Switch to TLS 2.1
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+
+            // Initialise the database
+            StatManager.Instance.InitDatabase();
 
             Trace.WriteLine(new LogMessage("MainForm", "Player Initialised"), LogType.Info.ToString());
         }
