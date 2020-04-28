@@ -99,7 +99,7 @@ namespace XiboClient
 
             // Populate the About tab
             textBoxLicence.AppendText(Properties.Resources.licence);
-            labelPlayerVersion.Content = ApplicationSettings.Default.ClientVersion + " R" + ApplicationSettings.Default.ClientCodeVersion;
+            labelPlayerVersion.Content = ApplicationSettings.Default.ClientVersion;
         }
 
         /// <summary>
