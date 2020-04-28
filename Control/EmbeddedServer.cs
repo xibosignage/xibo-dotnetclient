@@ -73,8 +73,10 @@ namespace XiboClient.Control
         {
             var server = new WebServer(o => o
                     .WithUrlPrefix(url)
-                    .WithMode(HttpListenerMode.EmbedIO))
-                .WithStaticFolder("/", ApplicationSettings.Default.LibraryPath, false);
+                    .WithMode(HttpListenerMode.EmbedIO)
+                )
+                .WithStaticFolder("/", ApplicationSettings.Default.LibraryPath, false, m => m
+                    .ContentCaching = false);
 
             return server;
         }
