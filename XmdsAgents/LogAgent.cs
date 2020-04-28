@@ -104,8 +104,20 @@ namespace XiboClient.XmdsAgents
             Trace.WriteLine(new LogMessage("LogAgent - Run", "Thread Stopped"), LogType.Info.ToString());
         }
 
+        /// <summary>
+        /// Process files
+        /// </summary>
+        /// <param name="xmds"></param>
+        /// <param name="key"></param>
+        /// <param name="type"></param>
         private void ProcessFiles(xmds.xmds xmds, string key, string type)
         {
+            // Protect against empty log type
+            if (string.IsNullOrEmpty(type))
+            {
+                type = "log.xml";
+            }
+
             // Test for old files
             DateTime testDate = DateTime.Now.AddDays(ApplicationSettings.Default.LibraryAgentInterval * -1);
 
