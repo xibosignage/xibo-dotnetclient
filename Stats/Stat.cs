@@ -19,6 +19,7 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Collections.Generic;
 
 namespace XiboClient.Stats
 {
@@ -29,10 +30,23 @@ namespace XiboClient.Stats
         public DateTime To;
         public int LayoutId;
         public int ScheduleId;
-        public String WidgetId;
-        public String Tag;
+        public string WidgetId;
+        public string Tag;
         public int Duration;
         public int Count;
+
+        /// <summary>
+        /// Engagements (such as geo-location, tags)
+        /// </summary>
+        public Dictionary<string, Engagement> Engagements { get; set; } 
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public Stat()
+        {
+            Engagements = new Dictionary<string, Engagement>();
+        }
 
         /// <summary>
         /// Return a StatType for the string provided

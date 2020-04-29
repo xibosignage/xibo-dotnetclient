@@ -46,7 +46,7 @@ namespace XiboClient.Rendering
             _useTaskKill = (options.Dictionary.Get("useTaskkill") == "1");
         }
 
-        public override void RenderMedia(int position)
+        public override void RenderMedia(double position)
         {
             if (!string.IsNullOrEmpty(_code))
             {

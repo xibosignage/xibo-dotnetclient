@@ -71,7 +71,7 @@ namespace XiboClient.Rendering
             }
         }
 
-        public override void RenderMedia(int position)
+        public override void RenderMedia(double position)
         {
             // Check that the file path exists
             if (!File.Exists(this.filePath))

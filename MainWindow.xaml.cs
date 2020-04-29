@@ -31,6 +31,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using XiboClient.Control;
 using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -138,9 +139,6 @@ namespace XiboClient
                 Directory.CreateDirectory(ApplicationSettings.Default.LibraryPath + @"\backgrounds");
             }
 
-            // Initialise the database
-            StatManager.Instance.InitDatabase();
-
             // Default the XmdsConnection
             ApplicationSettings.Default.XmdsLastConnection = DateTime.MinValue;
 
@@ -193,6 +191,9 @@ namespace XiboClient
 
             // Switch to TLS 2.1
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+
+            // Initialise the database
+            StatManager.Instance.InitDatabase();
 
             Trace.WriteLine(new LogMessage("MainForm", "Player Initialised"), LogType.Info.ToString());
         }
@@ -492,6 +493,8 @@ namespace XiboClient
                         this.currentLayout.Stop();
 
                         DestroyLayout(this.currentLayout);
+
+                        Debug.WriteLine("ChangeToNextLayout: stopped and removed the current Layout", "MainWindow");
                     }
                 }
                 catch (Exception e)
@@ -900,7 +903,7 @@ namespace XiboClient
         /// </summary>
         private void DestroyLayout(Layout layout)
         {
-            Debug.WriteLine("Destroying Layout", "MainForm - DestoryLayout");
+            Debug.WriteLine("DestoryLayout: Destroying Layout", "MainForm");
 
             layout.Remove();
             layout.OnReportLayoutPlayDurationEvent -= CurrentLayout_OnReportLayoutPlayDurationEvent;

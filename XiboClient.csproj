@@ -162,6 +162,7 @@
     <Compile Include="Rendering\Region.xaml.cs">
       <DependentUpon>Region.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Stats\Engagement.cs" />
     <Compile Include="Stats\Stat.cs" />
     <Compile Include="Stats\StatManager.cs" />
     <Compile Include="Web References\xmds\Reference.cs">
@@ -277,13 +278,16 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BouncyCastle">
-      <Version>1.8.5</Version>
+      <Version>1.8.6.1</Version>
     </PackageReference>
     <PackageReference Include="CefSharp.Wpf">
       <Version>79.1.360</Version>
     </PackageReference>
+    <PackageReference Include="DotNetZip">
+      <Version>1.13.7</Version>
+    </PackageReference>
     <PackageReference Include="EmbedIO">
-      <Version>3.4.2</Version>
+      <Version>3.4.3</Version>
     </PackageReference>
     <PackageReference Include="GeoJSON.Net">
       <Version>1.2.15</Version>
@@ -298,7 +302,7 @@
       <Version>14.0.1016.290</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Toolkit.Wpf.UI.Controls.WebView">
-      <Version>6.0.0</Version>
+      <Version>6.0.1</Version>
     </PackageReference>
     <PackageReference Include="NetMQ">
       <Version>4.0.0.207</Version>
@@ -307,7 +311,7 @@
       <Version>12.0.3</Version>
     </PackageReference>
     <PackageReference Include="NodaTime">
-      <Version>2.4.7</Version>
+      <Version>2.4.8</Version>
     </PackageReference>
     <PackageReference Include="Ookii.Dialogs.Wpf">
       <Version>1.1.0</Version>

@@ -93,6 +93,21 @@ namespace XiboClient.Rendering
         protected DateTime _startTick;
 
         /// <summary>
+        /// The ScheduleId
+        /// </summary>
+        public int ScheduleId { get; private set; }
+
+        /// <summary>
+        /// The LayoutId
+        /// </summary>
+        public int LayoutId { get; private set; }
+
+        /// <summary>
+        /// Are stats enabled.
+        /// </summary>
+        public bool StatsEnabled { get; private set; }
+
+        /// <summary>
         /// Media Object
         /// </summary>
         /// <param name="options"></param>
@@ -103,17 +118,20 @@ namespace XiboClient.Rendering
             // Store the options.
             this.options = options;
             this.Id = options.mediaid;
+            ScheduleId = options.scheduleId;
+            LayoutId = options.layoutId;
+            StatsEnabled = options.isStatEnabled;
         }
 
         /// <summary>
         /// Start the Timer for this Media
         /// </summary>
-        protected void StartTimer(int position)
+        protected void StartTimer(double position)
         {
             //start the timer
             if (!_timerStarted && Duration > 0)
             {
-                int remainingSeconds = (Duration - position);
+                double remainingSeconds = (Duration - position);
 
                 Debug.WriteLine("StartTimer: duration = " + Duration + ", position = " + position + ", Delta = " + remainingSeconds, "Media");
 
@@ -154,10 +172,10 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Render Media call
         /// </summary>
-        public virtual void RenderMedia(int position)
+        public virtual void RenderMedia(double position)
         {
             // Record the start time.
-            if (position <= 0)
+            if (position <= 0 || this._startTick == null)
             {
                 this._startTick = DateTime.Now;
             }
@@ -232,36 +250,18 @@ namespace XiboClient.Rendering
         /// Get the Current Tick
         /// </summary>
         /// <returns></returns>
-        public int CurrentPlaytime()
+        public double CurrentPlaytime()
         {
-            return Convert.ToInt32((DateTime.Now - this._startTick).TotalSeconds);
+            return (DateTime.Now - this._startTick).TotalSeconds;
         }
 
         /// <summary>
         /// Is a region size change required
         /// </summary>
         /// <returns></returns>
-        public bool RegionSizeChangeRequired()
+        public virtual bool RegionSizeChangeRequired()
         {
             return false;
-        }
-
-        /// <summary>
-        /// Get Region Size
-        /// </summary>
-        /// <returns></returns>
-        public Size GetRegionSize()
-        {
-            return new Size(Width, Height);
-        }
-
-        /// <summary>
-        /// Get Region Location
-        /// </summary>
-        /// <returns></returns>
-        public Point GetRegionLocation()
-        {
-            return new Point(this.options.top, this.options.left);
         }
 
         /// <summary>

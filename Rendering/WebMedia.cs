@@ -18,10 +18,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Ionic.Zip;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Text.RegularExpressions;
 
 namespace XiboClient.Rendering
@@ -56,6 +56,11 @@ namespace XiboClient.Rendering
         // Events
         public delegate void HtmlUpdatedDelegate(string url);
         public event HtmlUpdatedDelegate HtmlUpdatedEvent;
+
+        /// <summary>
+        /// Lock for packaged HTML generation
+        /// </summary>
+        private static object _packageHtmlLock = new object();
 
         // Class Methods
 
@@ -111,13 +116,20 @@ namespace XiboClient.Rendering
 
             // Check to see if our package has been extracted already
             // if not, then extract it
-            if (!(Directory.Exists(pathToPackageFolder) && IsUpdated(pathToStatusFile, File.GetLastWriteTime(pathToMediaFile))))
+            lock (_packageHtmlLock)
             {
-                // Extract our file into the specified folder.
-                ZipFile.ExtractToDirectory(pathToMediaFile, pathToPackageFolder);
-
-                // Add in our extraction date.
-                WriteUpdatedFlag(pathToStatusFile);
+                // if the directory doesn't yet exist, or if the status file has been updated. extract.
+                if (!Directory.Exists(pathToPackageFolder) || IsUpdated(pathToStatusFile, File.GetLastWriteTime(pathToMediaFile)))
+                {
+                    using (ZipFile archive = new ZipFile(pathToMediaFile))
+                    {
+                        // Extract our file into the specified folder.
+                        archive.ExtractAll(pathToPackageFolder, ExtractExistingFileAction.OverwriteSilently);
+                    }
+                    
+                    // Add in our extraction date.
+                    WriteUpdatedFlag(pathToStatusFile);
+                }
             }
         }
 

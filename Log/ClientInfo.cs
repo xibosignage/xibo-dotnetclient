@@ -179,8 +179,7 @@ namespace XiboClient.Log
             try
             {
                 StringBuilder sb = new StringBuilder();
-                StringWriter sw = new StringWriter(sb);
-
+                using (StringWriter sw = new StringWriter(sb))
                 using (JsonWriter writer = new JsonTextWriter(sw))
                 {
                     writer.Formatting = Formatting.None;
@@ -197,15 +196,17 @@ namespace XiboClient.Log
                     writer.WriteValue(RequiredFilesStatus);
                     writer.WritePropertyName("xmrStatus");
                     writer.WriteValue(XmrSubscriberStatus);
+                    writer.WriteEndObject();
+                }
 
-                    if (CurrentGeoLocation != null && !CurrentGeoLocation.IsUnknown)
-                    {
-                        writer.WritePropertyName("latitude");
-                        writer.WriteValue(CurrentGeoLocation.Latitude);
-                        writer.WritePropertyName("longitude");
-                        writer.WriteValue(CurrentGeoLocation.Longitude);
-                    }
-
+                StringBuilder finalSb = new StringBuilder();
+                using (StringWriter sw = new StringWriter(finalSb))
+                using (JsonWriter writer = new JsonTextWriter(sw))
+                {
+                    writer.Formatting = Formatting.None;
+                    writer.WriteStartObject();
+                    writer.WritePropertyName("statusDialog");
+                    writer.WriteValue(sb.ToString());
                     writer.WriteEndObject();
                 }
 
@@ -213,8 +214,11 @@ namespace XiboClient.Log
                 using (xmds.xmds statusXmds = new xmds.xmds())
                 {
                     statusXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
-                    statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
+                    statusXmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, finalSb.ToString());
                 }
+
+                sb.Clear();
+                finalSb.Clear();
             }
             catch (Exception e)
             {

@@ -31,5 +31,21 @@ namespace XiboClient.Logic
         public DateTime LastPlaytimeUpdate;
         public DateTime LastInterruptScheduleChange;
         public Dictionary<int, double> InterruptTracking;
+
+        /// <summary>
+        /// Get an empty Interrupt State
+        /// </summary>
+        /// <returns></returns>
+        public static InterruptState EmptyState()
+        {
+            // set the dates to just enough in the past for them to get reset.
+            return new InterruptState()
+            {
+                LastInterruption = DateTime.Now.AddHours(-2),
+                LastPlaytimeUpdate = DateTime.Now.AddHours(-2),
+                LastInterruptScheduleChange = DateTime.Now.AddHours(-2),
+                InterruptTracking = new Dictionary<int, double>()
+            };
+        }
     }
 }

@@ -56,7 +56,7 @@ namespace XiboClient.Rendering
         private bool _sizeResetRequired;
         private bool _dimensionsSet = false;
         private int _audioSequence;
-        private int _currentPlaytime;
+        private double _currentPlaytime;
 
         /// <summary>
         /// Event to indicate that this Region's duration has elapsed
@@ -99,7 +99,7 @@ namespace XiboClient.Rendering
         /// Start the Next Media
         /// <paramref name="position"/>
         /// </summary>
-        private void StartNext(int position)
+        private void StartNext(double position)
         {
             Debug.WriteLine("StartNext: Region " + this.options.regionId + " starting next sequence " + this.currentSequence + " at position " + position, "Region");
 
@@ -193,7 +193,9 @@ namespace XiboClient.Rendering
                     // See if we need to change our Region Dimensions
                     if (newMedia.RegionSizeChangeRequired())
                     {
-                        SetDimensions(newMedia.GetRegionLocation(), newMedia.GetRegionSize());
+                        SetDimensions(0, 0, this.options.PlayerWidth, this.options.PlayerHeight);
+
+                        // Set size reset for the next time around.
                         _sizeResetRequired = true;
                     }
                     else if (_sizeResetRequired)
@@ -230,7 +232,8 @@ namespace XiboClient.Rendering
                 currentMedia = newMedia;
 
                 // Open a stat record
-                OpenStatRecordForMedia();
+                // options accurately reflect the current media, so we can use them.
+                StatManager.Instance.WidgetStart(this.options.scheduleId, this.options.layoutId, this.options.mediaid);
             }
         }
 
@@ -670,7 +673,7 @@ namespace XiboClient.Rendering
         /// Start the provided media
         /// </summary>
         /// <param name="media"></param>
-        private void StartMedia(Media media, int position)
+        private void StartMedia(Media media, double position)
         {
             Trace.WriteLine(new LogMessage("Region", "StartMedia: Starting media at position: " + position), LogType.Audit.ToString());
 
@@ -745,15 +748,15 @@ namespace XiboClient.Rendering
             // Dispose of the current media
             try
             {
+                // Close the stat record
+                StatManager.Instance.WidgetStop(media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled);
+
                 // Media Stopped Event removes the media from the scene
                 media.MediaStoppedEvent += Media_MediaStoppedEvent;
 
                 // Tidy Up
                 media.DurationElapsedEvent -= media_DurationElapsedEvent;
                 media.Stop(regionStopped);
-
-                // Close the stat record
-                CloseCurrentStatRecord();
             }
             catch (Exception ex)
             {
@@ -793,24 +796,6 @@ namespace XiboClient.Rendering
                     Trace.WriteLine(new LogMessage("Region - Stop Media", "Audio -  Unable to dispose. Ex = " + ex.Message), LogType.Audit.ToString());
                 }
             }
-        }
-
-        /// <summary>
-        /// Opens a stat record for the current media
-        /// </summary>
-        private void OpenStatRecordForMedia()
-        {
-            // This media has started and is being replaced
-            StatManager.Instance.WidgetStart(this.options.scheduleId, this.options.layoutId, this.options.mediaid);
-        }
-
-        /// <summary>
-        /// Close out the stat record
-        /// </summary>
-        private void CloseCurrentStatRecord()
-        {
-            // Here we say that this media is expired
-            StatManager.Instance.WidgetStop(this.options.scheduleId, this.options.layoutId, this.options.mediaid, this.options.isStatEnabled);
         }
 
         /// <summary>

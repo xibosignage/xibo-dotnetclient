@@ -19,6 +19,7 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using Microsoft.Data.Sqlite;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,6 +27,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Xml;
+using XiboClient.Log;
 using XiboClient.XmdsAgents;
 
 namespace XiboClient.Stats
@@ -134,11 +136,13 @@ namespace XiboClient.Stats
             {
                 // New record, which we put in the dictionary
                 string key = scheduleId + "-" + layoutId;
-                Stat stat = new Stat();
-                stat.Type = StatType.Layout;
-                stat.From = DateTime.Now;
-                stat.ScheduleId = scheduleId;
-                stat.LayoutId = layoutId;
+                Stat stat = new Stat
+                {
+                    Type = StatType.Layout,
+                    From = DateTime.Now,
+                    ScheduleId = scheduleId,
+                    LayoutId = layoutId
+                };
 
                 this.proofOfPlay.Add(key, stat);
             }
@@ -159,9 +163,8 @@ namespace XiboClient.Stats
             {
                 // Record we expect to already be open in the Dictionary
                 string key = scheduleId + "-" + layoutId;
-                Stat stat;
 
-                if (this.proofOfPlay.TryGetValue(key, out stat))
+                if (this.proofOfPlay.TryGetValue(key, out Stat stat))
                 {
                     // Remove from the Dictionary
                     this.proofOfPlay.Remove(key);
@@ -171,6 +174,9 @@ namespace XiboClient.Stats
 
                     // Work our the duration
                     duration = (stat.To - stat.From).TotalSeconds;
+
+                    // GeoLocation
+                    AnnotateWithLocation(stat, duration);
 
                     if (ApplicationSettings.Default.StatsEnabled && statEnabled)
                     {
@@ -196,16 +202,20 @@ namespace XiboClient.Stats
         /// <param name="widgetId"></param>
         public void WidgetStart(int scheduleId, int layoutId, string widgetId)
         {
+            Debug.WriteLine(string.Format("WidgetStart: scheduleId: {0}, layoutId: {1}, widgetId: {2}", scheduleId, layoutId, widgetId), "StatManager");
+
             lock (_locker)
             {
                 // New record, which we put in the dictionary
                 string key = scheduleId + "-" + layoutId + "-" + widgetId;
-                Stat stat = new Stat();
-                stat.Type = StatType.Media;
-                stat.From = DateTime.Now;
-                stat.ScheduleId = scheduleId;
-                stat.LayoutId = layoutId;
-                stat.WidgetId = widgetId;
+                Stat stat = new Stat
+                {
+                    Type = StatType.Media,
+                    From = DateTime.Now,
+                    ScheduleId = scheduleId,
+                    LayoutId = layoutId,
+                    WidgetId = widgetId
+                };
 
                 this.proofOfPlay.Add(key, stat);
             }
@@ -221,15 +231,16 @@ namespace XiboClient.Stats
         /// <returns>Duration</returns>
         public double WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled)
         {
+            Debug.WriteLine(string.Format("WidgetStop: scheduleId: {0}, layoutId: {1}, widgetId: {2}", scheduleId, layoutId, widgetId), "StatManager");
+
             double duration = 0;
 
             lock (_locker)
             {
                 // Record we expect to already be open in the Dictionary
                 string key = scheduleId + "-" + layoutId + "-" + widgetId;
-                Stat stat;
 
-                if (this.proofOfPlay.TryGetValue(key, out stat))
+                if (this.proofOfPlay.TryGetValue(key, out Stat stat))
                 {
                     // Remove from the Dictionary
                     this.proofOfPlay.Remove(key);
@@ -239,6 +250,9 @@ namespace XiboClient.Stats
 
                     // Work our the duration
                     duration = (stat.To - stat.From).TotalSeconds;
+
+                    // GeoLocation
+                    AnnotateWithLocation(stat, duration);
 
                     if (ApplicationSettings.Default.StatsEnabled && statEnabled)
                     {
@@ -257,6 +271,27 @@ namespace XiboClient.Stats
         }
 
         /// <summary>
+        /// Annotate a stat record with an engagement
+        /// </summary>
+        /// <param name="stat"></param>
+        /// <param name="duration"></param>
+        private void AnnotateWithLocation(Stat stat, double duration)
+        {
+            // Do we have any engagements to record?
+            if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+            {
+                // Annotate our stat with the current geolocation
+                Engagement engagement = new Engagement
+                {
+                    Tag = "LOCATION:" + ClientInfo.Instance.CurrentGeoLocation.Latitude + ":" + ClientInfo.Instance.CurrentGeoLocation.Longitude,
+                    Duration = duration,
+                    Count = 1
+                };
+                stat.Engagements.Add("LOCATION", engagement);
+            }
+        }
+
+        /// <summary>
         /// Records a stat record
         /// </summary>
         /// <param name="stat"></param>
@@ -272,8 +307,8 @@ namespace XiboClient.Stats
                     command.Connection = connection;
 
                     // Parameterize
-                    command.CommandText = "INSERT INTO stat (type, fromdt, todt, scheduleId, layoutId, widgetId, tag, processing) " +
-                        "VALUES (@type, @fromdt, @todt, @scheduleId, @layoutId, @widgetId, @tag, @processing)";
+                    command.CommandText = "INSERT INTO stat (type, fromdt, todt, scheduleId, layoutId, widgetId, tag, engagements, processing) " +
+                        "VALUES (@type, @fromdt, @todt, @scheduleId, @layoutId, @widgetId, @tag, @engagements, @processing)";
 
                     command.Parameters.AddWithValue("@type", stat.Type.ToString());
                     command.Parameters.AddWithValue("@fromdt", stat.From.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF"));
@@ -284,10 +319,19 @@ namespace XiboClient.Stats
                     command.Parameters.AddWithValue("@tag", stat.Tag ?? "");
                     command.Parameters.AddWithValue("@processing", 0);
 
+                    // Do we have any engagements?
+                    if (stat.Engagements.Count > 0)
+                    {
+                        // Make a simple collection with them in instead.
+                        command.Parameters.AddWithValue("@engagements", JsonConvert.SerializeObject(stat.Engagements));
+                    }
+                    else
+                    {
+                        command.Parameters.AddWithValue("@engagements", "");
+                    }
+
                     // Execute and don't wait for the result
                     command.ExecuteNonQueryAsync();
-
-                    // TODO: should we trigger a send to happen?
                 }
             }
             catch (Exception ex)
@@ -403,7 +447,7 @@ namespace XiboClient.Stats
 
                 connection.Open();
                 cmd.Connection = connection;
-                cmd.CommandText = "SELECT type, fromdt, todt, scheduleId, layoutId, widgetId, tag FROM stat WHERE processing = @processing";
+                cmd.CommandText = "SELECT type, fromdt, todt, scheduleId, layoutId, widgetId, tag, IFNULL(engagements, \"\") AS engagements FROM stat WHERE processing = @processing";
                 cmd.Parameters.AddWithValue("processing", marker);
 
                 using (SqliteDataReader reader = cmd.ExecuteReader())
@@ -425,6 +469,35 @@ namespace XiboClient.Stats
                             writer.WriteAttributeString("tag", reader.GetString(6));
                             writer.WriteAttributeString("duration", "" + Math.Floor((to - from).TotalSeconds));
                             writer.WriteAttributeString("count", "1");
+
+                            // Engagements
+                            string engagementString = reader.GetString(7);
+                            if (!string.IsNullOrEmpty(engagementString))
+                            {
+                                try
+                                {
+                                    // Deserialise them and process.
+                                    Dictionary<string, Engagement> engagements = JsonConvert.DeserializeObject<Dictionary<string, Engagement>>(engagementString);
+
+                                    writer.WriteStartElement("engagements");
+
+                                    foreach (Engagement engagement in engagements.Values)
+                                    {
+                                        writer.WriteStartElement("engagement");
+                                        writer.WriteAttributeString("tag", engagement.Tag);
+                                        writer.WriteAttributeString("duration", "" + Math.Floor(engagement.Duration));
+                                        writer.WriteAttributeString("count", "" + engagement.Count);
+                                        writer.WriteEndElement();
+                                    }
+
+                                    writer.WriteEndElement();
+                                }
+                                catch
+                                {
+                                    Debug.WriteLine("GetXmlForSend: Error processing engagements.", "StatManager");
+                                }
+                            }
+
                             writer.WriteEndElement();
                         }
                     }
@@ -471,18 +544,38 @@ namespace XiboClient.Stats
                             string type = reader.GetString(0).ToLowerInvariant();
                             string mediaId = reader.GetString(5);
                             string tag = reader.GetString(6);
+                            string engagements = reader.GetString(7);
 
                             // Create a Key to anchor the aggregate.
                             string key = type + scheduleId + "-" + mediaId + tag + fromAggregate.ToString("yyyyMMddHHmm") + toAggregate.ToString("yyyyMMddHHmm");
 
                             if (!aggregates.ContainsKey(key))
                             {
-                                Stat stat = new Stat();
-                                stat.Type = Stat.StatTypeFromString(type);
-                                stat.ScheduleId = scheduleId;
-                                stat.LayoutId = layoutId;
-                                stat.WidgetId = mediaId;
-                                stat.Tag = tag;
+                                Stat stat = new Stat
+                                {
+                                    Type = Stat.StatTypeFromString(type),
+                                    ScheduleId = scheduleId,
+                                    LayoutId = layoutId,
+                                    WidgetId = mediaId,
+                                    Tag = tag
+                                };
+
+                                // Engagements
+                                try
+                                {
+                                    if (string.IsNullOrEmpty(engagements))
+                                    {
+                                        stat.Engagements = new Dictionary<string, Engagement>();
+                                    }
+                                    else
+                                    {
+                                        stat.Engagements = JsonConvert.DeserializeObject<Dictionary<string, Engagement>>(engagements);
+                                    }
+                                }
+                                catch
+                                {
+                                    stat.Engagements = new Dictionary<string, Engagement>();
+                                }
 
                                 // Dates are our aggregate dates
                                 stat.From = fromAggregate;
@@ -503,6 +596,28 @@ namespace XiboClient.Stats
                                 // Add the duration.
                                 stat.Count++;
                                 stat.Duration += duration;
+
+                                // Add the new engagements to the existing.
+                                if (!string.IsNullOrEmpty(engagements))
+                                {
+                                    Dictionary<string, Engagement> newEngagements = JsonConvert.DeserializeObject<Dictionary<string, Engagement>>(engagements);
+
+                                    foreach (KeyValuePair<string, Engagement> keyValuePair in newEngagements)
+                                    {
+                                        // Do we already have this key in this stat record
+                                        if (stat.Engagements.ContainsKey(keyValuePair.Key))
+                                        {
+                                            // Update the existing
+                                            stat.Engagements[keyValuePair.Key].Count += keyValuePair.Value.Count;
+                                            stat.Engagements[keyValuePair.Key].Duration += keyValuePair.Value.Duration;
+                                        }
+                                        else
+                                        {
+                                            // Add it whole
+                                            stat.Engagements.Add(keyValuePair.Key, keyValuePair.Value);
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -519,6 +634,23 @@ namespace XiboClient.Stats
                             writer.WriteAttributeString("tag", stat.Tag);
                             writer.WriteAttributeString("duration", "" + stat.Duration);
                             writer.WriteAttributeString("count", "" + stat.Count);
+
+                            if (stat.Engagements.Count > 0)
+                            {
+                                writer.WriteStartElement("engagements");
+
+                                foreach (Engagement engagement in stat.Engagements.Values)
+                                {
+                                    writer.WriteStartElement("engagement");
+                                    writer.WriteAttributeString("tag", engagement.Tag);
+                                    writer.WriteAttributeString("duration", "" + Math.Floor(engagement.Duration));
+                                    writer.WriteAttributeString("count", "" + engagement.Count);
+                                    writer.WriteEndElement();
+                                }
+
+                                writer.WriteEndElement();
+                            }
+
                             writer.WriteEndElement();
                         }
                     }

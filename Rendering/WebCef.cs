@@ -41,7 +41,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Render Media
         /// </summary>
-        public override void RenderMedia(int position)
+        public override void RenderMedia(double position)
         {
             Debug.WriteLine("Created CEF Renderer for " + this.regionId, "WebCef");
 

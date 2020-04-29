@@ -33,11 +33,24 @@ namespace XiboClient.Rendering
         private int volume;
         private bool _detectEnd = false;
         private bool isLooping = false;
+        private readonly bool isFullScreenRequest = false;
         protected bool ShouldBeVisible { get; set; }
         protected bool Muted { get; set; }
 
+        /// <summary>
+        /// Should we seek to a position or not
+        /// </summary>
+        private double _position;
+
+        /// <summary>
+        /// The Media element for Playback
+        /// </summary>
         private MediaElement mediaElement;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="options"></param>
         public Video(RegionOptions options) : base(options)
         {
             this.ShouldBeVisible = true;
@@ -57,6 +70,9 @@ namespace XiboClient.Rendering
 
             // Should we loop?
             this.isLooping = (options.Dictionary.Get("loop", "0") == "1" && _duration != 0);
+
+            // Full Screen?
+            this.isFullScreenRequest = options.Dictionary.Get("showFullScreen", "0") == "1";
         }
 
         private void MediaElement_MediaFailed(object sender, ExceptionRoutedEventArgs e)
@@ -99,8 +115,11 @@ namespace XiboClient.Rendering
             }
         }
 
-        public override void RenderMedia(int position)
+        public override void RenderMedia(double position)
         {
+            // Save the position
+            this._position = position;
+
             // Check to see if the video exists or not (if it doesnt say we are already expired)
             // we only do this if we aren't a stream
             Uri uri = new Uri(_filePath);
@@ -115,12 +134,6 @@ namespace XiboClient.Rendering
             this.mediaElement = new MediaElement();
             this.mediaElement.Volume = this.volume;
             this.mediaElement.IsMuted = this.Muted;
-
-            if (position > 0)
-            {
-                this.mediaElement.Position = TimeSpan.FromSeconds(position);
-            }
-
             this.mediaElement.LoadedBehavior = MediaState.Manual;
 
             if (!this.ShouldBeVisible)
@@ -131,6 +144,7 @@ namespace XiboClient.Rendering
             }
 
             // Events
+            this.mediaElement.MediaOpened += MediaElement_MediaOpened;
             this.mediaElement.Loaded += MediaElement_Loaded;
             this.mediaElement.MediaEnded += MediaElement_MediaEnded;
             this.mediaElement.MediaFailed += MediaElement_MediaFailed;
@@ -167,11 +181,28 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
+        /// Fired when the video is loaded and ready to seek
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MediaElement_MediaOpened(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("MediaElement_MediaOpened", "Video");
+
+            // Try to seek
+            if (this._position > 0)
+            {
+                this.mediaElement.Position = TimeSpan.FromSeconds(this._position);
+            }
+        }
+
+        /// <summary>
         /// Stop
         /// </summary>
         public override void Stop(bool regionStopped)
         {
             // Remove the event handlers
+            this.mediaElement.MediaOpened -= MediaElement_MediaOpened;
             this.mediaElement.Loaded -= MediaElement_Loaded;
             this.mediaElement.MediaEnded -= MediaElement_MediaEnded;
             this.mediaElement.MediaFailed -= MediaElement_MediaFailed;
@@ -191,6 +222,15 @@ namespace XiboClient.Rendering
                 // We're not end detect, so we pass the timer through
                 base.timer_Tick(sender, e);
             }
+        }
+
+        /// <summary>
+        /// Is a region size change required
+        /// </summary>
+        /// <returns></returns>
+        public override bool RegionSizeChangeRequired()
+        {
+            return this.isFullScreenRequest;
         }
     }
 }

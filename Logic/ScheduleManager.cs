@@ -18,8 +18,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
-using GeoJSON.Net.Contrib.MsSqlSpatial;
-using GeoJSON.Net.Geometry;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -191,9 +189,21 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Thread Started"), LogType.Info.ToString());
 
             // Create a GeoCoordinateWatcher
-            GeoCoordinateWatcher watcher = new GeoCoordinateWatcher(GeoPositionAccuracy.Default);
-            watcher.PositionChanged += Watcher_PositionChanged;
-            watcher.Start();
+            GeoCoordinateWatcher watcher = null;
+            try
+            {
+                watcher = new GeoCoordinateWatcher(GeoPositionAccuracy.Default)
+                {
+                    MovementThreshold = 100
+                };
+                watcher.PositionChanged += Watcher_PositionChanged;
+                watcher.StatusChanged += Watcher_StatusChanged;
+                watcher.Start();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("ScheduleManager", "Run: GeoCoordinateWatcher failed to start. E = " + e.Message), LogType.Error.ToString());
+            }
 
             // Load the interrupt state
             InterruptInitState();
@@ -219,7 +229,14 @@ namespace XiboClient
                         // Handle interrupts to keep the list in order and fresh
                         // this effectively sets the order of our interrupt layouts before they get updated on the main
                         // thread.
-                        InterruptAssessAndUpdate();
+                        try
+                        {
+                            InterruptAssessAndUpdate();
+                        }
+                        catch (Exception e)
+                        {
+                            Trace.WriteLine(new LogMessage("ScheduleManager", "Run: Problem assessing interrupt schedule. E = " + e.Message), LogType.Error.ToString());
+                        }
 
                         // Events
                         // ------
@@ -287,8 +304,13 @@ namespace XiboClient
             }
 
             // Stop the watcher
-            watcher.PositionChanged -= Watcher_PositionChanged;
-            watcher.Stop();
+            if (watcher != null)
+            {
+                watcher.PositionChanged -= Watcher_PositionChanged;
+                watcher.StatusChanged -= Watcher_StatusChanged;
+                watcher.Stop();
+                watcher.Dispose();
+            }
 
             // Save the interrupt state
             InterruptPersistState();
@@ -297,6 +319,42 @@ namespace XiboClient
         }
 
         #region Methods
+
+        /// <summary>
+        /// Watcher status changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Watcher_StatusChanged(object sender, GeoPositionStatusChangedEventArgs e)
+        {
+            switch (e.Status)
+            {
+                case GeoPositionStatus.Initializing:
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_StatusChanged: Working on location fix"), LogType.Info.ToString());
+                    break;
+
+                case GeoPositionStatus.Ready:
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_StatusChanged: Have location"), LogType.Info.ToString());
+                    break;
+
+                case GeoPositionStatus.NoData:
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_StatusChanged: No data"), LogType.Info.ToString());
+                    break;
+
+                case GeoPositionStatus.Disabled:
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_StatusChanged: Disabled"), LogType.Info.ToString());
+                    // Restart
+                    try
+                    {
+                        ((GeoCoordinateWatcher)sender).Start();
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_StatusChanged: Disabled and can't restart, e = " + ex.Message), LogType.Error.ToString());
+                    }
+                    break;
+            }
+        }
 
         /// <summary>
         /// Watcher position has changed
@@ -328,40 +386,11 @@ namespace XiboClient
                     || coordinate.Latitude != ClientInfo.Instance.CurrentGeoLocation.Latitude
                     || coordinate.Longitude != ClientInfo.Instance.CurrentGeoLocation.Longitude)
                 {
-                    // test the change in position
-                    bool acceptChange = true;
+                    // Take the new one.
+                    ClientInfo.Instance.CurrentGeoLocation = coordinate;
 
-                    // Do we have an existing geo location we can check our new location against
-                    if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
-                    {
-                        Point currentPosition = new Point(new Position(ClientInfo.Instance.CurrentGeoLocation.Latitude, ClientInfo.Instance.CurrentGeoLocation.Longitude));
-                        Point newPosition = new Point(new Position(coordinate.Latitude, coordinate.Longitude));
-
-                        var distance = currentPosition.ToSqlGeometry().STDistance(newPosition.ToSqlGeometry());
-
-                        // If we've changed less than 500 meters, don't update
-                        if (distance < 500)
-                        {
-                            acceptChange = false;
-                        }
-                    }
-
-                    if (acceptChange)
-                    {
-                        // Take the new one.
-                        ClientInfo.Instance.CurrentGeoLocation = coordinate;
-
-                        // Wake up the schedule manager for another pass
-                        RefreshSchedule = true;
-                        RunNow();
-
-                        // Report to Notify Status
-                        ClientInfo.Instance.NotifyStatusToXmds();
-                    }
-                    else
-                    {
-                        Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_PositionChanged: Less accurate update ignored"), LogType.Audit.ToString());
-                    }
+                    // Wake up the schedule manager for another pass
+                    RefreshSchedule = true;
                 }
             }
         }
@@ -431,7 +460,9 @@ namespace XiboClient
 
             // If the current schedule is empty, always overwrite
             if (CurrentSchedule.Count == 0)
+            {
                 forceChange = true;
+            }
 
             // Log
             List<string> currentScheduleString = new List<string>();
@@ -683,7 +714,7 @@ namespace XiboClient
                 return prioritySchedule;
 
             // If the current schedule is empty by the end of all this, then slip the default in
-            if (newSchedule.Count == 0)
+            if (newSchedule.Count == 0 && !isForInterrupt)
                 newSchedule.Add(defaultLayout);
 
             return newSchedule;
@@ -1331,67 +1362,67 @@ namespace XiboClient
                 {
                     this._interruptState.TargetHourlyInterruption = Math.Max(targetHourlyInterruption, this._interruptState.TargetHourlyInterruption);
                 }
-            }
 
-            // Order the schedule and determine if we need to interrupt
-            InterruptResetSecondsIfNecessary();
+                // Order the schedule and determine if we need to interrupt
+                InterruptResetSecondsIfNecessary();
 
-            // How far through the hour are we?
-            int secondsIntoHour = (int)(DateTime.Now - TopOfHour()).TotalSeconds;
+                // How far through the hour are we?
+                int secondsIntoHour = (int)(DateTime.Now - TopOfHour()).TotalSeconds;
 
-            // Assess each Layout and update the item with current understanding of seconds played and rank
-            foreach (ScheduleItem item in CurrentInterruptSchedule)
-            {
-                try
+                // Assess each Layout and update the item with current understanding of seconds played and rank
+                foreach (ScheduleItem item in CurrentInterruptSchedule)
                 {
-                    if (this._interruptState.InterruptTracking.ContainsKey(item.scheduleid))
+                    try
                     {
-                        // Annotate this item with the existing seconds played
-                        this._interruptState.InterruptTracking.TryGetValue(item.scheduleid, out double secondsPlayed);
+                        if (this._interruptState.InterruptTracking.ContainsKey(item.scheduleid))
+                        {
+                            // Annotate this item with the existing seconds played
+                            this._interruptState.InterruptTracking.TryGetValue(item.scheduleid, out double secondsPlayed);
 
-                        item.SecondsPlayed = secondsPlayed;
+                            item.SecondsPlayed = secondsPlayed;
 
-                        // Is this item fulfilled
-                        item.IsFulfilled = (item.SecondsPlayed >= item.ShareOfVoice) ;
+                            // Is this item fulfilled
+                            item.IsFulfilled = (item.SecondsPlayed >= item.ShareOfVoice);
+                        }
+                        else
+                        {
+                            item.SecondsPlayed = 0;
+                        }
+
+                        Debug.WriteLine("InterruptAssessAndUpdate: Updating scheduleId " + item.scheduleid + " with seconds played " + item.SecondsPlayed, "ScheduleManager");
                     }
-                    else
+                    catch
                     {
+                        // If we have trouble getting it, then assume 0 to be safe
                         item.SecondsPlayed = 0;
                     }
-
-                    Debug.WriteLine("InterruptAssessAndUpdate: Updating scheduleId " + item.scheduleid + " with seconds played " + item.SecondsPlayed, "ScheduleManager");
                 }
-                catch
+
+                // Sort the interrupt layouts
+                CurrentInterruptSchedule.Sort(new ScheduleItemComparer(3600 - secondsIntoHour));
+                CurrentInterruptSchedule.Reverse();
+
+                // Do we need to interrupt at this moment, or not
+                double percentageThroughHour = secondsIntoHour / 3600.0;
+                int secondsShouldHaveInterrupted = Convert.ToInt32(Math.Floor(this._interruptState.TargetHourlyInterruption * percentageThroughHour));
+                int secondsSinceLastInterrupt = Convert.ToInt32((DateTime.Now - this._interruptState.LastInterruption).TotalSeconds);
+
+                Debug.WriteLine("InterruptAssessAndUpdate: Target = " + this._interruptState.TargetHourlyInterruption
+                    + ", Required = " + secondsShouldHaveInterrupted
+                    + ", Interrupted = " + this._interruptState.SecondsInterrutedThisHour
+                    + ", Last Interrupt = " + secondsSinceLastInterrupt
+                    , "ScheduleManager");
+
+                // Interrupt if the seconds we've interrupted this hour so far is less than the seconds we
+                // should have interrupted.
+                if (Math.Floor(this._interruptState.SecondsInterrutedThisHour) < secondsShouldHaveInterrupted)
                 {
-                    // If we have trouble getting it, then assume 0 to be safe
-                    item.SecondsPlayed = 0;
+                    OnInterruptNow?.Invoke();
                 }
-            }
-
-            // Sort the interrupt layouts
-            CurrentInterruptSchedule.Sort(new ScheduleItemComparer(3600 - secondsIntoHour));
-            CurrentInterruptSchedule.Reverse();
-
-            // Do we need to interrupt at this moment, or not
-            double percentageThroughHour = secondsIntoHour / 3600.0;
-            int secondsShouldHaveInterrupted = Convert.ToInt32(Math.Floor(this._interruptState.TargetHourlyInterruption * percentageThroughHour));
-            int secondsSinceLastInterrupt = Convert.ToInt32((DateTime.Now - this._interruptState.LastInterruption).TotalSeconds);
-
-            Debug.WriteLine("InterruptAssessAndUpdate: Target = " + this._interruptState.TargetHourlyInterruption
-                + ", Required = " + secondsShouldHaveInterrupted
-                + ", Interrupted = " + this._interruptState.SecondsInterrutedThisHour
-                + ", Last Interrupt = " + secondsSinceLastInterrupt
-                , "ScheduleManager");
-
-            // Interrupt if the seconds we've interrupted this hour so far is less than the seconds we
-            // should have interrupted.
-            if (Math.Floor(this._interruptState.SecondsInterrutedThisHour) < secondsShouldHaveInterrupted)
-            {
-                OnInterruptNow?.Invoke();
-            }
-            else
-            {
-                OnInterruptPausePending?.Invoke();
+                else
+                {
+                    OnInterruptPausePending?.Invoke();
+                }
             }
         }
 
@@ -1455,9 +1486,9 @@ namespace XiboClient
         /// </summary>
         private void InterruptInitState()
         {
-            try
+            lock (_locker)
             {
-                lock (_locker)
+                try
                 {
                     if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\interrupt.json"))
                     {
@@ -1466,19 +1497,16 @@ namespace XiboClient
                     else
                     {
                         // Create a new empty object
-                        // set the dates to just enough in the past for them to get reset.
-                        this._interruptState = new InterruptState();
-                        this._interruptState.LastInterruption = DateTime.Now.AddHours(-2);
-                        this._interruptState.LastPlaytimeUpdate = DateTime.Now.AddHours(-2);
-                        this._interruptState.LastInterruptScheduleChange = DateTime.Now.AddHours(-2);
-                        this._interruptState.InterruptTracking = new Dictionary<int, double>();
+                        this._interruptState = InterruptState.EmptyState();
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptInitState: Failed to read interrupt file. e = " + e.Message), LogType.Error.ToString());
-            }
+                catch (Exception e)
+                {
+                    this._interruptState = InterruptState.EmptyState();
+
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptInitState: Failed to read interrupt file. e = " + e.Message), LogType.Error.ToString());
+                }
+            }            
         }
 
         /// <summary>
