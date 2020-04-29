@@ -277,58 +277,65 @@ namespace XiboClient.XmdsAgents
         {
             StringBuilder sb = new StringBuilder();
             using (StringWriter sw = new StringWriter(sb))
+            using (JsonWriter writer = new JsonTextWriter(sw))
             {
-                using (JsonWriter writer = new JsonTextWriter(sw))
-                {
-                    writer.Formatting = Newtonsoft.Json.Formatting.None;
-                    writer.WriteStartObject();
-                    writer.WritePropertyName("deviceName");
-                    writer.WriteValue(Environment.MachineName);
-                    writer.WritePropertyName("width");
-                    writer.WriteValue(ClientInfo.Instance.PlayerWidth);
-                    writer.WritePropertyName("height");
-                    writer.WriteValue(ClientInfo.Instance.PlayerHeight);
+                writer.Formatting = Newtonsoft.Json.Formatting.None;
+                writer.WriteStartObject();
+                writer.WritePropertyName("deviceName");
+                writer.WriteValue(Environment.MachineName);
+                writer.WritePropertyName("width");
+                writer.WriteValue(ClientInfo.Instance.PlayerWidth);
+                writer.WritePropertyName("height");
+                writer.WriteValue(ClientInfo.Instance.PlayerHeight);
 
-                    try
+                // GeoLocation
+                if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+                {
+                    writer.WritePropertyName("latitude");
+                    writer.WriteValue(ClientInfo.Instance.CurrentGeoLocation.Latitude);
+                    writer.WritePropertyName("longitude");
+                    writer.WriteValue(ClientInfo.Instance.CurrentGeoLocation.Longitude);
+                }
+
+                try
+                {
+                    // Use Drive Info
+                    foreach (DriveInfo drive in DriveInfo.GetDrives())
                     {
-                        // Use Drive Info
-                        foreach (DriveInfo drive in DriveInfo.GetDrives())
+                        if (drive.IsReady && ApplicationSettings.Default.LibraryPath.Contains(drive.RootDirectory.FullName))
                         {
-                            if (drive.IsReady && ApplicationSettings.Default.LibraryPath.Contains(drive.RootDirectory.FullName))
-                            {
-                                writer.WritePropertyName("availableSpace");
-                                writer.WriteValue(drive.TotalFreeSpace);
-                                writer.WritePropertyName("totalSpace");
-                                writer.WriteValue(drive.TotalSize);
-                                break;
-                            }
+                            writer.WritePropertyName("availableSpace");
+                            writer.WriteValue(drive.TotalFreeSpace);
+                            writer.WritePropertyName("totalSpace");
+                            writer.WriteValue(drive.TotalSize);
+                            break;
                         }
                     }
-                    catch
-                    {
-                        Trace.WriteLine(new LogMessage("NotifyStatus", "Unable to get drive info"), LogType.Info.ToString());
-                    }
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("NotifyStatus", "Unable to get drive info"), LogType.Info.ToString());
+                }
 
 
-                    // Timezone
-                    // we only do the timezone if it is currently empty, otherwise we stick with whatever has been set.
-                    if (string.IsNullOrEmpty(ApplicationSettings.Default.DisplayTimeZone))
-                    {
-                        writer.WritePropertyName("timeZone");
-                        writer.WriteValue(WindowsToIana(TimeZone.CurrentTimeZone.StandardName));
-                    }
+                // Timezone
+                // we only do the timezone if it is currently empty, otherwise we stick with whatever has been set.
+                if (string.IsNullOrEmpty(ApplicationSettings.Default.DisplayTimeZone))
+                {
+                    writer.WritePropertyName("timeZone");
+                    writer.WriteValue(WindowsToIana(TimeZone.CurrentTimeZone.StandardName));
+                }
 
-                    // Finish
-                    writer.WriteEndObject();
+                // Finish
+                writer.WriteEndObject();
 
-                    // Report
-                    using (xmds.xmds xmds = new xmds.xmds())
-                    {
-                        xmds.Credentials = null;
-                        xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
-                        xmds.UseDefaultCredentials = false;
-                        xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
-                    }
+                // Report
+                using (xmds.xmds xmds = new xmds.xmds())
+                {
+                    xmds.Credentials = null;
+                    xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
+                    xmds.UseDefaultCredentials = false;
+                    xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
                 }
             }
 
