@@ -31,6 +31,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using XiboClient.Stats;
 using XiboClient.XmdsAgents;
 
 namespace XiboClient
@@ -169,6 +170,16 @@ namespace XiboClient
             this.textBoxStatus.FontFamily = new System.Windows.Media.FontFamily("Segoe UI");
             this.textBoxStatus.FontSize = 12;
             this.textBoxStatus.TextAlignment = TextAlignment.Left;
+
+            // Try to create the SQLite database
+            try
+            {
+                StatManager.Instance.InitDatabase();
+            }
+            catch
+            {
+                textBoxStatus.AppendText("There was a problem creating a local database. This will probably solve itself when the Player starts, but as a precaution you could press Connect again.");
+            }
 
             try
             {
@@ -322,6 +333,16 @@ namespace XiboClient
 
             // Commit these changes back to the user settings
             ApplicationSettings.Default.Save();
+
+            // Try to create the SQLite database
+            try
+            {
+                StatManager.Instance.InitDatabase();
+            }
+            catch
+            {
+                textBoxStatus.AppendText("There was a problem creating a local database. This will probably solve itself when the Player starts, but as a precaution you could press Use Code again.");
+            }
 
             // Show the code in the status window, and disable the other buttons.
             try
