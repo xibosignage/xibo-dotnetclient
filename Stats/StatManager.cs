@@ -26,6 +26,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using XiboClient.Log;
 using XiboClient.XmdsAgents;
@@ -331,7 +332,15 @@ namespace XiboClient.Stats
                     }
 
                     // Execute and don't wait for the result
-                    command.ExecuteNonQueryAsync();
+                    command.ExecuteNonQueryAsync().ContinueWith(t =>
+                    {
+                        var aggException = t.Exception.Flatten();
+                        foreach (var exception in aggException.InnerExceptions)
+                        {
+                            Trace.WriteLine(new LogMessage("StatManager", "RecordStat: Error saving stat to database. Ex = " + exception.Message), LogType.Error.ToString());
+                        }
+                    },
+                    TaskContinuationOptions.OnlyOnFaulted);
                 }
             }
             catch (Exception ex)
