@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -84,26 +85,78 @@ namespace XiboClient.Stats
 
             using (var connection = new SqliteConnection("Filename=" + this.databasePath))
             {
-                string sql = "CREATE TABLE IF NOT EXISTS stat (" +
-                    "_id INTEGER PRIMARY KEY, " +
-                    "fromdt TEXT, " +
-                    "todt TEXT, " +
-                    "type TEXT, " +
-                    "scheduleId INT, " +
-                    "layoutId INT, " +
-                    "widgetId TEXT, " +
-                    "tag TEXT, " +
-                    "processing INT" +
-                    ")";
-
                 // Open the connection
                 connection.Open();
 
-                // Create an execute a command.
-                using (var command = new SqliteCommand(sql, connection))
+                // What version are we?
+                int version = GetDbVersion(connection);
+
+                if (version == 0)
                 {
-                    command.ExecuteNonQuery();
+                    // Create the table fresh
+                    string sql = "CREATE TABLE IF NOT EXISTS stat (" +
+                        "_id INTEGER PRIMARY KEY, " +
+                        "fromdt TEXT, " +
+                        "todt TEXT, " +
+                        "type TEXT, " +
+                        "scheduleId INT, " +
+                        "layoutId INT, " +
+                        "widgetId TEXT, " +
+                        "tag TEXT, " +
+                        "processing INT" +
+                        ")";
+
+                    // Create an execute a command.
+                    using (var command = new SqliteCommand(sql, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
                 }
+                
+                // Add the engagements column
+                if (version <= 1)
+                {
+                    using (var command = new SqliteCommand("ALTER TABLE stat ADD COLUMN engagements TEXT", connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+
+                    // Set the DB version to 2
+                    SetDbVersion(connection, 2);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get the current DB version.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <returns></returns>
+        private int GetDbVersion(SqliteConnection connection)
+        {
+            try
+            {
+                using (var command = new SqliteCommand("PRAGMA user_version", connection))
+                {
+                    return Convert.ToInt32(command.ExecuteScalar());
+                }
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Set the DB version
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="version"></param>
+        private void SetDbVersion(SqliteConnection connection, int version)
+        {
+            using (var command = new SqliteCommand("PRAGMA user_version = " + version, connection))
+            {
+                command.ExecuteNonQuery();
             }
         }
 
