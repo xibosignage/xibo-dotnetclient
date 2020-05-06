@@ -21,6 +21,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -94,7 +95,7 @@ namespace XiboClient
             _traceMessages.Add(new TraceMessage
             {
                 category = category,
-                dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
                 message = message
             });
 
