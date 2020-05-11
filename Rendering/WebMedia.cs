@@ -382,7 +382,7 @@ namespace XiboClient.Rendering
 
             // Compare the cached dimensions in the file with the dimensions now, and 
             // regenerate if they are different.
-            if (cachedFile.Contains("[[ViewPortWidth]]") || !ReadCachedViewPort(cachedFile).Equals(Width.ToString() + "x" + Height.ToString()))
+            if (cachedFile.Contains("[[ViewPortWidth]]") || !ReadCachedViewPort(cachedFile).Equals(WidthIntended.ToString() + "x" + HeightIntended.ToString()))
             {
                 // Regex out the existing replacement if present
                 cachedFile = Regex.Replace(cachedFile, "<!--START_STYLE_ADJUST-->(.*)<!--END_STYLE_ADJUST-->", "");
