@@ -40,6 +40,7 @@ namespace XiboClient.XmdsAgents
 
             // Assume no backlog when we first start out.
             bool isBacklog = false;
+            int retryAfterSeconds = 0;
             int countBacklogBatches = 0;
             int processing = 0;
 
@@ -54,6 +55,9 @@ namespace XiboClient.XmdsAgents
                     {
                         // If we are restarting, reset
                         _manualReset.Reset();
+
+                        // Reset backOff
+                        retryAfterSeconds = 0;
 
                         // How many records do we have to send?
                         int recordsReady = StatManager.Instance.TotalReady();
@@ -86,6 +90,17 @@ namespace XiboClient.XmdsAgents
                             StatManager.Instance.DeleteSent(processing);
                         }
                     }
+                    catch (WebException webEx) when (webEx.Response is HttpWebResponse httpWebResponse && (int)httpWebResponse.StatusCode == 429)
+                    {
+                        // We got a backoff, so none of those records are processed.
+                        StatManager.Instance.UnmarkRecordsForSend(processing);
+
+                        // Get the header for how long we ought to wait
+                        retryAfterSeconds = webEx.Response.Headers["Retry-After"] != null ? int.Parse(webEx.Response.Headers["Retry-After"]) : 120;
+
+                        // Log it.
+                        Trace.WriteLine(new LogMessage("StatAgent", "Run: 429 received, waiting for " + retryAfterSeconds + " seconds."), LogType.Info.ToString());
+                    }
                     catch (WebException webEx)
                     {
                         // Increment the quantity of XMDS failures and bail out
@@ -107,7 +122,12 @@ namespace XiboClient.XmdsAgents
                     }
                 }
 
-                if (isBacklog)
+                if (retryAfterSeconds > 0)
+                {
+                    // Sleep this thread until we've fulfilled our try after
+                    _manualReset.WaitOne(retryAfterSeconds * 1000);
+                }
+                else if (isBacklog)
                 {
                     // We've just completed a send in backlog mode, so add to batches.
                     countBacklogBatches++;
