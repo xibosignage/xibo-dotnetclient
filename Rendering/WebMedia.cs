@@ -163,7 +163,9 @@ namespace XiboClient.Rendering
                 string flag = File.ReadAllText(path);
                 DateTime updated = DateTime.Parse(flag);
 
-                return updated > lastModified;
+                Debug.WriteLine("Last time we extracted: " + updated.ToString() + ", ZIP file last modified: " + lastModified.ToString());
+
+                return updated < lastModified;
             }
             catch (Exception e)
             {
