@@ -143,7 +143,7 @@ namespace XiboClient.Log
             {
                 try
                 {
-                    using (FileStream file = new FileStream(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
+                    using (FileStream file = new FileStream(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), FileMode.Create, FileAccess.Write, FileShare.Read))
                     {
                         using (StreamWriter sw = new StreamWriter(file))
                         {
