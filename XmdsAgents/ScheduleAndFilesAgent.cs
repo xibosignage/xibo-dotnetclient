@@ -123,10 +123,15 @@ namespace XiboClient.XmdsAgents
         {
             Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Thread Started"), LogType.Info.ToString());
 
+            int retryAfterSeconds = 0;
+
             while (!_forceStop)
             {
                 // If we are restarting, reset
                 _manualReset.Reset();
+
+                // Reset backOff
+                retryAfterSeconds = 0;
 
                 lock (_locker)
                 {
@@ -230,6 +235,14 @@ namespace XiboClient.XmdsAgents
                                 }
                             }
                         }
+                        catch (WebException webEx) when (webEx.Response is HttpWebResponse httpWebResponse && (int)httpWebResponse.StatusCode == 429)
+                        {
+                            // Get the header for how long we ought to wait
+                            retryAfterSeconds = webEx.Response.Headers["Retry-After"] != null ? int.Parse(webEx.Response.Headers["Retry-After"]) : 120;
+
+                            // Log it.
+                            Trace.WriteLine(new LogMessage("LogAgent", "Run: 429 received, waiting for " + retryAfterSeconds + " seconds."), LogType.Info.ToString());
+                        }
                         catch (WebException webEx)
                         {
                             // Increment the quantity of XMDS failures and bail out
@@ -254,8 +267,16 @@ namespace XiboClient.XmdsAgents
                     }
                 }
 
-                // Sleep this thread until the next collection interval
-                _manualReset.WaitOne((int)(ApplicationSettings.Default.CollectInterval * ApplicationSettings.Default.XmdsCollectionIntervalFactor() * 1000));
+                if (retryAfterSeconds > 0)
+                {
+                    // Sleep this thread until we've fulfilled our try after
+                    _manualReset.WaitOne(retryAfterSeconds * 1000);
+                }
+                else
+                {
+                    // Sleep this thread until the next collection interval
+                    _manualReset.WaitOne((int)(ApplicationSettings.Default.CollectInterval * ApplicationSettings.Default.XmdsCollectionIntervalFactor() * 1000));
+                }
             }
 
             Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Thread Stopped"), LogType.Info.ToString());
