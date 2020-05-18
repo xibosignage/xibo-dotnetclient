@@ -79,7 +79,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                HandleUnhandledException(ex);
+                HandleUnhandledException(ex, false);
             }
 
             // Always flush at the end
@@ -124,24 +124,24 @@ namespace XiboClient
         #region Exception Handlers
         static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
-            HandleUnhandledException(e.Exception);
+            HandleUnhandledException(e.Exception, true);
         }
 
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            HandleUnhandledException(e.ExceptionObject);
+            HandleUnhandledException(e.ExceptionObject, true);
         }
 
         static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            HandleUnhandledException(e.Exception);
+            HandleUnhandledException(e.Exception, false);
         }
 
         /// <summary>
         /// Event for unhandled exceptions
         /// </summary>
         /// <param name="o"></param>
-        static void HandleUnhandledException(Object o)
+        static void HandleUnhandledException(Object o, bool quit)
         {
             Exception e = o as Exception;
 
@@ -149,34 +149,38 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
             Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Audit.ToString());
 
-            try
+            // Should we quit or continue
+            if (quit)
             {
-                string productName = ApplicationSettings.GetProductNameFromAssembly();
-
-                // Also write to the event log
                 try
                 {
-                    if (!EventLog.SourceExists(productName))
+                    string productName = ApplicationSettings.GetProductNameFromAssembly();
+
+                    // Also write to the event log
+                    try
                     {
-                        EventLog.CreateEventSource(productName, "Xibo");
+                        if (!EventLog.SourceExists(productName))
+                        {
+                            EventLog.CreateEventSource(productName, "Xibo");
+                        }
+
+                        EventLog.WriteEntry(productName, e.ToString(), EventLogEntryType.Error);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine(new LogMessage("Main", "Couldn't write to event log: " + ex.Message), LogType.Info.ToString());
                     }
 
-                    EventLog.WriteEntry(productName, e.ToString(), EventLogEntryType.Error);
+                    Trace.Flush();
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(new LogMessage("Main", "Couldn't write to event log: " + ex.Message), LogType.Info.ToString());
+                    Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Info.ToString());
                 }
 
-                Trace.Flush();
+                // Exit the application and allow it to be restarted by the Watchdog.
+                Environment.Exit(0);
             }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Info.ToString());
-            }
-
-            // Exit the application and allow it to be restarted by the Watchdog.
-            Environment.Exit(0);
         }
 
         internal static class NativeMethods

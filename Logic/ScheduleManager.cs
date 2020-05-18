@@ -1494,17 +1494,17 @@ namespace XiboClient
                     {
                         this._interruptState = JsonConvert.DeserializeObject<InterruptState>(File.ReadAllText(ApplicationSettings.Default.LibraryPath + @"\interrupt.json"));
                     }
-                    else
-                    {
-                        // Create a new empty object
-                        this._interruptState = InterruptState.EmptyState();
-                    }
                 }
                 catch (Exception e)
                 {
-                    this._interruptState = InterruptState.EmptyState();
-
                     Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptInitState: Failed to read interrupt file. e = " + e.Message), LogType.Error.ToString());
+                }
+
+                // If we are still empty after loading, we should create an empty object
+                if (this._interruptState == null)
+                {
+                    // Create a new empty object
+                    this._interruptState = InterruptState.EmptyState();
                 }
             }            
         }
@@ -1514,6 +1514,12 @@ namespace XiboClient
         /// </summary>
         private void InterruptPersistState()
         {
+            // If the interrupt state is null for whatever reason, don't persist it to file
+            if (this._interruptState == null)
+            {
+                return;
+            }
+
             try
             {
                 lock (_locker)

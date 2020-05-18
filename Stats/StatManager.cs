@@ -23,9 +23,12 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using XiboClient.Log;
 using XiboClient.XmdsAgents;
@@ -83,26 +86,78 @@ namespace XiboClient.Stats
 
             using (var connection = new SqliteConnection("Filename=" + this.databasePath))
             {
-                string sql = "CREATE TABLE IF NOT EXISTS stat (" +
-                    "_id INTEGER PRIMARY KEY, " +
-                    "fromdt TEXT, " +
-                    "todt TEXT, " +
-                    "type TEXT, " +
-                    "scheduleId INT, " +
-                    "layoutId INT, " +
-                    "widgetId TEXT, " +
-                    "tag TEXT, " +
-                    "processing INT" +
-                    ")";
-
                 // Open the connection
                 connection.Open();
 
-                // Create an execute a command.
-                using (var command = new SqliteCommand(sql, connection))
+                // What version are we?
+                int version = GetDbVersion(connection);
+
+                if (version == 0)
                 {
-                    command.ExecuteNonQuery();
+                    // Create the table fresh
+                    string sql = "CREATE TABLE IF NOT EXISTS stat (" +
+                        "_id INTEGER PRIMARY KEY, " +
+                        "fromdt TEXT, " +
+                        "todt TEXT, " +
+                        "type TEXT, " +
+                        "scheduleId INT, " +
+                        "layoutId INT, " +
+                        "widgetId TEXT, " +
+                        "tag TEXT, " +
+                        "processing INT" +
+                        ")";
+
+                    // Create an execute a command.
+                    using (var command = new SqliteCommand(sql, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
                 }
+                
+                // Add the engagements column
+                if (version <= 1)
+                {
+                    using (var command = new SqliteCommand("ALTER TABLE stat ADD COLUMN engagements TEXT", connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+
+                    // Set the DB version to 2
+                    SetDbVersion(connection, 2);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get the current DB version.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <returns></returns>
+        private int GetDbVersion(SqliteConnection connection)
+        {
+            try
+            {
+                using (var command = new SqliteCommand("PRAGMA user_version", connection))
+                {
+                    return Convert.ToInt32(command.ExecuteScalar());
+                }
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Set the DB version
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="version"></param>
+        private void SetDbVersion(SqliteConnection connection, int version)
+        {
+            using (var command = new SqliteCommand("PRAGMA user_version = " + version, connection))
+            {
+                command.ExecuteNonQuery();
             }
         }
 
@@ -311,8 +366,8 @@ namespace XiboClient.Stats
                         "VALUES (@type, @fromdt, @todt, @scheduleId, @layoutId, @widgetId, @tag, @engagements, @processing)";
 
                     command.Parameters.AddWithValue("@type", stat.Type.ToString());
-                    command.Parameters.AddWithValue("@fromdt", stat.From.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF"));
-                    command.Parameters.AddWithValue("@todt", stat.To.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF"));
+                    command.Parameters.AddWithValue("@fromdt", stat.From.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF", CultureInfo.InvariantCulture));
+                    command.Parameters.AddWithValue("@todt", stat.To.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF", CultureInfo.InvariantCulture));
                     command.Parameters.AddWithValue("@scheduleId", stat.ScheduleId);
                     command.Parameters.AddWithValue("@layoutId", stat.LayoutId);
                     command.Parameters.AddWithValue("@widgetId", stat.WidgetId ?? "");
@@ -331,7 +386,15 @@ namespace XiboClient.Stats
                     }
 
                     // Execute and don't wait for the result
-                    command.ExecuteNonQueryAsync();
+                    command.ExecuteNonQueryAsync().ContinueWith(t =>
+                    {
+                        var aggException = t.Exception.Flatten();
+                        foreach (var exception in aggException.InnerExceptions)
+                        {
+                            Trace.WriteLine(new LogMessage("StatManager", "RecordStat: Error saving stat to database. Ex = " + exception.Message), LogType.Error.ToString());
+                        }
+                    },
+                    TaskContinuationOptions.OnlyOnFaulted);
                 }
             }
             catch (Exception ex)
@@ -367,7 +430,7 @@ namespace XiboClient.Stats
                 if (aggregationLevel == "hourly")
                 {
                     // Hourly (get only from last hour)
-                    cmd.Parameters.AddWithValue("@todt", DateTime.Now.ToString("yyyy-MM-dd HH:00:00.0000000"));
+                    cmd.Parameters.AddWithValue("@todt", DateTime.Now.ToString("yyyy-MM-dd HH:00:00.0000000", CultureInfo.InvariantCulture));
 
                     // if we are in backlog mode, then take a days worth of worse case, otherwise an hours worth
                     cmd.Parameters.AddWithValue("@limit", (isBacklog) ? 86400 : 3600);
@@ -375,7 +438,7 @@ namespace XiboClient.Stats
                 else if (aggregationLevel == "daily")
                 {
                     // Daily (get only from this day)
-                    cmd.Parameters.AddWithValue("@todt", DateTime.Now.Date.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF"));
+                    cmd.Parameters.AddWithValue("@todt", DateTime.Now.Date.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF", CultureInfo.InvariantCulture));
 
                     // The maximum number of records we can get in one day (or at least a reasonable number is 1 per second)
                     // gather at least that many, regardless of mode.
@@ -461,8 +524,8 @@ namespace XiboClient.Stats
                             DateTime to = reader.GetDateTime(2);
                             writer.WriteStartElement("stat");
                             writer.WriteAttributeString("type", reader.GetString(0).ToLowerInvariant());
-                            writer.WriteAttributeString("fromdt", from.ToString("yyyy-MM-dd HH:mm:ss"));
-                            writer.WriteAttributeString("todt", to.ToString("yyyy-MM-dd HH:mm:ss"));
+                            writer.WriteAttributeString("fromdt", from.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
+                            writer.WriteAttributeString("todt", to.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
                             writer.WriteAttributeString("scheduleid", reader.GetString(3));
                             writer.WriteAttributeString("layoutid", reader.GetString(4));
                             writer.WriteAttributeString("mediaid", reader.GetString(5));
@@ -626,8 +689,8 @@ namespace XiboClient.Stats
                         {
                             writer.WriteStartElement("stat");
                             writer.WriteAttributeString("type", stat.Type.ToString());
-                            writer.WriteAttributeString("fromdt", stat.From.ToString("yyyy-MM-dd HH:mm:ss"));
-                            writer.WriteAttributeString("todt", stat.To.ToString("yyyy-MM-dd HH:mm:ss"));
+                            writer.WriteAttributeString("fromdt", stat.From.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
+                            writer.WriteAttributeString("todt", stat.To.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
                             writer.WriteAttributeString("scheduleid", stat.ScheduleId.ToString());
                             writer.WriteAttributeString("layoutid", stat.LayoutId.ToString());
                             writer.WriteAttributeString("mediaid", stat.WidgetId);
@@ -691,8 +754,8 @@ namespace XiboClient.Stats
 
             // Calculate a cut off date
             string cutOff = ApplicationSettings.Default.AggregationLevel.ToLowerInvariant() == "daily"
-                ? DateTime.Now.Date.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF")
-                : DateTime.Now.ToString("yyyy-MM-dd HH:") + ":00:00.0000000";
+                ? DateTime.Now.Date.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFF", CultureInfo.InvariantCulture)
+                : DateTime.Now.ToString("yyyy-MM-dd HH:", CultureInfo.InvariantCulture) + ":00:00.0000000";
 
             // Run query
             using (var connection = new SqliteConnection("Filename=" + this.databasePath))

@@ -1088,8 +1088,8 @@ namespace XiboClient
 
                 Width = sizeX;
                 Height = sizeY;
-                Top = (double)ApplicationSettings.Default.OffsetX;
-                Left = (double)ApplicationSettings.Default.OffsetY;
+                Left = (double)ApplicationSettings.Default.OffsetX;
+                Top = (double)ApplicationSettings.Default.OffsetY;
             }
             else
             {
