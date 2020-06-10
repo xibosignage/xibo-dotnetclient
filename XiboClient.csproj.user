@@ -5,8 +5,7 @@
     </StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <StartArguments>
-    </StartArguments>
+    <StartArguments>o</StartArguments>
   </PropertyGroup>
   <PropertyGroup>
     <PublishUrlHistory>T:\Development\Version 2\Client\</PublishUrlHistory>
