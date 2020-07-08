@@ -175,7 +175,13 @@ namespace XiboClient
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(new LogMessage("Main", "Unable to write to event log " + ex.Message), LogType.Info.ToString());
+                    Trace.WriteLine(new LogMessage("Main", "Unable to write Trace Listeners " + ex.Message), LogType.Info.ToString());
+
+                    // Complete failure, show something to the user in these circumstances.
+                    if (quit)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
                 }
 
                 // Exit the application and allow it to be restarted by the Watchdog.
