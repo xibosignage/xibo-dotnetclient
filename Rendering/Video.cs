@@ -207,6 +207,12 @@ namespace XiboClient.Rendering
             this.mediaElement.MediaEnded -= MediaElement_MediaEnded;
             this.mediaElement.MediaFailed -= MediaElement_MediaFailed;
 
+            // Try and clear some memory
+            this.mediaElement.Close();
+            this.mediaElement.Clock = null;
+            this.mediaElement.Source = null;
+            this.mediaElement = null;
+
             base.Stop(regionStopped);
         }
 
