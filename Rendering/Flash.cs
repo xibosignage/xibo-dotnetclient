@@ -31,9 +31,10 @@ namespace XiboClient.Rendering
             options.Dictionary.Replace("modeid", "1");
 
             // This openes a cached file
-            this._filePath = ApplicationSettings.Default.EmbeddedServerAddress + "flash_" + options.FileId + ".htm";
+            string cacheFile = ApplicationSettings.Default.EmbeddedServerAddress + "flash_" + options.FileId + ".htm";
+            options.Dictionary.Replace("uri", cacheFile);
 
-            if (!File.Exists(this._filePath))
+            if (!File.Exists(cacheFile))
             {
                 // Set the body
                 string html = @"
@@ -57,7 +58,7 @@ namespace XiboClient.Rendering
                 html = this.MakeHtmlSubstitutions(html);
 
                 // Save this file to disk
-                using (FileStream stream = new FileStream(this._filePath, FileMode.Create))
+                using (FileStream stream = new FileStream(cacheFile, FileMode.Create))
                 {
                     using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
                     {
@@ -65,6 +66,15 @@ namespace XiboClient.Rendering
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Is this a native open widget
+        /// </summary>
+        /// <returns></returns>
+        protected override bool IsNativeOpen()
+        {
+            return true;
         }
     }
 }
