@@ -16,7 +16,7 @@ namespace XiboClient.Logic
             Rectangle bounds;
 
             // Override the default size if necessary
-            if (ApplicationSettings.Default.SizeX != 0)
+            if (ApplicationSettings.Default.SizeX != 0 || ApplicationSettings.Default.SizeY != 0)
             {
                 bounds = new Rectangle((int)ApplicationSettings.Default.OffsetX, (int)ApplicationSettings.Default.OffsetY, (int)ApplicationSettings.Default.SizeX, (int)ApplicationSettings.Default.SizeY);
             }
