@@ -112,6 +112,8 @@
     <Compile Include="Action\ScheduleCommand.cs" />
     <Compile Include="Action\XmrSubscriber.cs" />
     <Compile Include="Control\EmbeddedServer.cs" />
+    <Compile Include="Control\InfoController.cs" />
+    <Compile Include="Control\RestrictiveFileModule.cs" />
     <Compile Include="Control\WatchDogManager.cs" />
     <Compile Include="Error\DefaultLayoutException.cs" />
     <Compile Include="Helpers\CefJsDialogHandler.cs" />
