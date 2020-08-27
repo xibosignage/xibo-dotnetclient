@@ -263,7 +263,7 @@ namespace XiboClient.XmdsAgents
                     }
                     else
                     {
-                        ClientInfo.Instance.RequiredFilesStatus = string.Format("Outside Download Window {0} - {1}", ApplicationSettings.Default.DownloadStartWindowTime.ToString("HH:mm", CultureInfo.InvariantCulture), ApplicationSettings.Default.DownloadEndWindowTime.ToString("HH:mm", CultureInfo.InvariantCulture));
+                        ClientInfo.Instance.RequiredFilesStatus = string.Format("Outside Download Window {0} - {1}", ApplicationSettings.Default.DownloadStartWindowTime.ToString(), ApplicationSettings.Default.DownloadEndWindowTime.ToString());
                     }
                 }
 
