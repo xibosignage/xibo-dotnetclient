@@ -532,7 +532,10 @@ namespace XiboClient
                     Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Prepare/Start Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
 
                     // Remove the Layout again
-                    DestroyLayout(this.currentLayout);
+                    if (this.currentLayout != null)
+                    {
+                        DestroyLayout(this.currentLayout);
+                    }
                     throw;
                 }
             }
