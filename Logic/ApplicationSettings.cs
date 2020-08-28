@@ -72,6 +72,8 @@ namespace XiboClient
             ExcludedProperties.Add("Version");
             ExcludedProperties.Add("ClientCodeVersion");
             ExcludedProperties.Add("FfmpegAvailable");
+            ExcludedProperties.Add("XmdsCheckSchedule");
+            ExcludedProperties.Add("XmdsCheckRf");
         }
 
         /// <summary>
@@ -379,6 +381,8 @@ namespace XiboClient
         public string VideoRenderingEngine { get; set; }
         public string NewCmsAddress { get; set; }
         public string NewCmsKey { get; set; }
+        public string XmdsCheckSchedule { get; set; }
+        public string XmdsCheckRf { get; set; }
 
         private string _libraryPath;
         public string LibraryPath
