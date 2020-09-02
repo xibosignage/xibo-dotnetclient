@@ -36,6 +36,7 @@ namespace XiboClient.Rendering
         private readonly bool isFullScreenRequest = false;
         protected bool ShouldBeVisible { get; set; }
         protected bool Muted { get; set; }
+        protected bool Stretch { get; set; }
 
         /// <summary>
         /// Should we seek to a position or not
@@ -73,6 +74,9 @@ namespace XiboClient.Rendering
 
             // Full Screen?
             this.isFullScreenRequest = options.Dictionary.Get("showFullScreen", "0") == "1";
+
+            // Scale type
+            Stretch = options.Dictionary.Get("scaleType", "aspect").ToLowerInvariant() == "stretch";
         }
 
         private void MediaElement_MediaFailed(object sender, ExceptionRoutedEventArgs e)
@@ -141,6 +145,12 @@ namespace XiboClient.Rendering
                 this.mediaElement.Width = 0;
                 this.mediaElement.Height = 0;
                 this.mediaElement.Visibility = Visibility.Hidden;
+            }
+
+            // Handle stretching
+            if (Stretch)
+            {
+                this.mediaElement.Stretch = System.Windows.Media.Stretch.Fill;
             }
 
             // Events
