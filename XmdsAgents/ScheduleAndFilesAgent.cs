@@ -18,11 +18,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Force.Crc32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Xml;
 using XiboClient.Log;
@@ -89,6 +91,16 @@ namespace XiboClient.XmdsAgents
         private string _hardwareKey;
 
         /// <summary>
+        /// a CRC32 of our last requiredfiles XML received
+        /// </summary>
+        private string _lastCheckRf;
+
+        /// <summary>
+        /// a CRC32 of our last schedule XML received
+        /// </summary>
+        private string _lastCheckSchedule;
+
+        /// <summary>
         /// Required Files Agent
         /// </summary>
         public ScheduleAndFilesAgent()
@@ -114,6 +126,24 @@ namespace XiboClient.XmdsAgents
         {
             _forceStop = true;
             _manualReset.Set();
+        }
+
+        /// <summary>
+        /// Should we check the schedule this time?
+        /// </summary>
+        /// <returns></returns>
+        private bool ShouldCheckSchedule()
+        {
+            return string.IsNullOrEmpty(_lastCheckSchedule) || _lastCheckSchedule != ApplicationSettings.Default.XmdsCheckSchedule;
+        }
+
+        /// <summary>
+        /// Should we check Rf this time?
+        /// </summary>
+        /// <returns></returns>
+        private bool ShouldCheckRf()
+        {
+            return string.IsNullOrEmpty(_lastCheckRf) || _lastCheckRf != ApplicationSettings.Default.XmdsCheckRf;
         }
 
         /// <summary>
@@ -151,6 +181,10 @@ namespace XiboClient.XmdsAgents
 
                                 Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Currently Downloading Files, skipping collect"), LogType.Audit.ToString());
                             }
+                            else if (!ShouldCheckRf())
+                            {
+                                ClientInfo.Instance.RequiredFilesStatus = "Sleeping: last check was not required.";
+                            }
                             else
                             {
                                 ClientInfo.Instance.RequiredFilesStatus = "Running: Requesting connection to Xibo Server";
@@ -168,6 +202,9 @@ namespace XiboClient.XmdsAgents
                                     ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
                                     ClientInfo.Instance.RequiredFilesStatus = "Running: Data received from Xibo Server";
+
+                                    // Calculate and store a CRC32
+                                    _lastCheckRf = Crc32Algorithm.Compute(Encoding.UTF8.GetBytes(requiredFilesXml)).ToString();
 
                                     // Load the XML file RF call
                                     XmlDocument xml = new XmlDocument();
@@ -263,7 +300,7 @@ namespace XiboClient.XmdsAgents
                     }
                     else
                     {
-                        ClientInfo.Instance.RequiredFilesStatus = string.Format("Outside Download Window {0} - {1}", ApplicationSettings.Default.DownloadStartWindowTime.ToString("HH:mm", CultureInfo.InvariantCulture), ApplicationSettings.Default.DownloadEndWindowTime.ToString("HH:mm", CultureInfo.InvariantCulture));
+                        ClientInfo.Instance.RequiredFilesStatus = string.Format("Outside Download Window {0} - {1}", ApplicationSettings.Default.DownloadStartWindowTime.ToString(), ApplicationSettings.Default.DownloadEndWindowTime.ToString());
                     }
                 }
 
@@ -356,8 +393,11 @@ namespace XiboClient.XmdsAgents
         {
             try
             {
-                // If we are restarting, reset
-                _manualReset.Reset();
+                if (!ShouldCheckSchedule())
+                {
+                    ClientInfo.Instance.ScheduleStatus = "Sleeping: last check was not required.";
+                    return;
+                }
 
                 Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Thread Woken and Lock Obtained"), LogType.Audit.ToString());
 
@@ -376,7 +416,12 @@ namespace XiboClient.XmdsAgents
 
                     ClientInfo.Instance.ScheduleStatus = "Running: Data Received";
 
+                    // Calculate and store a CRC32
+                    _lastCheckSchedule = Crc32Algorithm.Compute(Encoding.UTF8.GetBytes(scheduleXml)).ToString();
+
                     // Hash of the result
+                    // TODO: we can probably remove this at some point in the future, given later CMS instances output CRC32's to indicate whether
+                    // the schedule has changed.
                     string md5NewSchedule = Hashes.MD5(scheduleXml);
                     string md5CurrentSchedule = Hashes.MD5(ScheduleManager.GetScheduleXmlString(_scheduleLocation));
 

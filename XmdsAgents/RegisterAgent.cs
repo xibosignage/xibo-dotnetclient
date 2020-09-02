@@ -250,10 +250,21 @@ namespace XiboClient.XmdsAgents
 
                         if (result.DocumentElement.Attributes["localDate"] != null)
                             result.DocumentElement.Attributes["localDate"].Value = "";
+
+                        // Check for our CRC32 cache attributes
+                        if (result.DocumentElement.Attributes["checkSchedule"] != null)
+                        {
+                            ApplicationSettings.Default.XmdsCheckSchedule = result.DocumentElement.Attributes["checkSchedule"].Value;
+                        }
+
+                        if (result.DocumentElement.Attributes["checkRf"] != null)
+                        {
+                            ApplicationSettings.Default.XmdsCheckRf = result.DocumentElement.Attributes["checkRf"].Value;
+                        }
                     }
                     catch
                     {
-                        // No date, no need to remove
+                        Debug.WriteLine("Can't read root attributes from Register XML");
                     }
 
                     string md5 = Hashes.MD5(result.OuterXml);

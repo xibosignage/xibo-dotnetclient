@@ -192,9 +192,9 @@ namespace XiboClient
             GeoCoordinateWatcher watcher = null;
             try
             {
-                watcher = new GeoCoordinateWatcher(GeoPositionAccuracy.Default)
+                watcher = new GeoCoordinateWatcher(GeoPositionAccuracy.High)
                 {
-                    MovementThreshold = 100
+                    MovementThreshold = 10
                 };
                 watcher.PositionChanged += Watcher_PositionChanged;
                 watcher.StatusChanged += Watcher_StatusChanged;
@@ -386,11 +386,22 @@ namespace XiboClient
                     || coordinate.Latitude != ClientInfo.Instance.CurrentGeoLocation.Latitude
                     || coordinate.Longitude != ClientInfo.Instance.CurrentGeoLocation.Longitude)
                 {
+                    // Have we moved more that 100 meters?
+                    double distanceTo = 1000;
+                    if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+                    {
+                        // Grab the distance from original position
+                        distanceTo = coordinate.GetDistanceTo(ClientInfo.Instance.CurrentGeoLocation);
+                    }                    
+
                     // Take the new one.
                     ClientInfo.Instance.CurrentGeoLocation = coordinate;
 
                     // Wake up the schedule manager for another pass
-                    RefreshSchedule = true;
+                    if (distanceTo >= 100)
+                    {
+                        RefreshSchedule = true;
+                    }
                 }
             }
         }
