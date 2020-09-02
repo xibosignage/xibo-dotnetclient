@@ -7,5 +7,14 @@
             // We are a normal WebIe control, opened natively
             options.Dictionary.Replace("modeid", "1");
         }
+
+        /// <summary>
+        /// Is this a native open widget
+        /// </summary>
+        /// <returns></returns>
+        protected override bool IsNativeOpen()
+        {
+            return true;
+        }
     }
 }

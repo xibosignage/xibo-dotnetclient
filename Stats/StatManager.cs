@@ -530,7 +530,7 @@ namespace XiboClient.Stats
                             writer.WriteAttributeString("layoutid", reader.GetString(4));
                             writer.WriteAttributeString("mediaid", reader.GetString(5));
                             writer.WriteAttributeString("tag", reader.GetString(6));
-                            writer.WriteAttributeString("duration", "" + Math.Floor((to - from).TotalSeconds));
+                            writer.WriteAttributeString("duration", "" + Math.Round((to - from).TotalSeconds));
                             writer.WriteAttributeString("count", "1");
 
                             // Engagements
@@ -548,7 +548,7 @@ namespace XiboClient.Stats
                                     {
                                         writer.WriteStartElement("engagement");
                                         writer.WriteAttributeString("tag", engagement.Tag);
-                                        writer.WriteAttributeString("duration", "" + Math.Floor(engagement.Duration));
+                                        writer.WriteAttributeString("duration", "" + Math.Round(engagement.Duration));
                                         writer.WriteAttributeString("count", "" + engagement.Count);
                                         writer.WriteEndElement();
                                     }
@@ -576,7 +576,7 @@ namespace XiboClient.Stats
                             DateTime toAggregate;
                             DateTime from = reader.GetDateTime(1);
                             DateTime to = reader.GetDateTime(2);
-                            int duration = Convert.ToInt32(Math.Floor((to - from).TotalSeconds));
+                            int duration = Convert.ToInt32(Math.Round((to - from).TotalSeconds));
 
                             if (aggregationLevel == "daily")
                             {
@@ -706,7 +706,7 @@ namespace XiboClient.Stats
                                 {
                                     writer.WriteStartElement("engagement");
                                     writer.WriteAttributeString("tag", engagement.Tag);
-                                    writer.WriteAttributeString("duration", "" + Math.Floor(engagement.Duration));
+                                    writer.WriteAttributeString("duration", "" + Math.Round(engagement.Duration));
                                     writer.WriteAttributeString("count", "" + engagement.Count);
                                     writer.WriteEndElement();
                                 }

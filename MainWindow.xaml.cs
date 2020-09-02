@@ -325,10 +325,15 @@ namespace XiboClient
             Debug.WriteLine(new LogMessage("MainForm_Load", "User AppData Path: " + ApplicationSettings.Default.LibraryPath), LogType.Info.ToString());
 
             // Initialise CEF
+            CefSharp.CefSharpSettings.SubprocessExitIfParentProcessClosed = true;
+
+            // Settings for Init
             CefSharp.Wpf.CefSettings settings = new CefSharp.Wpf.CefSettings();
             settings.CachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
             settings.LogFile = ApplicationSettings.Default.LibraryPath + @"\CEF\cef.log";
             settings.LogSeverity = CefSharp.LogSeverity.Fatal;
+            settings.CefCommandLineArgs["autoplay-policy"] = "no-user-gesture-required";
+
             CefSharp.Cef.Initialize(settings);
         }
 
@@ -527,7 +532,10 @@ namespace XiboClient
                     Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Prepare/Start Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
 
                     // Remove the Layout again
-                    DestroyLayout(this.currentLayout);
+                    if (this.currentLayout != null)
+                    {
+                        DestroyLayout(this.currentLayout);
+                    }
                     throw;
                 }
             }

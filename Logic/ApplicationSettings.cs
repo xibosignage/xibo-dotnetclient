@@ -50,9 +50,9 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "2 R254.1";
+        public string ClientVersion { get; } = "2 R255.3";
         public string Version { get; } = "5";
-        public int ClientCodeVersion { get; } = 254;
+        public int ClientCodeVersion { get; } = 255;
 
         private ApplicationSettings()
         {
@@ -71,6 +71,9 @@ namespace XiboClient
             ExcludedProperties.Add("ClientVersion");
             ExcludedProperties.Add("Version");
             ExcludedProperties.Add("ClientCodeVersion");
+            ExcludedProperties.Add("FfmpegAvailable");
+            ExcludedProperties.Add("XmdsCheckSchedule");
+            ExcludedProperties.Add("XmdsCheckRf");
         }
 
         /// <summary>
@@ -366,6 +369,8 @@ namespace XiboClient
 
         public bool EnableExpiredFileDeletion { get; set; }
         public bool ForceHttps { get; set; }
+        public bool UseFFmpeg { get; set; }
+        public bool UseFFmpegForHls { get; set; }
 
         public int LibraryAgentInterval { get; set; }
 
@@ -376,6 +381,8 @@ namespace XiboClient
         public string VideoRenderingEngine { get; set; }
         public string NewCmsAddress { get; set; }
         public string NewCmsKey { get; set; }
+        public string XmdsCheckSchedule { get; set; }
+        public string XmdsCheckRf { get; set; }
 
         private string _libraryPath;
         public string LibraryPath
@@ -465,7 +472,7 @@ namespace XiboClient
             }
         }
 
-        public DateTime DownloadStartWindowTime
+        public TimeSpan DownloadStartWindowTime
         {
             get
             {
@@ -473,7 +480,7 @@ namespace XiboClient
             }
         }
 
-        public DateTime DownloadEndWindowTime
+        public TimeSpan DownloadEndWindowTime
         {
             get
             {
@@ -482,14 +489,12 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// Get a locally formatted date based on the H:i string provided.
+        /// Get a TimeSpan from a H:i string
         /// </summary>
         /// <param name="hi"></param>
         /// <returns></returns>
-        private DateTime getDateFromHi(string hi)
+        private TimeSpan getDateFromHi(string hi)
         {
-            DateTime now = DateTime.Now;
-
             try
             {
                 int h;
@@ -508,12 +513,12 @@ namespace XiboClient
                     m = int.Parse(split[1]);
                 }
 
-                return new DateTime(now.Year, now.Month, now.Day, h, m, 0, DateTimeKind.Local);
+                return new TimeSpan(h, m, 0);
             }
             catch (Exception e)
             {
                 Trace.WriteLine(new LogMessage("getDateFromHi", "Unable to parse H:i, Error = " + e.Message), LogType.Info.ToString());
-                return new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Local);
+                return new TimeSpan(0, 0, 0);
             }
         }
 
@@ -526,14 +531,22 @@ namespace XiboClient
             {
                 try
                 {
+                    // Identical strings mean we're in window always
                     if (DownloadStartWindow == DownloadEndWindow)
+                    {
                         return true;
+                    }
 
-                    DateTime startWindow = DownloadStartWindowTime;
-                    if (DownloadEndWindowTime < startWindow)
-                        startWindow = DownloadStartWindowTime.AddDays(-1);
+                    TimeSpan now = DateTime.Now.TimeOfDay;
 
-                    return (startWindow <= DateTime.Now && DownloadEndWindowTime >= DateTime.Now);
+                    // Start is before end, normal comparison
+                    if (DownloadStartWindowTime < DownloadEndWindowTime)
+                    {
+                        return DownloadStartWindowTime <= now && now <= DownloadEndWindowTime;
+                    }
+
+                    // Start is after end, reverse comparison
+                    return !(DownloadEndWindowTime < now && now < DownloadStartWindowTime);
                 }
                 catch
                 {
