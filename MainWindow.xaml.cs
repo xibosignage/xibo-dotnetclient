@@ -671,7 +671,7 @@ namespace XiboClient
             Debug.WriteLine("StartLayout: Started Layout", "MainWindow");
 
             // Update client info
-            ClientInfo.Instance.CurrentLayoutId = layout.ScheduleItem.id + "";
+            ClientInfo.Instance.CurrentLayoutId = layout.ScheduleItem.id;
             ClientInfo.Instance.CurrentlyPlaying = layout.ScheduleItem.layoutFile;
             ClientInfo.Instance.ControlCount = this.Scene.Children.Count;
 
