@@ -146,22 +146,6 @@ namespace XiboClient
         /// </summary>
         public List<ScheduleItem> CurrentInterruptSchedule { get; private set; }
 
-        /// <summary>
-        /// Get or Set the current layout id
-        /// </summary>
-        public int CurrentLayoutId
-        {
-            get
-            {
-                return _currenctLayoutId;
-            }
-            set
-            {
-                lock (_locker)
-                    _currenctLayoutId = value;
-            }
-        }
-
         #endregion
 
         /// <summary>
@@ -620,7 +604,7 @@ namespace XiboClient
                 // If we haven't already assessed this layout before, then check that it is valid
                 if (!validLayoutIds.Contains(layout.id))
                 {
-                    if (!ApplicationSettings.Default.ExpireModifiedLayouts && layout.id == CurrentLayoutId)
+                    if (!ApplicationSettings.Default.ExpireModifiedLayouts && layout.id == ClientInfo.Instance.CurrentLayoutId)
                     {
                         Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Skipping validity test for current layout."), LogType.Audit.ToString());
                     }
