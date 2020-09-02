@@ -62,7 +62,7 @@ namespace XiboClient.Log
         /// <summary>
         /// Current Layout Id
         /// </summary>
-        public string CurrentLayoutId;
+        public int CurrentLayoutId;
 
         /// <summary>
         /// XMR Status
