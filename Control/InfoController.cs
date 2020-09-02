@@ -37,16 +37,25 @@ namespace XiboClient.Control
             Response.ContentType = MimeType.Json;
             using (var writer = HttpContext.OpenResponseText(Encoding.UTF8, true))
             {
-                writer.Write(
-                    JObject.FromObject(new
-                    {
-                        hardwareKey = ApplicationSettings.Default.HardwareKey.ToString(),
-                        displayName = ApplicationSettings.Default.DisplayName,
-                        timeZone = ApplicationSettings.Default.DisplayTimeZone,
-                        latitude = ClientInfo.Instance.CurrentGeoLocation.Latitude,
-                        longitude = ClientInfo.Instance.CurrentGeoLocation.Longitude
-                    })
-                .ToString());
+                JObject jObject = JObject.FromObject( new
+                {
+                    hardwareKey = ApplicationSettings.Default.HardwareKey.ToString(),
+                    displayName = ApplicationSettings.Default.DisplayName,
+                    timeZone = ApplicationSettings.Default.DisplayTimeZone
+                });
+
+                if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+                {
+                    jObject.Add("latitude", ClientInfo.Instance.CurrentGeoLocation.Latitude);
+                    jObject.Add("longitude", ClientInfo.Instance.CurrentGeoLocation.Longitude);
+                }
+                else
+                {
+                    jObject.Add("latitude", null);
+                    jObject.Add("longitude", null);
+                }
+
+                writer.Write(jObject.ToString());
             }
         }
     }
