@@ -76,19 +76,24 @@ namespace XiboClient.Rendering
             // Check that the file path exists
             if (!File.Exists(this.filePath))
             {
-                Trace.WriteLine(new LogMessage("Image - Dispose", "Cannot Create image object. Invalid Filepath."), LogType.Error.ToString());
-                return;
+                Trace.WriteLine(new LogMessage("Image", "RenderMedia: Cannot Create image object. Invalid Filepath."), LogType.Error.ToString());
+                throw new FileNotFoundException();
             }
 
-            // Create a URI
-            Uri filePath = new Uri(this.filePath);
+            // Create a bitmap from our image.
+            BitmapImage bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.UriSource = new Uri(this.filePath);
+            bitmap.DecodePixelWidth = (int)Width;
+            bitmap.EndInit();
 
+            // Set the bitmap as the source of our image
             this.image = new System.Windows.Controls.Image()
             {
                 Name = "Img" + this.Id,
+                Source = bitmap
             };
-
-            this.image.Source = new BitmapImage(filePath);
 
             // Handle the different scale types supported
             if (this.scaleType == "stretch")
@@ -106,6 +111,7 @@ namespace XiboClient.Rendering
 
             this.MediaScene.Children.Add(this.image);
 
+            // Call base render to set off timers, etc.
             base.RenderMedia(position);
         }
     }

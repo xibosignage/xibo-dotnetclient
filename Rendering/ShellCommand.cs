@@ -194,7 +194,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Stop
         /// </summary>
-        public override void Stop(bool regionStopped)
+        public override void Stopped()
         {
             try
             {
@@ -209,7 +209,7 @@ namespace XiboClient.Rendering
                 Debug.WriteLine(new LogMessage("Unable to terminate command", "Dispose"));
             }
 
-            base.Stop(regionStopped);
+            base.Stopped();
         }
     }
 }

@@ -657,6 +657,10 @@ namespace XiboClient.Rendering
                     break;
             }
 
+            // Set the media width/height
+            media.Width = Width;
+            media.Height = Height;
+
             // Sets up the timer for this media, if it hasn't already been set
             if (media.Duration == 0)
             {
@@ -774,6 +778,7 @@ namespace XiboClient.Rendering
         private void Media_MediaStoppedEvent(Media media)
         {
             media.MediaStoppedEvent -= Media_MediaStoppedEvent;
+            media.Stopped();
 
             // Remove the controls
             RegionScene.Children.Remove(media);
