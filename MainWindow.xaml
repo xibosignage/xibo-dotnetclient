@@ -12,6 +12,7 @@
         ResizeMode="NoResize" 
         Background="Black"
         WindowStartupLocation="Manual"
+        RenderOptions.EdgeMode="Aliased"
         >
     <Grid>
         <!--layout grid-->
