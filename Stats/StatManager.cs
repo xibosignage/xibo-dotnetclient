@@ -185,12 +185,12 @@ namespace XiboClient.Stats
         /// </summary>
         /// <param name="scheduleId"></param>
         /// <param name="layoutId"></param>
-        public void LayoutStart(int scheduleId, int layoutId)
+        public void LayoutStart(Guid uniqueId, int scheduleId, int layoutId)
         {
             lock (_locker)
             {
                 // New record, which we put in the dictionary
-                string key = scheduleId + "-" + layoutId;
+                string key = uniqueId + "-" + scheduleId + "-" + layoutId;
                 Stat stat = new Stat
                 {
                     Type = StatType.Layout,
@@ -210,14 +210,14 @@ namespace XiboClient.Stats
         /// <param name="layoutId"></param>
         /// <param name="statEnabled"></param>
         /// <returns>Duration</returns>
-        public double LayoutStop(int scheduleId, int layoutId, bool statEnabled)
+        public double LayoutStop(Guid uniqueId, int scheduleId, int layoutId, bool statEnabled)
         {
             double duration = 0;
 
             lock (_locker)
             {
                 // Record we expect to already be open in the Dictionary
-                string key = scheduleId + "-" + layoutId;
+                string key = uniqueId + "-" + scheduleId + "-" + layoutId;
 
                 if (this.proofOfPlay.TryGetValue(key, out Stat stat))
                 {

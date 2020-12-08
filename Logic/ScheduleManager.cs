@@ -80,11 +80,6 @@ namespace XiboClient
         private DateTime _lastScreenShotDate;
 
         /// <summary>
-        /// The currently playing layout Id
-        /// </summary>
-        private int _currenctLayoutId;
-
-        /// <summary>
         /// Creates a new schedule Manager
         /// </summary>
         /// <param name="scheduleLocation"></param>
@@ -97,6 +92,7 @@ namespace XiboClient
             CurrentSchedule = new List<ScheduleItem>();
             _layoutChangeActions = new List<LayoutChangePlayerAction>();
             _commands = new List<ScheduleCommand>();
+            CurrentDefaultLayout = ScheduleItem.Splash();
 
             // Overlay schedules
             CurrentOverlaySchedule = new List<ScheduleItem>();
@@ -129,6 +125,11 @@ namespace XiboClient
                     _refreshSchedule = value;
             }
         }
+
+        /// <summary>
+        /// The current default layout
+        /// </summary>
+        public ScheduleItem CurrentDefaultLayout { get; private set; }
 
         /// <summary>
         /// The current layout schedule
@@ -712,6 +713,12 @@ namespace XiboClient
             if (newSchedule.Count == 0 && !isForInterrupt)
                 newSchedule.Add(defaultLayout);
 
+            // Set the current default layout
+            if (!isForInterrupt)
+            {
+                CurrentDefaultLayout = defaultLayout;
+            }
+
             return newSchedule;
         }
 
@@ -1073,13 +1080,8 @@ namespace XiboClient
             // Remove the existing schedule
             _layoutSchedule.Clear();
 
-            // Schedule up the default
-            ScheduleItem temp = new ScheduleItem();
-            temp.layoutFile = ApplicationSettings.Default.LibraryPath + @"\Default.xml";
-            temp.id = 0;
-            temp.scheduleid = 0;
-
-            _layoutSchedule.Add(temp);
+            // Add the splash
+            _layoutSchedule.Add(ScheduleItem.Splash());
         }
 
         /// <summary>
