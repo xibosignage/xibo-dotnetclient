@@ -176,7 +176,7 @@ namespace XiboClient
                     ClientInfo.Instance.UpdateStatusMarkerFile();
 
                     // Start watchdog
-                    WatchDogManager.Start();
+                    XiboClient.Control.WatchDogManager.Start();
                 }
                 catch (Exception e)
                 {

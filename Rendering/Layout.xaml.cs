@@ -257,7 +257,7 @@ namespace XiboClient.Rendering
                     LogType.Info.ToString());
 
                 // Add this to our unsafe list.
-                CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Layout, _layoutId, ""+_layoutId, "No Regions or Widgets", 3600);
+                CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Layout, _layoutId, ""+_layoutId, "No Regions or Widgets");
 
                 throw new LayoutInvalidException("Layout without any Regions or Widgets");
             }

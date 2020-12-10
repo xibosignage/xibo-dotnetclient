@@ -329,9 +329,26 @@ namespace XiboClient
         /// <param name="layoutId"></param>
         /// <param name="id"></param>
         /// <param name="reason"></param>
+        public void AddUnsafeItem(UnsafeItemType type, int layoutId, string id, string reason)
+        {
+            AddUnsafeItem(type, layoutId, id, reason, 86400);
+        }
+
+        /// <summary>
+        /// Add an unsafe item to the list
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="layoutId"></param>
+        /// <param name="id"></param>
+        /// <param name="reason"></param>
         /// <param name="ttl"></param>
         public void AddUnsafeItem(UnsafeItemType type, int layoutId, string id, string reason, int ttl)
         {
+            if (ttl == 0)
+            {
+                ttl = 86400;
+            }
+
             try
             {
                 UnsafeItem item = _unsafeItems

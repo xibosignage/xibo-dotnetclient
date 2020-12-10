@@ -351,7 +351,7 @@ namespace XiboClient
         {
             GeoCoordinate coordinate = e.Position.Location;
 
-            if (coordinate.IsUnknown)
+            if (coordinate.IsUnknown || (coordinate.Latitude == 0 && coordinate.Longitude == 0))
             {
                 Trace.WriteLine(new LogMessage("ScheduleManager", "Watcher_PositionChanged: Position Unknown"), LogType.Audit.ToString());
             }
