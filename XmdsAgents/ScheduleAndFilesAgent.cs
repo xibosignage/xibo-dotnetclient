@@ -381,6 +381,9 @@ namespace XiboClient.XmdsAgents
 
             if (rf.FileType == "layout")
             {
+                // Reset the safe list for this file.
+                CacheManager.Instance.RemoveUnsafeLayout(rf.Id);
+
                 // Raise an event to say it is completed
                 OnComplete?.Invoke(rf.SaveAs);
             }

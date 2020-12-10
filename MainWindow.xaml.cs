@@ -845,6 +845,10 @@ namespace XiboClient
             {
                 throw new ShowSplashScreenException();
             }
+            else if (CacheManager.Instance.IsUnsafeLayout(scheduleItem.id))
+            {
+                throw new LayoutInvalidException("Unsafe Layout");
+            }
             else
             {
                 try

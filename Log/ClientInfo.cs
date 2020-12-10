@@ -70,6 +70,11 @@ namespace XiboClient.Log
         public string XmrSubscriberStatus;
 
         /// <summary>
+        /// Unsafe list
+        /// </summary>
+        public string UnsafeList;
+
+        /// <summary>
         /// Control Count
         /// </summary>
         public int ControlCount;
@@ -132,6 +137,15 @@ namespace XiboClient.Log
         public void UpdateRequiredFiles(string requiredFilesString)
         {
             RequiredFilesList = requiredFilesString;
+        }
+
+        /// <summary>
+        /// Update the unsafe files list
+        /// </summary>
+        /// <param name="unsafeList"></param>
+        public void UpdateUnsafeList(string unsafeList)
+        {
+            UnsafeList = unsafeList;
         }
 
         /// <summary>

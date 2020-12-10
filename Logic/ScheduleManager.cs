@@ -64,6 +64,7 @@ namespace XiboClient
         private List<ScheduleItem> _layoutSchedule;
         private List<ScheduleCommand> _commands;
         private List<ScheduleItem> _overlaySchedule;
+        private List<ScheduleItem> _invalidSchedule;
         private InterruptState _interruptState;
 
         public delegate void OnInterruptNowDelegate();
@@ -397,6 +398,16 @@ namespace XiboClient
         /// <returns></returns>
         private bool IsNewScheduleAvailable()
         {
+            // Reassess validity
+            if (_invalidSchedule == null)
+            {
+                _invalidSchedule = new List<ScheduleItem>();
+            }
+            else
+            {
+                _invalidSchedule.Clear();
+            }
+
             // Remove completed change actions
             removeLayoutChangeActionIfComplete();
 
@@ -614,9 +625,10 @@ namespace XiboClient
                         // Is the layout valid in the cachemanager?
                         try
                         {
-                            if (!CacheManager.Instance.IsValidPath(layout.id + ".xlf"))
+                            if (!CacheManager.Instance.IsValidPath(layout.id + ".xlf") || CacheManager.Instance.IsUnsafeLayout(layout.id))
                             {
                                 invalidLayouts.Add(layout.id);
+                                _invalidSchedule.Add(layout);
                                 Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());
                                 continue;
                             }
@@ -625,6 +637,7 @@ namespace XiboClient
                         {
                             // Ignore this layout.. raise an error?
                             invalidLayouts.Add(layout.id);
+                            _invalidSchedule.Add(layout);
                             Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Unable to determine if layout is valid or not"), LogType.Error.ToString());
                             continue;
                         }
@@ -636,6 +649,7 @@ namespace XiboClient
                             if (!string.IsNullOrEmpty(dependent) && !CacheManager.Instance.IsValidPath(dependent))
                             {
                                 invalidLayouts.Add(layout.id);
+                                _invalidSchedule.Add(layout);
                                 Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewSchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
 
                                 validDependents = false;
@@ -756,9 +770,10 @@ namespace XiboClient
                     // Is the layout valid in the cachemanager?
                     try
                     {
-                        if (!CacheManager.Instance.IsValidPath(layout.id + ".xlf"))
+                        if (!CacheManager.Instance.IsValidPath(layout.id + ".xlf") || CacheManager.Instance.IsUnsafeLayout(layout.id))
                         {
                             invalidLayouts.Add(layout.id);
+                            _invalidSchedule.Add(layout);
                             Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewOverlaySchedule", "Layout invalid: " + layout.id), LogType.Info.ToString());
                             continue;
                         }
@@ -767,6 +782,7 @@ namespace XiboClient
                     {
                         // Ignore this layout.. raise an error?
                         invalidLayouts.Add(layout.id);
+                        _invalidSchedule.Add(layout);
                         Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewOverlaySchedule", "Unable to determine if layout is valid or not"), LogType.Error.ToString());
                         continue;
                     }
@@ -777,6 +793,7 @@ namespace XiboClient
                         if (!CacheManager.Instance.IsValidPath(dependent))
                         {
                             invalidLayouts.Add(layout.id);
+                            _invalidSchedule.Add(layout);
                             Trace.WriteLine(new LogMessage("ScheduleManager - LoadNewOverlaySchedule", "Layout has invalid dependent: " + dependent), LogType.Info.ToString());
                             continue;
                         }
@@ -1190,6 +1207,11 @@ namespace XiboClient
             foreach (ScheduleItem layoutSchedule in CurrentInterruptSchedule)
             {
                 layoutsInSchedule += "Interrupt LayoutId: " + layoutSchedule.id + ", shareOfVoice: " + layoutSchedule.ShareOfVoice + ". Runs from " + layoutSchedule.FromDt.ToString() + Environment.NewLine;
+            }
+
+            foreach (ScheduleItem layoutSchedule in _invalidSchedule)
+            {
+                layoutsInSchedule += "Invalid LayoutId: " + layoutSchedule.id + ". Should run from " + layoutSchedule.FromDt.ToString() + Environment.NewLine;
             }
 
             return layoutsInSchedule;

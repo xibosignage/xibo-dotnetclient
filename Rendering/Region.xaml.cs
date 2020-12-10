@@ -145,6 +145,7 @@ namespace XiboClient.Rendering
                 if (!SetNextMediaNodeInOptions())
                 {
                     // For some reason we cannot set a media node... so we need this region to become invalid
+                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Region, options.layoutId, options.regionId, "Unable to set any region media nodes.", 60);
                     throw new InvalidOperationException("Unable to set any region media nodes.");
                 }
 
@@ -327,7 +328,7 @@ namespace XiboClient.Rendering
                 }
 
                 // Check isnt blacklisted
-                if (BlackList.Instance.BlackListed(this.options.mediaid))
+                if (CacheManager.Instance.IsUnsafeMedia(this.options.mediaid))
                 {
                     Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", string.Format("MediaID [{0}] has been blacklisted.", this.options.mediaid)), LogType.Error.ToString());
 
@@ -363,7 +364,7 @@ namespace XiboClient.Rendering
                 if (this.options.type == "video" || this.options.type == "flash" || this.options.type == "image" || this.options.type == "powerpoint" || this.options.type == "audio" || this.options.type == "htmlpackage")
                 {
                     // Use the cache manager to determine if the file is valid
-                    validNode = CacheManager.Instance.IsValidPath(this.options.uri);
+                    validNode = CacheManager.Instance.IsValidPath(this.options.uri) && !CacheManager.Instance.IsUnsafeMedia(this.options.uri);
                 }
 
                 // If we have a valid node, break out of the loop

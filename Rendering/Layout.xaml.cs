@@ -256,6 +256,9 @@ namespace XiboClient.Rendering
                     string.Format("A layout with {0} regions and {1} media has been detected.", listRegions.Count.ToString(), listMedia.Count.ToString())),
                     LogType.Info.ToString());
 
+                // Add this to our unsafe list.
+                CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Layout, _layoutId, ""+_layoutId, "No Regions or Widgets", 3600);
+
                 throw new LayoutInvalidException("Layout without any Regions or Widgets");
             }
 

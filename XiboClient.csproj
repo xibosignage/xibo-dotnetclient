@@ -122,7 +122,6 @@
       <DependentUpon>InfoScreen.xaml</DependentUpon>
     </Compile>
     <Compile Include="Logic\ApplicationSettings.cs" />
-    <Compile Include="Logic\BlackList.cs" />
     <Compile Include="Logic\CacheManager.cs" />
     <Compile Include="Logic\HardwareKey.cs" />
     <Compile Include="Logic\Hashes.cs" />
