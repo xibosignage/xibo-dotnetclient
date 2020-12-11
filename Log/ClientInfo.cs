@@ -239,5 +239,41 @@ namespace XiboClient.Log
                 Trace.WriteLine(new LogMessage("ClientInfo - notifyStatusToXmds", "Failed to notify status to XMDS. e = " + e.Message), LogType.Error.ToString());
             }
         }
+
+        /// <summary>
+        /// Get the drive info for the current drive
+        /// </summary>
+        /// <returns></returns>
+        public DriveInfo GetDriveInfo()
+        {
+            // Use Drive Info
+            foreach (DriveInfo drive in DriveInfo.GetDrives())
+            {
+                if (drive.IsReady && ApplicationSettings.Default.LibraryPath.Contains(drive.RootDirectory.FullName))
+                {
+                    return drive;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Get Drive Free Space
+        /// </summary>
+        /// <returns></returns>
+        public long GetDriveFreeSpace()
+        {
+            try
+            {
+                DriveInfo driveInfo = ClientInfo.Instance.GetDriveInfo();
+                return (driveInfo != null) ? driveInfo.TotalFreeSpace : -1;
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("ClientInfo", "GetDriveFreeSpace: unable to get drive, e: " + e.Message), LogType.Audit.ToString());
+                return -1;
+            }
+        }
     }
 }

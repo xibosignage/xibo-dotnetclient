@@ -337,16 +337,13 @@ namespace XiboClient.XmdsAgents
                 try
                 {
                     // Use Drive Info
-                    foreach (DriveInfo drive in DriveInfo.GetDrives())
+                    DriveInfo info = ClientInfo.Instance.GetDriveInfo();
+                    if (info != null)
                     {
-                        if (drive.IsReady && ApplicationSettings.Default.LibraryPath.Contains(drive.RootDirectory.FullName))
-                        {
-                            writer.WritePropertyName("availableSpace");
-                            writer.WriteValue(drive.TotalFreeSpace);
-                            writer.WritePropertyName("totalSpace");
-                            writer.WriteValue(drive.TotalSize);
-                            break;
-                        }
+                        writer.WritePropertyName("availableSpace");
+                        writer.WriteValue(info.TotalFreeSpace);
+                        writer.WritePropertyName("totalSpace");
+                        writer.WriteValue(info.TotalSize);
                     }
                 }
                 catch
