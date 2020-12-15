@@ -1356,9 +1356,6 @@ namespace XiboClient
         {
             if (this.CurrentInterruptSchedule.Count <= 0)
             {
-                // Drop all current hashes
-                this._interruptState.InterruptTracking.Clear();
-
                 // Fire an end event
                 OnInterruptEnd?.Invoke();
             }
@@ -1387,8 +1384,10 @@ namespace XiboClient
 
                 // How far through the hour are we?
                 int secondsIntoHour = (int)(DateTime.Now - TopOfHour()).TotalSeconds;
+                int secondsIntoPeriod = (int)(DateTime.Now - TopOfPeriod()).TotalSeconds;
 
                 // Assess each Layout and update the item with current understanding of seconds played and rank
+                bool hasNotFulfilledSchedule = false;
                 foreach (ScheduleItem item in CurrentInterruptSchedule)
                 {
                     try
@@ -1405,7 +1404,14 @@ namespace XiboClient
                         }
                         else
                         {
+                            item.IsFulfilled = false;
                             item.SecondsPlayed = 0;
+                        }
+
+                        // Set our watermark for whether we have a not-fulfilled schedule
+                        if (!item.IsFulfilled)
+                        {
+                            hasNotFulfilledSchedule = true;
                         }
 
                         Debug.WriteLine("InterruptAssessAndUpdate: Updating scheduleId " + item.scheduleid + " with seconds played " + item.SecondsPlayed, "ScheduleManager");
@@ -1422,24 +1428,32 @@ namespace XiboClient
                 CurrentInterruptSchedule.Reverse();
 
                 // Do we need to interrupt at this moment, or not
-                double percentageThroughHour = secondsIntoHour / 3600.0;
-                int secondsShouldHaveInterrupted = Convert.ToInt32(Math.Floor(this._interruptState.TargetHourlyInterruption * percentageThroughHour));
+                double percentageThroughPeriod = secondsIntoPeriod / 900.0;
+                int secondsShouldHaveInterrupted = Convert.ToInt32(Math.Floor(this._interruptState.TargetHourlyInterruption / 3600.0 * 900.0 * percentageThroughPeriod));
                 int secondsSinceLastInterrupt = Convert.ToInt32((DateTime.Now - this._interruptState.LastInterruption).TotalSeconds);
 
-                Debug.WriteLine("InterruptAssessAndUpdate: Target = " + this._interruptState.TargetHourlyInterruption
+                Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptAssessAndUpdate: Target = " + this._interruptState.TargetHourlyInterruption
                     + ", Required = " + secondsShouldHaveInterrupted
-                    + ", Interrupted = " + this._interruptState.SecondsInterrutedThisHour
+                    + ", Interrupted = " + this._interruptState.SecondsInterrutedThisPeriod
                     + ", Last Interrupt = " + secondsSinceLastInterrupt
-                    , "ScheduleManager");
+                    + ", Period Percent = " + percentageThroughPeriod)
+                    , LogType.Audit.ToString());
 
                 // Interrupt if the seconds we've interrupted this hour so far is less than the seconds we
                 // should have interrupted.
-                if (Math.Floor(this._interruptState.SecondsInterrutedThisHour) < secondsShouldHaveInterrupted)
+                if (!hasNotFulfilledSchedule)
                 {
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptAssessAndUpdate: No not-fulfilled schedules, Pause Pending."), LogType.Audit.ToString());
+                    OnInterruptPausePending?.Invoke();
+                }
+                else if (Math.Floor(this._interruptState.SecondsInterrutedThisPeriod) < secondsShouldHaveInterrupted)
+                {
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptAssessAndUpdate: Interrupting."), LogType.Audit.ToString());
                     OnInterruptNow?.Invoke();
                 }
                 else
                 {
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptAssessAndUpdate: Pause Pending."), LogType.Audit.ToString());
                     OnInterruptPausePending?.Invoke();
                 }
             }
@@ -1450,11 +1464,15 @@ namespace XiboClient
         /// </summary>
         private void InterruptResetSecondsIfNecessary()
         {
+            if (this._interruptState.LastPlaytimeUpdate < TopOfPeriod())
+            {
+                Debug.WriteLine("InterruptResetSecondsIfNecessary: LastPlaytimeUpdate in prior period, resetting play time.", "ScheduleManager");
+                this._interruptState.SecondsInterrutedThisPeriod = 0;
+            }
+
             if (this._interruptState.LastPlaytimeUpdate < TopOfHour())
             {
-                Debug.WriteLine("InterruptResetSecondsIfNecessary: LastPlaytimeUpdate in prior hour, resetting play time.", "ScheduleManager");
-
-                this._interruptState.SecondsInterrutedThisHour = 0;
+                Debug.WriteLine("InterruptResetSecondsIfNecessary: LastPlaytimeUpdate in prior hour, resetting hashes.", "ScheduleManager");
                 this._interruptState.InterruptTracking.Clear();
             }
         }
@@ -1481,7 +1499,7 @@ namespace XiboClient
             InterruptResetSecondsIfNecessary();
 
             // Add to our overall interrupted seconds
-            this._interruptState.SecondsInterrutedThisHour += seconds;
+            this._interruptState.SecondsInterrutedThisPeriod += seconds;
 
             // Record the last play time as not
             this._interruptState.LastPlaytimeUpdate = DateTime.Now;
@@ -1562,6 +1580,32 @@ namespace XiboClient
         private DateTime TopOfHour()
         {
             return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 0, 0);
+        }
+
+        /// <summary>
+        /// Get the top of this 15 minute period
+        /// </summary>
+        /// <returns></returns>
+        private DateTime TopOfPeriod()
+        {
+            int currentMinute = DateTime.Now.Minute;
+
+            if (currentMinute < 15)
+            {
+                return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 0, 0);
+            }
+            else if (currentMinute < 30)
+            {
+                return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 15, 0);
+            }
+            else if (currentMinute < 45)
+            {
+                return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 30, 0);
+            }
+            else
+            {
+                return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 45, 0);
+            }
         }
 
         #endregion
