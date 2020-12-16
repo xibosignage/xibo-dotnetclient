@@ -84,9 +84,12 @@ namespace XiboClient
             labelControlCount.Content = ClientInfo.Instance.ControlCount;
 
             textBoxSchedule.Text = ClientInfo.Instance.ScheduleManagerStatus;
-            textBoxRequiredFiles.Text = ClientInfo.Instance.RequiredFilesList;
+            textBoxRequiredFiles.Text = ClientInfo.Instance.UnsafeList
+                + Environment.NewLine 
+                + ClientInfo.Instance.RequiredFilesList;
 
             // Log grid
+            logDataGridView.Items.Clear();
             foreach (LogMessage message in ClientInfo.Instance.LogMessages.Read())
             {
                 logDataGridView.Items.Add(message);

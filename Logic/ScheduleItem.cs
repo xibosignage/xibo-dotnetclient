@@ -78,11 +78,20 @@ namespace XiboClient.Logic
             return string.Format("[{0}] From {1} to {2} with priority {3}. {4} dependents.", id, FromDt.ToString(), ToDt.ToString(), Priority, Dependents.Count);
         }
 
+        /// <summary>
+        /// Hash Code
+        /// </summary>
+        /// <returns></returns>
         public override int GetHashCode()
         {
             return id + scheduleid;
         }
 
+        /// <summary>
+        /// Equals
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public override bool Equals(object obj)
         {
             if (obj == null || GetType() != obj.GetType())
@@ -96,6 +105,28 @@ namespace XiboClient.Logic
                 ToDt.Ticks == compare.ToDt.Ticks &&
                 actionId == compare.actionId
                 ;
+        }
+
+        /// <summary>
+        /// Splash Screen Schedule Item
+        /// </summary>
+        /// <returns></returns>
+        public static ScheduleItem Splash()
+        {
+            return new ScheduleItem
+            {
+                id = 0,
+                scheduleid = 0
+            };
+        }
+
+        /// <summary>
+        /// Is this the splash screen?
+        /// </summary>
+        /// <returns>true if splash</returns>
+        public bool IsSplash()
+        {
+            return this.id == 0 && this.scheduleid == 0;
         }
 
         /// <summary>

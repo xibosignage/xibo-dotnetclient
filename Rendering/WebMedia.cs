@@ -110,9 +110,10 @@ namespace XiboClient.Rendering
             string pathToMediaFile = Path.Combine(ApplicationSettings.Default.LibraryPath, _options.uri);
             string pathToPackageFolder = Path.Combine(ApplicationSettings.Default.LibraryPath, "package_" + _options.FileId);
             string pathToStatusFile = Path.Combine(pathToPackageFolder, "_updated");
+            string nominatedFile = Uri.UnescapeDataString(_options.Dictionary.Get("nominatedFile", "index.html")).Replace('+', ' ');
 
             // Configure the file path to indicate which file should be opened by the browser
-            _filePath = ApplicationSettings.Default.EmbeddedServerAddress + "package_" + _options.FileId + "/" + _options.Dictionary.Get("nominatedFile", "index.html");
+            _filePath = ApplicationSettings.Default.EmbeddedServerAddress + "package_" + _options.FileId + "/" + nominatedFile;
 
             // Check to see if our package has been extracted already
             // if not, then extract it

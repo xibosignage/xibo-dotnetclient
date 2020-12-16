@@ -123,13 +123,13 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Stop
         /// </summary>
-        public override void Stop(bool regionStopped)
+        public override void Stopped()
         {
             HtmlUpdatedEvent -= WebEdge_HtmlUpdatedEvent;
             this.webView.NavigationCompleted -= WebView_NavigationCompleted;
             this.webView.Dispose();
 
-            base.Stop(regionStopped);
+            base.Stopped();
         }
 
         /// <summary>
