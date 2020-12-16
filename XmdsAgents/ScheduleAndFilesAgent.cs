@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -218,12 +219,30 @@ namespace XiboClient.XmdsAgents
                                     // TODO: Track these threads so that we can abort them if the application closes
                                     List<Thread> threadsToStart = new List<Thread>();
 
+                                    // Track available disk space.
+                                    long freeSpace = ClientInfo.Instance.GetDriveFreeSpace();
+
                                     // Required files now contains a list of files to download (this will be updated by the various worker threads)
                                     foreach (RequiredFile fileToDownload in _requiredFiles.RequiredFileList)
                                     {
                                         // Skip downloaded files
                                         if (fileToDownload.Complete)
+                                        {
                                             continue;
+                                        }
+
+                                        // Can we fit the file on the drive?
+                                        if (freeSpace != -1)
+                                        {
+                                            if (fileToDownload.Size > freeSpace)
+                                            {
+                                                Trace.WriteLine(new LogMessage("RequiredFilesAgent", "Run: Not enough free space on disk"), LogType.Error.ToString());
+                                                continue;
+                                            }
+
+                                            // Decrement this file from the free space
+                                            freeSpace -= (long)fileToDownload.Size;
+                                        }
 
                                         // Spawn a thread to download this file.
                                         FileAgent fileAgent = new FileAgent();
@@ -278,7 +297,7 @@ namespace XiboClient.XmdsAgents
                             retryAfterSeconds = webEx.Response.Headers["Retry-After"] != null ? int.Parse(webEx.Response.Headers["Retry-After"]) : 120;
 
                             // Log it.
-                            Trace.WriteLine(new LogMessage("LogAgent", "Run: 429 received, waiting for " + retryAfterSeconds + " seconds."), LogType.Info.ToString());
+                            Trace.WriteLine(new LogMessage("RequiredFilesAgent", "Run: 429 received, waiting for " + retryAfterSeconds + " seconds."), LogType.Info.ToString());
                         }
                         catch (WebException webEx)
                         {
@@ -381,6 +400,9 @@ namespace XiboClient.XmdsAgents
 
             if (rf.FileType == "layout")
             {
+                // Reset the safe list for this file.
+                CacheManager.Instance.RemoveUnsafeLayout(rf.Id);
+
                 // Raise an event to say it is completed
                 OnComplete?.Invoke(rf.SaveAs);
             }

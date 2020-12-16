@@ -29,6 +29,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml;
+using XiboClient.Error;
 using XiboClient.Logic;
 using XiboClient.Stats;
 
@@ -74,6 +75,7 @@ namespace XiboClient.Rendering
         private bool isOverlay;
         private bool isInterrupt;
 
+        public Guid UniqueId { get; private set; }
         public int ScheduleId { get; private set; }
 
         /// <summary>
@@ -101,6 +103,9 @@ namespace XiboClient.Rendering
 
             // Create a new empty collection of Regions
             _regions = new List<Region>();
+
+            // Generate a new GUID
+            UniqueId = Guid.NewGuid();
         }
 
         /// <summary>
@@ -251,25 +256,10 @@ namespace XiboClient.Rendering
                     string.Format("A layout with {0} regions and {1} media has been detected.", listRegions.Count.ToString(), listMedia.Count.ToString())),
                     LogType.Info.ToString());
 
-                if (Schedule.ActiveLayouts == 1)
-                {
-                    Trace.WriteLine(new LogMessage("PrepareLayout", "Only 1 layout scheduled and it has nothing to show."), LogType.Info.ToString());
+                // Add this to our unsafe list.
+                CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Layout, _layoutId, ""+_layoutId, "No Regions or Widgets");
 
-                    throw new Exception("Only 1 layout schduled and it has nothing to show");
-                }
-                else
-                {
-                    Trace.WriteLine(new LogMessage("PrepareLayout",
-                        string.Format(string.Format("An empty layout detected, will show for {0} seconds.", ApplicationSettings.Default.EmptyLayoutDuration.ToString()))), LogType.Info.ToString());
-
-                    // Put a small dummy region in place, with a small dummy media node - which expires in 10 seconds.
-                    XmlDocument dummyXml = new XmlDocument();
-                    dummyXml.LoadXml(string.Format("<region id='blah' width='1' height='1' top='1' left='1'><media id='blah' type='text' duration='{0}'><raw><text></text></raw></media></region>",
-                        ApplicationSettings.Default.EmptyLayoutDuration.ToString()));
-
-                    // Replace the list of regions (they mean nothing as they are empty)
-                    listRegions = dummyXml.SelectNodes("/region");
-                }
+                throw new LayoutInvalidException("Layout without any Regions or Widgets");
             }
 
             // Parse the regions
@@ -362,7 +352,7 @@ namespace XiboClient.Rendering
         public void Start()
         {
             // Stat Start
-            StatManager.Instance.LayoutStart(ScheduleId, _layoutId);
+            StatManager.Instance.LayoutStart(UniqueId, ScheduleId, _layoutId);
 
             // Start all regions
             foreach (Region region in _regions)
@@ -391,7 +381,7 @@ namespace XiboClient.Rendering
             IsPaused = true;
 
             // Close and dispatch any stat records
-            double duration = StatManager.Instance.LayoutStop(ScheduleId, _layoutId, this.isStatEnabled);
+            double duration = StatManager.Instance.LayoutStop(UniqueId, ScheduleId, _layoutId, this.isStatEnabled);
 
             // Report Play Duration
             if (this.isInterrupt)
@@ -418,7 +408,7 @@ namespace XiboClient.Rendering
         /// </summary>
         public void Resume()
         {
-            StatManager.Instance.LayoutStart(ScheduleId, _layoutId);
+            StatManager.Instance.LayoutStart(UniqueId, ScheduleId, _layoutId);
 
             // Resume each region
             foreach (Region region in _regions)
@@ -435,7 +425,7 @@ namespace XiboClient.Rendering
         public void Stop()
         {
             // Stat stop
-            double duration = StatManager.Instance.LayoutStop(ScheduleId, _layoutId, this.isStatEnabled);
+            double duration = StatManager.Instance.LayoutStop(UniqueId, ScheduleId, _layoutId, this.isStatEnabled);
 
             // If we are an interrupt layout, then report our duration.
             if (this.isInterrupt)

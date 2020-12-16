@@ -222,7 +222,7 @@ namespace XiboClient.Rendering
         /// Stop this Media
         /// <param name="regionStopped"/>
         /// </summary>
-        public virtual void Stop(bool regionStopped)
+        public void Stop(bool regionStopped)
         {
             if (regionStopped)
             {
@@ -244,6 +244,14 @@ namespace XiboClient.Rendering
                 }
                 _timer = null;
             }
+        }
+
+        /// <summary>
+        /// Final clean up
+        /// </summary>
+        public virtual void Stopped()
+        {
+
         }
 
         /// <summary>

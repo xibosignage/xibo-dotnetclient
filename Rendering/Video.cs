@@ -84,6 +84,10 @@ namespace XiboClient.Rendering
             // Log and expire
             Trace.WriteLine(new LogMessage("Video", "MediaElement_MediaFailed: Media Failed. E = " + e.ErrorException.Message), LogType.Error.ToString());
 
+            // Add this to a temporary blacklist so that we don't repeat it too quickly
+            CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, LayoutId, Id, "Video Failed: " + e.ErrorException.Message, 120);
+
+            // Expire
             Expired = true;
         }
 
@@ -209,7 +213,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Stop
         /// </summary>
-        public override void Stop(bool regionStopped)
+        public override void Stopped()
         {
             // Remove the event handlers
             this.mediaElement.MediaOpened -= MediaElement_MediaOpened;
@@ -223,7 +227,7 @@ namespace XiboClient.Rendering
             this.mediaElement.Source = null;
             this.mediaElement = null;
 
-            base.Stop(regionStopped);
+            base.Stopped();
         }
 
         /// <summary>

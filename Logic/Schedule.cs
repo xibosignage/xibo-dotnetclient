@@ -482,6 +482,15 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Get the current default layout.
+        /// </summary>
+        /// <returns></returns>
+        public ScheduleItem GetDefaultLayout()
+        {
+            return _scheduleManager.CurrentDefaultLayout;
+        }
+
+        /// <summary>
         /// The number of active layouts in the current schedule
         /// </summary>
         public int ActiveLayouts
@@ -532,8 +541,10 @@ namespace XiboClient
                 }
             }
 
-            if (OverlayChangeEvent != null && changeRequired)
-                OverlayChangeEvent(_overlaySchedule);
+            if (changeRequired)
+            {
+                OverlayChangeEvent?.Invoke(_overlaySchedule);
+            }
 
             // If the layout that got changed is the current layout, move on
             try
@@ -628,6 +639,20 @@ namespace XiboClient
 
             // Stop the embedded server
             _server.Stop();
+        }
+
+        /// <summary>
+        /// Remove this Layout from the Schedule.
+        /// </summary>
+        /// <param name="item"></param>
+        public void RemoveLayout(ScheduleItem item)
+        {
+            _layoutSchedule.Remove(item);
+
+            if (_layoutSchedule.Count <= 0)
+            {
+                _layoutSchedule.Add(ScheduleItem.Splash());
+            }
         }
 
         #region Interrupt Layouts

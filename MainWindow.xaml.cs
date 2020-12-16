@@ -31,7 +31,6 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using XiboClient.Control;
 using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -177,7 +176,7 @@ namespace XiboClient
                     ClientInfo.Instance.UpdateStatusMarkerFile();
 
                     // Start watchdog
-                    WatchDogManager.Start();
+                    XiboClient.Control.WatchDogManager.Start();
                 }
                 catch (Exception e)
                 {
@@ -299,7 +298,7 @@ namespace XiboClient
             }
 
             // Show the splash screen
-            ShowSplashScreen();
+            ShowSplashScreen(0);
 
             // Change the default Proxy class
             OptionsForm.SetGlobalProxy();
@@ -523,8 +522,9 @@ namespace XiboClient
                     // Start the Layout.
                     StartLayout(this.currentLayout);
                 }
-                catch (DefaultLayoutException)
+                catch (ShowSplashScreenException)
                 {
+                    // Pass straight out to show the splash screen
                     throw;
                 }
                 catch (Exception e)
@@ -536,35 +536,54 @@ namespace XiboClient
                     {
                         DestroyLayout(this.currentLayout);
                     }
+
+                    // Pass out
                     throw;
+                }
+            }
+            catch (ShowSplashScreenException)
+            {
+                // Specifically asked to show the splash screen.
+                if (!_showingSplash)
+                {
+                    ShowSplashScreen(10);
                 }
             }
             catch (Exception ex)
             {
-                if (!(ex is DefaultLayoutException))
-                {
-                    Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Layout Change to " + scheduleItem.layoutFile + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
-                }
+                Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Layout Change to " + scheduleItem.layoutFile + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
 
-                // Do we have more than one Layout in our schedule?
+                // We could not prepare or start this Layout, so we ought to remove it from the Schedule.
+                _schedule.RemoveLayout(scheduleItem);
+
+                // Do we have more than one Layout in our Schedule which we can try?
                 if (_schedule.ActiveLayouts > 1)
                 {
                     _schedule.NextLayout();
                 }
+                else if (scheduleItem != _schedule.GetDefaultLayout() && !_schedule.GetDefaultLayout().IsSplash())
+                {
+                    // Can we show the default layout?
+                    try 
+                    {
+                        currentLayout = PrepareLayout(_schedule.GetDefaultLayout());
+
+                        // We have loaded a layout background and therefore are no longer showing the splash screen
+                        // Remove the Splash Screen Image
+                        RemoveSplashScreen();
+
+                        // Start the Layout.
+                        StartLayout(this.currentLayout);
+                    } 
+                    catch
+                    {
+                        Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Failed to show the default layout. Exception raised was: " + ex.Message), LogType.Error.ToString());
+                        ShowSplashScreen(10);
+                    }
+                }
                 else
                 {
-                    if (!_showingSplash)
-                    {
-                        ShowSplashScreen();
-                    }
-
-                    // In 10 seconds fire the next layout
-                    DispatcherTimer timer = new DispatcherTimer()
-                    {
-                        Interval = new TimeSpan(0, 0, 10)
-                    };
-                    timer.Tick += new EventHandler(splashScreenTimer_Tick);
-                    timer.Start();
+                    ShowSplashScreen(10);
                 }
             }
         }
@@ -822,19 +841,25 @@ namespace XiboClient
         private Layout PrepareLayout(ScheduleItem scheduleItem)
         {
             // Default or not
-            if (scheduleItem.layoutFile == ApplicationSettings.Default.LibraryPath + @"\Default.xml" || string.IsNullOrEmpty(scheduleItem.layoutFile))
+            if (scheduleItem.IsSplash() || string.IsNullOrEmpty(scheduleItem.layoutFile))
             {
-                throw new DefaultLayoutException();
+                throw new ShowSplashScreenException();
+            }
+            else if (CacheManager.Instance.IsUnsafeLayout(scheduleItem.id))
+            {
+                throw new LayoutInvalidException("Unsafe Layout");
             }
             else
             {
                 try
                 {
                     // Construct a new Current Layout
-                    Layout layout = new Layout();
-                    layout.Width = Width;
-                    layout.Height = Height;
-                    layout.Schedule = _schedule;
+                    Layout layout = new Layout
+                    {
+                        Width = Width,
+                        Height = Height,
+                        Schedule = _schedule
+                    };
                     layout.loadFromFile(scheduleItem);
                     layout.OnReportLayoutPlayDurationEvent += CurrentLayout_OnReportLayoutPlayDurationEvent;
                     return layout;
@@ -843,15 +868,16 @@ namespace XiboClient
                 {
                     CacheManager.Instance.Remove(scheduleItem.layoutFile);
 
-                    throw new DefaultLayoutException();
+                    throw new LayoutInvalidException("IO Exception");
                 }
             }
         }
 
         /// <summary>
         /// Shows the splash screen (set the background to the embedded resource)
+        /// <paramref name="timeout"/>
         /// </summary>
-        private void ShowSplashScreen()
+        private void ShowSplashScreen(int timeout)
         {
             _showingSplash = true;
 
@@ -875,6 +901,17 @@ namespace XiboClient
             else
             {
                 ShowDefaultSplashScreen();
+            }
+
+            if (timeout > 0)
+            {
+                // In "timeout" seconds fire the next layout
+                DispatcherTimer timer = new DispatcherTimer()
+                {
+                    Interval = new TimeSpan(0, 0, timeout)
+                };
+                timer.Tick += new EventHandler(splashScreenTimer_Tick);
+                timer.Start();
             }
         }
 
@@ -1056,7 +1093,7 @@ namespace XiboClient
                         // Start
                         layout.Start();
                     }
-                    catch (DefaultLayoutException)
+                    catch (ShowSplashScreenException)
                     {
                         // Unable to prepare this layout - log and move on
                         Trace.WriteLine(new LogMessage("MainForm - ManageOverlays", "Unable to Prepare Layout: " + item.layoutFile), LogType.Audit.ToString());

@@ -95,6 +95,16 @@ namespace XiboClient.XmdsAgents
 
                             RegisterAgent.ProcessRegisterXml(callRegister(xmds, key));
 
+                            // If we have screenshot requested set, then take and send
+                            if (ApplicationSettings.Default.ScreenShotRequested)
+                            {
+                                // Take a screenshot
+                                ScreenShot.TakeAndSend();
+
+                                // Send status notification
+                                ClientInfo.Instance.NotifyStatusToXmds();
+                            }
+
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
@@ -270,7 +280,9 @@ namespace XiboClient.XmdsAgents
                     string md5 = Hashes.MD5(result.OuterXml);
 
                     if (md5 == ApplicationSettings.Default.Hash)
+                    {
                         return result.DocumentElement.Attributes["message"].Value;
+                    }
 
                     // Populate the settings based on the XML we've received.
                     ApplicationSettings.Default.PopulateFromXml(result);
@@ -278,13 +290,6 @@ namespace XiboClient.XmdsAgents
                     // Store the MD5 hash and the save
                     ApplicationSettings.Default.Hash = md5;
                     ApplicationSettings.Default.Save();
-
-                    // If we have screenshot requested set, then take and send
-                    // we don't have a client info form here, so we can't send that data.
-                    if (ApplicationSettings.Default.ScreenShotRequested)
-                    {
-                        ScreenShot.TakeAndSend();
-                    }
                 }
                 else
                 {
@@ -332,16 +337,13 @@ namespace XiboClient.XmdsAgents
                 try
                 {
                     // Use Drive Info
-                    foreach (DriveInfo drive in DriveInfo.GetDrives())
+                    DriveInfo info = ClientInfo.Instance.GetDriveInfo();
+                    if (info != null)
                     {
-                        if (drive.IsReady && ApplicationSettings.Default.LibraryPath.Contains(drive.RootDirectory.FullName))
-                        {
-                            writer.WritePropertyName("availableSpace");
-                            writer.WriteValue(drive.TotalFreeSpace);
-                            writer.WritePropertyName("totalSpace");
-                            writer.WriteValue(drive.TotalSize);
-                            break;
-                        }
+                        writer.WritePropertyName("availableSpace");
+                        writer.WriteValue(info.TotalFreeSpace);
+                        writer.WritePropertyName("totalSpace");
+                        writer.WriteValue(info.TotalSize);
                     }
                 }
                 catch

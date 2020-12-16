@@ -22,8 +22,10 @@ using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
+using XiboClient.Log;
 
 namespace XiboClient
 {
@@ -38,7 +40,17 @@ namespace XiboClient
             => lazy.Value;
 
         private readonly object _locker = new object();
-        public Collection<Md5Resource> _files = new Collection<Md5Resource>();
+
+        /// <summary>
+        /// Files under cache management
+        /// </summary>
+        private Collection<Md5Resource> _files = new Collection<Md5Resource>();
+
+        /// <summary>
+        /// Unsafe items
+        /// </summary>
+        private Collection<UnsafeItem> _unsafeItems = new Collection<UnsafeItem>();
+
 
         private CacheManager()
         {
@@ -85,7 +97,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public String GetMD5(String path)
+        public string GetMD5(string path)
         {
             // Either we already have the MD5 stored
             foreach (Md5Resource file in _files)
@@ -100,7 +112,7 @@ namespace XiboClient
                         Trace.WriteLine(new LogMessage("GetMD5", path + " has been written to since cache, recalculating"), LogType.Audit.ToString());
 
                         // Get the MD5 again
-                        String md5 = CalcMD5(path);
+                        string md5 = CalcMD5(path);
 
                         // Store the new cacheDate AND the new MD5
                         Remove(path);
@@ -123,7 +135,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        private string CalcMD5(String path)
+        private string CalcMD5(string path)
         {
             try
             {
@@ -147,7 +159,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="path"></param>
         /// <param name="md5"></param>
-        public void Add(String path, String md5)
+        public void Add(string path, string md5)
         {
             lock (_locker)
             {
@@ -176,7 +188,7 @@ namespace XiboClient
         /// Removes the MD5 resource associated with the Path given
         /// </summary>
         /// <param name="path"></param>
-        public void Remove(String path)
+        public void Remove(string path)
         {
             lock (_locker)
             {
@@ -225,7 +237,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="path"></param>
         /// <returns>True is it is and false if it isnt</returns>
-        public bool IsValidPath(String path)
+        public bool IsValidPath(string path)
         {
             lock (_locker)
             {
@@ -273,17 +285,6 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// Get the URI of this media item
-        /// </summary>
-        /// <param name="media"></param>
-        /// <returns></returns>
-        private string GetUri(XmlNode media)
-        {
-            XmlNode uriNode = media.SelectSingleNode(".//options/uri");
-            return uriNode.InnerText;
-        }
-
-        /// <summary>
         /// Regenerate from Required Files
         /// </summary>
         public void Regenerate()
@@ -318,12 +319,200 @@ namespace XiboClient
                 }
             }
         }
+
+        #region Unsafe List
+
+        /// <summary>
+        /// Add an unsafe item to the list
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="layoutId"></param>
+        /// <param name="id"></param>
+        /// <param name="reason"></param>
+        public void AddUnsafeItem(UnsafeItemType type, int layoutId, string id, string reason)
+        {
+            AddUnsafeItem(type, layoutId, id, reason, 86400);
+        }
+
+        /// <summary>
+        /// Add an unsafe item to the list
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="layoutId"></param>
+        /// <param name="id"></param>
+        /// <param name="reason"></param>
+        /// <param name="ttl"></param>
+        public void AddUnsafeItem(UnsafeItemType type, int layoutId, string id, string reason, int ttl)
+        {
+            if (ttl == 0)
+            {
+                ttl = 86400;
+            }
+
+            try
+            {
+                UnsafeItem item = _unsafeItems
+                    .Where(i => i.Type == type && i.LayoutId == layoutId && i.Id == id)
+                    .First();
+
+                item.DateTime = DateTime.Now;
+                item.Reason = reason;
+            }
+            catch
+            {
+                _unsafeItems.Add(new UnsafeItem
+                {
+                    DateTime = DateTime.Now,
+                    Type = type,
+                    LayoutId = layoutId,
+                    Id = id,
+                    Reason = reason,
+                    Ttl = ttl
+                });
+            }
+
+            ClientInfo.Instance.UpdateUnsafeList(UnsafeListAsString());
+        }
+
+        /// <summary>
+        /// Remove a Layout from the unsafe items list
+        /// </summary>
+        /// <param name="layoutId"></param>
+        public void RemoveUnsafeLayout(int layoutId)
+        {
+            foreach (UnsafeItem item in _unsafeItems)
+            {
+                if (item.LayoutId == layoutId)
+                {
+                    _unsafeItems.Remove(item);
+                }
+            }
+
+            ClientInfo.Instance.UpdateUnsafeList(UnsafeListAsString());
+        }
+
+        /// <summary>
+        /// Is the provided layout unsafe?
+        /// </summary>
+        /// <param name="layoutId">ID of the Layout to test</param>
+        /// <returns></returns>
+        public bool IsUnsafeLayout(int layoutId)
+        {
+            bool updateList = false;
+            bool found = false;
+
+            for (int i = _unsafeItems.Count - 1; i >= 0; i--)
+            {
+                UnsafeItem item = _unsafeItems[i];
+                if (item.LayoutId == layoutId)
+                {
+                    // Test the Ttl
+                    if (DateTime.Now > item.DateTime.AddSeconds(item.Ttl))
+                    {
+                        _unsafeItems.RemoveAt(i);
+                        updateList = true;
+                    }
+                    else
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (updateList)
+            {
+                ClientInfo.Instance.UpdateUnsafeList(UnsafeListAsString());
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Is the provided mediaId unsafe?
+        /// </summary>
+        /// <param name="mediaId"></param>
+        /// <returns></returns>
+        public bool IsUnsafeMedia(string mediaId)
+        {
+            bool updateList = false;
+            bool found = false;
+
+            for (int i = _unsafeItems.Count - 1; i >= 0; i--)
+            {
+                UnsafeItem item = _unsafeItems[i];
+                if (item.Type == UnsafeItemType.Media &&  item.Id == mediaId)
+                {
+                    // Test the Ttl
+                    if (DateTime.Now > item.DateTime.AddSeconds(item.Ttl))
+                    {
+                        _unsafeItems.RemoveAt(i);
+                        updateList = true;
+                    }
+                    else
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (updateList)
+            {
+                ClientInfo.Instance.UpdateUnsafeList(UnsafeListAsString());
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Get the unsafe list represented as a string
+        /// </summary>
+        /// <returns></returns>
+        private string UnsafeListAsString()
+        {
+            string list = "";
+            foreach (UnsafeItem item in _unsafeItems)
+            {
+                list += item.Type.ToString() + ": " + item.LayoutId + ", " + item.Reason + ", ttl: " + item.Ttl + Environment.NewLine;
+            }
+            return list;
+        }
+
+        #endregion
     }
 
+    /// <summary>
+    /// A resource file under cache management
+    /// </summary>
     public struct Md5Resource
     {
-        public String md5;
-        public String path;
+        public string md5;
+        public string path;
         public DateTime cacheDate;
+    }
+
+    /// <summary>
+    /// An unsafe item entry
+    /// </summary>
+    public struct UnsafeItem
+    {
+        public DateTime DateTime { get; set; }
+        public UnsafeItemType Type { get; set; }
+        public int LayoutId { get; set; }
+        public string Id { get; set; }
+        public string Reason { get; set; }
+        public int Ttl { get; set; }
+    }
+
+    /// <summary>
+    /// Types of unsafe item
+    /// </summary>
+    public enum UnsafeItemType
+    {
+        Layout,
+        Region,
+        Widget,
+        Media
     }
 }

@@ -25,7 +25,7 @@ namespace XiboClient.Logic
 {
     class InterruptState
     {
-        public double SecondsInterrutedThisHour = 0;
+        public double SecondsInterrutedThisPeriod = 0;
         public int TargetHourlyInterruption = 0;
         public DateTime LastInterruption;
         public DateTime LastPlaytimeUpdate;
