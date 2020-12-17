@@ -768,7 +768,7 @@ namespace XiboClient.Rendering
         /// <param name="regionStopped"></param>
         private void StopMedia(Media media, bool regionStopped)
         {
-            Trace.WriteLine(new LogMessage("Region", "StopMedia: Stopping..."), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("Region", "StopMedia: " + media.Id + " stopping, region stopped " + regionStopped), LogType.Audit.ToString());
 
             // Dispose of the current media
             try
@@ -798,6 +798,8 @@ namespace XiboClient.Rendering
         /// <param name="media"></param>
         private void Media_MediaStoppedEvent(Media media)
         {
+            Trace.WriteLine(new LogMessage("Region", "Media_MediaStoppedEvent: " + media.Id), LogType.Audit.ToString());
+
             media.MediaStoppedEvent -= Media_MediaStoppedEvent;
             media.Stopped();
 
