@@ -51,17 +51,14 @@ namespace XiboClient.Rendering
                 Name = "region_" + this.regionId
             };
 
-            // Configure proxy, etc.
-            CefSharp.Cef.UIThreadTaskFactory.StartNew(() => {
-                // Do we have any auth service white lists
-                /*webView.RequestContext.SetPreference("auth.server_whitelist", "", out var error);
-                webView.RequestContext.SetPreference("auth.negotiate_delegate_whitelist", "", out var error2);*/
-
-                if (string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+            // Configure proxy
+            if (string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+            {
+                CefSharp.Cef.UIThreadTaskFactory.StartNew(() =>
                 {
                     webView.RequestHandler = new ProxyRequestHandler();
-                }
-            });
+                });
+            }
 
             webView.Visibility = System.Windows.Visibility.Hidden;
             webView.Loaded += WebView_Loaded;
