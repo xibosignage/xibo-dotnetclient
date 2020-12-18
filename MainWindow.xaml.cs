@@ -327,10 +327,12 @@ namespace XiboClient
             CefSharp.CefSharpSettings.SubprocessExitIfParentProcessClosed = true;
 
             // Settings for Init
-            CefSharp.Wpf.CefSettings settings = new CefSharp.Wpf.CefSettings();
-            settings.CachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
-            settings.LogFile = ApplicationSettings.Default.LibraryPath + @"\CEF\cef.log";
-            settings.LogSeverity = CefSharp.LogSeverity.Fatal;
+            CefSharp.Wpf.CefSettings settings = new CefSharp.Wpf.CefSettings
+            {
+                CachePath = ApplicationSettings.Default.LibraryPath + @"\CEF",
+                LogFile = ApplicationSettings.Default.LibraryPath + @"\CEF\cef.log",
+                LogSeverity = CefSharp.LogSeverity.Fatal
+            };
             settings.CefCommandLineArgs["autoplay-policy"] = "no-user-gesture-required";
 
             CefSharp.Cef.Initialize(settings);
