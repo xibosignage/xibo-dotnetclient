@@ -23,6 +23,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace XiboClient.Rendering
 {
@@ -34,6 +35,7 @@ namespace XiboClient.Rendering
         private bool _detectEnd = false;
         private bool isLooping = false;
         private readonly bool isFullScreenRequest = false;
+        private bool _openCalled = false;
 
         /// <summary>
         /// Should this be visible? Audio sets this to false.
@@ -102,11 +104,14 @@ namespace XiboClient.Rendering
             // Log and expire
             Trace.WriteLine(new LogMessage("Video", "MediaElement_MediaFailed: " + this.Id + " Media Failed. E = " + e.ErrorException.Message), LogType.Error.ToString());
 
+            // Failed is the opposite of open, but we mark this as open called so that our watchman doesn't also try to expire
+            this._openCalled = true;
+
             // Add this to a temporary blacklist so that we don't repeat it too quickly
             CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, LayoutId, Id, "Video Failed: " + e.ErrorException.Message, 120);
 
             // Expire
-            Expired = true;
+            SignalElapsedEvent();
         }
 
         /// <summary>
@@ -148,6 +153,28 @@ namespace XiboClient.Rendering
                 // Problem calling play, we should expire.
                 Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: " + this.Id + " Media Failed. E = " + ex.Message), LogType.Error.ToString());
             }
+
+            // We make a watchman to check that the video actually gets loaded.
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+            timer.Tick += (timerSender, args) =>
+            {
+                // You only tick once
+                timer.Stop();
+
+                // Check to see if open has been called.
+                if (!_openCalled)
+                {
+                    Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: " + this.Id + " Open not called after 4 seconds, marking unsafe and Expiring."), LogType.Error.ToString());
+                    
+                    // Add this to a temporary blacklist so that we don't repeat it too quickly
+                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, LayoutId, Id, "Video Failed: Open not called after 4 seconds", 120);
+
+                    // Expire
+                    SignalElapsedEvent();
+                }
+            };
+
+            timer.Start();
         }
 
         /// <summary>
@@ -249,6 +276,9 @@ namespace XiboClient.Rendering
         private void MediaElement_MediaOpened(object sender, RoutedEventArgs e)
         {
             Trace.WriteLine(new LogMessage("Video", "MediaElement_MediaOpened: " + this.Id + " Opened, seek to: " + this._position), LogType.Audit.ToString());
+
+            // Open has been called.
+            this._openCalled = true;
 
             // Try to seek
             if (this._position > 0)
