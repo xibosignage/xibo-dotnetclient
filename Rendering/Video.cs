@@ -23,6 +23,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace XiboClient.Rendering
 {
@@ -34,6 +35,7 @@ namespace XiboClient.Rendering
         private bool _detectEnd = false;
         private bool isLooping = false;
         private readonly bool isFullScreenRequest = false;
+        private bool _openCalled = false;
 
         /// <summary>
         /// Should this be visible? Audio sets this to false.
@@ -102,11 +104,14 @@ namespace XiboClient.Rendering
             // Log and expire
             Trace.WriteLine(new LogMessage("Video", "MediaElement_MediaFailed: " + this.Id + " Media Failed. E = " + e.ErrorException.Message), LogType.Error.ToString());
 
+            // Failed is the opposite of open, but we mark this as open called so that our watchman doesn't also try to expire
+            this._openCalled = true;
+
             // Add this to a temporary blacklist so that we don't repeat it too quickly
             CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, LayoutId, Id, "Video Failed: " + e.ErrorException.Message, 120);
 
             // Expire
-            Expired = true;
+            SignalElapsedEvent();
         }
 
         /// <summary>
@@ -131,13 +136,13 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
-        /// Media is loaded
+        /// MediaElement has been added to the visual tree
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void MediaElement_Loaded(object sender, RoutedEventArgs e)
         {
-            Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: " + this.Id + " Loaded."), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: " + this.Id + " Control loaded, calling Play."), LogType.Audit.ToString());
 
             try
             {
@@ -146,8 +151,30 @@ namespace XiboClient.Rendering
             catch (Exception ex)
             {
                 // Problem calling play, we should expire.
-                Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: Media Failed. E = " + ex.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: " + this.Id + " Media Failed. E = " + ex.Message), LogType.Error.ToString());
             }
+
+            // We make a watchman to check that the video actually gets loaded.
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+            timer.Tick += (timerSender, args) =>
+            {
+                // You only tick once
+                timer.Stop();
+
+                // Check to see if open has been called.
+                if (!_openCalled)
+                {
+                    Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: " + this.Id + " Open not called after 4 seconds, marking unsafe and Expiring."), LogType.Error.ToString());
+                    
+                    // Add this to a temporary blacklist so that we don't repeat it too quickly
+                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, LayoutId, Id, "Video Failed: Open not called after 4 seconds", 120);
+
+                    // Expire
+                    SignalElapsedEvent();
+                }
+            };
+
+            timer.Start();
         }
 
         /// <summary>
@@ -174,6 +201,7 @@ namespace XiboClient.Rendering
             this.mediaElement.Volume = this.volume;
             this.mediaElement.IsMuted = this.Muted;
             this.mediaElement.LoadedBehavior = MediaState.Manual;
+            this.mediaElement.UnloadedBehavior = MediaState.Close;
 
             // This is false if we're an audio module, otherwise video.
             if (!this.ShouldBeVisible)
@@ -197,9 +225,16 @@ namespace XiboClient.Rendering
             }
 
             // Events
+            // MediaOpened is called after we've called Play()
             this.mediaElement.MediaOpened += MediaElement_MediaOpened;
+
+            // Loaded is from the Framework and is called when the MediaElement is added to the visual tree (we call play in here)
             this.mediaElement.Loaded += MediaElement_Loaded;
+
+            // Media ended is called when the media file has finished playing
             this.mediaElement.MediaEnded += MediaElement_MediaEnded;
+
+            // Media Failed is called if the media file cannot be opened
             this.mediaElement.MediaFailed += MediaElement_MediaFailed;
 
             // Do we need to determine the end time ourselves?
@@ -222,7 +257,7 @@ namespace XiboClient.Rendering
 
                 this.MediaScene.Children.Add(this.mediaElement);
 
-                Trace.WriteLine(new LogMessage("Video", "RenderMedia: " + this.Id + ", added MediaElement and set source."), LogType.Audit.ToString());
+                Trace.WriteLine(new LogMessage("Video", "RenderMedia: " + this.Id + ", added MediaElement and set source, detect end is " + _detectEnd), LogType.Audit.ToString());
             }
             catch (Exception ex)
             {
@@ -242,10 +277,16 @@ namespace XiboClient.Rendering
         {
             Trace.WriteLine(new LogMessage("Video", "MediaElement_MediaOpened: " + this.Id + " Opened, seek to: " + this._position), LogType.Audit.ToString());
 
+            // Open has been called.
+            this._openCalled = true;
+
             // Try to seek
             if (this._position > 0)
             {
                 this.mediaElement.Position = TimeSpan.FromSeconds(this._position);
+
+                // Set the position to 0, so that if we loop around again we start from the beginning
+                this._position = 0;
             }
         }
 

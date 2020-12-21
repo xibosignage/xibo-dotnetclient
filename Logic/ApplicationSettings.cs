@@ -50,7 +50,7 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "2 R256.6";
+        public string ClientVersion { get; } = "2 R256.7";
         public string Version { get; } = "5";
         public int ClientCodeVersion { get; } = 256;
 
@@ -456,6 +456,8 @@ namespace XiboClient
         public string ClientInformationKeyCode { get; set; }
         public string XmrNetworkAddress { get; set; }
         public string AggregationLevel { get; set; }
+        public string AuthServerWhitelist { get; set; }
+        public string EdgeBrowserWhitelist { get; set; }
 
         // Download window
         public string DisplayTimeZone { get; set; }
