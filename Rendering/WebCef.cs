@@ -51,12 +51,31 @@ namespace XiboClient.Rendering
                 Name = "region_" + this.regionId
             };
 
-            // Configure proxy
-            if (string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+            // Configure run time CEF settings?
+            if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist)
+                || !string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
             {
                 CefSharp.Cef.UIThreadTaskFactory.StartNew(() =>
                 {
-                    webView.RequestHandler = new ProxyRequestHandler();
+                    // NTLM/Auth Server White Lists.
+                    if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
+                    {
+                        if (!webView.RequestContext.SetPreference("auth.server_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error))
+                        {
+                            Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.server_whitelist. e = " + error), LogType.Error.ToString());
+                        }
+
+                        if (!webView.RequestContext.SetPreference("auth.negotiate_delegate_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error2))
+                        {
+                            Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.negotiate_delegate_whitelist. e = " + error2), LogType.Error.ToString());
+                        }
+                    }
+
+                    // Proxy
+                    if (!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+                    {
+                        webView.RequestHandler = new ProxyRequestHandler();
+                    }
                 });
             }
 
@@ -115,7 +134,7 @@ namespace XiboClient.Rendering
 
         private void WebView_LoadError(object sender, CefSharp.LoadErrorEventArgs e)
         {
-            Trace.WriteLine(new LogMessage("EdgeWebMedia", "Cannot navigate. e = " + e.ToString()), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Cannot navigate. e = " + e.ToString()), LogType.Error.ToString());
 
             // This should exipre the media
             Duration = 5;

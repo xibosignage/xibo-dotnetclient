@@ -456,6 +456,8 @@ namespace XiboClient
         public string ClientInformationKeyCode { get; set; }
         public string XmrNetworkAddress { get; set; }
         public string AggregationLevel { get; set; }
+        public string AuthServerWhitelist { get; set; }
+        public string EdgeBrowserWhitelist { get; set; }
 
         // Download window
         public string DisplayTimeZone { get; set; }
