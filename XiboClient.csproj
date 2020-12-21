@@ -118,6 +118,7 @@
     <Compile Include="Error\LayoutInvalidException.cs" />
     <Compile Include="Error\ShowSplashScreenException.cs" />
     <Compile Include="Helpers\CefJsDialogHandler.cs" />
+    <Compile Include="Helpers\ProxyRequestHandler.cs" />
     <Compile Include="InfoScreen.xaml.cs">
       <DependentUpon>InfoScreen.xaml</DependentUpon>
     </Compile>

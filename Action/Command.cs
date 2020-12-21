@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Windows;
 
 namespace XiboClient.Logic
 {
@@ -39,6 +40,15 @@ namespace XiboClient.Logic
                 {
                     return true;
                 }
+            }
+            else if (CommandString == "SoftRestart")
+            {
+                // Call close.
+                Application.Current.Dispatcher.Invoke(new System.Action(() => {
+                    Application.Current.MainWindow.Close();
+                }));
+                
+                return true;
             }
             else
             {

@@ -472,16 +472,22 @@ namespace XiboClient.Rendering
         /// <returns></returns>
         public static WebMedia GetConfiguredWebMedia(RegionOptions options)
         {
-            WebMedia media;
             if (ApplicationSettings.Default.FallbackToInternetExplorer)
             {
-                media = new WebIe(options);
+                return new WebIe(options);
             }
-            else
+            else if (!string.IsNullOrEmpty(ApplicationSettings.Default.EdgeBrowserWhitelist))
             {
-                media = new WebCef(options);
+                // Decode the URL
+                string url = Uri.UnescapeDataString(options.uri);
+                
+                if (url.Contains(ApplicationSettings.Default.EdgeBrowserWhitelist))
+                {
+                    return new WebEdge(options);
+                }
             }
-            return media;
+
+            return new WebCef(options);
         }
 
         /// <summary>
