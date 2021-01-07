@@ -112,8 +112,10 @@
     <Compile Include="Action\ScheduleCommand.cs" />
     <Compile Include="Action\XmrSubscriber.cs" />
     <Compile Include="Control\EmbeddedServer.cs" />
+    <Compile Include="Control\HookController.cs" />
     <Compile Include="Control\InfoController.cs" />
     <Compile Include="Control\RestrictiveFileModule.cs" />
+    <Compile Include="Control\TriggerRequest.cs" />
     <Compile Include="Control\WatchDogManager.cs" />
     <Compile Include="Error\LayoutInvalidException.cs" />
     <Compile Include="Error\ShowSplashScreenException.cs" />
@@ -122,6 +124,7 @@
     <Compile Include="InfoScreen.xaml.cs">
       <DependentUpon>InfoScreen.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Action\Action.cs" />
     <Compile Include="Logic\ApplicationSettings.cs" />
     <Compile Include="Logic\CacheManager.cs" />
     <Compile Include="Logic\HardwareKey.cs" />

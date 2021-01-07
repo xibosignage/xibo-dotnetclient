@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -60,6 +60,16 @@ namespace XiboClient.Rendering
         /// Regions for this Layout
         /// </summary>
         private List<Region> _regions;
+
+        /// <summary>
+        /// Actions for this Layout
+        /// </summary>
+        private List<Action.Action> _actions;
+
+        /// <summary>
+        /// The Drawer of interactive widgets
+        /// </summary>
+        private XmlNodeList _drawer;
 
         /// <summary>
         /// Last updated time of this Layout
@@ -185,6 +195,16 @@ namespace XiboClient.Rendering
             // We know know what our Layout controls dimensions should be
             SetDimensions((int)leftOverX, (int)leftOverY, backgroundWidth, backgroundHeight);
 
+            // Parse any Actions
+            try
+            {
+                _actions = Action.Action.CreateFromXmlNodeList(layoutXml.SelectNodes("/layout/action"));
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Layout", "loadFromFile: unable to load actions. e = " + e.Message), LogType.Info.ToString());
+            }
+
             // New region and region options objects
             RegionOptions options = new RegionOptions();
 
@@ -248,6 +268,7 @@ namespace XiboClient.Rendering
             // Get the regions
             XmlNodeList listRegions = layoutXml.SelectNodes("/layout/region");
             XmlNodeList listMedia = layoutXml.SelectNodes("/layout/region/media");
+            _drawer = layoutXml.SelectNodes("/layout/drawer/media");
 
             // Check to see if there are any regions on this layout.
             if (listRegions.Count == 0 || listMedia.Count == 0)
@@ -310,6 +331,28 @@ namespace XiboClient.Rendering
                 // All the media nodes for this region / layout combination
                 options.mediaNodes = region.SelectNodes("media");
 
+                // Pull out any actions
+                try
+                {
+                    // Region Actions
+                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(region.SelectNodes("action")));
+
+                    // Widget Actions
+                    foreach (XmlNode media in options.mediaNodes)
+                    {
+                        List<Action.Action> mediaActions = Action.Action.CreateFromXmlNodeList(media.SelectNodes("action"));
+
+                        if (mediaActions.Count > 0)
+                        {
+                            _actions.AddRange(mediaActions);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("Layout", "loadFromFile: unable to load media actions. e = " + e.Message), LogType.Info.ToString());
+                }
+
                 Region temp = new Region();
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(Region_DurationElapsedEvent);
                 temp.MediaExpiredEvent += Region_MediaExpiredEvent;
@@ -322,14 +365,17 @@ namespace XiboClient.Rendering
 
                 Debug.WriteLine("loadFromFile: Created new region", "Layout");
 
-                // Dont be fooled, this innocent little statement kicks everything off
-                temp.loadFromOptions(options);
+                // Load our region
+                temp.loadFromOptions(options.regionId, options);
 
                 // Add to our list of Regions
                 _regions.Add(temp);
 
                 Debug.WriteLine("loadFromFile: Adding region", "Layout");
             }
+
+            // Order all Actions by their Source
+            _actions.Sort((l, r) => Action.Action.PriorityForActionSource(l.Source) < Action.Action.PriorityForActionSource(r.Source) ? -1 : 1);
 
             // Order all Regions by their ZIndex
             _regions.Sort((l, r) => l.ZIndex < r.ZIndex ? -1 : 1);
@@ -469,6 +515,45 @@ namespace XiboClient.Rendering
             }
 
             _regions = null;
+        }
+
+        /// <summary>
+        /// Move to the previous item in the named Region
+        /// </summary>
+        /// <param name="regionId"></param>
+        public void RegionPrevious(string regionId)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.Id == regionId)
+                {
+                    region.Previous();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Move to the next item in the named Region
+        /// </summary>
+        /// <param name="regionId"></param>
+        public void RegionNext(string regionId)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.Id == regionId)
+                {
+                    region.Next();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get Actions
+        /// </summary>
+        /// <returns></returns>
+        public List<Action.Action> GetActions()
+        {
+            return _actions;
         }
 
         /// <summary>

@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -356,6 +356,9 @@ namespace XiboClient
                 // Bind to the overlay change event
                 _schedule.OverlayChangeEvent += ScheduleOverlayChangeEvent;
 
+                // Bind to the trigger received event
+                _schedule.OnTriggerReceived += HandleActionTrigger;
+
                 // Initialize the other schedule components
                 _schedule.InitializeComponents();
 
@@ -393,7 +396,10 @@ namespace XiboClient
 
                 // Stop the schedule object
                 if (_schedule != null)
+                {
                     _schedule.Stop();
+                    _schedule.OnTriggerReceived -= HandleActionTrigger;
+                }
 
                 // Write the CacheManager to disk
                 CacheManager.Instance.WriteCacheManager();
@@ -576,7 +582,7 @@ namespace XiboClient
 
                         // Start the Layout.
                         StartLayout(this.currentLayout);
-                    } 
+                    }
                     catch
                     {
                         Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Failed to show the default layout. Exception raised was: " + ex.Message), LogType.Error.ToString());
@@ -1105,6 +1111,114 @@ namespace XiboClient
             catch (Exception e)
             {
                 Trace.WriteLine(new LogMessage("MainForm - _schedule_OverlayChangeEvent", "Unknown issue managing overlays. Ex = " + e.Message), LogType.Info.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Handle an incoming Action Trigger
+        /// </summary>
+        /// <param name="triggerType"></param>
+        /// <param name="triggerCode"></param>
+        /// <param name="sourceId"></param>
+        public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId)
+        {
+            // If we're interrupting we don't process any actions.
+            if (currentLayout.IsPaused)
+            {
+                Debug.WriteLine("HandleActionTrigger: Skipping Action as current Layout is paused.", "MainWindow");
+                return;
+            }
+
+            // Do we have any actions which match this trigger type?
+            // These are in order, with Widgets first.
+            foreach (Action.Action action in currentLayout.GetActions())
+            {
+                if (action.TriggerType == triggerType)
+                {
+                    // Is this a trigger which must match the code?
+                    if (string.IsNullOrEmpty(action.TriggerCode) || action.TriggerCode == triggerCode)
+                    {
+                        // Action found, so execute it
+                        try
+                        {
+                            ExecuteAction(action);
+                        }
+                        catch (Exception e)
+                        {
+                            Trace.WriteLine(new LogMessage("MainForm", "HandleActionTrigger: unable to execute action. e = " + e.Message), LogType.Error.ToString());
+                        }
+
+                        // Should we process further actions?
+                        if (!action.Bubble)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Execute the matched Action
+        /// </summary>
+        /// <param name="action"></param>
+        public void ExecuteAction(Action.Action action)
+        {
+            // Target can be `screen` or `region`
+            // What type of action are we?
+            switch (action.ActionType)
+            {
+                case "next":
+                    // Trigger the next layout/widget
+                    if (action.Target == "screen")
+                    {
+                        // Next Layout
+                        _schedule.NextLayout();
+                    }
+                    else
+                    {
+                        // Next Widget in the named region
+                        currentLayout.RegionNext("" + action.TargetId);
+                    }
+                    break;
+
+                case "previous":
+                    // Trigger the previous layout/widget
+                    if (action.Target == "screen")
+                    {
+                        // Previous Layout
+                        _schedule.PreviousLayout();
+                    }
+                    else
+                    {
+                        // Previous Widget in the named region
+                        currentLayout.RegionPrevious("" + action.TargetId);
+                    }
+                    break;
+
+                case "navLayout":
+                    // Navigate to the provided Layout
+                    // target is always screen
+                    ChangeToNextLayout(_schedule.GetScheduleItemForLayoutId(action.TargetId));
+
+                    break;
+
+                case "navWidget":
+                    // Navigate to the provided Widget
+                    if (action.Target == "screen")
+                    {
+                        // Expect a shell command.
+                    }
+                    else
+                    {
+                        // Provided Widget in the named region
+                    }
+
+                    break;
+
+                default:
+                    Trace.WriteLine(new LogMessage("MainWindow", "ExecuteAction: unknown type: " + action.ActionType), LogType.Error.ToString());
+                    break;
             }
         }
 

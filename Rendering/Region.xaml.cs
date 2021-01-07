@@ -15,6 +15,11 @@ namespace XiboClient.Rendering
     public partial class Region : UserControl
     {
         /// <summary>
+        /// The RegionId
+        /// </summary>
+        public string Id { get;  private set; }
+
+        /// <summary>
         /// Has the Layout Expired?
         /// </summary>
         public bool IsLayoutExpired = false;
@@ -81,7 +86,7 @@ namespace XiboClient.Rendering
             ZIndex = 0;
         }
 
-        public void loadFromOptions(RegionOptions options)
+        public void loadFromOptions(string Id, RegionOptions options)
         {
             // Start of by setting our dimensions
             SetDimensions(options.left, options.top, options.width, options.height);
@@ -97,6 +102,31 @@ namespace XiboClient.Rendering
         {
             // Start this region
             this.currentSequence = -1;
+            StartNext(0);
+        }
+
+        /// <summary>
+        /// Move to the Next item
+        /// </summary>
+        public void Previous()
+        {
+            // Drop back a count of 2 (we move on in StartNext);
+            this.currentSequence = this.currentSequence - 2;
+
+            // If we're less than 0, move back one from the end
+            if (this.currentSequence < 0)
+            {
+                this.currentSequence = this.options.mediaNodes.Count - 2;
+            }
+
+            StartNext(0);
+        }
+
+        /// <summary>
+        /// Move to the Next item
+        /// </summary>
+        public void Next()
+        {
             StartNext(0);
         }
 
@@ -244,6 +274,8 @@ namespace XiboClient.Rendering
                 StatManager.Instance.WidgetStart(this.options.scheduleId, this.options.layoutId, this.options.mediaid);
             }
         }
+
+        
 
         /// <summary>
         /// Sets the next media node. Should be used either from a mediaComplete event, or an options reset from 
@@ -488,7 +520,7 @@ namespace XiboClient.Rendering
                     }
                     catch
                     {
-                        System.Diagnostics.Trace.WriteLine("Non integer scrollSpeed in XLF", "Region - SetNextMediaNode");
+                        Trace.WriteLine("Non integer scrollSpeed in XLF", "Region - SetNextMediaNode");
                     }
                 }
                 else if (option.Name == "updateInterval")
