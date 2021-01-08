@@ -86,12 +86,13 @@ namespace XiboClient.Rendering
             ZIndex = 0;
         }
 
-        public void loadFromOptions(string Id, RegionOptions options)
+        public void loadFromOptions(string id, RegionOptions options)
         {
             // Start of by setting our dimensions
             SetDimensions(options.left, options.top, options.width, options.height);
 
             // Store the options
+            Id = id;
             this.options = options;
         }
 
@@ -111,7 +112,7 @@ namespace XiboClient.Rendering
         public void Previous()
         {
             // Drop back a count of 2 (we move on in StartNext);
-            this.currentSequence = this.currentSequence - 2;
+            this.currentSequence -= 2;
 
             // If we're less than 0, move back one from the end
             if (this.currentSequence < 0)
@@ -119,7 +120,7 @@ namespace XiboClient.Rendering
                 this.currentSequence = this.options.mediaNodes.Count - 2;
             }
 
-            StartNext(0);
+            Next();
         }
 
         /// <summary>
@@ -127,7 +128,11 @@ namespace XiboClient.Rendering
         /// </summary>
         public void Next()
         {
-            StartNext(0);
+            // Shimmy onto the STA thread
+            Dispatcher.Invoke(new System.Action(() => {
+                // Call start next
+                StartNext(0);
+            }));
         }
 
         /// <summary>

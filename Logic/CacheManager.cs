@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -51,7 +51,14 @@ namespace XiboClient
         /// </summary>
         private Collection<UnsafeItem> _unsafeItems = new Collection<UnsafeItem>();
 
+        /// <summary>
+        /// Layout Codes
+        /// </summary>
+        private Collection<LayoutCode> _layoutCodes = new Collection<LayoutCode>();
 
+        /// <summary>
+        /// Hide constructor
+        /// </summary>
         private CacheManager()
         {
         }
@@ -480,6 +487,60 @@ namespace XiboClient
         }
 
         #endregion
+
+        #region Layout Codes
+
+        /// <summary>
+        /// Add a Layout Code
+        /// </summary>
+        /// <param name="layoutId"></param>
+        /// <param name="code"></param>
+        public void AddLayoutCode(int layoutId, string code)
+        {
+            for (int i = 0; i < _layoutCodes.Count; i++)
+            {
+                LayoutCode layoutCode = _layoutCodes[i];
+                if (layoutCode.LayoutId == layoutId)
+                {
+                    layoutCode.Code = code;
+                    return;
+                }
+            }
+
+            _layoutCodes.Add(new LayoutCode
+            {
+                LayoutId = layoutId,
+                Code = code
+            });
+        }
+
+        /// <summary>
+        /// Get a Layout Code
+        /// </summary>
+        /// <param name="layoutId"></param>
+        /// <returns></returns>
+        public int GetLayoutId(string layoutCode)
+        {
+            foreach (LayoutCode code in _layoutCodes)
+            {
+                if (code.Code == layoutCode)
+                {
+                    return code.LayoutId;
+                }
+            }
+
+            throw new Exception("Layout Code " + layoutCode + " not found.");
+        }
+
+        /// <summary>
+        /// Clear all Layout Codes.
+        /// </summary>
+        public void ClearLayoutCodes()
+        {
+            _layoutCodes.Clear();
+        }
+
+        #endregion
     }
 
     /// <summary>
@@ -514,5 +575,14 @@ namespace XiboClient
         Region,
         Widget,
         Media
+    }
+
+    /// <summary>
+    /// Layout Codes
+    /// </summary>
+    public struct LayoutCode
+    {
+        public int LayoutId { get; set; }
+        public string Code { get; set; }
     }
 }

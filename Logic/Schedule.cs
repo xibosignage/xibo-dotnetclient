@@ -701,10 +701,13 @@ namespace XiboClient
         /// <summary>
         /// Get a Schedule Item for the given LayoutId
         /// </summary>
-        /// <param name="layoutId"></param>
+        /// <param name="layoutCode"></param>
         /// <returns></returns>
-        public ScheduleItem GetScheduleItemForLayoutId(int layoutId)
+        public ScheduleItem GetScheduleItemForLayoutCode(string layoutCode)
         {
+            // Find the layoutId we want.
+            int layoutId = CacheManager.Instance.GetLayoutId(layoutCode);
+
             // Check that this Layout is valid
             if (!CacheManager.Instance.IsValidPath(layoutId + ".xlf") || CacheManager.Instance.IsUnsafeLayout(layoutId))
             {

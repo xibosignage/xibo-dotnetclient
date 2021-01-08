@@ -1133,27 +1133,39 @@ namespace XiboClient
             // These are in order, with Widgets first.
             foreach (Action.Action action in currentLayout.GetActions())
             {
-                if (action.TriggerType == triggerType)
+                // Match the trigger type
+                if (action.TriggerType != triggerType)
                 {
-                    // Is this a trigger which must match the code?
-                    if (string.IsNullOrEmpty(action.TriggerCode) || action.TriggerCode == triggerCode)
-                    {
-                        // Action found, so execute it
-                        try
-                        {
-                            ExecuteAction(action);
-                        }
-                        catch (Exception e)
-                        {
-                            Trace.WriteLine(new LogMessage("MainForm", "HandleActionTrigger: unable to execute action. e = " + e.Message), LogType.Error.ToString());
-                        }
+                    continue;
+                }
 
-                        // Should we process further actions?
-                        if (!action.Bubble)
-                        {
-                            break;
-                        }
-                    }
+                // Match the sourceId if it has been provided
+                if (sourceId != 0 && sourceId == action.SourceId)
+                {
+                    continue;
+                }
+
+                // Is this a trigger which must match the code?
+                if (triggerType == "webhook" && !string.IsNullOrEmpty(action.TriggerCode) && action.TriggerCode != triggerCode)
+                {
+                    continue;
+                }
+                
+                // Action found, so execute it
+                try
+                {
+                    ExecuteAction(action);
+                }
+
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm", "HandleActionTrigger: unable to execute action. e = " + e.Message), LogType.Error.ToString());
+                }
+
+                // Should we process further actions?
+                if (!action.Bubble)
+                {
+                    break;
                 }
             }
         }
@@ -1199,7 +1211,7 @@ namespace XiboClient
                 case "navLayout":
                     // Navigate to the provided Layout
                     // target is always screen
-                    ChangeToNextLayout(_schedule.GetScheduleItemForLayoutId(action.TargetId));
+                    ChangeToNextLayout(_schedule.GetScheduleItemForLayoutCode(action.LayoutCode));
 
                     break;
 
