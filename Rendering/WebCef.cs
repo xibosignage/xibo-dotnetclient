@@ -31,7 +31,7 @@ namespace XiboClient.Rendering
         private string regionId;
         private bool hasBackgroundColor = false;
 
-        public WebCef(RegionOptions options)
+        public WebCef(MediaOptions options)
             : base(options)
         {
             this.regionId = options.regionId;

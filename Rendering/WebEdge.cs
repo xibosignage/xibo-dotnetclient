@@ -33,7 +33,7 @@ namespace XiboClient.Rendering
         private int backgroundLeft;
         private int backgroundTop;
 
-        public WebEdge(RegionOptions options) : base(options)
+        public WebEdge(MediaOptions options) : base(options)
         {
             this.backgroundColor = options.Dictionary.Get("backgroundColor", options.backgroundColor);
             this.backgroundImage = options.backgroundImage;

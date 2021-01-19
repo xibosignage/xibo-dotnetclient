@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Xml;
 
 namespace XiboClient.Action
@@ -42,12 +43,14 @@ namespace XiboClient.Action
         public string LayoutCode { get; set; }
         public bool Bubble { get; set; }
 
+        public Rect Rect { get; set; }
+
         /// <summary>
         /// Create an Action from XmlNode
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        public static Action CreateFromXmlNode(XmlNode node)
+        public static Action CreateFromXmlNode(XmlNode node, int top, int left, int width, int height)
         {
             XmlAttributeCollection attributes = node.Attributes;
 
@@ -63,7 +66,8 @@ namespace XiboClient.Action
                 TargetId = string.IsNullOrEmpty(attributes["targetId"]?.Value) ? 0 : int.Parse(attributes["targetId"].Value),
                 Target = attributes["target"]?.Value,
                 LayoutCode = attributes["layoutCode"]?.Value,
-                Bubble = false
+                Bubble = false,
+                Rect = new Rect(left, top, width, height)
             };
         }
 
@@ -74,12 +78,22 @@ namespace XiboClient.Action
         /// <returns></returns>
         public static List<Action> CreateFromXmlNodeList(XmlNodeList nodeList)
         {
+            return CreateFromXmlNodeList(nodeList, 0, 0, 0, 0);
+        }
+
+        /// <summary>
+        /// Create a list of Actions from an XmlNodeList
+        /// </summary>
+        /// <param name="nodeList"></param>
+        /// <returns></returns>
+        public static List<Action> CreateFromXmlNodeList(XmlNodeList nodeList, int top, int left, int width, int height)
+        {
             List<Action> actions = new List<Action>();
             foreach (XmlNode node in nodeList)
             {
                 try
                 {
-                    actions.Add(CreateFromXmlNode(node));
+                    actions.Add(CreateFromXmlNode(node, top, left, width, height));
                 }
                 catch (Exception e)
                 {
@@ -110,6 +124,16 @@ namespace XiboClient.Action
                 default:
                     return 4;
             }
+        }
+
+        /// <summary>
+        /// Is the point inside this action
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public bool IsPointInside(Point point)
+        {
+            return Rect.Contains(point);
         }
     }
 }

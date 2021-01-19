@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -27,7 +27,7 @@ namespace XiboClient.Rendering
         /// Constructor
         /// </summary>
         /// <param name="options"></param>
-        public Audio(RegionOptions options)
+        public Audio(MediaOptions options)
             : base(options)
         {
             this.ShouldBeVisible = false;

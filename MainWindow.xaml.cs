@@ -151,6 +151,7 @@ namespace XiboClient
             Loaded += MainWindow_Loaded;
             Closing += MainForm_FormClosing;
             ContentRendered += MainForm_Shown;
+            MouseInterceptor.Instance.MouseClickEvent += MouseInterceptor_MouseClickEvent;
 
             // Trace listener for Client Info
             ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener
@@ -204,17 +205,46 @@ namespace XiboClient
         {
             _screenSaver = true;
 
-            // Configure some listeners for the mouse (to quit)
+            // Indicate to the KeyStore that we are a scrensaver
             KeyStore.Instance.ScreenSaver = true;
-            MouseInterceptor.Instance.MouseEvent += Instance_MouseEvent;
+
+            // Mouse Move
+            MouseInterceptor.Instance.MouseMoveEvent += MouseInterceptor_MouseMoveEvent;
         }
 
         /// <summary>
-        /// Handle Mouse Events
+        /// Mouse Move Event
         /// </summary>
-        private void Instance_MouseEvent()
+        private void MouseInterceptor_MouseMoveEvent()
         {
-            System.Windows.Application.Current.Shutdown();
+            if (_screenSaver)
+            {
+                System.Windows.Application.Current.Shutdown();
+            }
+        }
+
+        /// <summary>
+        /// Mouse Click Event
+        /// </summary>
+        /// <param name="point"></param>
+        private void MouseInterceptor_MouseClickEvent(System.Drawing.Point point)
+        {
+            if (_screenSaver)
+            {
+                System.Windows.Application.Current.Shutdown();
+            }
+            else if (!(point.X < Left || point.X > Width + Left || point.Y < Top || point.Y > Height + Top))
+            {
+                Debug.WriteLine("Inside Player: " + point.X + "," + point.Y 
+                    + ". Player: " + Left + "," + Top + ". " + Width + "x" + Height, "MouseInterceptor_MouseClickEvent");
+
+                // Rebase to Player dimensions and pass to Handle
+                HandleActionTrigger("touch", "", 0, new Point
+                {
+                    X = point.X - Left,
+                    Y = point.Y - Top
+                });
+            }
         }
 
         /// <summary>
@@ -1120,7 +1150,8 @@ namespace XiboClient
         /// <param name="triggerType"></param>
         /// <param name="triggerCode"></param>
         /// <param name="sourceId"></param>
-        public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId)
+        /// <param name="point"></param>
+        public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, Point point)
         {
             // If we're interrupting we don't process any actions.
             if (currentLayout.IsPaused)
@@ -1148,6 +1179,12 @@ namespace XiboClient
                 // Is this a trigger which must match the code?
                 if (triggerType == "webhook" && !string.IsNullOrEmpty(action.TriggerCode) && action.TriggerCode != triggerCode)
                 {
+                    continue;
+                }
+                // Does this action match the point provided?
+                else if (triggerType == "touch" && !action.IsPointInside(point))
+                {
+                    Debug.WriteLine(point.ToString() + " not inside action: " + action.Rect.ToString(), "HandleActionTrigger");
                     continue;
                 }
                 
@@ -1224,6 +1261,7 @@ namespace XiboClient
                     else
                     {
                         // Provided Widget in the named region
+                        currentLayout.RegionChangeToWidget(action.TargetId + "", action.WidgetId);
                     }
 
                     break;

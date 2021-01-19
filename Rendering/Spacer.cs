@@ -26,7 +26,7 @@ namespace XiboClient.Rendering
     /// </summary>
     class Spacer : Media
     {
-        public Spacer(RegionOptions options) : base(options)
+        public Spacer(MediaOptions options) : base(options)
         {
 
         }

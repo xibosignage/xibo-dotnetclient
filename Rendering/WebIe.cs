@@ -34,7 +34,7 @@ namespace XiboClient.Rendering
         private int backgroundLeft;
         private int backgroundTop;
 
-        public WebIe(RegionOptions options)
+        public WebIe(MediaOptions options)
             : base(options)
         {
             this.backgroundColor = options.Dictionary.Get("backgroundColor", options.backgroundColor);

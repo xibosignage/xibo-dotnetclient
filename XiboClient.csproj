@@ -132,7 +132,8 @@
     <Compile Include="Logic\InterruptState.cs" />
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
-    <Compile Include="Logic\MediaOption.cs" />
+    <Compile Include="Logic\MediaDictionary.cs" />
+    <Compile Include="Logic\MediaOptions.cs" />
     <Compile Include="Logic\MouseInterceptor.cs" />
     <Compile Include="Logic\OpenSslInterop.cs" />
     <Compile Include="Logic\RegionOptions.cs" />

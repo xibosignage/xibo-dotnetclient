@@ -45,6 +45,11 @@ namespace XiboClient.Rendering
         public int ZIndex { get; set; }
 
         /// <summary>
+        /// The list of media for this Region
+        /// </summary>
+        private XmlNodeList _media;
+
+        /// <summary>
         /// The Region Options
         /// </summary>
         private RegionOptions options;
@@ -55,6 +60,11 @@ namespace XiboClient.Rendering
         private Media currentMedia;
 
         /// <summary>
+        /// The current media options
+        /// </summary>
+        private MediaOptions _currentMediaOptions;
+
+        /// <summary>
         /// Track the current sequence
         /// </summary>
         private int currentSequence = -1;
@@ -62,6 +72,7 @@ namespace XiboClient.Rendering
         private bool _dimensionsSet = false;
         private int _audioSequence;
         private double _currentPlaytime;
+        private bool _isNavigateToWidgetActive = false;
 
         /// <summary>
         /// Event to indicate that this Region's duration has elapsed
@@ -86,7 +97,7 @@ namespace XiboClient.Rendering
             ZIndex = 0;
         }
 
-        public void loadFromOptions(string id, RegionOptions options)
+        public void LoadFromOptions(string id, RegionOptions options, XmlNodeList media)
         {
             // Start of by setting our dimensions
             SetDimensions(options.left, options.top, options.width, options.height);
@@ -94,6 +105,7 @@ namespace XiboClient.Rendering
             // Store the options
             Id = id;
             this.options = options;
+            _media = media;
         }
 
         /// <summary>
@@ -117,7 +129,7 @@ namespace XiboClient.Rendering
             // If we're less than 0, move back one from the end
             if (this.currentSequence < 0)
             {
-                this.currentSequence = this.options.mediaNodes.Count - 2;
+                this.currentSequence = this._media.Count - 2;
             }
 
             Next();
@@ -132,6 +144,39 @@ namespace XiboClient.Rendering
             Dispatcher.Invoke(new System.Action(() => {
                 // Call start next
                 StartNext(0);
+            }));
+        }
+
+        /// <summary>
+        /// Navigate to the provided XmlNode
+        /// </summary>
+        /// <param name="media">A Media XmlNode</param>
+        public void NavigateToWidget(XmlNode node)
+        {
+            // Create the options and media node
+            Media media = CreateNextMediaNode(Media.ParseOptions(node));
+
+            // Where are we?
+            _currentPlaytime = this.currentMedia.CurrentPlaytime();
+            _isNavigateToWidgetActive = true;
+
+            Dispatcher.Invoke(new System.Action(() => {
+                try
+                {
+                    // Stop Audio
+                    StopAudio();
+
+                    // Start our new one.
+                    StartMedia(media, 0);
+
+                    // Stop Media
+                    StopMedia(currentMedia);
+
+                } 
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("Region", "NavigateToWidget: e = " + e.Message), LogType.Error.ToString());
+                }
             }));
         }
 
@@ -162,7 +207,7 @@ namespace XiboClient.Rendering
             while (!startSuccessful)
             {
                 // If we go round this the same number of times as media objects, then we are unsuccessful and should exception
-                if (countTries >= this.options.mediaNodes.Count)
+                if (countTries >= this._media.Count)
                     throw new ArgumentOutOfRangeException("Unable to set and start a media node");
 
                 // Lets try again
@@ -211,17 +256,15 @@ namespace XiboClient.Rendering
                     }
                 }
 
-                // Store the Current Index
-                this.options.CurrentIndex = this.currentSequence;
-
                 // See if we can start the new media object
                 try
                 {
-                    newMedia = CreateNextMediaNode();
+                    newMedia = CreateNextMediaNode(_currentMediaOptions);
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(new LogMessage("Region", "StartNext: Unable to create new " + this.options.type + "  object: " + ex.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("Region", "StartNext: Unable to create new " + _currentMediaOptions.type 
+                        + "  object: " + ex.Message), LogType.Error.ToString());
 
                     // Try the next node
                     startSuccessful = false;
@@ -254,7 +297,7 @@ namespace XiboClient.Rendering
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(new LogMessage("Region", "StartNext: Unable to start new " + this.options.type + "  object: " + ex.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("Region", "StartNext: Unable to start new " + _currentMediaOptions.type + "  object: " + ex.Message), LogType.Error.ToString());
                     startSuccessful = false;
                     continue;
                 }
@@ -276,11 +319,9 @@ namespace XiboClient.Rendering
 
                 // Open a stat record
                 // options accurately reflect the current media, so we can use them.
-                StatManager.Instance.WidgetStart(this.options.scheduleId, this.options.layoutId, this.options.mediaid);
+                StatManager.Instance.WidgetStart(this.options.scheduleId, this.options.layoutId, _currentMediaOptions.mediaid);
             }
         }
-
-        
 
         /// <summary>
         /// Sets the next media node. Should be used either from a mediaComplete event, or an options reset from 
@@ -289,33 +330,20 @@ namespace XiboClient.Rendering
         private bool SetNextMediaNodeInOptions()
         {
             // What if there are no media nodes?
-            if (this.options.mediaNodes.Count == 0)
+            if (_media.Count == 0)
             {
                 Trace.WriteLine(new LogMessage("Region", "SetNextMediaNode: No media nodes to display"), LogType.Audit.ToString());
 
                 return false;
             }
 
-            // Zero out the options that are persisted
-            this.options.text = "";
-            this.options.documentTemplate = "";
-            this.options.copyrightNotice = "";
-            this.options.scrollSpeed = 30;
-            this.options.updateInterval = 6;
-            this.options.uri = "";
-            this.options.direction = "none";
-            this.options.javaScript = "";
-            this.options.FromDt = DateTime.MinValue;
-            this.options.ToDt = DateTime.MaxValue;
-            this.options.Dictionary = new MediaDictionary();
-
             // Tidy up old audio if necessary
-            foreach (Media audio in this.options.Audio)
+            foreach (Media audio in _currentMediaOptions.Audio)
             {
                 try
                 {
                     // Unbind any events and dispose
-                    audio.DurationElapsedEvent -= audio_DurationElapsedEvent;
+                    audio.DurationElapsedEvent -= Audio_DurationElapsedEvent;
                     audio.Stop(false);
                 }
                 catch
@@ -325,19 +353,19 @@ namespace XiboClient.Rendering
             }
 
             // Empty the options node
-            this.options.Audio.Clear();
+            _currentMediaOptions.Audio.Clear();
 
             // Get a media node
             bool validNode = false;
             int numAttempts = 0;
 
             // Loop through all the nodes in order
-            while (numAttempts < this.options.mediaNodes.Count)
+            while (numAttempts < this._media.Count)
             {
                 // Move the sequence on
                 this.currentSequence++;
 
-                if (this.currentSequence >= this.options.mediaNodes.Count)
+                if (this.currentSequence >= _media.Count)
                 {
                     Trace.WriteLine(new LogMessage("Region", "SetNextMediaNodeInOptions: Region " + this.options.regionId + " Expired"), LogType.Audit.ToString());
 
@@ -358,24 +386,18 @@ namespace XiboClient.Rendering
                 }
 
                 // Get the media node for this sequence
-                XmlNode mediaNode = this.options.mediaNodes[this.currentSequence];
-                XmlAttributeCollection nodeAttributes = mediaNode.Attributes;
+                XmlNode mediaNode = _media[this.currentSequence];
 
-                // Set the media id
-                if (nodeAttributes["id"].Value != null)
-                    this.options.mediaid = nodeAttributes["id"].Value;
-
-                // Set the file id
-                if (nodeAttributes["fileId"] != null)
+                try
                 {
-                    this.options.FileId = int.Parse(nodeAttributes["fileId"].Value);
+                    // Get media options representing the incoming media node.
+                    _currentMediaOptions = Media.ParseOptions(mediaNode);
+
+                    // Decorate it with common properties.
+                    _currentMediaOptions.DecorateWithRegionOptions(this.options);
                 }
-
-                // Check isnt blacklisted
-                if (CacheManager.Instance.IsUnsafeMedia(this.options.mediaid))
+                catch
                 {
-                    Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", string.Format("MediaID [{0}] has been blacklisted.", this.options.mediaid)), LogType.Error.ToString());
-
                     // Increment the number of attempts and try again
                     numAttempts++;
 
@@ -383,14 +405,8 @@ namespace XiboClient.Rendering
                     continue;
                 }
 
-                // Stats enabled?
-                this.options.isStatEnabled = (nodeAttributes["enableStat"] == null) ? true : (int.Parse(nodeAttributes["enableStat"].Value) == 1);
-
-                // Parse the options for this media node
-                ParseOptionsForMediaNode(mediaNode, nodeAttributes);
-
                 // Is this widget inside the from/to date?
-                if (!(this.options.FromDt <= DateTime.Now && this.options.ToDt > DateTime.Now))
+                if (!(_currentMediaOptions.FromDt <= DateTime.Now && _currentMediaOptions.ToDt > DateTime.Now))
                 {
                     Trace.WriteLine(new LogMessage("Region", "SetNextMediaNode: Widget outside from/to date."), LogType.Audit.ToString());
 
@@ -398,15 +414,15 @@ namespace XiboClient.Rendering
                     numAttempts++;
 
                     // Watermark the next earliest time we can expect this Widget to be available.
-                    if (this.options.FromDt > DateTime.Now)
+                    if (_currentMediaOptions.FromDt > DateTime.Now)
                     {
                         if (_widgetAvailableTtl == 0)
                         {
-                            _widgetAvailableTtl = (int)(this.options.FromDt - DateTime.Now).TotalSeconds;
+                            _widgetAvailableTtl = (int)(_currentMediaOptions.FromDt - DateTime.Now).TotalSeconds;
                         }
                         else
                         {
-                            _widgetAvailableTtl = Math.Min(_widgetAvailableTtl, (int)(this.options.FromDt - DateTime.Now).TotalSeconds);
+                            _widgetAvailableTtl = Math.Min(_widgetAvailableTtl, (int)(_currentMediaOptions.FromDt - DateTime.Now).TotalSeconds);
                         }
                     }
 
@@ -414,230 +430,27 @@ namespace XiboClient.Rendering
                     continue;
                 }
 
-                // Assume we have a valid node at this point
+                // We have a valid node
                 validNode = true;
-
-                // Is this a file based media node?
-                if (this.options.type == "video" || this.options.type == "flash" || this.options.type == "image" || this.options.type == "powerpoint" || this.options.type == "audio" || this.options.type == "htmlpackage")
-                {
-                    // Use the cache manager to determine if the file is valid
-                    validNode = CacheManager.Instance.IsValidPath(this.options.uri) && !CacheManager.Instance.IsUnsafeMedia(this.options.uri);
-                }
-
-                // If we have a valid node, break out of the loop
-                if (validNode)
-                    break;
-
-                // Increment the number of attempts and try again
-                numAttempts++;
+                break;
             }
 
             // If we dont have a valid node out of all the nodes in the region, then return false.
             if (!validNode)
                 return false;
 
-            Trace.WriteLine(new LogMessage("Region - SetNextMediaNode", "New media detected " + this.options.type), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("Region", "SetNextMediaNode: New media detected " + _currentMediaOptions.type), LogType.Audit.ToString());
 
             return true;
-        }
-
-        /// <summary>
-        /// Parse options for the media node
-        /// </summary>
-        /// <param name="mediaNode"></param>
-        /// <param name="nodeAttributes"></param>
-        private void ParseOptionsForMediaNode(XmlNode mediaNode, XmlAttributeCollection nodeAttributes)
-        {
-            // New version has a different schema - the right way to do it would be to pass the <options> and <raw> nodes to 
-            // the relevant media class - however I dont feel like engineering such a change so the alternative is to
-            // parse all the possible media type nodes here.
-
-            // Type and Duration will always be on the media node
-            this.options.type = nodeAttributes["type"].Value;
-
-            // Render as
-            if (nodeAttributes["render"] != null)
-                this.options.render = nodeAttributes["render"].Value;
-
-            //TODO: Check the type of node we have, and make sure it is supported.
-
-            if (nodeAttributes["duration"].Value != "")
-            {
-                this.options.duration = int.Parse(nodeAttributes["duration"].Value);
-            }
-            else
-            {
-                this.options.duration = 60;
-                Trace.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
-            }
-
-            // Widget From/To dates (v2 onward)
-            try
-            {
-                if (nodeAttributes["fromDt"] != null)
-                {
-                    this.options.FromDt = DateTime.Parse(nodeAttributes["fromDt"].Value, CultureInfo.InvariantCulture);
-                }
-
-                if (nodeAttributes["toDt"] != null)
-                {
-                    this.options.ToDt = DateTime.Parse(nodeAttributes["toDt"].Value, CultureInfo.InvariantCulture);
-                }
-            }
-            catch
-            {
-                Trace.WriteLine(new LogMessage("Region", "ParseOptionsForMediaNode: Unable to parse widget from/to dates."), LogType.Error.ToString());
-            }
-
-            // We cannot have a 0 duration here... not sure why we would... but
-            if (this.options.duration == 0 && this.options.type != "video" && this.options.type != "localvideo")
-            {
-                int emptyLayoutDuration = int.Parse(ApplicationSettings.Default.EmptyLayoutDuration.ToString());
-                this.options.duration = (emptyLayoutDuration == 0) ? 10 : emptyLayoutDuration;
-            }
-
-            // There will be some stuff on option nodes
-            XmlNode optionNode = mediaNode.SelectSingleNode("options");
-
-            // Track if an update interval has been provided in the XLF
-            bool updateIntervalProvided = false;
-
-            // Loop through each option node
-            foreach (XmlNode option in optionNode.ChildNodes)
-            {
-                if (option.Name == "direction")
-                {
-                    this.options.direction = option.InnerText;
-                }
-                else if (option.Name == "uri")
-                {
-                    this.options.uri = option.InnerText;
-                }
-                else if (option.Name == "copyright")
-                {
-                    this.options.copyrightNotice = option.InnerText;
-                }
-                else if (option.Name == "scrollSpeed")
-                {
-                    try
-                    {
-                        this.options.scrollSpeed = int.Parse(option.InnerText);
-                    }
-                    catch
-                    {
-                        Trace.WriteLine("Non integer scrollSpeed in XLF", "Region - SetNextMediaNode");
-                    }
-                }
-                else if (option.Name == "updateInterval")
-                {
-                    updateIntervalProvided = true;
-
-                    try
-                    {
-                        this.options.updateInterval = int.Parse(option.InnerText);
-                    }
-                    catch
-                    {
-                        // Update interval not defined, so assume a high value
-                        this.options.updateInterval = 3600;
-
-                        Trace.WriteLine("Non integer updateInterval in XLF", "Region - SetNextMediaNode");
-                    }
-                }
-
-                // Add this to the options object
-                this.options.Dictionary.Add(option.Name, option.InnerText);
-            }
-
-            // And some stuff on Raw nodes
-            XmlNode rawNode = mediaNode.SelectSingleNode("raw");
-
-            if (rawNode != null)
-            {
-                foreach (XmlNode raw in rawNode.ChildNodes)
-                {
-                    if (raw.Name == "text")
-                    {
-                        this.options.text = raw.InnerText;
-                    }
-                    else if (raw.Name == "template")
-                    {
-                        this.options.documentTemplate = raw.InnerText;
-                    }
-                    else if (raw.Name == "embedHtml")
-                    {
-                        this.options.text = raw.InnerText;
-                    }
-                    else if (raw.Name == "embedScript")
-                    {
-                        this.options.javaScript = raw.InnerText;
-                    }
-                }
-            }
-
-            // Audio Nodes?
-            XmlNode audio = mediaNode.SelectSingleNode("audio");
-
-            if (audio != null)
-            {
-                foreach (XmlNode audioNode in audio.ChildNodes)
-                {
-                    RegionOptions options = new RegionOptions();
-                    options.Dictionary = new MediaDictionary();
-                    options.duration = 0;
-                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + audioNode.InnerText;
-
-                    if (audioNode.Attributes["loop"] != null)
-                    {
-                        options.Dictionary.Add("loop", audioNode.Attributes["loop"].Value);
-
-                        if (options.Dictionary.Get("loop", 0) == 1)
-                        {
-                            // Set the media duration to be equal to the duration of the parent media
-                            options.duration = (this.options.duration == 0) ? int.MaxValue : this.options.duration;
-                        }
-                    }
-
-                    if (audioNode.Attributes["volume"] != null)
-                        options.Dictionary.Add("volume", audioNode.Attributes["volume"].Value);
-
-                    Media audioMedia = new Audio(options);
-
-                    // Bind to the media complete event
-                    audioMedia.DurationElapsedEvent += audio_DurationElapsedEvent;
-
-                    this.options.Audio.Add(audioMedia);
-                }
-            }
-
-            // Media Types without an update interval should have a sensible default (xibosignage/xibo#404)
-            // This means that items which do not provide an update interval will still refresh.
-            if (!updateIntervalProvided)
-            {
-                // Special handling for text/webpages because we know they should never have a default update interval applied
-                if (this.options.type == "webpage" || this.options.type == "text")
-                {
-                    // Very high (will expire eventually, but shouldn't cause a routine request for a new resource
-                    this.options.updateInterval = int.MaxValue;
-                }
-                else
-                {
-                    // Default to 5 minutes for those items that do not provide an update interval
-                    this.options.updateInterval = 5;
-                }
-            }
         }
 
         /// <summary>
         /// Create the next media node based on the provided options
         /// </summary>
         /// <returns></returns>
-        private Media CreateNextMediaNode()
+        private Media CreateNextMediaNode(MediaOptions options)
         {
             Media media;
-
-            // Grab a local copy of options
-            RegionOptions options = this.options;
 
             Trace.WriteLine(new LogMessage("Region - CreateNextMediaNode", string.Format("Creating new media: {0}, {1}", options.type, options.mediaid)), LogType.Audit.ToString());
 
@@ -671,7 +484,7 @@ namespace XiboClient.Rendering
                     break;
 
                 case "embedded":
-                    media = WebMedia.GetConfiguredWebMedia(options, WebMedia.ReadBrowserType(this.options.text));
+                    media = WebMedia.GetConfiguredWebMedia(options, WebMedia.ReadBrowserType(options.text));
                     break;
 
                 case "datasetview":
@@ -726,7 +539,13 @@ namespace XiboClient.Rendering
             }
 
             // Add event handler for when this completes
-            media.DurationElapsedEvent += new Media.DurationElapsedDelegate(media_DurationElapsedEvent);
+            media.DurationElapsedEvent += new Media.DurationElapsedDelegate(Media_DurationElapsedEvent);
+
+            // Add event handlers for audio
+            foreach (Media audio in options.Audio)
+            {
+                audio.DurationElapsedEvent += Audio_DurationElapsedEvent;
+            }
 
             return media;
         }
@@ -747,18 +566,18 @@ namespace XiboClient.Rendering
 
             // Reset the audio sequence and start
             _audioSequence = 1;
-            startAudio();
+            StartAudio();
         }
 
         /// <summary>
         /// Start Audio if necessary
         /// </summary>
-        private void startAudio()
+        private void StartAudio()
         {
             // Start any associated audio
-            if (this.options.Audio.Count >= _audioSequence)
+            if (_currentMediaOptions.Audio.Count >= _audioSequence)
             {
-                Media audio = this.options.Audio[_audioSequence - 1];
+                Media audio = _currentMediaOptions.Audio[_audioSequence - 1];
 
                 // call render media and add to controls
                 audio.RenderMedia(0);
@@ -772,11 +591,11 @@ namespace XiboClient.Rendering
         /// Audio Finished Playing
         /// </summary>
         /// <param name="filesPlayed"></param>
-        private void audio_DurationElapsedEvent(int filesPlayed)
+        private void Audio_DurationElapsedEvent(int filesPlayed)
         {
             try
             {
-                StopMedia(this.options.Audio[_audioSequence - 1]);
+                StopMedia(_currentMediaOptions.Audio[_audioSequence - 1]);
             }
             catch (Exception ex)
             {
@@ -786,7 +605,7 @@ namespace XiboClient.Rendering
             _audioSequence += filesPlayed;
 
             // Start
-            startAudio();
+            StartAudio();
         }
 
         /// <summary>
@@ -817,7 +636,7 @@ namespace XiboClient.Rendering
                 media.MediaStoppedEvent += Media_MediaStoppedEvent;
 
                 // Tidy Up
-                media.DurationElapsedEvent -= media_DurationElapsedEvent;
+                media.DurationElapsedEvent -= Media_DurationElapsedEvent;
                 media.Stop(regionStopped);
             }
             catch (Exception ex)
@@ -850,11 +669,11 @@ namespace XiboClient.Rendering
         private void StopAudio()
         {
             // Stop the currently playing audio (if there is any)
-            if (this.options.Audio.Count > 0)
+            if (_currentMediaOptions.Audio.Count > 0)
             {
                 try
                 {
-                    StopMedia(this.options.Audio[_audioSequence - 1]);
+                    StopMedia(_currentMediaOptions.Audio[_audioSequence - 1]);
                 }
                 catch (Exception ex)
                 {
@@ -866,9 +685,15 @@ namespace XiboClient.Rendering
         /// <summary>
         /// The media has elapsed
         /// </summary>
-        private void media_DurationElapsedEvent(int filesPlayed)
+        private void Media_DurationElapsedEvent(int filesPlayed)
         {
-            Trace.WriteLine(new LogMessage("Region", string.Format("DurationElapsedEvent: Media Elapsed: {0}", this.options.uri)), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("Region", string.Format("DurationElapsedEvent: Media Elapsed: {0}", _currentMediaOptions.uri)), LogType.Audit.ToString());
+
+            if (_isNavigateToWidgetActive)
+            {
+                // Drop the currentSequence
+                this.currentSequence--;
+            }
 
             if (filesPlayed > 1)
             {
@@ -908,7 +733,10 @@ namespace XiboClient.Rendering
             // make some decisions about what to do next
             try
             {
-                StartNext(0);
+                StartNext(_isNavigateToWidgetActive ? _currentPlaytime : 0);
+
+                // We are no longer navigating to a Widget.
+                _isNavigateToWidgetActive = false;
             }
             catch (Exception e)
             {
@@ -996,13 +824,13 @@ namespace XiboClient.Rendering
             // if we are a normal layout, then we resume the current one.
             if (isInterrupt)
             {
-                if (this.options.mediaNodes.Count <= 1)
+                if (this._media.Count <= 1)
                 {
                     this.currentSequence--;
                 }
 
-                // Resume the current media item
-                StartNext(this._currentPlaytime);
+                // Start media item
+                StartNext(0);
             }
             else
             {
@@ -1010,7 +838,7 @@ namespace XiboClient.Rendering
                 this.currentSequence--;
 
                 // Resume the current media item
-                StartNext(0);
+                StartNext(this._currentPlaytime);
             }
 
             this._isPaused = false;

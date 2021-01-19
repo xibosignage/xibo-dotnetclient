@@ -206,11 +206,12 @@ namespace XiboClient.Rendering
             }
 
             // New region and region options objects
-            RegionOptions options = new RegionOptions();
-
-            options.PlayerWidth = (int)Width;
-            options.PlayerHeight = (int)Height;
-            options.LayoutModifiedDate = layoutModifiedTime;
+            RegionOptions options = new RegionOptions
+            {
+                PlayerWidth = (int)Width,
+                PlayerHeight = (int)Height,
+                LayoutModifiedDate = layoutModifiedTime
+            };
 
             // Deal with the color
             // unless we are an overlay, in which case don't put up a background at all
@@ -329,18 +330,20 @@ namespace XiboClient.Rendering
                 options.backgroundTop = options.top * -1;
 
                 // All the media nodes for this region / layout combination
-                options.mediaNodes = region.SelectNodes("media");
+                XmlNodeList mediaNodes = region.SelectNodes("media");
 
                 // Pull out any actions
                 try
                 {
                     // Region Actions
-                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(region.SelectNodes("action")));
+                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(region.SelectNodes("action"), 
+                        options.top, options.left, options.width, options.height));
 
                     // Widget Actions
-                    foreach (XmlNode media in options.mediaNodes)
+                    foreach (XmlNode media in mediaNodes)
                     {
-                        List<Action.Action> mediaActions = Action.Action.CreateFromXmlNodeList(media.SelectNodes("action"));
+                        List<Action.Action> mediaActions = Action.Action.CreateFromXmlNodeList(media.SelectNodes("action"), 
+                            options.top, options.left, options.width, options.height);
 
                         if (mediaActions.Count > 0)
                         {
@@ -366,7 +369,7 @@ namespace XiboClient.Rendering
                 Debug.WriteLine("loadFromFile: Created new region", "Layout");
 
                 // Load our region
-                temp.loadFromOptions(options.regionId, options);
+                temp.LoadFromOptions(options.regionId, options, mediaNodes);
 
                 // Add to our list of Regions
                 _regions.Add(temp);
@@ -545,6 +548,56 @@ namespace XiboClient.Rendering
                     region.Next();
                 }
             }
+        }
+
+        /// <summary>
+        /// Change the Widget in the provided region
+        /// </summary>
+        /// <param name="regionId"></param>
+        /// <param name="widgetId"></param>
+        public void RegionChangeToWidget(string regionId, int widgetId)
+        {
+            // Get the XmlNode associated with this Widget.
+            XmlNode widget = GetWidgetFromDrawer(widgetId);
+
+            foreach (Region region in _regions)
+            {
+                if (region.Id == regionId)
+                {
+                    region.NavigateToWidget(widget);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Execute a Widget
+        /// </summary>
+        /// <param name="widgetId"></param>
+        public void ExecuteWidget(int widgetId)
+        {
+            // We should check that this widget is a shell command, and if not, back out.
+            // if it is a shell command, we should execute it without interrupting what we're doing.
+
+        }
+
+        /// <summary>
+        /// Get a Widget from the Drawer
+        /// </summary>
+        /// <param name="widgetId"></param>
+        /// <returns></returns>
+        private XmlNode GetWidgetFromDrawer(int widgetId)
+        {
+            // Get our node from the drawer
+            foreach (XmlNode node in _drawer)
+            {
+                if (node.Attributes["id"] != null && int.Parse(node.Attributes["id"].Value) == widgetId)
+                {
+                    // Found it, create the media node
+                    return node;
+                }
+            }
+
+            throw new Exception("Drawer does not contain a Widget with widgetId " + widgetId);
         }
 
         /// <summary>

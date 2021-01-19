@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Xml;
+using XiboClient.Logic;
 using XiboClient.Rendering;
 
 namespace XiboClient
@@ -38,80 +39,29 @@ namespace XiboClient
         public int left;
         public int originalWidth;
         public int originalHeight;
-
-        // Widget From/To dates
-        public DateTime FromDt { get; set; }
-        public DateTime ToDt { get; set; }
-
         public int backgroundLeft;
         public int backgroundTop;
-
-        public string render;
-        public string type;
-        public string uri;
-        public int duration;
 
         // Region Loop
         public bool RegionLoop;
 
-        //xml
-        public XmlNodeList mediaNodes;
-
-        //rss options
-        public string direction;
-        public string text;
-        public string documentTemplate;
-        public string copyrightNotice;
-        public string javaScript;
-        public int updateInterval;
-        public int scrollSpeed;
-
         //The identification for this region
-        public string mediaid;
         public int layoutId;
         public string regionId;
         public int scheduleId;
-        public int CurrentIndex;
-        public int FileId { get; set; }
 
         //general options
         public string backgroundImage;
         public string backgroundColor;
-
-        public MediaDictionary Dictionary;
 
         public DateTime LayoutModifiedDate { get; set; }
 
         public int PlayerWidth { get; set; }
         public int PlayerHeight { get; set; }
 
-        /// <summary>
-        /// Audio associated with the widget
-        /// </summary>
-        public List<Media> Audio
-        {
-            get
-            {
-                if (_audio == null)
-                    _audio = new List<Media>();
-
-                return _audio;
-            }
-            set
-            {
-                _audio = value;
-            }
-        }
-        private List<Media> _audio;
-
-        /// <summary>
-        /// Are statistics enabled
-        /// </summary>
-        public bool isStatEnabled;
-
         public override string ToString()
         {
-            return String.Format("({0},{1},{2},{3},{4},{5})", width, height, top, left, type, uri);
+            return string.Format("({0},{1},{2},{3},{4},{5})", width, height, top, left, layoutId, regionId);
         }
     }
 }

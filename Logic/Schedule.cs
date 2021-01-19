@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Windows;
 using XiboClient.Action;
 using XiboClient.Control;
 using XiboClient.Log;
@@ -42,7 +43,7 @@ namespace XiboClient
         public delegate void OverlayChangeDelegate(List<ScheduleItem> overlays);
         public event OverlayChangeDelegate OverlayChangeEvent;
 
-        public delegate void OnTriggerReceivedDelegate(string triggerType, string triggerCode, int sourceId);
+        public delegate void OnTriggerReceivedDelegate(string triggerType, string triggerCode, int sourceId, Point point);
         public event OnTriggerReceivedDelegate OnTriggerReceived;
 
         /// <summary>
@@ -728,7 +729,7 @@ namespace XiboClient
         /// <param name="sourceId"></param>
         private void EmbeddedServerOnTriggerReceived(string triggerCode, int sourceId)
         {
-            OnTriggerReceived?.Invoke("webhook", triggerCode, sourceId);
+            OnTriggerReceived?.Invoke("webhook", triggerCode, sourceId, new Point());
         }
 
         #region Interrupt Layouts
