@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -22,7 +22,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Windows;
 using XiboClient.Action;
 using XiboClient.Control;
 using XiboClient.Log;
@@ -43,7 +42,7 @@ namespace XiboClient
         public delegate void OverlayChangeDelegate(List<ScheduleItem> overlays);
         public event OverlayChangeDelegate OverlayChangeEvent;
 
-        public delegate void OnTriggerReceivedDelegate(string triggerType, string triggerCode, int sourceId, Point point);
+        public delegate void OnTriggerReceivedDelegate(string triggerType, string triggerCode, int sourceId, int duration);
         public event OnTriggerReceivedDelegate OnTriggerReceived;
 
         /// <summary>
@@ -172,8 +171,11 @@ namespace XiboClient
             _server = new EmbeddedServer();
             _server.OnServerClosed += _server_OnServerClosed;
             _server.OnTriggerReceived += EmbeddedServerOnTriggerReceived;
-            _serverThread = new Thread(new ThreadStart(_server.Run));
-            _serverThread.Name = "EmbeddedServer";
+            _server.OnDurationReceived += EmbeddedServerOnDurationReceived;
+            _serverThread = new Thread(new ThreadStart(_server.Run))
+            {
+                Name = "EmbeddedServer"
+            };
         }
 
         /// <summary>
@@ -682,6 +684,7 @@ namespace XiboClient
             // Stop the embedded server
             _server.Stop();
             _server.OnTriggerReceived -= EmbeddedServerOnTriggerReceived;
+            _server.OnDurationReceived -= EmbeddedServerOnDurationReceived;
             _server.OnServerClosed -= _server_OnServerClosed;
         }
 
@@ -729,7 +732,18 @@ namespace XiboClient
         /// <param name="sourceId"></param>
         private void EmbeddedServerOnTriggerReceived(string triggerCode, int sourceId)
         {
-            OnTriggerReceived?.Invoke("webhook", triggerCode, sourceId, new Point());
+            OnTriggerReceived?.Invoke("webhook", triggerCode, sourceId, 0);
+        }
+
+        /// <summary>
+        /// Trigger received form an embedded server
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="duration"></param>
+        private void EmbeddedServerOnDurationReceived(string operation, int sourceId, int duration)
+        {
+            OnTriggerReceived?.Invoke("duration", operation, sourceId, duration);
         }
 
         #region Interrupt Layouts

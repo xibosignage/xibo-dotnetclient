@@ -21,13 +21,8 @@
 using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.Text;
-using XiboClient.Log;
 
 namespace XiboClient.Control
 {

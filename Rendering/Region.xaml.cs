@@ -65,6 +65,11 @@ namespace XiboClient.Rendering
         private MediaOptions _currentMediaOptions;
 
         /// <summary>
+        /// Media we have navigated to, interrupting the usual flow
+        /// </summary>
+        private Media navigatedMedia;
+
+        /// <summary>
         /// Track the current sequence
         /// </summary>
         private int currentSequence = -1;
@@ -72,7 +77,6 @@ namespace XiboClient.Rendering
         private bool _dimensionsSet = false;
         private int _audioSequence;
         private double _currentPlaytime;
-        private bool _isNavigateToWidgetActive = false;
 
         /// <summary>
         /// Event to indicate that this Region's duration has elapsed
@@ -158,8 +162,8 @@ namespace XiboClient.Rendering
 
             // Where are we?
             _currentPlaytime = this.currentMedia.CurrentPlaytime();
-            _isNavigateToWidgetActive = true;
 
+            // UI thread
             Dispatcher.Invoke(new System.Action(() => {
                 try
                 {
@@ -169,15 +173,57 @@ namespace XiboClient.Rendering
                     // Start our new one.
                     StartMedia(media, 0);
 
-                    // Stop Media
-                    StopMedia(currentMedia);
+                    // Do we have a navigate to media already active?
+                    if (navigatedMedia != null)
+                    {
+                        StopMedia(navigatedMedia);
+                    }
+                    else
+                    {
+                        // Stop Normal Media
+                        StopMedia(currentMedia);
+                    }
 
+                    // Switch-a-roo
+                    navigatedMedia = media;
                 } 
                 catch (Exception e)
                 {
                     Trace.WriteLine(new LogMessage("Region", "NavigateToWidget: e = " + e.Message), LogType.Error.ToString());
                 }
             }));
+        }
+
+        /// <summary>
+        /// Extend the current widgets duration by the provided amount
+        /// </summary>
+        /// <param name="duration"></param>
+        public void ExtendCurrentWidgetDuration(int duration)
+        {
+            if (navigatedMedia != null)
+            {
+                navigatedMedia.ExtendDuration(duration);
+            }
+            else
+            {
+                currentMedia.ExtendDuration(duration);
+            }
+        }
+
+        /// <summary>
+        /// Set the current widgets duration to the provided amount
+        /// </summary>
+        /// <param name="duration"></param>
+        public void SetCurrentWidgetDuration(int duration)
+        {
+            if (navigatedMedia != null)
+            {
+                navigatedMedia.SetDuration(duration);
+            }
+            else
+            {
+                currentMedia.SetDuration(duration);
+            }
         }
 
         /// <summary>
@@ -305,7 +351,15 @@ namespace XiboClient.Rendering
                 startSuccessful = true;
 
                 // Remove the old media
-                if (currentMedia != null)
+                if (navigatedMedia != null)
+                {
+                    Debug.WriteLine("StartNext: Stopping navigated media in regionId " + this.options.regionId + ", position " + position, "Region");
+
+                    StopMedia(navigatedMedia);
+
+                    navigatedMedia = null;
+                }
+                else if (currentMedia != null)
                 {
                     Debug.WriteLine("StartNext: Stopping current media in regionId " + this.options.regionId + ", position " + position, "Region");
 
@@ -450,83 +504,9 @@ namespace XiboClient.Rendering
         /// <returns></returns>
         private Media CreateNextMediaNode(MediaOptions options)
         {
-            Media media;
-
             Trace.WriteLine(new LogMessage("Region - CreateNextMediaNode", string.Format("Creating new media: {0}, {1}", options.type, options.mediaid)), LogType.Audit.ToString());
 
-            // We've set our next media node in options already
-            // this includes checking that file based media is valid.
-            switch (options.type)
-            {
-                case "image":
-                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
-                    media = new Image(options);
-                    break;
-
-                case "powerpoint":
-                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
-                    media = new PowerPoint(options);
-                    break;
-
-                case "video":
-                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
-                    media = new Video(options);
-                    break;
-
-                case "localvideo":
-                    // Local video does not update the URI with the library path, it just takes what has been provided in the Widget.
-                    media = new Video(options);
-                    break;
-
-                case "audio":
-                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
-                    media = new Audio(options);
-                    break;
-
-                case "embedded":
-                    media = WebMedia.GetConfiguredWebMedia(options, WebMedia.ReadBrowserType(options.text));
-                    break;
-
-                case "datasetview":
-                case "ticker":
-                case "text":
-                case "webpage":
-                    media = WebMedia.GetConfiguredWebMedia(options);
-                    break;
-
-                case "flash":
-                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
-                    media = new Flash(options);
-                    break;
-
-                case "shellcommand":
-                    media = new ShellCommand(options);
-                    break;
-
-                case "htmlpackage":
-                    media = WebMedia.GetConfiguredWebMedia(options);
-                    ((WebMedia)media).ConfigureForHtmlPackage();
-                    break;
-
-                case "spacer":
-                    media = new Spacer(options);
-                    break;
-
-                case "hls":
-                    media = new WebEdge(options);
-                    break;
-
-                default:
-                    if (options.render == "html")
-                    {
-                        media = WebMedia.GetConfiguredWebMedia(options);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Not a valid media node type: " + options.type);
-                    }
-                    break;
-            }
+            Media media = Media.Create(options);
 
             // Set the media width/height
             media.Width = Width;
@@ -689,16 +669,15 @@ namespace XiboClient.Rendering
         {
             Trace.WriteLine(new LogMessage("Region", string.Format("DurationElapsedEvent: Media Elapsed: {0}", _currentMediaOptions.uri)), LogType.Audit.ToString());
 
-            if (_isNavigateToWidgetActive)
+            if (navigatedMedia != null)
             {
                 // Drop the currentSequence
                 this.currentSequence--;
-            }
-
-            if (filesPlayed > 1)
+            } 
+            else if (filesPlayed > 1)
             {
                 // Increment the _current sequence by the number of filesPlayed (minus 1)
-                this.currentSequence = this.currentSequence + (filesPlayed - 1);
+                this.currentSequence += (filesPlayed - 1);
             }
 
             // Indicate that this media has expired.
@@ -733,10 +712,8 @@ namespace XiboClient.Rendering
             // make some decisions about what to do next
             try
             {
-                StartNext(_isNavigateToWidgetActive ? _currentPlaytime : 0);
-
-                // We are no longer navigating to a Widget.
-                _isNavigateToWidgetActive = false;
+                double startAt = navigatedMedia != null ? _currentPlaytime : 0;
+                StartNext(startAt);
             }
             catch (Exception e)
             {

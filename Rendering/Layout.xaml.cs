@@ -526,13 +526,7 @@ namespace XiboClient.Rendering
         /// <param name="regionId"></param>
         public void RegionPrevious(string regionId)
         {
-            foreach (Region region in _regions)
-            {
-                if (region.Id == regionId)
-                {
-                    region.Previous();
-                }
-            }
+            GetRegionById(regionId).Previous();
         }
 
         /// <summary>
@@ -541,13 +535,27 @@ namespace XiboClient.Rendering
         /// <param name="regionId"></param>
         public void RegionNext(string regionId)
         {
-            foreach (Region region in _regions)
-            {
-                if (region.Id == regionId)
-                {
-                    region.Next();
-                }
-            }
+            GetRegionById(regionId).Next();
+        }
+
+        /// <summary>
+        /// Extend the current widget's duration
+        /// </summary>
+        /// <param name="regionId"></param>
+        /// <param name="duration"></param>
+        public void RegionExtend(string regionId, int duration)
+        {
+            GetRegionById(regionId).ExtendCurrentWidgetDuration(duration);
+        }
+
+        /// <summary>
+        /// Set the current widget's duration
+        /// </summary>
+        /// <param name="regionId"></param>
+        /// <param name="duration"></param>
+        public void RegionSetDuration(string regionId, int duration)
+        {
+            GetRegionById(regionId).SetCurrentWidgetDuration(duration);
         }
 
         /// <summary>
@@ -558,15 +566,7 @@ namespace XiboClient.Rendering
         public void RegionChangeToWidget(string regionId, int widgetId)
         {
             // Get the XmlNode associated with this Widget.
-            XmlNode widget = GetWidgetFromDrawer(widgetId);
-
-            foreach (Region region in _regions)
-            {
-                if (region.Id == regionId)
-                {
-                    region.NavigateToWidget(widget);
-                }
-            }
+            GetRegionById(regionId).NavigateToWidget(GetWidgetFromDrawer(widgetId));
         }
 
         /// <summary>
@@ -577,7 +577,44 @@ namespace XiboClient.Rendering
         {
             // We should check that this widget is a shell command, and if not, back out.
             // if it is a shell command, we should execute it without interrupting what we're doing.
+            XmlNode widget = GetWidgetFromDrawer(widgetId);
 
+            // Check the widgets type
+            if (widget.Attributes["type"] == null || widget.Attributes["type"].Value != "shellcommand")
+            {
+                throw new Exception("Widget not a shell command. widgetId: " + widgetId);
+            }
+
+            // Create the new node
+            Media media = Media.Create(Media.ParseOptions(widget));
+
+            // UI thread
+            Dispatcher.Invoke(new System.Action(() => {
+                // Execute this media node immediately.
+                media.RenderMedia(0);
+
+                // Stop it
+                media.Stop(true);
+                media = null;
+            }));
+        }
+
+        /// <summary>
+        /// Get Region by Id
+        /// </summary>
+        /// <param name="regionId"></param>
+        /// <returns></returns>
+        private Region GetRegionById(string regionId)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.Id == regionId)
+                {
+                    return region;
+                }
+            }
+
+            throw new Exception("Region not found with Id: " + regionId + " on layoutId: " + _layoutId);
         }
 
         /// <summary>

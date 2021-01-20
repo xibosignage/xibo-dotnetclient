@@ -163,13 +163,34 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
+        /// Set the duration to the new duration provided.
+        /// </summary>
+        /// <param name="duration"></param>
+        public void SetDuration(int duration)
+        {
+            Duration = (int)(duration - CurrentPlaytime());
+            RestartTimer();
+        }
+
+        /// <summary>
+        /// Extend the duration by the provided amount
+        /// </summary>
+        /// <param name="duration"></param>
+        public void ExtendDuration(int duration)
+        {
+            SetDuration(Duration + duration);
+        }
+
+        /// <summary>
         /// Reset the timer and start again
         /// </summary>
         protected void RestartTimer()
         {
+            Debug.WriteLine("Restarting Timer to " + Duration, "Media");
             if (_timerStarted)
             {
                 _timer.Stop();
+                _timer.Interval = TimeSpan.FromSeconds(Duration);
                 _timer.Start();
             }
             else
@@ -537,6 +558,88 @@ namespace XiboClient.Rendering
                     RenderTransform = trans;
                     break;
             }
+        }
+
+        /// <summary>
+        /// Create a new media node
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public static Media Create(MediaOptions options)
+        {
+            Media media;
+            switch (options.type)
+            {
+                case "image":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Image(options);
+                    break;
+
+                case "powerpoint":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new PowerPoint(options);
+                    break;
+
+                case "video":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Video(options);
+                    break;
+
+                case "localvideo":
+                    // Local video does not update the URI with the library path, it just takes what has been provided in the Widget.
+                    media = new Video(options);
+                    break;
+
+                case "audio":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Audio(options);
+                    break;
+
+                case "embedded":
+                    media = WebMedia.GetConfiguredWebMedia(options, WebMedia.ReadBrowserType(options.text));
+                    break;
+
+                case "datasetview":
+                case "ticker":
+                case "text":
+                case "webpage":
+                    media = WebMedia.GetConfiguredWebMedia(options);
+                    break;
+
+                case "flash":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Flash(options);
+                    break;
+
+                case "shellcommand":
+                    media = new ShellCommand(options);
+                    break;
+
+                case "htmlpackage":
+                    media = WebMedia.GetConfiguredWebMedia(options);
+                    ((WebMedia)media).ConfigureForHtmlPackage();
+                    break;
+
+                case "spacer":
+                    media = new Spacer(options);
+                    break;
+
+                case "hls":
+                    media = new WebEdge(options);
+                    break;
+
+                default:
+                    if (options.render == "html")
+                    {
+                        media = WebMedia.GetConfiguredWebMedia(options);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Not a valid media node type: " + options.type);
+                    }
+                    break;
+            }
+            return media;
         }
 
         /// <summary>

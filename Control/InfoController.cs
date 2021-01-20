@@ -21,10 +21,7 @@
 using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Diagnostics;
-using System.IO;
 using System.Text;
 using XiboClient.Log;
 
@@ -38,6 +35,12 @@ namespace XiboClient.Control
         [Route(HttpVerbs.Get, "/")]
         public void GetInfo()
         {
+            // Disallow any local requests.
+            if (!Request.IsLocal)
+            {
+                throw HttpException.Forbidden();
+            }
+
             Response.ContentType = MimeType.Json;
             using (var writer = HttpContext.OpenResponseText(Encoding.UTF8, true))
             {

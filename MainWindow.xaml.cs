@@ -1145,12 +1145,39 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Handle Action trigger from a Trigger
+        /// </summary>
+        /// <param name="triggerType"></param>
+        /// <param name="triggerCode"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="duration"></param>
+        public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, int duration)
+        {
+            if (triggerType == "duration")
+            {
+                try
+                {
+                    ExecuteDurationTrigger(triggerCode, sourceId, duration);
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm", "HandleActionTrigger: unable to execute duration trigger. e = " + e.Message), LogType.Error.ToString());
+                }
+            }
+            else
+            {
+                HandleActionTrigger(triggerType, triggerCode, sourceId, new Point());
+            }
+        }
+
+        /// <summary>
         /// Handle an incoming Action Trigger
         /// </summary>
         /// <param name="triggerType"></param>
         /// <param name="triggerCode"></param>
         /// <param name="sourceId"></param>
         /// <param name="point"></param>
+        /// <param name="duration"></param>
         public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, Point point)
         {
             // If we're interrupting we don't process any actions.
@@ -1193,7 +1220,6 @@ namespace XiboClient
                 {
                     ExecuteAction(action);
                 }
-
                 catch (Exception e)
                 {
                     Trace.WriteLine(new LogMessage("MainForm", "HandleActionTrigger: unable to execute action. e = " + e.Message), LogType.Error.ToString());
@@ -1268,6 +1294,31 @@ namespace XiboClient
 
                 default:
                     Trace.WriteLine(new LogMessage("MainWindow", "ExecuteAction: unknown type: " + action.ActionType), LogType.Error.ToString());
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Execute Duration Trigger
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="duration"></param>
+        public void ExecuteDurationTrigger(string operation, int sourceId, int duration)
+        {
+            switch (operation)
+            {
+                case "expire":
+                    // Next Widget in the named region
+                    currentLayout.RegionNext("" + sourceId);
+                    break;
+
+                case "extend":
+                    currentLayout.RegionExtend("" + sourceId, duration);
+                    break;
+
+                case "set":
+                    currentLayout.RegionSetDuration("" + sourceId, duration);
                     break;
             }
         }
