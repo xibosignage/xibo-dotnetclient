@@ -40,6 +40,11 @@ namespace XiboClient.Rendering
         private bool IsPausePending = false;
 
         /// <summary>
+        /// Region Dimensions
+        /// </summary>
+        public Rect Dimensions { get; set; }
+
+        /// <summary>
         /// This Regions zIndex
         /// </summary>
         public int ZIndex { get; set; }
@@ -103,6 +108,15 @@ namespace XiboClient.Rendering
 
         public void LoadFromOptions(string id, RegionOptions options, XmlNodeList media)
         {
+            // Store dimensions
+            Dimensions = new Rect
+            {
+                Width = options.width,
+                Height = options.height,
+                X = options.left,
+                Y = options.top
+            };
+
             // Start of by setting our dimensions
             SetDimensions(options.left, options.top, options.width, options.height);
 
@@ -113,18 +127,12 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
-        /// Get the Rect representing this regions dimensions
+        /// Get Current WidgetId
         /// </summary>
         /// <returns></returns>
-        public Rect GetRect()
+        public string GetCurrentWidgetId()
         {
-            return new Rect
-            {
-                Width = this.Width,
-                Height = this.Height,
-                X = this.options.top,
-                Y = this.options.left
-            };
+            return this.currentMedia?.Id;
         }
 
         /// <summary>

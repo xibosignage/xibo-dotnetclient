@@ -1208,10 +1208,22 @@ namespace XiboClient
                 {
                     continue;
                 }
+                // Webhooks coming from a Widget must be active somewhere on the Layout
+                else if (triggerType == "webhook" && action.Source == "widget" && !currentLayout.IsWidgetIdPlaying("" + action.SourceId))
+                {
+                    Debug.WriteLine(point.ToString() + " webhook matches widget which isn't playing: " + action.SourceId, "HandleActionTrigger");
+                    continue;
+                }
                 // Does this action match the point provided?
                 else if (triggerType == "touch" && !action.IsPointInside(point))
                 {
                     Debug.WriteLine(point.ToString() + " not inside action: " + action.Rect.ToString(), "HandleActionTrigger");
+                    continue;
+                }
+                // If the source of the action is a widget, it must currently be active.
+                else if (triggerType == "touch" && !action.IsDrawer && action.Source == "widget" && currentLayout.GetCurrentWidgetIdForRegion(point) != "" + action.SourceId)
+                {
+                    Debug.WriteLine(point.ToString() + " not active widget: " + action.SourceId, "HandleActionTrigger");
                     continue;
                 }
                 // If for a drawer widget, it has to be active

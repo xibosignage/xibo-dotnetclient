@@ -587,9 +587,44 @@ namespace XiboClient.Rendering
             {
                 if (action.IsDrawer && action.Source == "widget" && action.SourceId == widgetId)
                 {
-                    action.Rect = region.GetRect();
+                    action.Rect = region.Dimensions;
                 }
             }
+        }
+
+        /// <summary>
+        /// Is the provided widgetId playing
+        /// </summary>
+        /// <param name="widgetId"></param>
+        /// <returns></returns>
+        public bool IsWidgetIdPlaying(string widgetId)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.GetCurrentWidgetId() == widgetId)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Get Current Widget Id for the provided Region
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public string GetCurrentWidgetIdForRegion(Point point)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.Dimensions.Contains(point))
+                {
+                    return region.GetCurrentWidgetId();
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -601,7 +636,7 @@ namespace XiboClient.Rendering
         {
             foreach (Region region in _regions)
             {
-                if (region.GetRect().Contains(point))
+                if (region.Dimensions.Contains(point))
                 {
                     return region.GetCurrentInteractiveWidgetId();
                 }
