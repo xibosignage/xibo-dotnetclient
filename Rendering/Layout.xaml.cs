@@ -166,7 +166,7 @@ namespace XiboClient.Rendering
             _layoutHeight = int.Parse(layoutAttributes["height"].Value, CultureInfo.InvariantCulture);
 
             // Are stats enabled for this Layout?
-            isStatEnabled = (layoutAttributes["enableStat"] == null) ? true : (int.Parse(layoutAttributes["enableStat"].Value) == 1);
+            isStatEnabled = (layoutAttributes["enableStat"] == null) || (int.Parse(layoutAttributes["enableStat"].Value) == 1);
 
             // Scaling factor, will be applied to all regions
             _scaleFactor = Math.Min(Width / _layoutWidth, Height / _layoutHeight);
@@ -270,6 +270,19 @@ namespace XiboClient.Rendering
             XmlNodeList listRegions = layoutXml.SelectNodes("/layout/region");
             XmlNodeList listMedia = layoutXml.SelectNodes("/layout/region/media");
             _drawer = layoutXml.SelectNodes("/layout/drawer/media");
+
+            // Drawer actions
+            try
+            {
+                foreach (XmlNode drawerItem in _drawer)
+                {
+                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(drawerItem.SelectNodes("action"), true));
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Layout", "loadFromFile: unable to load drawer actions. e = " + e.Message), LogType.Info.ToString());
+            }
 
             // Check to see if there are any regions on this layout.
             if (listRegions.Count == 0 || listMedia.Count == 0)
@@ -566,7 +579,35 @@ namespace XiboClient.Rendering
         public void RegionChangeToWidget(string regionId, int widgetId)
         {
             // Get the XmlNode associated with this Widget.
-            GetRegionById(regionId).NavigateToWidget(GetWidgetFromDrawer(widgetId));
+            Region region = GetRegionById(regionId);
+            region.NavigateToWidget(GetWidgetFromDrawer(widgetId));
+
+            // Update any actions sourced from the widgetId we've just swapped to
+            foreach (Action.Action action in _actions)
+            {
+                if (action.IsDrawer && action.Source == "widget" && action.SourceId == widgetId)
+                {
+                    action.Rect = region.GetRect();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get Current Widget Id for the provided Region
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public string GetCurrentInteractiveWidgetIdForRegion(Point point)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.GetRect().Contains(point))
+                {
+                    return region.GetCurrentInteractiveWidgetId();
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

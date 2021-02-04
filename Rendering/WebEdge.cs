@@ -109,6 +109,10 @@ namespace XiboClient.Rendering
                     // Show the browser
                     this.webView.Visibility = System.Windows.Visibility.Visible;
                 }
+
+                // Initialise Interactive Control
+                webView.InvokeScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
+                    + ApplicationSettings.Default.EmbeddedServerPort + "})");
             }
             else
             {

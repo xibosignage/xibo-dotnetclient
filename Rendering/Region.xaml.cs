@@ -113,6 +113,30 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
+        /// Get the Rect representing this regions dimensions
+        /// </summary>
+        /// <returns></returns>
+        public Rect GetRect()
+        {
+            return new Rect
+            {
+                Width = this.Width,
+                Height = this.Height,
+                X = this.options.top,
+                Y = this.options.left
+            };
+        }
+
+        /// <summary>
+        /// Get Current WidgetId
+        /// </summary>
+        /// <returns></returns>
+        public string GetCurrentInteractiveWidgetId()
+        {
+            return this.navigatedMedia?.Id;
+        }
+
+        /// <summary>
         /// Start
         /// </summary>
         public void Start()

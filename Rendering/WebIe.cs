@@ -115,6 +115,10 @@ namespace XiboClient.Rendering
             );
 
             activeX.Silent = true;
+
+            // Initialise Interactive Control
+            _webBrowser.InvokeScript("xiboIC.config({hostname:\"localhost\", port: "
+                    + ApplicationSettings.Default.EmbeddedServerPort + "})");
         }
 
         private void IeWebMedia_HtmlUpdatedEvent(string url)

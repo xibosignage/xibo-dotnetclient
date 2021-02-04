@@ -82,6 +82,7 @@ namespace XiboClient.Rendering
             webView.Visibility = System.Windows.Visibility.Hidden;
             webView.Loaded += WebView_Loaded;
             webView.LoadError += WebView_LoadError;
+            webView.FrameLoadEnd += WebView_FrameLoadEnd;
             webView.JsDialogHandler = new CefJsDialogHandler();
 
             this.MediaScene.Children.Add(webView);
@@ -111,7 +112,36 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
-        /// Navigation completed event - this is the last event we get and signifies the page has loaded completely
+        /// Main Frame finished loading.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void WebView_FrameLoadEnd(object sender, CefSharp.FrameLoadEndEventArgs e)
+        {
+            Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Frame Loaded", "CefWebView");
+
+            // If we aren't expired yet, we should show it
+            if (e.Frame.IsMain && !Expired)
+            {
+                // Show the browser after some time
+                if (!Dispatcher.CheckAccess())
+                {
+                    Dispatcher.BeginInvoke(new System.Action(() =>
+                    {
+                        webView.Visibility = System.Windows.Visibility.Visible;
+
+                        //this.TransitionIn();
+                    }));
+                }
+
+                // Initialise Interactive Control
+                webView.GetBrowser().MainFrame.ExecuteJavaScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
+                    + ApplicationSettings.Default.EmbeddedServerPort + "})");
+            }
+        }
+
+        /// <summary>
+        /// Navigation completed event - this is the last event we get and signifies the control has loaded completely
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -119,19 +149,23 @@ namespace XiboClient.Rendering
         {
             Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Navigate Completed", "CefWebView");
 
-            // We've finished rendering the document
-            DocumentCompleted();
-
-            // If we aren't expired yet, we should show it
+            /*// Show the browser after some time
             if (!Expired)
             {
-                // Show the browser after some time
                 webView.Visibility = System.Windows.Visibility.Visible;
 
                 //this.TransitionIn();
-            }
+            }*/
+
+            // We've finished rendering the control
+            DocumentCompleted();
         }
 
+        /// <summary>
+        /// Load Error
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void WebView_LoadError(object sender, CefSharp.LoadErrorEventArgs e)
         {
             Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Cannot navigate. e = " + e.ToString()), LogType.Error.ToString());
@@ -158,6 +192,7 @@ namespace XiboClient.Rendering
             HtmlUpdatedEvent -= WebMediaHtmlUdatedEvent;
             this.webView.Loaded -= WebView_Loaded;
             this.webView.LoadError -= WebView_LoadError;
+            this.webView.FrameLoadEnd -= WebView_FrameLoadEnd;
             this.webView.Dispose();
 
             base.Stopped();

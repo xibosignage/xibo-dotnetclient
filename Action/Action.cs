@@ -42,6 +42,7 @@ namespace XiboClient.Action
         public string Target { get; set; }
         public string LayoutCode { get; set; }
         public bool Bubble { get; set; }
+        public bool IsDrawer { get; set; }
 
         public Rect Rect { get; set; }
 
@@ -50,7 +51,7 @@ namespace XiboClient.Action
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        public static Action CreateFromXmlNode(XmlNode node, int top, int left, int width, int height)
+        public static Action CreateFromXmlNode(XmlNode node, int top, int left, int width, int height, bool isDrawer)
         {
             XmlAttributeCollection attributes = node.Attributes;
 
@@ -67,6 +68,7 @@ namespace XiboClient.Action
                 Target = attributes["target"]?.Value,
                 LayoutCode = attributes["layoutCode"]?.Value,
                 Bubble = false,
+                IsDrawer = isDrawer,
                 Rect = new Rect(left, top, width, height)
             };
         }
@@ -78,7 +80,17 @@ namespace XiboClient.Action
         /// <returns></returns>
         public static List<Action> CreateFromXmlNodeList(XmlNodeList nodeList)
         {
-            return CreateFromXmlNodeList(nodeList, 0, 0, 0, 0);
+            return CreateFromXmlNodeList(nodeList, 0, 0, 0, 0, false);
+        }
+
+        /// <summary>
+        /// Create a list of Actions from an XmlNodeList
+        /// </summary>
+        /// <param name="nodeList"></param>
+        /// <returns></returns>
+        public static List<Action> CreateFromXmlNodeList(XmlNodeList nodeList, bool isDrawer)
+        {
+            return CreateFromXmlNodeList(nodeList, 0, 0, 0, 0, isDrawer);
         }
 
         /// <summary>
@@ -88,12 +100,23 @@ namespace XiboClient.Action
         /// <returns></returns>
         public static List<Action> CreateFromXmlNodeList(XmlNodeList nodeList, int top, int left, int width, int height)
         {
+            return CreateFromXmlNodeList(nodeList, top, left, width, height, false);
+        }
+
+        /// <summary>
+        /// Create a list of Actions from an XmlNodeList
+        /// </summary>
+        /// <param name="nodeList"></param>
+        /// <param name="isDrawer"></param>
+        /// <returns></returns>
+        public static List<Action> CreateFromXmlNodeList(XmlNodeList nodeList, int top, int left, int width, int height, bool isDrawer)
+        {
             List<Action> actions = new List<Action>();
             foreach (XmlNode node in nodeList)
             {
                 try
                 {
-                    actions.Add(CreateFromXmlNode(node, top, left, width, height));
+                    actions.Add(CreateFromXmlNode(node, top, left, width, height, isDrawer));
                 }
                 catch (Exception e)
                 {

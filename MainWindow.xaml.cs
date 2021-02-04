@@ -1214,6 +1214,12 @@ namespace XiboClient
                     Debug.WriteLine(point.ToString() + " not inside action: " + action.Rect.ToString(), "HandleActionTrigger");
                     continue;
                 }
+                // If for a drawer widget, it has to be active
+                else if (triggerType == "touch" && action.IsDrawer && action.Source == "widget" && currentLayout.GetCurrentInteractiveWidgetIdForRegion(point) != ""+action.SourceId)
+                {
+                    Debug.WriteLine(point.ToString() + " not active drawer widget: " + action.SourceId, "HandleActionTrigger");
+                    continue;
+                }
                 
                 // Action found, so execute it
                 try
@@ -1283,6 +1289,7 @@ namespace XiboClient
                     if (action.Target == "screen")
                     {
                         // Expect a shell command.
+                        currentLayout.ExecuteWidget(action.WidgetId);
                     }
                     else
                     {
