@@ -33,7 +33,7 @@ namespace XiboClient.Rendering
         private int backgroundLeft;
         private int backgroundTop;
 
-        public WebEdge(RegionOptions options) : base(options)
+        public WebEdge(MediaOptions options) : base(options)
         {
             this.backgroundColor = options.Dictionary.Get("backgroundColor", options.backgroundColor);
             this.backgroundImage = options.backgroundImage;
@@ -109,6 +109,10 @@ namespace XiboClient.Rendering
                     // Show the browser
                     this.webView.Visibility = System.Windows.Visibility.Visible;
                 }
+
+                // Initialise Interactive Control
+                webView.InvokeScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
+                    + ApplicationSettings.Default.EmbeddedServerPort + "})");
             }
             else
             {

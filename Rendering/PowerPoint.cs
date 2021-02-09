@@ -5,7 +5,7 @@ namespace XiboClient.Rendering
 {
     class PowerPoint : WebIe
     {
-        public PowerPoint(RegionOptions options) : base(options)
+        public PowerPoint(MediaOptions options) : base(options)
         {
             // Check if PowerPoint is enabled
             if (!ApplicationSettings.Default.PowerpointEnabled)

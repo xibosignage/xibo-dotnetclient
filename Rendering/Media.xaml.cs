@@ -19,12 +19,16 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using System.Xml;
+using XiboClient.Logic;
 
 namespace XiboClient.Rendering
 {
@@ -83,9 +87,9 @@ namespace XiboClient.Rendering
         public int HeightIntended { get { return options.width; } }
 
         /// <summary>
-        /// The Region Options
+        /// The Media Options
         /// </summary>
-        private RegionOptions options;
+        private MediaOptions options;
 
         /// <summary>
         /// The time we started
@@ -111,7 +115,7 @@ namespace XiboClient.Rendering
         /// Media Object
         /// </summary>
         /// <param name="options"></param>
-        public Media(RegionOptions options)
+        public Media(MediaOptions options)
         {
             InitializeComponent();
 
@@ -122,6 +126,11 @@ namespace XiboClient.Rendering
             LayoutId = options.layoutId;
             StatsEnabled = options.isStatEnabled;
         }
+
+        /// <summary>
+        /// Media Options for protected access
+        /// </summary>
+        protected MediaOptions Options { get { return this.options; } }
 
         /// <summary>
         /// Start the Timer for this Media
@@ -154,13 +163,34 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
+        /// Set the duration to the new duration provided.
+        /// </summary>
+        /// <param name="duration"></param>
+        public void SetDuration(int duration)
+        {
+            Duration = (int)(duration - CurrentPlaytime());
+            RestartTimer();
+        }
+
+        /// <summary>
+        /// Extend the duration by the provided amount
+        /// </summary>
+        /// <param name="duration"></param>
+        public void ExtendDuration(int duration)
+        {
+            SetDuration(Duration + duration);
+        }
+
+        /// <summary>
         /// Reset the timer and start again
         /// </summary>
         protected void RestartTimer()
         {
+            Debug.WriteLine("Restarting Timer to " + Duration, "Media");
             if (_timerStarted)
             {
                 _timer.Stop();
+                _timer.Interval = TimeSpan.FromSeconds(Duration);
                 _timer.Start();
             }
             else
@@ -528,6 +558,316 @@ namespace XiboClient.Rendering
                     RenderTransform = trans;
                     break;
             }
+        }
+
+        /// <summary>
+        /// Create a new media node
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public static Media Create(MediaOptions options)
+        {
+            Media media;
+            switch (options.type)
+            {
+                case "image":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Image(options);
+                    break;
+
+                case "powerpoint":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new PowerPoint(options);
+                    break;
+
+                case "video":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Video(options);
+                    break;
+
+                case "localvideo":
+                    // Local video does not update the URI with the library path, it just takes what has been provided in the Widget.
+                    media = new Video(options);
+                    break;
+
+                case "audio":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Audio(options);
+                    break;
+
+                case "embedded":
+                    media = WebMedia.GetConfiguredWebMedia(options, WebMedia.ReadBrowserType(options.text));
+                    break;
+
+                case "datasetview":
+                case "ticker":
+                case "text":
+                case "webpage":
+                    media = WebMedia.GetConfiguredWebMedia(options);
+                    break;
+
+                case "flash":
+                    options.uri = ApplicationSettings.Default.LibraryPath + @"\" + options.uri;
+                    media = new Flash(options);
+                    break;
+
+                case "shellcommand":
+                    media = new ShellCommand(options);
+                    break;
+
+                case "htmlpackage":
+                    media = WebMedia.GetConfiguredWebMedia(options);
+                    ((WebMedia)media).ConfigureForHtmlPackage();
+                    break;
+
+                case "spacer":
+                    media = new Spacer(options);
+                    break;
+
+                case "hls":
+                    media = new WebEdge(options);
+                    break;
+
+                default:
+                    if (options.render == "html")
+                    {
+                        media = WebMedia.GetConfiguredWebMedia(options);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Not a valid media node type: " + options.type);
+                    }
+                    break;
+            }
+            return media;
+        }
+
+        /// <summary>
+        /// Parse and return options
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        public static MediaOptions ParseOptions(XmlNode node)
+        {
+            // A brand new media options
+            MediaOptions options = new MediaOptions
+            {
+                Dictionary = new MediaDictionary()
+            };
+
+            // Parse node attributes
+            XmlAttributeCollection nodeAttributes = node.Attributes; 
+
+            // Set the media id
+            if (nodeAttributes["id"].Value != null)
+                options.mediaid = nodeAttributes["id"].Value;
+
+            // Set the file id
+            if (nodeAttributes["fileId"] != null)
+            {
+                options.FileId = int.Parse(nodeAttributes["fileId"].Value);
+            }
+
+            // Check isnt blacklisted
+            if (CacheManager.Instance.IsUnsafeMedia(options.mediaid))
+            {
+                Trace.WriteLine(new LogMessage("Media", string.Format("ParseOptions: MediaID [{0}] has been blacklisted.", options.mediaid)), LogType.Error.ToString());
+                throw new Exception("Unsafe Media");
+            }
+
+            // Stats enabled?
+            options.isStatEnabled = (nodeAttributes["enableStat"] == null) ? true : (int.Parse(nodeAttributes["enableStat"].Value) == 1);
+
+            // Parse the options for this media node
+            // Type and Duration will always be on the media node
+            options.type = nodeAttributes["type"].Value;
+
+            // Render as
+            if (nodeAttributes["render"] != null)
+                options.render = nodeAttributes["render"].Value;
+
+            //TODO: Check the type of node we have, and make sure it is supported.
+            if (nodeAttributes["duration"].Value != "")
+            {
+                options.duration = int.Parse(nodeAttributes["duration"].Value);
+            }
+            else
+            {
+                options.duration = 60;
+                Debug.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
+            }
+
+            // Widget From/To dates (v2 onward)
+            try
+            {
+                if (nodeAttributes["fromDt"] != null)
+                {
+                    options.FromDt = DateTime.Parse(nodeAttributes["fromDt"].Value, CultureInfo.InvariantCulture);
+                }
+
+                if (nodeAttributes["toDt"] != null)
+                {
+                    options.ToDt = DateTime.Parse(nodeAttributes["toDt"].Value, CultureInfo.InvariantCulture);
+                }
+            }
+            catch
+            {
+                Trace.WriteLine(new LogMessage("Region", "ParseOptionsForMediaNode: Unable to parse widget from/to dates."), LogType.Error.ToString());
+            }
+
+            // We cannot have a 0 duration here... not sure why we would... but
+            if (options.duration == 0 && options.type != "video" && options.type != "localvideo")
+            {
+                int emptyLayoutDuration = int.Parse(ApplicationSettings.Default.EmptyLayoutDuration.ToString());
+                options.duration = (emptyLayoutDuration == 0) ? 10 : emptyLayoutDuration;
+            }
+
+            // There will be some stuff on option nodes
+            XmlNode optionNode = node.SelectSingleNode("options");
+
+            // Track if an update interval has been provided in the XLF
+            bool updateIntervalProvided = false;
+
+            // Loop through each option node
+            foreach (XmlNode option in optionNode.ChildNodes)
+            {
+                if (option.Name == "direction")
+                {
+                    options.direction = option.InnerText;
+                }
+                else if (option.Name == "uri")
+                {
+                    options.uri = option.InnerText;
+                }
+                else if (option.Name == "copyright")
+                {
+                    options.copyrightNotice = option.InnerText;
+                }
+                else if (option.Name == "scrollSpeed")
+                {
+                    try
+                    {
+                        options.scrollSpeed = int.Parse(option.InnerText);
+                    }
+                    catch
+                    {
+                        Debug.WriteLine("Non integer scrollSpeed in XLF", "Region - SetNextMediaNode");
+                    }
+                }
+                else if (option.Name == "updateInterval")
+                {
+                    updateIntervalProvided = true;
+
+                    try
+                    {
+                        options.updateInterval = int.Parse(option.InnerText);
+                    }
+                    catch
+                    {
+                        // Update interval not defined, so assume a high value
+                        options.updateInterval = 3600;
+
+                        Debug.WriteLine("Non integer updateInterval in XLF", "Region - SetNextMediaNode");
+                    }
+                }
+
+                // Add this to the options object
+                options.Dictionary.Add(option.Name, option.InnerText);
+            }
+
+            // And some stuff on Raw nodes
+            XmlNode rawNode = node.SelectSingleNode("raw");
+
+            if (rawNode != null)
+            {
+                foreach (XmlNode raw in rawNode.ChildNodes)
+                {
+                    if (raw.Name == "text")
+                    {
+                        options.text = raw.InnerText;
+                    }
+                    else if (raw.Name == "template")
+                    {
+                        options.documentTemplate = raw.InnerText;
+                    }
+                    else if (raw.Name == "embedHtml")
+                    {
+                        options.text = raw.InnerText;
+                    }
+                    else if (raw.Name == "embedScript")
+                    {
+                        options.javaScript = raw.InnerText;
+                    }
+                }
+            }
+
+            // Is this a file based media node?
+            if (options.type == "video"
+                || options.type == "flash"
+                || options.type == "image"
+                || options.type == "powerpoint"
+                || options.type == "audio"
+                || options.type == "htmlpackage")
+            {
+                // Use the cache manager to determine if the file is valid
+                if (!CacheManager.Instance.IsValidPath(options.uri) && !CacheManager.Instance.IsUnsafeMedia(options.uri))
+                {
+                    throw new Exception("Invalid Media");
+                }
+            }
+
+            // Audio Nodes?
+            XmlNode audio = node.SelectSingleNode("audio");
+
+            if (audio != null)
+            {
+                foreach (XmlNode audioNode in audio.ChildNodes)
+                {
+                    MediaOptions audioOptions = new MediaOptions
+                    {
+                        Dictionary = new MediaDictionary(),
+                        duration = 0,
+                        uri = ApplicationSettings.Default.LibraryPath + @"\" + audioNode.InnerText
+                    };
+
+                    if (audioNode.Attributes["loop"] != null)
+                    {
+                        audioOptions.Dictionary.Add("loop", audioNode.Attributes["loop"].Value);
+
+                        if (audioOptions.Dictionary.Get("loop", 0) == 1)
+                        {
+                            // Set the media duration to be equal to the duration of the parent media
+                            audioOptions.duration = (options.duration == 0) ? int.MaxValue : options.duration;
+                        }
+                    }
+
+                    if (audioNode.Attributes["volume"] != null)
+                    {
+                        options.Dictionary.Add("volume", audioNode.Attributes["volume"].Value);
+                    }
+
+                    options.Audio.Add(new Audio(audioOptions));
+                }
+            }
+
+            // Media Types without an update interval should have a sensible default (xibosignage/xibo#404)
+            // This means that items which do not provide an update interval will still refresh.
+            if (!updateIntervalProvided)
+            {
+                // Special handling for text/webpages because we know they should never have a default update interval applied
+                if (options.type == "webpage" || options.type == "text")
+                {
+                    // Very high (will expire eventually, but shouldn't cause a routine request for a new resource
+                    options.updateInterval = int.MaxValue;
+                }
+                else
+                {
+                    // Default to 5 minutes for those items that do not provide an update interval
+                    options.updateInterval = 5;
+                }
+            }
+
+            return options;
         }
     }
 }

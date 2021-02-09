@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -19,16 +19,11 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace XiboClient.Rendering
+namespace XiboClient.Control
 {
-    /// <summary>
-    /// This doesn't put anything on the screen at all, it just has a timer.
-    /// </summary>
-    class Spacer : Media
+    class TriggerRequest
     {
-        public Spacer(MediaOptions options) : base(options)
-        {
-
-        }
+        public string trigger { get; set; }
+        public int id { get; set; }
     }
 }

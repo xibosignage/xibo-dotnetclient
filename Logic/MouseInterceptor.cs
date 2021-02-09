@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.InteropServices;
 
 namespace XiboClient.Logic
 {
-    public delegate void MouseInterceptorEventHandler();
-
     /// <summary>
     /// Adapted From: http://blogs.msdn.com/b/toub/archive/2006/05/03/589468.aspx
     /// </summary>
@@ -15,11 +14,23 @@ namespace XiboClient.Logic
         private static IntPtr _hookID = IntPtr.Zero;
 
         private static MouseInterceptor s_instance = null;
-        // The KeyPressed Event
-        public event MouseInterceptorEventHandler MouseEvent;
 
-        private static System.Drawing.Point _mouseLocation;
+        // Events
+        public delegate void MouseMoveDelegate();
+        public event MouseMoveDelegate MouseMoveEvent;
 
+        public delegate void MouseClickDelegate(Point point);
+        public event MouseClickDelegate MouseClickEvent;
+
+        /// <summary>
+        /// The mouse location
+        /// </summary>
+        private static Point _mouseLocation;
+
+        /// <summary>
+        /// Set the hook
+        /// </summary>
+        /// <returns></returns>
         public static IntPtr SetHook()
         {
             using (Process curProcess = Process.GetCurrentProcess())
@@ -29,28 +40,59 @@ namespace XiboClient.Logic
             }
         }
 
+        /// <summary>
+        /// Unset the hook
+        /// </summary>
         public static void UnsetHook()
         {
             UnhookWindowsHookEx(_hookID);
         }
 
+        /// <summary>
+        /// Low level mouse proc
+        /// </summary>
+        /// <param name="nCode"></param>
+        /// <param name="wParam"></param>
+        /// <param name="lParam"></param>
+        /// <returns></returns>
         private delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
 
+        /// <summary>
+        /// Hook Callback
+        /// </summary>
+        /// <param name="nCode"></param>
+        /// <param name="wParam"></param>
+        /// <param name="lParam"></param>
+        /// <returns></returns>
         private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
             if (nCode >= 0)
             {
-                if (MouseMessages.WM_LBUTTONDOWN == (MouseMessages)wParam || MouseMessages.WM_MOUSEMOVE == (MouseMessages)wParam)
+                // Process various types of message
+                if (MouseMessages.WM_MOUSEMOVE == (MouseMessages)wParam)
                 {
+                    // Mouse has moved
                     MSLLHOOKSTRUCT hookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
 
-                    if (Math.Abs(_mouseLocation.X - hookStruct.pt.x) > 5 || Math.Abs(_mouseLocation.Y - hookStruct.pt.y) > 5)
-                    {
-                        if (MouseInterceptor.s_instance != null && MouseInterceptor.s_instance.MouseEvent != null)
-                            MouseInterceptor.s_instance.MouseEvent();
-                    }
+                    // Has it moved more than 5 pixels in any direction
+                    bool moved = Math.Abs(_mouseLocation.X - hookStruct.pt.x) > 5 || Math.Abs(_mouseLocation.Y - hookStruct.pt.y) > 5;
 
-                    _mouseLocation = new System.Drawing.Point(hookStruct.pt.x, hookStruct.pt.y);
+                    // Set new point
+                    _mouseLocation = new Point(hookStruct.pt.x, hookStruct.pt.y);
+
+                    // Moved?
+                    if (moved && s_instance != null)
+                    {
+                        s_instance.MouseMoveEvent?.Invoke();
+                    }
+                } 
+                else if (MouseMessages.WM_LBUTTONDOWN == (MouseMessages)wParam)
+                {
+                    // Mouse down
+                    if (s_instance != null)
+                    {
+                        s_instance.MouseClickEvent?.Invoke(_mouseLocation);
+                    }
                 }
             }
 
@@ -65,14 +107,22 @@ namespace XiboClient.Logic
             get
             {
                 if (null == s_instance)
+                {
                     s_instance = new MouseInterceptor();
+                }
 
                 return s_instance;
             }
         }
 
+        /// <summary>
+        /// LL (low level) to catch sub proceses
+        /// </summary>
         private const int WH_MOUSE_LL = 14;
 
+        /// <summary>
+        /// Move Message
+        /// </summary>
         private enum MouseMessages
         {
             WM_LBUTTONDOWN = 0x0201,

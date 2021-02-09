@@ -18,20 +18,38 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using EmbedIO;
+using EmbedIO.Routing;
+using EmbedIO.WebApi;
+using System;
+using System.Diagnostics;
 
-namespace XiboClient.Rendering
+namespace XiboClient.Control
 {
-    class Audio : Video
+    class HookController : WebApiController
     {
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="options"></param>
-        public Audio(MediaOptions options)
-            : base(options)
+        EmbeddedServer parent;
+
+        public HookController(EmbeddedServer parent)
         {
-            this.ShouldBeVisible = false;
-            this.Muted = false;
+            this.parent = parent;
+        }
+
+        /// <summary>
+        /// Trigger some action.
+        /// </summary>
+        [Route(HttpVerbs.Post, "/")]
+        public async void Trigger()
+        {
+            try
+            {
+                var data = await HttpContext.GetRequestDataAsync<TriggerRequest>();
+                parent.Trigger(data.trigger, data.id);
+            } 
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("HookController", "Trigger: unable to parse request: " + e.Message), LogType.Error.ToString());
+            }
         }
     }
 }

@@ -211,6 +211,9 @@ namespace XiboClient.XmdsAgents
                                     XmlDocument xml = new XmlDocument();
                                     xml.LoadXml(requiredFilesXml);
 
+                                    // Clear any layout codes
+                                    CacheManager.Instance.ClearLayoutCodes();
+
                                     // Create a required files object and set it to contain the RF returned this tick
                                     _requiredFiles = new RequiredFiles();
                                     _requiredFiles.RequiredFilesXml = xml;

@@ -34,7 +34,7 @@ namespace XiboClient.Rendering
         private int backgroundLeft;
         private int backgroundTop;
 
-        public WebIe(RegionOptions options)
+        public WebIe(MediaOptions options)
             : base(options)
         {
             this.backgroundColor = options.Dictionary.Get("backgroundColor", options.backgroundColor);
@@ -115,6 +115,10 @@ namespace XiboClient.Rendering
             );
 
             activeX.Silent = true;
+
+            // Initialise Interactive Control
+            _webBrowser.InvokeScript("xiboIC.config({hostname:\"localhost\", port: "
+                    + ApplicationSettings.Default.EmbeddedServerPort + "})");
         }
 
         private void IeWebMedia_HtmlUpdatedEvent(string url)

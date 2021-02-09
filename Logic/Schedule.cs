@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -41,6 +41,9 @@ namespace XiboClient
 
         public delegate void OverlayChangeDelegate(List<ScheduleItem> overlays);
         public event OverlayChangeDelegate OverlayChangeEvent;
+
+        public delegate void OnTriggerReceivedDelegate(string triggerType, string triggerCode, int sourceId, int duration);
+        public event OnTriggerReceivedDelegate OnTriggerReceived;
 
         /// <summary>
         /// Current Schedule of Normal Layouts
@@ -167,8 +170,12 @@ namespace XiboClient
             // Embedded Server
             _server = new EmbeddedServer();
             _server.OnServerClosed += _server_OnServerClosed;
-            _serverThread = new Thread(new ThreadStart(_server.Run));
-            _serverThread.Name = "EmbeddedServer";
+            _server.OnTriggerReceived += EmbeddedServerOnTriggerReceived;
+            _server.OnDurationReceived += EmbeddedServerOnDurationReceived;
+            _serverThread = new Thread(new ThreadStart(_server.Run))
+            {
+                Name = "EmbeddedServer"
+            };
         }
 
         /// <summary>
@@ -397,6 +404,34 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Moves to the previous Layout
+        /// </summary>
+        public void PreviousLayout()
+        {
+            Debug.WriteLine("PreviousLayout: called. Interrupting: " + this._interrupting, "Schedule");
+
+            // Only active if we aren't interrupting
+            if (!_interrupting)
+            {
+                // Capture the active layout
+                ScheduleItem activeSchedule = _layoutSchedule[_currentLayout];
+
+                // Move the current layout back
+                // next layout moves it forward, so we actually need to move it back 2.
+                _currentLayout = _currentLayout - 2;
+
+                // If we have dropped below the first layout in the list, we should go to the end of the list instead.
+                if (_currentLayout < 0)
+                {
+                    _currentLayout = _layoutSchedule.Count - 2;
+                }
+
+                // Call Next Layout
+                NextLayout(activeSchedule);
+            }
+        }
+
+        /// <summary>
         /// Moves the layout on
         /// </summary>
         public void NextLayout()
@@ -404,16 +439,25 @@ namespace XiboClient
             Debug.WriteLine("NextLayout: called. Interrupting: " + this._interrupting, "Schedule");
 
             // Get the previous layout
-            ScheduleItem previousLayout = (this._interrupting)
+            ScheduleItem activeSchedule = (this._interrupting)
                 ? _scheduleManager.CurrentInterruptSchedule[_currentInterruptLayout]
                 : _layoutSchedule[_currentLayout];
 
+            NextLayout(activeSchedule);
+        }
+
+        /// <summary>
+        /// Moves the layout on
+        /// </summary>
+        /// <param name="activeSchedule">The active schedule</param>
+        public void NextLayout(ScheduleItem activeSchedule)
+        {
             // See if the current layout is an action that can be removed.
             // If it CAN be removed then this will almost certainly result in a change in the current _layoutSchedule
             // therefore we should return out of this and kick off a schedule manager cycle, which will set the new layout.
             try
             {
-                if (_scheduleManager.removeLayoutChangeActionIfComplete(previousLayout))
+                if (_scheduleManager.removeLayoutChangeActionIfComplete(activeSchedule))
                 {
                     _scheduleManager.RunNow();
                     return;
@@ -639,6 +683,9 @@ namespace XiboClient
 
             // Stop the embedded server
             _server.Stop();
+            _server.OnTriggerReceived -= EmbeddedServerOnTriggerReceived;
+            _server.OnDurationReceived -= EmbeddedServerOnDurationReceived;
+            _server.OnServerClosed -= _server_OnServerClosed;
         }
 
         /// <summary>
@@ -653,6 +700,50 @@ namespace XiboClient
             {
                 _layoutSchedule.Add(ScheduleItem.Splash());
             }
+        }
+
+        /// <summary>
+        /// Get a Schedule Item for the given LayoutId
+        /// </summary>
+        /// <param name="layoutCode"></param>
+        /// <returns></returns>
+        public ScheduleItem GetScheduleItemForLayoutCode(string layoutCode)
+        {
+            // Find the layoutId we want.
+            int layoutId = CacheManager.Instance.GetLayoutId(layoutCode);
+
+            // Check that this Layout is valid
+            if (!CacheManager.Instance.IsValidPath(layoutId + ".xlf") || CacheManager.Instance.IsUnsafeLayout(layoutId))
+            {
+                throw new Exception("Layout Invalid. Id = " + layoutId);
+            }
+
+            return new ScheduleItem()
+            {
+                id = layoutId,
+                layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + layoutId + @".xlf"
+            };
+        }
+
+        /// <summary>
+        /// Trigger received form an embedded server
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        /// <param name="sourceId"></param>
+        private void EmbeddedServerOnTriggerReceived(string triggerCode, int sourceId)
+        {
+            OnTriggerReceived?.Invoke("webhook", triggerCode, sourceId, 0);
+        }
+
+        /// <summary>
+        /// Trigger received form an embedded server
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="duration"></param>
+        private void EmbeddedServerOnDurationReceived(string operation, int sourceId, int duration)
+        {
+            OnTriggerReceived?.Invoke("duration", operation, sourceId, duration);
         }
 
         #region Interrupt Layouts

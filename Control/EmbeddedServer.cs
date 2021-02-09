@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -40,6 +40,12 @@ namespace XiboClient.Control
         public delegate void OnServerClosedDelegate();
         public event OnServerClosedDelegate OnServerClosed;
 
+        public delegate void OnTriggerReceivedDelegate(string triggerCode, int sourceId);
+        public event OnTriggerReceivedDelegate OnTriggerReceived;
+
+        public delegate void OnDurationReceivedDelegate(string operation, int sourceId, int duration);
+        public event OnDurationReceivedDelegate OnDurationReceived;
+
         /// <summary>
         /// Stops the thread
         /// </summary>
@@ -58,7 +64,12 @@ namespace XiboClient.Control
                 // If we are restarting, reset
                 _manualReset.Reset();
 
-                using (WebServer server = CreateWebServer(ApplicationSettings.Default.EmbeddedServerAddress))
+                string url = (ApplicationSettings.Default.EmbeddedServerAllowWan
+                        ? "http://+:"
+                        : "http://localhost:") 
+                    + ApplicationSettings.Default.EmbeddedServerPort;
+
+                using (WebServer server = CreateWebServer(url))
                 {
                     server.RunAsync();
 
@@ -83,26 +94,52 @@ namespace XiboClient.Control
         /// <returns></returns>
         private WebServer CreateWebServer(string url)
         {
-            List<string> paths = new List<string>();
-            paths.Add("/id_rsa");
-            paths.Add("/hardwarekey");
-            paths.Add("/cacheManager.xml");
-            paths.Add("/config.xml");
-            paths.Add("/requiredFiles.xml");
-            paths.Add("/schedule.xml");
-            paths.Add("/interrupt.json");
-            paths.Add("/pop.db");
-            paths.Add("/cef");
+            List<string> paths = new List<string>
+            {
+                "/id_rsa",
+                "/hardwarekey",
+                "/cacheManager.xml",
+                "/config.xml",
+                "/requiredFiles.xml",
+                "/schedule.xml",
+                "/interrupt.json",
+                "/pop.db",
+                "/cef"
+            };
 
             var server = new WebServer(o => o
                     .WithUrlPrefix(url)
                     .WithMode(HttpListenerMode.EmbedIO))
                 .WithWebApi("/info", m => m
                     .WithController<InfoController>())
+                .WithWebApi("/trigger", m => m
+                    .WithController(() => new HookController(this)))
+                .WithWebApi("/duration", m => m
+                    .WithController(() => new DurationController(this)))
                 .WithModule(new RestrictiveFileModule("/", new FileSystemProvider(ApplicationSettings.Default.LibraryPath, false), paths), m => m
                     .ContentCaching = false);
 
             return server;
+        }
+
+        /// <summary>
+        /// Received a trigger code
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        public void Trigger(string triggerCode, int sourceId)
+        {
+            OnTriggerReceived?.Invoke(triggerCode, sourceId);
+        }
+
+        /// <summary>
+        /// Trigger a duration update
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="duration"></param>
+        public void Duration(string operation, int sourceId, int duration)
+        {
+            OnDurationReceived?.Invoke(operation, sourceId, duration);
         }
     }
 }

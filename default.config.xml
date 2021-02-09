@@ -51,6 +51,7 @@
   <PreventSleep>1</PreventSleep>
   <XmrNetworkAddress></XmrNetworkAddress>
   <EmbeddedServerPort>9696</EmbeddedServerPort>
+  <EmbeddedServerAllowWan>false</EmbeddedServerAllowWan>
   <ScreenShotSize>0</ScreenShotSize>
   <FallbackToInternetExplorer>false</FallbackToInternetExplorer>
   <AggregationLevel>individual</AggregationLevel>

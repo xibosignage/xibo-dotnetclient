@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -151,6 +151,7 @@ namespace XiboClient
             Loaded += MainWindow_Loaded;
             Closing += MainForm_FormClosing;
             ContentRendered += MainForm_Shown;
+            MouseInterceptor.Instance.MouseClickEvent += MouseInterceptor_MouseClickEvent;
 
             // Trace listener for Client Info
             ClientInfoTraceListener clientInfoTraceListener = new ClientInfoTraceListener
@@ -204,17 +205,46 @@ namespace XiboClient
         {
             _screenSaver = true;
 
-            // Configure some listeners for the mouse (to quit)
+            // Indicate to the KeyStore that we are a scrensaver
             KeyStore.Instance.ScreenSaver = true;
-            MouseInterceptor.Instance.MouseEvent += Instance_MouseEvent;
+
+            // Mouse Move
+            MouseInterceptor.Instance.MouseMoveEvent += MouseInterceptor_MouseMoveEvent;
         }
 
         /// <summary>
-        /// Handle Mouse Events
+        /// Mouse Move Event
         /// </summary>
-        private void Instance_MouseEvent()
+        private void MouseInterceptor_MouseMoveEvent()
         {
-            System.Windows.Application.Current.Shutdown();
+            if (_screenSaver)
+            {
+                System.Windows.Application.Current.Shutdown();
+            }
+        }
+
+        /// <summary>
+        /// Mouse Click Event
+        /// </summary>
+        /// <param name="point"></param>
+        private void MouseInterceptor_MouseClickEvent(System.Drawing.Point point)
+        {
+            if (_screenSaver)
+            {
+                System.Windows.Application.Current.Shutdown();
+            }
+            else if (!(point.X < Left || point.X > Width + Left || point.Y < Top || point.Y > Height + Top))
+            {
+                Debug.WriteLine("Inside Player: " + point.X + "," + point.Y 
+                    + ". Player: " + Left + "," + Top + ". " + Width + "x" + Height, "MouseInterceptor_MouseClickEvent");
+
+                // Rebase to Player dimensions and pass to Handle
+                HandleActionTrigger("touch", "", 0, new Point
+                {
+                    X = point.X - Left,
+                    Y = point.Y - Top
+                });
+            }
         }
 
         /// <summary>
@@ -356,6 +386,9 @@ namespace XiboClient
                 // Bind to the overlay change event
                 _schedule.OverlayChangeEvent += ScheduleOverlayChangeEvent;
 
+                // Bind to the trigger received event
+                _schedule.OnTriggerReceived += HandleActionTrigger;
+
                 // Initialize the other schedule components
                 _schedule.InitializeComponents();
 
@@ -393,7 +426,10 @@ namespace XiboClient
 
                 // Stop the schedule object
                 if (_schedule != null)
+                {
                     _schedule.Stop();
+                    _schedule.OnTriggerReceived -= HandleActionTrigger;
+                }
 
                 // Write the CacheManager to disk
                 CacheManager.Instance.WriteCacheManager();
@@ -576,7 +612,7 @@ namespace XiboClient
 
                         // Start the Layout.
                         StartLayout(this.currentLayout);
-                    } 
+                    }
                     catch
                     {
                         Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Failed to show the default layout. Exception raised was: " + ex.Message), LogType.Error.ToString());
@@ -1105,6 +1141,204 @@ namespace XiboClient
             catch (Exception e)
             {
                 Trace.WriteLine(new LogMessage("MainForm - _schedule_OverlayChangeEvent", "Unknown issue managing overlays. Ex = " + e.Message), LogType.Info.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Handle Action trigger from a Trigger
+        /// </summary>
+        /// <param name="triggerType"></param>
+        /// <param name="triggerCode"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="duration"></param>
+        public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, int duration)
+        {
+            if (triggerType == "duration")
+            {
+                try
+                {
+                    ExecuteDurationTrigger(triggerCode, sourceId, duration);
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm", "HandleActionTrigger: unable to execute duration trigger. e = " + e.Message), LogType.Error.ToString());
+                }
+            }
+            else
+            {
+                HandleActionTrigger(triggerType, triggerCode, sourceId, new Point());
+            }
+        }
+
+        /// <summary>
+        /// Handle an incoming Action Trigger
+        /// </summary>
+        /// <param name="triggerType"></param>
+        /// <param name="triggerCode"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="point"></param>
+        /// <param name="duration"></param>
+        public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, Point point)
+        {
+            // If we're interrupting we don't process any actions.
+            if (currentLayout.IsPaused)
+            {
+                Debug.WriteLine("HandleActionTrigger: Skipping Action as current Layout is paused.", "MainWindow");
+                return;
+            }
+
+            // Do we have any actions which match this trigger type?
+            // These are in order, with Widgets first.
+            foreach (Action.Action action in currentLayout.GetActions())
+            {
+                // Match the trigger type
+                if (action.TriggerType != triggerType)
+                {
+                    continue;
+                }
+
+                // Match the sourceId if it has been provided
+                if (sourceId != 0 && sourceId == action.SourceId)
+                {
+                    continue;
+                }
+
+                // Is this a trigger which must match the code?
+                if (triggerType == "webhook" && !string.IsNullOrEmpty(action.TriggerCode) && action.TriggerCode != triggerCode)
+                {
+                    continue;
+                }
+                // Webhooks coming from a Widget must be active somewhere on the Layout
+                else if (triggerType == "webhook" && action.Source == "widget" && !currentLayout.IsWidgetIdPlaying("" + action.SourceId))
+                {
+                    Debug.WriteLine(point.ToString() + " webhook matches widget which isn't playing: " + action.SourceId, "HandleActionTrigger");
+                    continue;
+                }
+                // Does this action match the point provided?
+                else if (triggerType == "touch" && !action.IsPointInside(point))
+                {
+                    Debug.WriteLine(point.ToString() + " not inside action: " + action.Rect.ToString(), "HandleActionTrigger");
+                    continue;
+                }
+                // If the source of the action is a widget, it must currently be active.
+                else if (triggerType == "touch" && !action.IsDrawer && action.Source == "widget" && currentLayout.GetCurrentWidgetIdForRegion(point) != "" + action.SourceId)
+                {
+                    Debug.WriteLine(point.ToString() + " not active widget: " + action.SourceId, "HandleActionTrigger");
+                    continue;
+                }
+                // If for a drawer widget, it has to be active
+                else if (triggerType == "touch" && action.IsDrawer && action.Source == "widget" && currentLayout.GetCurrentInteractiveWidgetIdForRegion(point) != ""+action.SourceId)
+                {
+                    Debug.WriteLine(point.ToString() + " not active drawer widget: " + action.SourceId, "HandleActionTrigger");
+                    continue;
+                }
+                
+                // Action found, so execute it
+                try
+                {
+                    ExecuteAction(action);
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm", "HandleActionTrigger: unable to execute action. e = " + e.Message), LogType.Error.ToString());
+                }
+
+                // Should we process further actions?
+                if (!action.Bubble)
+                {
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Execute the matched Action
+        /// </summary>
+        /// <param name="action"></param>
+        public void ExecuteAction(Action.Action action)
+        {
+            // Target can be `screen` or `region`
+            // What type of action are we?
+            switch (action.ActionType)
+            {
+                case "next":
+                    // Trigger the next layout/widget
+                    if (action.Target == "screen")
+                    {
+                        // Next Layout
+                        _schedule.NextLayout();
+                    }
+                    else
+                    {
+                        // Next Widget in the named region
+                        currentLayout.RegionNext("" + action.TargetId);
+                    }
+                    break;
+
+                case "previous":
+                    // Trigger the previous layout/widget
+                    if (action.Target == "screen")
+                    {
+                        // Previous Layout
+                        _schedule.PreviousLayout();
+                    }
+                    else
+                    {
+                        // Previous Widget in the named region
+                        currentLayout.RegionPrevious("" + action.TargetId);
+                    }
+                    break;
+
+                case "navLayout":
+                    // Navigate to the provided Layout
+                    // target is always screen
+                    ChangeToNextLayout(_schedule.GetScheduleItemForLayoutCode(action.LayoutCode));
+
+                    break;
+
+                case "navWidget":
+                    // Navigate to the provided Widget
+                    if (action.Target == "screen")
+                    {
+                        // Expect a shell command.
+                        currentLayout.ExecuteWidget(action.WidgetId);
+                    }
+                    else
+                    {
+                        // Provided Widget in the named region
+                        currentLayout.RegionChangeToWidget(action.TargetId + "", action.WidgetId);
+                    }
+
+                    break;
+
+                default:
+                    Trace.WriteLine(new LogMessage("MainWindow", "ExecuteAction: unknown type: " + action.ActionType), LogType.Error.ToString());
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Execute Duration Trigger
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="duration"></param>
+        public void ExecuteDurationTrigger(string operation, int sourceId, int duration)
+        {
+            switch (operation)
+            {
+                case "expire":
+                    // Next Widget in the named region
+                    currentLayout.RegionNext("" + sourceId);
+                    break;
+
+                case "extend":
+                    currentLayout.RegionExtend("" + sourceId, duration);
+                    break;
+
+                case "set":
+                    currentLayout.RegionSetDuration("" + sourceId, duration);
+                    break;
             }
         }
 

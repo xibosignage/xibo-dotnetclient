@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -60,6 +60,16 @@ namespace XiboClient.Rendering
         /// Regions for this Layout
         /// </summary>
         private List<Region> _regions;
+
+        /// <summary>
+        /// Actions for this Layout
+        /// </summary>
+        private List<Action.Action> _actions;
+
+        /// <summary>
+        /// The Drawer of interactive widgets
+        /// </summary>
+        private XmlNodeList _drawer;
 
         /// <summary>
         /// Last updated time of this Layout
@@ -156,7 +166,7 @@ namespace XiboClient.Rendering
             _layoutHeight = int.Parse(layoutAttributes["height"].Value, CultureInfo.InvariantCulture);
 
             // Are stats enabled for this Layout?
-            isStatEnabled = (layoutAttributes["enableStat"] == null) ? true : (int.Parse(layoutAttributes["enableStat"].Value) == 1);
+            isStatEnabled = (layoutAttributes["enableStat"] == null) || (int.Parse(layoutAttributes["enableStat"].Value) == 1);
 
             // Scaling factor, will be applied to all regions
             _scaleFactor = Math.Min(Width / _layoutWidth, Height / _layoutHeight);
@@ -185,12 +195,23 @@ namespace XiboClient.Rendering
             // We know know what our Layout controls dimensions should be
             SetDimensions((int)leftOverX, (int)leftOverY, backgroundWidth, backgroundHeight);
 
-            // New region and region options objects
-            RegionOptions options = new RegionOptions();
+            // Parse any Actions
+            try
+            {
+                _actions = Action.Action.CreateFromXmlNodeList(layoutXml.SelectNodes("/layout/action"));
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Layout", "loadFromFile: unable to load actions. e = " + e.Message), LogType.Info.ToString());
+            }
 
-            options.PlayerWidth = (int)Width;
-            options.PlayerHeight = (int)Height;
-            options.LayoutModifiedDate = layoutModifiedTime;
+            // New region and region options objects
+            RegionOptions options = new RegionOptions
+            {
+                PlayerWidth = (int)Width,
+                PlayerHeight = (int)Height,
+                LayoutModifiedDate = layoutModifiedTime
+            };
 
             // Deal with the color
             // unless we are an overlay, in which case don't put up a background at all
@@ -248,6 +269,20 @@ namespace XiboClient.Rendering
             // Get the regions
             XmlNodeList listRegions = layoutXml.SelectNodes("/layout/region");
             XmlNodeList listMedia = layoutXml.SelectNodes("/layout/region/media");
+            _drawer = layoutXml.SelectNodes("/layout/drawer/media");
+
+            // Drawer actions
+            try
+            {
+                foreach (XmlNode drawerItem in _drawer)
+                {
+                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(drawerItem.SelectNodes("action"), true));
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Layout", "loadFromFile: unable to load drawer actions. e = " + e.Message), LogType.Info.ToString());
+            }
 
             // Check to see if there are any regions on this layout.
             if (listRegions.Count == 0 || listMedia.Count == 0)
@@ -308,7 +343,31 @@ namespace XiboClient.Rendering
                 options.backgroundTop = options.top * -1;
 
                 // All the media nodes for this region / layout combination
-                options.mediaNodes = region.SelectNodes("media");
+                XmlNodeList mediaNodes = region.SelectNodes("media");
+
+                // Pull out any actions
+                try
+                {
+                    // Region Actions
+                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(region.SelectNodes("action"), 
+                        options.top, options.left, options.width, options.height));
+
+                    // Widget Actions
+                    foreach (XmlNode media in mediaNodes)
+                    {
+                        List<Action.Action> mediaActions = Action.Action.CreateFromXmlNodeList(media.SelectNodes("action"), 
+                            options.top, options.left, options.width, options.height);
+
+                        if (mediaActions.Count > 0)
+                        {
+                            _actions.AddRange(mediaActions);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("Layout", "loadFromFile: unable to load media actions. e = " + e.Message), LogType.Info.ToString());
+                }
 
                 Region temp = new Region();
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(Region_DurationElapsedEvent);
@@ -322,14 +381,17 @@ namespace XiboClient.Rendering
 
                 Debug.WriteLine("loadFromFile: Created new region", "Layout");
 
-                // Dont be fooled, this innocent little statement kicks everything off
-                temp.loadFromOptions(options);
+                // Load our region
+                temp.LoadFromOptions(options.regionId, options, mediaNodes);
 
                 // Add to our list of Regions
                 _regions.Add(temp);
 
                 Debug.WriteLine("loadFromFile: Adding region", "Layout");
             }
+
+            // Order all Actions by their Source
+            _actions.Sort((l, r) => Action.Action.PriorityForActionSource(l.Source) < Action.Action.PriorityForActionSource(r.Source) ? -1 : 1);
 
             // Order all Regions by their ZIndex
             _regions.Sort((l, r) => l.ZIndex < r.ZIndex ? -1 : 1);
@@ -469,6 +531,195 @@ namespace XiboClient.Rendering
             }
 
             _regions = null;
+        }
+
+        /// <summary>
+        /// Move to the previous item in the named Region
+        /// </summary>
+        /// <param name="regionId"></param>
+        public void RegionPrevious(string regionId)
+        {
+            GetRegionById(regionId).Previous();
+        }
+
+        /// <summary>
+        /// Move to the next item in the named Region
+        /// </summary>
+        /// <param name="regionId"></param>
+        public void RegionNext(string regionId)
+        {
+            GetRegionById(regionId).Next();
+        }
+
+        /// <summary>
+        /// Extend the current widget's duration
+        /// </summary>
+        /// <param name="regionId"></param>
+        /// <param name="duration"></param>
+        public void RegionExtend(string regionId, int duration)
+        {
+            GetRegionById(regionId).ExtendCurrentWidgetDuration(duration);
+        }
+
+        /// <summary>
+        /// Set the current widget's duration
+        /// </summary>
+        /// <param name="regionId"></param>
+        /// <param name="duration"></param>
+        public void RegionSetDuration(string regionId, int duration)
+        {
+            GetRegionById(regionId).SetCurrentWidgetDuration(duration);
+        }
+
+        /// <summary>
+        /// Change the Widget in the provided region
+        /// </summary>
+        /// <param name="regionId"></param>
+        /// <param name="widgetId"></param>
+        public void RegionChangeToWidget(string regionId, int widgetId)
+        {
+            // Get the XmlNode associated with this Widget.
+            Region region = GetRegionById(regionId);
+            region.NavigateToWidget(GetWidgetFromDrawer(widgetId));
+
+            // Update any actions sourced from the widgetId we've just swapped to
+            foreach (Action.Action action in _actions)
+            {
+                if (action.IsDrawer && action.Source == "widget" && action.SourceId == widgetId)
+                {
+                    action.Rect = region.Dimensions;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Is the provided widgetId playing
+        /// </summary>
+        /// <param name="widgetId"></param>
+        /// <returns></returns>
+        public bool IsWidgetIdPlaying(string widgetId)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.GetCurrentWidgetId() == widgetId)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Get Current Widget Id for the provided Region
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public string GetCurrentWidgetIdForRegion(Point point)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.Dimensions.Contains(point))
+                {
+                    return region.GetCurrentWidgetId();
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Get Current Widget Id for the provided Region
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        public string GetCurrentInteractiveWidgetIdForRegion(Point point)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.Dimensions.Contains(point))
+                {
+                    return region.GetCurrentInteractiveWidgetId();
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Execute a Widget
+        /// </summary>
+        /// <param name="widgetId"></param>
+        public void ExecuteWidget(int widgetId)
+        {
+            // We should check that this widget is a shell command, and if not, back out.
+            // if it is a shell command, we should execute it without interrupting what we're doing.
+            XmlNode widget = GetWidgetFromDrawer(widgetId);
+
+            // Check the widgets type
+            if (widget.Attributes["type"] == null || widget.Attributes["type"].Value != "shellcommand")
+            {
+                throw new Exception("Widget not a shell command. widgetId: " + widgetId);
+            }
+
+            // Create the new node
+            Media media = Media.Create(Media.ParseOptions(widget));
+
+            // UI thread
+            Dispatcher.Invoke(new System.Action(() => {
+                // Execute this media node immediately.
+                media.RenderMedia(0);
+
+                // Stop it
+                media.Stop(true);
+                media = null;
+            }));
+        }
+
+        /// <summary>
+        /// Get Region by Id
+        /// </summary>
+        /// <param name="regionId"></param>
+        /// <returns></returns>
+        private Region GetRegionById(string regionId)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.Id == regionId)
+                {
+                    return region;
+                }
+            }
+
+            throw new Exception("Region not found with Id: " + regionId + " on layoutId: " + _layoutId);
+        }
+
+        /// <summary>
+        /// Get a Widget from the Drawer
+        /// </summary>
+        /// <param name="widgetId"></param>
+        /// <returns></returns>
+        private XmlNode GetWidgetFromDrawer(int widgetId)
+        {
+            // Get our node from the drawer
+            foreach (XmlNode node in _drawer)
+            {
+                if (node.Attributes["id"] != null && int.Parse(node.Attributes["id"].Value) == widgetId)
+                {
+                    // Found it, create the media node
+                    return node;
+                }
+            }
+
+            throw new Exception("Drawer does not contain a Widget with widgetId " + widgetId);
+        }
+
+        /// <summary>
+        /// Get Actions
+        /// </summary>
+        /// <returns></returns>
+        public List<Action.Action> GetActions()
+        {
+            return _actions;
         }
 
         /// <summary>

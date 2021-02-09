@@ -33,7 +33,7 @@ namespace XiboClient.Rendering
         private System.Windows.HorizontalAlignment hAlign;
         private System.Windows.VerticalAlignment vAlign;
 
-        public Image(RegionOptions options) : base(options)
+        public Image(MediaOptions options) : base(options)
         {
             this.filePath = options.uri;
             this.scaleType = options.Dictionary.Get("scaleType", "stretch");

@@ -1,13 +1,14 @@
-/*
+/**
+ * Copyright (C) 2021 Xibo Signage Ltd
+ *
  * Xibo - Digital Signage - http://www.xibo.org.uk
- * Copyright (C) 2019 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
  * Xibo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * any later version. 
+ * any later version.
  *
  * Xibo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,10 +25,6 @@ using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 
-/// 17/02/12 Dan Enriched to also manage currently downloading files
-/// 28/02/12 Dan Changed the way RequiredFiles are updated
-/// 09/04/12 Dan Fixed problem with adding an existing file to the cache manager!
-/// 16/FEB/14 Dan Changes to understand the new "resource" file type
 namespace XiboClient
 {
     public class RequiredFiles
@@ -120,6 +117,12 @@ namespace XiboClient
                     }
 
                     rf.ChunkSize = rf.Size;
+
+                    // See if we have a LayoutCode
+                    if (attributes["code"] != null && !string.IsNullOrEmpty(attributes["code"].Value))
+                    {
+                        CacheManager.Instance.AddLayoutCode(rf.Id, attributes["code"].Value);
+                    }
                 }
                 else if (rf.FileType == "resource")
                 {
