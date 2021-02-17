@@ -22,6 +22,11 @@ namespace XiboClient.Log
         public delegate void UpdateStatusFile();
 
         /// <summary>
+        /// Use a locker for certain flie ops
+        /// </summary>
+        public static object _locker = new object();
+
+        /// <summary>
         /// Set the schedule status
         /// </summary>
         public string ScheduleStatus
@@ -323,32 +328,35 @@ namespace XiboClient.Log
         /// </summary>
         private void updateStatusFile()
         {
-            try
+            lock (_locker)
             {
-                using (FileStream file = new FileStream(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite))
+                try
                 {
-                    using (StreamWriter sw = new StreamWriter(file))
+                    using (FileStream file = new FileStream(Path.Combine(ApplicationSettings.Default.LibraryPath, "status.json"), FileMode.Create, FileAccess.Write, FileShare.Read))
                     {
-                        using (JsonWriter writer = new JsonTextWriter(sw))
+                        using (StreamWriter sw = new StreamWriter(file))
                         {
-                            writer.Formatting = Formatting.Indented;
-                            writer.WriteStartObject();
-                            writer.WritePropertyName("lastActivity");
-                            writer.WriteValue(DateTime.Now.ToString());
-                            writer.WritePropertyName("state");
-                            writer.WriteValue(Thread.State.ToString());
-                            writer.WritePropertyName("xmdsLastActivity");
-                            writer.WriteValue(ApplicationSettings.Default.XmdsLastConnection.ToString());
-                            writer.WritePropertyName("xmdsCollectInterval");
-                            writer.WriteValue(ApplicationSettings.Default.CollectInterval.ToString());
-                            writer.WriteEndObject();
+                            using (JsonWriter writer = new JsonTextWriter(sw))
+                            {
+                                writer.Formatting = Formatting.Indented;
+                                writer.WriteStartObject();
+                                writer.WritePropertyName("lastActivity");
+                                writer.WriteValue(DateTime.Now.ToString());
+                                writer.WritePropertyName("state");
+                                writer.WriteValue(Thread.State.ToString());
+                                writer.WritePropertyName("xmdsLastActivity");
+                                writer.WriteValue(ApplicationSettings.Default.XmdsLastConnection.ToString());
+                                writer.WritePropertyName("xmdsCollectInterval");
+                                writer.WriteValue(ApplicationSettings.Default.CollectInterval.ToString());
+                                writer.WriteEndObject();
+                            }
                         }
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(new LogMessage("ClientInfo - updateStatusFile", "Failed to update status file. e = " + e.Message), LogType.Error.ToString());
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("ClientInfo - updateStatusFile", "Failed to update status file. e = " + e.Message), LogType.Error.ToString());
+                }
             }
         }
 
