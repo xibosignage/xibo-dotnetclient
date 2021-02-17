@@ -6,10 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using XiboClient.Action;
 using XiboClient.Log;
+using XiboClient.Logic;
 
-namespace XiboClient.Logic
+namespace XiboClient.Action
 {
     class XmrSubscriber
     {
@@ -222,24 +222,18 @@ namespace XiboClient.Logic
 
                 case "collectNow":
                 case RevertToSchedulePlayerAction.Name:
-                    if (OnAction != null)
-                        OnAction(action);
+                    OnAction?.Invoke(action);
                     break;
 
                 case LayoutChangePlayerAction.Name:
-
                     LayoutChangePlayerAction changeLayout = JsonConvert.DeserializeObject<LayoutChangePlayerAction>(opened);
-
-                    if (OnAction != null)
-                        OnAction(changeLayout);
-
+                    OnAction?.Invoke(changeLayout);
                     break;
 
                 case OverlayLayoutPlayerAction.Name:
                     OverlayLayoutPlayerAction overlayLayout = JsonConvert.DeserializeObject<OverlayLayoutPlayerAction>(opened);
 
-                    if (OnAction != null)
-                        OnAction(overlayLayout);
+                    OnAction?.Invoke(overlayLayout);
                     break;
 
                 case "screenShot":

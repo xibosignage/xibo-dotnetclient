@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace XiboClient.Logic
+namespace XiboClient.Action
 {
     public class ScheduleCommand
     {
         public DateTime Date { get; set; }
-        public String Code { get; set; }
+        public string Code { get; set; }
         public Command Command { get; set; }
         public int ScheduleId { get; set; }
 

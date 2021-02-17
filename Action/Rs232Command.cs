@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO.Ports;
 using System.Linq;
 
-namespace XiboClient.Logic
+namespace XiboClient.Action
 {
     public class Rs232Command
     {
