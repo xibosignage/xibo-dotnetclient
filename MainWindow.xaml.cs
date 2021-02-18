@@ -1181,7 +1181,7 @@ namespace XiboClient
         public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, Point point)
         {
             // If we're interrupting we don't process any actions.
-            if (currentLayout.IsPaused)
+            if (currentLayout == null || currentLayout.IsPaused)
             {
                 Debug.WriteLine("HandleActionTrigger: Skipping Action as current Layout is paused.", "MainWindow");
                 return;
