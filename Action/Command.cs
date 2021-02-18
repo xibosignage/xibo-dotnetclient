@@ -32,7 +32,7 @@ namespace XiboClient.Action
         public string CommandString;
         public string Validation;
 
-        public bool notifyStatus()
+        public bool IsValidationRequired()
         {
             return !string.IsNullOrEmpty(Validation);
         }
@@ -52,7 +52,7 @@ namespace XiboClient.Action
                 Rs232Command rs232 = new Rs232Command(this);
                 string line = rs232.Run();
 
-                if (notifyStatus())
+                if (IsValidationRequired())
                 {
                     return line == Validation;
                 }
@@ -75,7 +75,7 @@ namespace XiboClient.Action
                 HttpCommand command = new HttpCommand(this);
                 var httpStatus = command.RunAsync();
 
-                if (notifyStatus())
+                if (IsValidationRequired())
                 {
                     return httpStatus.Result + "" == Validation;
                 }
@@ -97,13 +97,13 @@ namespace XiboClient.Action
                     startInfo.Arguments = "/C " + CommandString;
                     startInfo.UseShellExecute = false;
 
-                    if (notifyStatus())
+                    if (IsValidationRequired())
                         startInfo.RedirectStandardOutput = true;
 
                     process.StartInfo = startInfo;
                     process.Start();
 
-                    if (notifyStatus())
+                    if (IsValidationRequired())
                     {
                         string line = "";
                         while (!process.StandardOutput.EndOfStream)

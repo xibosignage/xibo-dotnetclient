@@ -49,7 +49,7 @@ namespace XiboClient.Action
                 }
 
                 // Read
-                if (_command.notifyStatus())
+                if (_command.IsValidationRequired())
                 {
                     _port.ReadTimeout = 5000;
                     response = _port.ReadLine();
