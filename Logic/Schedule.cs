@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -36,7 +36,7 @@ namespace XiboClient
     /// </summary>
     public class Schedule
     {
-        public delegate void ScheduleChangeDelegate(ScheduleItem scheduleItem, string mode);
+        public delegate void ScheduleChangeDelegate(ScheduleItem scheduleItem);
         public event ScheduleChangeDelegate ScheduleChangeEvent;
 
         public delegate void OverlayChangeDelegate(List<ScheduleItem> overlays);
@@ -47,7 +47,6 @@ namespace XiboClient
         /// </summary>
         private List<ScheduleItem> _layoutSchedule;
         private int _currentLayout = 0;
-        private int _currentInterruptLayout = 0;
 
         /// <summary>
         /// Current Schedule of Overlay Layouts
@@ -58,11 +57,6 @@ namespace XiboClient
         /// Has stop been called?
         /// </summary>
         private bool _stopCalled = false;
-
-        /// <summary>
-        /// Are we currently interrupting?
-        /// </summary>
-        private bool _interrupting = false;
 
         #region Threads and Agents
         // Key
@@ -122,9 +116,6 @@ namespace XiboClient
             _scheduleManager.OnNewScheduleAvailable += new ScheduleManager.OnNewScheduleAvailableDelegate(_scheduleManager_OnNewScheduleAvailable);
             _scheduleManager.OnRefreshSchedule += new ScheduleManager.OnRefreshScheduleDelegate(_scheduleManager_OnRefreshSchedule);
             _scheduleManager.OnScheduleManagerCheckComplete += _scheduleManager_OnScheduleManagerCheckComplete;
-            _scheduleManager.OnInterruptNow += _scheduleManager_OnInterruptNow;
-            _scheduleManager.OnInterruptPausePending += _scheduleManager_OnInterruptPausePending;
-            _scheduleManager.OnInterruptEnd += _scheduleManager_OnInterruptEnd;
 
             // Create a schedule manager thread
             _scheduleManagerThread = new Thread(new ThreadStart(_scheduleManager.Run));
@@ -216,19 +207,11 @@ namespace XiboClient
             // Set the current pointer to 0
             _currentLayout = 0;
 
-            // If we are not interrupting, then update the current schedule
-            if (!this._interrupting)
-            {
-                // Raise a schedule change event
-                ScheduleChangeEvent(_layoutSchedule[0], "next");
+            // Raise a schedule change event
+            ScheduleChangeEvent(_layoutSchedule[0]);
 
-                // Pass a new set of overlay's to subscribers
-                OverlayChangeEvent?.Invoke(_overlaySchedule);
-            }
-            else
-            {
-                Debug.WriteLine("_scheduleManager_OnNewScheduleAvailable: Skipping Next Layout Change due to Interrupt", "Schedule");
-            }
+            // Pass a new set of overlay's to subscribers
+            OverlayChangeEvent?.Invoke(_overlaySchedule);
         }
 
         /// <summary>
@@ -401,12 +384,10 @@ namespace XiboClient
         /// </summary>
         public void NextLayout()
         {
-            Debug.WriteLine("NextLayout: called. Interrupting: " + this._interrupting, "Schedule");
+            Debug.WriteLine("NextLayout: called", "Schedule");
 
             // Get the previous layout
-            ScheduleItem previousLayout = (this._interrupting)
-                ? _scheduleManager.CurrentInterruptSchedule[_currentInterruptLayout]
-                : _layoutSchedule[_currentLayout];
+            ScheduleItem previousLayout = _layoutSchedule[_currentLayout];
 
             // See if the current layout is an action that can be removed.
             // If it CAN be removed then this will almost certainly result in a change in the current _layoutSchedule
@@ -424,61 +405,21 @@ namespace XiboClient
                 Trace.WriteLine(new LogMessage("Schedule", "NextLayout: Unable to check layout change actions. E = " + e.Message), LogType.Error.ToString());
             }
 
-            // Are currently interrupting?
-            ScheduleItem nextLayout;
-            if (this._interrupting)
+            // increment the current layout
+            _currentLayout++;
+
+            // if the current layout is greater than the count of layouts, then reset to 0
+            if (_currentLayout >= _layoutSchedule.Count)
             {
-                // We might have fulifilled items in the schedule.
-                List<ScheduleItem> notFulfilled = new List<ScheduleItem>();
-                foreach (ScheduleItem item in _scheduleManager.CurrentInterruptSchedule)
-                {
-                    if (!item.IsFulfilled)
-                    {
-                        notFulfilled.Add(item);
-                    }
-                }
-
-                // What if we don't have any?
-                // pick the least worst option
-                if (notFulfilled.Count <= 0)
-                {
-                    Debug.WriteLine("NextLayout: Interrupting and have run out of not-fulfilled schedules, using the first one.", "Schedule");
-
-                    nextLayout = _scheduleManager.CurrentInterruptSchedule[0];
-                }
-                else
-                {
-                    // increment the current layout
-                    _currentInterruptLayout++;
-
-                    // if the current layout is greater than the count of layouts, then reset to 0
-                    if (_currentInterruptLayout >= notFulfilled.Count)
-                    {
-                        _currentInterruptLayout = 0;
-                    }
-
-                    // Pull out the next Layout
-                    nextLayout = notFulfilled[_currentInterruptLayout];
-                }
+                _currentLayout = 0;
             }
-            else
-            {
-                // increment the current layout
-                _currentLayout++;
 
-                // if the current layout is greater than the count of layouts, then reset to 0
-                if (_currentLayout >= _layoutSchedule.Count)
-                {
-                    _currentLayout = 0;
-                }
-
-                nextLayout = _layoutSchedule[_currentLayout];
-            }
+            ScheduleItem nextLayout = _layoutSchedule[_currentLayout];
 
             Debug.WriteLine(string.Format("NextLayout: {0}, Interrupt: {1}", nextLayout.layoutFile, nextLayout.IsInterrupt()), "Schedule");
 
             // Raise the event
-            ScheduleChangeEvent?.Invoke(nextLayout, (this._interrupting ? "interrupt-next" : "next"));
+            ScheduleChangeEvent?.Invoke(nextLayout);
         }
 
         /// <summary>
@@ -522,8 +463,7 @@ namespace XiboClient
 
             // Are we set to expire modified layouts? If not then just return as if
             // nothing had happened.
-            // We never force change an interrupt layout
-            if (!ApplicationSettings.Default.ExpireModifiedLayouts || this._interrupting)
+            if (!ApplicationSettings.Default.ExpireModifiedLayouts)
             {
                 return;
             }
@@ -618,9 +558,6 @@ namespace XiboClient
 
             // Stop the Schedule Manager Thread
             _scheduleManager.Stop();
-            _scheduleManager.OnInterruptNow -= _scheduleManager_OnInterruptNow;
-            _scheduleManager.OnInterruptPausePending -= _scheduleManager_OnInterruptPausePending;
-            _scheduleManager.OnInterruptEnd -= _scheduleManager_OnInterruptEnd;
 
             // Stop the LibraryAgent Thread
             _libraryAgent.Stop();
@@ -654,102 +591,5 @@ namespace XiboClient
                 _layoutSchedule.Add(ScheduleItem.Splash());
             }
         }
-
-        #region Interrupt Layouts
-
-        /// <summary>
-        /// Indicate we are interrupting
-        /// </summary>
-        public void SetInterrupting()
-        {
-            this._interrupting = true;
-
-            // Inform the schedule manager that we have interrupted.
-            this._scheduleManager.InterruptSetActive();
-        }
-
-        /// <summary>
-        /// Interrupt Media has been Played
-        /// </summary>
-        public void SetInterruptMediaPlayed()
-        {
-            // Call interrupt end to switch back to the normal schedule
-            this._scheduleManager_OnInterruptEnd();
-        }
-
-        /// <summary>
-        /// Indicate there is an error with the Interrupt
-        /// </summary>
-        public void SetInterruptUnableToPlayAndEnd()
-        {
-            this._scheduleManager_OnInterruptEnd();
-        }
-
-        /// <summary>
-        /// Interrupt Ended
-        /// </summary>
-        private void _scheduleManager_OnInterruptEnd()
-        {
-            Debug.WriteLine("Interrupt End Event", "Schedule");
-
-            if (this._interrupting)
-            {
-                // Assume we will stop
-                this._interrupting = false;
-
-                // Stop interrupting forthwith
-                ScheduleChangeEvent?.Invoke(null, "interrupt-end");
-
-                // Bring back overlays
-                OverlayChangeEvent?.Invoke(_overlaySchedule);
-            }
-        }
-
-        /// <summary>
-        /// Interrupt should pause after playback
-        /// </summary>
-        private void _scheduleManager_OnInterruptPausePending()
-        {
-            Debug.WriteLine("Interrupt Pause Pending Event", "Schedule");
-
-            if (this._interrupting)
-            {
-                // Set Pause Pending on the current Interrupt Layout
-                ScheduleChangeEvent?.Invoke(null, "pause-pending");
-            }
-        }
-
-        /// <summary>
-        /// Interrupt should happen now
-        /// </summary>
-        private void _scheduleManager_OnInterruptNow()
-        {
-            Debug.WriteLine("Interrupt Now Event", "Schedule");
-
-            if (!this._interrupting && this._scheduleManager.CurrentInterruptSchedule.Count > 0)
-            {
-                // Remove overlays
-                if (_overlaySchedule != null && _overlaySchedule.Count > 0)
-                {
-                    OverlayChangeEvent?.Invoke(new List<ScheduleItem>());
-                }
-
-                // Choose the interrupt in position 0
-                ScheduleChangeEvent?.Invoke(this._scheduleManager.CurrentInterruptSchedule[0], "interrupt");
-            }
-        }
-
-        /// <summary>
-        /// Report the Play durarion of the current layout.
-        /// </summary>
-        /// <param name="scheduleId"></param>
-        /// <param name="layoutId"></param>
-        /// <param name="duration"></param>
-        public void CurrentLayout_OnReportLayoutPlayDurationEvent(int scheduleId, int layoutId, double duration)
-        {
-            this._scheduleManager.InterruptRecordSecondsPlayed(scheduleId, duration);
-        }
-
-        #endregion
     }
 }

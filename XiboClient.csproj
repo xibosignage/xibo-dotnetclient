@@ -126,7 +126,6 @@
     <Compile Include="Logic\CacheManager.cs" />
     <Compile Include="Logic\HardwareKey.cs" />
     <Compile Include="Logic\Hashes.cs" />
-    <Compile Include="Logic\InterruptState.cs" />
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
     <Compile Include="Logic\MediaOption.cs" />

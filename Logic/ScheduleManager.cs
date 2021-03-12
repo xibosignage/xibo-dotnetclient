@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -65,16 +65,6 @@ namespace XiboClient
         private List<ScheduleCommand> _commands;
         private List<ScheduleItem> _overlaySchedule;
         private List<ScheduleItem> _invalidSchedule;
-        private InterruptState _interruptState;
-
-        public delegate void OnInterruptNowDelegate();
-        public event OnInterruptNowDelegate OnInterruptNow;
-
-        public delegate void OnInterruptPausePendingDelegate();
-        public event OnInterruptPausePendingDelegate OnInterruptPausePending;
-
-        public delegate void OnInterruptEndDelegate();
-        public event OnInterruptEndDelegate OnInterruptEnd;
 
         // State
         private bool _refreshSchedule;
@@ -191,9 +181,6 @@ namespace XiboClient
                 Trace.WriteLine(new LogMessage("ScheduleManager", "Run: GeoCoordinateWatcher failed to start. E = " + e.Message), LogType.Error.ToString());
             }
 
-            // Load the interrupt state
-            InterruptInitState();
-
             // Run loop
             // --------
             while (!_forceStop)
@@ -209,20 +196,6 @@ namespace XiboClient
 
                         // Work out if there is a new schedule available, if so - raise the event
                         bool isNewScheduleAvailable = IsNewScheduleAvailable();
-
-                        // Interrupts
-                        // ----------
-                        // Handle interrupts to keep the list in order and fresh
-                        // this effectively sets the order of our interrupt layouts before they get updated on the main
-                        // thread.
-                        try
-                        {
-                            InterruptAssessAndUpdate();
-                        }
-                        catch (Exception e)
-                        {
-                            Trace.WriteLine(new LogMessage("ScheduleManager", "Run: Problem assessing interrupt schedule. E = " + e.Message), LogType.Error.ToString());
-                        }
 
                         // Events
                         // ------
@@ -297,9 +270,6 @@ namespace XiboClient
                 watcher.Stop();
                 watcher.Dispose();
             }
-
-            // Save the interrupt state
-            InterruptPersistState();
 
             Trace.WriteLine(new LogMessage("ScheduleManager - Run", "Thread Stopped"), LogType.Info.ToString());
         }
@@ -521,19 +491,6 @@ namespace XiboClient
                     // New overlay schedule doesn't contain the layout?
                     if (!overlaySchedule.Contains(layout))
                         forceChange = true;
-                }
-            }
-
-            // Interrupts
-            // ----------
-            // We don't want a change in interrupt schedule to forceChange, because we don't want to impact the usual running schedule.
-            // But we do want to know if its happened
-            foreach (ScheduleItem layout in CurrentInterruptSchedule)
-            {
-                if (!newInterruptSchedule.Contains(layout))
-                {
-                    this._interruptState.LastInterruptScheduleChange = DateTime.Now;
-                    Trace.WriteLine(new LogMessage("ScheduleManager - IsNewScheduleAvailable", "Interrupt Schedule Change"), LogType.Audit.ToString());
                 }
             }
 
@@ -1342,269 +1299,6 @@ namespace XiboClient
                     action.downloadRequired = false;
                     RefreshSchedule = true;
                 }
-            }
-        }
-
-        #endregion
-
-        #region Interrupt Management
-
-        /// <summary>
-        /// Update our schedule according to current standings
-        /// </summary>
-        private void InterruptAssessAndUpdate()
-        {
-            if (this.CurrentInterruptSchedule.Count <= 0)
-            {
-                // Fire an end event
-                OnInterruptEnd?.Invoke();
-            }
-            else
-            {
-                // Recalculate the target hourly interruption
-                int targetHourlyInterruption = 0;
-                foreach (ScheduleItem item in CurrentInterruptSchedule)
-                {
-                    targetHourlyInterruption += item.ShareOfVoice;
-                }
-
-                // Did our schedule change last hour?
-                if (this._interruptState.LastInterruptScheduleChange < TopOfHour())
-                {
-                    // Just take the new figure
-                    this._interruptState.TargetHourlyInterruption = targetHourlyInterruption;
-                }
-                else
-                {
-                    this._interruptState.TargetHourlyInterruption = Math.Max(targetHourlyInterruption, this._interruptState.TargetHourlyInterruption);
-                }
-
-                // Order the schedule and determine if we need to interrupt
-                InterruptResetSecondsIfNecessary();
-
-                // How far through the hour are we?
-                int secondsIntoHour = (int)(DateTime.Now - TopOfHour()).TotalSeconds;
-                int secondsIntoPeriod = (int)(DateTime.Now - TopOfPeriod()).TotalSeconds;
-
-                // Assess each Layout and update the item with current understanding of seconds played and rank
-                bool hasNotFulfilledSchedule = false;
-                foreach (ScheduleItem item in CurrentInterruptSchedule)
-                {
-                    try
-                    {
-                        if (this._interruptState.InterruptTracking.ContainsKey(item.scheduleid))
-                        {
-                            // Annotate this item with the existing seconds played
-                            this._interruptState.InterruptTracking.TryGetValue(item.scheduleid, out double secondsPlayed);
-
-                            item.SecondsPlayed = secondsPlayed;
-
-                            // Is this item fulfilled
-                            item.IsFulfilled = (item.SecondsPlayed >= item.ShareOfVoice);
-                        }
-                        else
-                        {
-                            item.IsFulfilled = false;
-                            item.SecondsPlayed = 0;
-                        }
-
-                        // Set our watermark for whether we have a not-fulfilled schedule
-                        if (!item.IsFulfilled)
-                        {
-                            hasNotFulfilledSchedule = true;
-                        }
-
-                        Debug.WriteLine("InterruptAssessAndUpdate: Updating scheduleId " + item.scheduleid + " with seconds played " + item.SecondsPlayed, "ScheduleManager");
-                    }
-                    catch
-                    {
-                        // If we have trouble getting it, then assume 0 to be safe
-                        item.SecondsPlayed = 0;
-                    }
-                }
-
-                // Sort the interrupt layouts
-                CurrentInterruptSchedule.Sort(new ScheduleItemComparer(3600 - secondsIntoHour));
-                CurrentInterruptSchedule.Reverse();
-
-                // Do we need to interrupt at this moment, or not
-                double percentageThroughPeriod = secondsIntoPeriod / 900.0;
-                int secondsShouldHaveInterrupted = Convert.ToInt32(Math.Floor(this._interruptState.TargetHourlyInterruption / 3600.0 * 900.0 * percentageThroughPeriod));
-                int secondsSinceLastInterrupt = Convert.ToInt32((DateTime.Now - this._interruptState.LastInterruption).TotalSeconds);
-
-                Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptAssessAndUpdate: Target = " + this._interruptState.TargetHourlyInterruption
-                    + ", Required = " + secondsShouldHaveInterrupted
-                    + ", Interrupted = " + this._interruptState.SecondsInterrutedThisPeriod
-                    + ", Last Interrupt = " + secondsSinceLastInterrupt
-                    + ", Period Percent = " + percentageThroughPeriod)
-                    , LogType.Audit.ToString());
-
-                // Interrupt if the seconds we've interrupted this hour so far is less than the seconds we
-                // should have interrupted.
-                if (!hasNotFulfilledSchedule)
-                {
-                    Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptAssessAndUpdate: No not-fulfilled schedules, Pause Pending."), LogType.Audit.ToString());
-                    OnInterruptPausePending?.Invoke();
-                }
-                else if (Math.Floor(this._interruptState.SecondsInterrutedThisPeriod) < secondsShouldHaveInterrupted)
-                {
-                    Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptAssessAndUpdate: Interrupting."), LogType.Audit.ToString());
-                    OnInterruptNow?.Invoke();
-                }
-                else
-                {
-                    Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptAssessAndUpdate: Pause Pending."), LogType.Audit.ToString());
-                    OnInterruptPausePending?.Invoke();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Reset interrupt seconds if we've gone into a new hour
-        /// </summary>
-        private void InterruptResetSecondsIfNecessary()
-        {
-            if (this._interruptState.LastPlaytimeUpdate < TopOfPeriod())
-            {
-                Debug.WriteLine("InterruptResetSecondsIfNecessary: LastPlaytimeUpdate in prior period, resetting play time.", "ScheduleManager");
-                this._interruptState.SecondsInterrutedThisPeriod = 0;
-            }
-
-            if (this._interruptState.LastPlaytimeUpdate < TopOfHour())
-            {
-                Debug.WriteLine("InterruptResetSecondsIfNecessary: LastPlaytimeUpdate in prior hour, resetting hashes.", "ScheduleManager");
-                this._interruptState.InterruptTracking.Clear();
-            }
-        }
-
-        /// <summary>
-        /// Mark an interrupt as having happened
-        /// </summary>
-        public void InterruptSetActive()
-        {
-            this._interruptState.LastInterruption = DateTime.Now;
-
-            Debug.WriteLine("InterruptSetActive", "ScheduleManager");
-        }
-
-        /// <summary>
-        /// Record how many seconds we've just played from an event.
-        /// </summary>
-        /// <param name="scheduleId"></param>
-        /// <param name="seconds"></param>
-        public void InterruptRecordSecondsPlayed(int scheduleId, double seconds)
-        {
-            Debug.WriteLine("InterruptRecordSecondsPlayed: scheduleId = " + scheduleId + ", seconds = " + seconds, "ScheduleManager");
-
-            InterruptResetSecondsIfNecessary();
-
-            // Add to our overall interrupted seconds
-            this._interruptState.SecondsInterrutedThisPeriod += seconds;
-
-            // Record the last play time as not
-            this._interruptState.LastPlaytimeUpdate = DateTime.Now;
-
-            // Update our tracker with these details.
-            if (!this._interruptState.InterruptTracking.ContainsKey(scheduleId))
-            {
-                this._interruptState.InterruptTracking.Add(scheduleId, 0);
-            }
-
-            // Add new seconds to tracked seconds
-            this._interruptState.InterruptTracking[scheduleId] += seconds;
-
-            // Log
-            Debug.WriteLine("InterruptRecordSecondsPlayed: Added " + seconds
-                + " seconds to eventId " + scheduleId + ", new total is " + this._interruptState.InterruptTracking[scheduleId], "ScheduleManager");
-        }
-
-        /// <summary>
-        /// Initialise interrupt state from disk
-        /// </summary>
-        private void InterruptInitState()
-        {
-            lock (_locker)
-            {
-                try
-                {
-                    if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\interrupt.json"))
-                    {
-                        this._interruptState = JsonConvert.DeserializeObject<InterruptState>(File.ReadAllText(ApplicationSettings.Default.LibraryPath + @"\interrupt.json"));
-                    }
-                }
-                catch (Exception e)
-                {
-                    Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptInitState: Failed to read interrupt file. e = " + e.Message), LogType.Error.ToString());
-                }
-
-                // If we are still empty after loading, we should create an empty object
-                if (this._interruptState == null)
-                {
-                    // Create a new empty object
-                    this._interruptState = InterruptState.EmptyState();
-                }
-            }            
-        }
-
-        /// <summary>
-        /// Persist state to disk
-        /// </summary>
-        private void InterruptPersistState()
-        {
-            // If the interrupt state is null for whatever reason, don't persist it to file
-            if (this._interruptState == null)
-            {
-                return;
-            }
-
-            try
-            {
-                lock (_locker)
-                {
-                    using (StreamWriter sw = new StreamWriter(ApplicationSettings.Default.LibraryPath + @"\interrupt.json", false, Encoding.UTF8))
-                    {
-                        sw.Write(JsonConvert.SerializeObject(this._interruptState, Newtonsoft.Json.Formatting.Indented));
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(new LogMessage("ScheduleManager", "InterruptPersistState: Failed to update interrupt file. e = " + e.Message), LogType.Error.ToString());
-            }
-        }
-
-        /// <summary>
-        /// Return the top of the Hour
-        /// </summary>
-        /// <returns></returns>
-        private DateTime TopOfHour()
-        {
-            return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 0, 0);
-        }
-
-        /// <summary>
-        /// Get the top of this 15 minute period
-        /// </summary>
-        /// <returns></returns>
-        private DateTime TopOfPeriod()
-        {
-            int currentMinute = DateTime.Now.Minute;
-
-            if (currentMinute < 15)
-            {
-                return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 0, 0);
-            }
-            else if (currentMinute < 30)
-            {
-                return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 15, 0);
-            }
-            else if (currentMinute < 45)
-            {
-                return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 30, 0);
-            }
-            else
-            {
-                return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 45, 0);
             }
         }
 

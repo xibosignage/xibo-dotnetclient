@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -85,14 +85,7 @@ namespace XiboClient.Rendering
 
         // Layout state
         public bool IsRunning { get; set; }
-        public bool IsPaused { get; set; }
         public bool IsExpired { get; private set; }
-
-        // Interrupts
-        private bool isPausePending = false;
-
-        public delegate void OnReportLayoutPlayDuration(int scheduleId, int layoutId, double duration);
-        public event OnReportLayoutPlayDuration OnReportLayoutPlayDurationEvent;
 
         /// <summary>
         /// Layout
@@ -362,61 +355,6 @@ namespace XiboClient.Rendering
 
             // We are running
             IsRunning = true;
-            IsPaused = false;
-        }
-
-        /// <summary>
-        /// Pause this Layout
-        /// </summary>
-        public void Pause()
-        {
-            // Pause each Region
-            foreach (Region region in _regions)
-            {
-                region.Pause();
-            }
-
-            // Pause no-longer pending
-            isPausePending = false;
-            IsPaused = true;
-
-            // Close and dispatch any stat records
-            double duration = StatManager.Instance.LayoutStop(UniqueId, ScheduleId, _layoutId, this.isStatEnabled);
-
-            // Report Play Duration
-            if (this.isInterrupt)
-            {
-                OnReportLayoutPlayDurationEvent?.Invoke(ScheduleId, _layoutId, duration);
-            }
-        }
-
-        /// <summary>
-        /// Set Pause Pending, so that next expiry we pause.
-        /// </summary>
-        public void PausePending()
-        {
-            isPausePending = true;
-
-            foreach(Region region in _regions)
-            {
-                region.PausePending();
-            }
-        }
-
-        /// <summary>
-        /// Resume this Layout
-        /// </summary>
-        public void Resume()
-        {
-            StatManager.Instance.LayoutStart(UniqueId, ScheduleId, _layoutId);
-
-            // Resume each region
-            foreach (Region region in _regions)
-            {
-                region.Resume(this.isInterrupt);
-            }
-
-            IsPaused = false;
         }
 
         /// <summary>
@@ -427,14 +365,8 @@ namespace XiboClient.Rendering
             // Stat stop
             double duration = StatManager.Instance.LayoutStop(UniqueId, ScheduleId, _layoutId, this.isStatEnabled);
 
-            // If we are an interrupt layout, then report our duration.
-            if (this.isInterrupt)
-            {
-                OnReportLayoutPlayDurationEvent?.Invoke(ScheduleId, this._layoutId, duration);
-            }
+            // TODO: record final duration of this layout in memory cache
 
-            // Stop
-            IsPaused = false;
             IsRunning = false;
         }
 
@@ -485,13 +417,6 @@ namespace XiboClient.Rendering
                 return;
             }
 
-            // If we are paused, don't do anything
-            if (IsPaused)
-            {
-                Debug.WriteLine("Region_DurationElapsedEvent: On Paused Layout, ignoring.", "Layout");
-                return;
-            }
-
             bool isExpired = true;
 
             // Check the other regions to see if they are also expired.
@@ -536,12 +461,6 @@ namespace XiboClient.Rendering
         private void Region_MediaExpiredEvent()
         {
             Trace.WriteLine(new LogMessage("Region", "MediaExpiredEvent: Media Elapsed"), LogType.Audit.ToString());
-
-            // Are we supposed to be pausing?
-            if (this.isPausePending)
-            {
-                Schedule.SetInterruptMediaPlayed();
-            }
         }
 
         /// <summary>
