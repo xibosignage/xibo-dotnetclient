@@ -24,7 +24,6 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Xml;
-using XiboClient.Logic;
 using XiboClient.Stats;
 
 namespace XiboClient.Rendering
@@ -66,7 +65,6 @@ namespace XiboClient.Rendering
         private bool _sizeResetRequired;
         private bool _dimensionsSet = false;
         private int _audioSequence;
-        private double _currentPlaytime;
 
         /// <summary>
         /// Event to indicate that this Region's duration has elapsed
