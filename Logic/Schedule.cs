@@ -386,25 +386,6 @@ namespace XiboClient
         {
             Debug.WriteLine("NextLayout: called", "Schedule");
 
-            // Get the previous layout
-            ScheduleItem previousLayout = _layoutSchedule[_currentLayout];
-
-            // See if the current layout is an action that can be removed.
-            // If it CAN be removed then this will almost certainly result in a change in the current _layoutSchedule
-            // therefore we should return out of this and kick off a schedule manager cycle, which will set the new layout.
-            try
-            {
-                if (_scheduleManager.removeLayoutChangeActionIfComplete(previousLayout))
-                {
-                    _scheduleManager.RunNow();
-                    return;
-                }
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(new LogMessage("Schedule", "NextLayout: Unable to check layout change actions. E = " + e.Message), LogType.Error.ToString());
-            }
-
             // increment the current layout
             _currentLayout++;
 
@@ -579,6 +560,32 @@ namespace XiboClient
             {
                 _layoutSchedule.Add(ScheduleItem.Splash());
             }
+        }
+
+        /// <summary>
+        /// A change layout action has finished
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public bool NotifyLayoutActionFinished(ScheduleItem item)
+        {
+            // See if the current layout is an action that can be removed.
+            // If it CAN be removed then this will almost certainly result in a change in the current _layoutSchedule
+            // therefore we should return out of this and kick off a schedule manager cycle, which will set the new layout.
+            try
+            {
+                if (_scheduleManager.removeLayoutChangeActionIfComplete(item))
+                {
+                    _scheduleManager.RunNow();
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("Schedule", "NotifyLayoutActionFinished: Unable to check layout change actions. E = " + e.Message), LogType.Error.ToString());
+            }
+
+            return false;
         }
     }
 }

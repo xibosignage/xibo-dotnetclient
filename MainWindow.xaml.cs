@@ -446,6 +446,16 @@ namespace XiboClient
                 {
                     if (this.currentLayout != null)
                     {
+                        // Check to see if this Layout was a Layout Change Action that we can mark as being played
+                        if (this.currentLayout.ScheduleItem.Override)
+                        {
+                            if (_schedule.NotifyLayoutActionFinished(this.currentLayout.ScheduleItem))
+                            {
+                                Debug.WriteLine("ChangeToNextLayout: not changing this time, because the current layout finishing will result in a schedule change.", "MainWindow");
+                                return;
+                            }
+                        }
+
                         Debug.WriteLine("ChangeToNextLayout: stopping the current Layout", "MainWindow");
 
                         this.currentLayout.Stop();
@@ -507,11 +517,14 @@ namespace XiboClient
             {
                 Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Layout Change to " + scheduleItem.layoutFile + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
 
+                // Store the active layout count, so that we can remove this one that failed and still see if there is another to try
+                int activeLayouts = _schedule.ActiveLayouts;
+
                 // We could not prepare or start this Layout, so we ought to remove it from the Schedule.
                 _schedule.RemoveLayout(scheduleItem);
 
                 // Do we have more than one Layout in our Schedule which we can try?
-                if (_schedule.ActiveLayouts > 1)
+                if (activeLayouts > 1)
                 {
                     _schedule.NextLayout();
                 }
