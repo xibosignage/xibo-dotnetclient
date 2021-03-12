@@ -54,4 +54,5 @@
   <ScreenShotSize>0</ScreenShotSize>
   <FallbackToInternetExplorer>false</FallbackToInternetExplorer>
   <AggregationLevel>individual</AggregationLevel>
+  <IsRecordGeoLocationOnProofOfPlay>false</IsRecordGeoLocationOnProofOfPlay>
 </ApplicationSettings>
