@@ -443,17 +443,6 @@ namespace XiboClient
         }
 
         /// <summary>
-        /// The number of active layouts in the current schedule
-        /// </summary>
-        public int ActiveInterruptLayouts
-        {
-            get
-            {
-                return _scheduleManager.CurrentInterruptSchedule.Count;
-            }
-        }
-
-        /// <summary>
         /// A layout file has changed
         /// </summary>
         /// <param name="layoutPath"></param>

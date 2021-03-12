@@ -505,7 +505,6 @@ namespace XiboClient
 
                         if (json.ContainsKey("cmsAddress"))
                         {
-                            // TODO: we are done! 
                             ApplicationSettings.Default.ServerUri = json["cmsAddress"].ToString();
                             ApplicationSettings.Default.ServerKey = json["cmsKey"].ToString();
 

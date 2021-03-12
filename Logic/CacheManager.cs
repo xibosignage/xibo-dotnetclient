@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -19,6 +19,7 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -51,6 +52,10 @@ namespace XiboClient
         /// </summary>
         private Collection<UnsafeItem> _unsafeItems = new Collection<UnsafeItem>();
 
+        /// <summary>
+        /// List of layout durations
+        /// </summary>
+        private Dictionary<int, int> _layoutDurations = new Dictionary<int, int>();
 
         private CacheManager()
         {
@@ -477,6 +482,38 @@ namespace XiboClient
                 list += item.Type.ToString() + ": " + item.LayoutId + ", " + item.Reason + ", ttl: " + item.Ttl + Environment.NewLine;
             }
             return list;
+        }
+
+        #endregion
+
+        #region Layout Durations
+
+        /// <summary>
+        /// Record Layout Duration
+        /// </summary>
+        /// <param name="layoutId"></param>
+        /// <param name="duration"></param>
+        public void RecordLayoutDuration(int layoutId, int duration)
+        {
+            _layoutDurations[layoutId] = duration;
+        }
+
+        /// <summary>
+        /// Get Layout Duration
+        /// </summary>
+        /// <param name="layoutId"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
+        public int GetLayoutDuration(int layoutId, int defaultValue)
+        {
+            if (_layoutDurations.ContainsKey(layoutId))
+            {
+                return _layoutDurations[layoutId];
+            }
+            else
+            {
+                return defaultValue;
+            }
         }
 
         #endregion

@@ -365,7 +365,8 @@ namespace XiboClient.Rendering
             // Stat stop
             double duration = StatManager.Instance.LayoutStop(UniqueId, ScheduleId, _layoutId, this.isStatEnabled);
 
-            // TODO: record final duration of this layout in memory cache
+            // Record final duration of this layout in memory cache
+            CacheManager.Instance.RecordLayoutDuration(_layoutId, (int)Math.Ceiling(duration));
 
             IsRunning = false;
         }

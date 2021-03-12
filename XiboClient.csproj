@@ -135,7 +135,6 @@
     <Compile Include="Logic\RequiredFiles.cs" />
     <Compile Include="Logic\Schedule.cs" />
     <Compile Include="Logic\ScheduleItem.cs" />
-    <Compile Include="Logic\ScheduleItemComparer.cs" />
     <Compile Include="Logic\ScheduleManager.cs" />
     <Compile Include="Logic\ScreenShot.cs" />
     <Compile Include="Logic\XmlHelper.cs" />
