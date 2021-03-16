@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -50,9 +50,9 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "2 R256.7";
+        public string ClientVersion { get; } = "2 R257.1";
         public string Version { get; } = "5";
-        public int ClientCodeVersion { get; } = 256;
+        public int ClientCodeVersion { get; } = 257;
 
         private ApplicationSettings()
         {
@@ -579,6 +579,7 @@ namespace XiboClient
         public bool PreventSleep { get; set; }
         public bool ScreenShotRequested { get; set; }
         public bool FallbackToInternetExplorer { get; set; }
+        public bool IsRecordGeoLocationOnProofOfPlay { get; set; }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;
