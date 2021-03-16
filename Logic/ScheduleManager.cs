@@ -18,7 +18,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Device.Location;
@@ -663,6 +662,15 @@ namespace XiboClient
             if (interrupt.Count <= 0)
             {
                 return normal;
+            }
+
+            // If we have an empty normal schedule, pop the default in there
+            if (normal.Count <= 0)
+            {
+                normal = new List<ScheduleItem>
+                {
+                    CurrentDefaultLayout
+                };
             }
 
             // We do have interrupts
