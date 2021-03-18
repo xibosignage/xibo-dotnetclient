@@ -424,6 +424,15 @@ namespace XiboClient
                 newSchedule = ResolveNormalAndInterrupts(parsedSchedule);
             }
 
+            // If we have come out of this process without any schedule, then we ought to assign the default
+            if (newSchedule.Count <= 0)
+            {
+                newSchedule = new List<ScheduleItem>()
+                {
+                    CurrentDefaultLayout
+                };
+            }
+
             // Should we force a change 
             // (broadly this depends on whether or not the schedule has changed.)
             bool forceChange = false;
