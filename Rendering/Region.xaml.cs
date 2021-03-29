@@ -90,6 +90,7 @@ namespace XiboClient.Rendering
         private bool _sizeResetRequired;
         private bool _dimensionsSet = false;
         private int _audioSequence;
+        private double _currentPlaytime;
 
         /// <summary>
         /// Event to indicate that this Region's duration has elapsed
@@ -783,68 +784,6 @@ namespace XiboClient.Rendering
         private void SetDimensions(Point location, Size size)
         {
             SetDimensions((int)location.X, (int)location.Y, (int)size.Width, (int)size.Height);
-        }
-
-        /// <summary>
-        /// Is Pause Pending?
-        /// </summary>
-        public void PausePending()
-        {
-            this.IsPausePending = true;
-        }
-
-        /// <summary>
-        /// Pause this Layout
-        /// </summary>
-        public void Pause()
-        {
-            if (this.currentMedia != null)
-            {
-                // Store the current playtime of this Region.
-                this._currentPlaytime = this.currentMedia.CurrentPlaytime();
-
-                // Stop and remove the current media.
-                StopMedia(this.currentMedia, true);
-
-                // Remove it.
-                this.currentMedia = null;
-
-                Debug.WriteLine("Pause: paused Region, current Playtime is " + this._currentPlaytime, "Region");
-            }
-
-            // Paused
-            this._isPaused = true;
-            this.IsPausePending = false;
-        }
-
-        /// <summary>
-        /// Resume this Layout
-        /// </summary>
-        public void Resume(bool isInterrupt)
-        {
-            // If we are an interrupt, we should skip on to the next item
-            // and if there is only 1 item, we should replay it.
-            // if we are a normal layout, then we resume the current one.
-            if (isInterrupt)
-            {
-                if (this.options.mediaNodes.Count <= 1)
-                {
-                    this.currentSequence--;
-                }
-
-                // Resume the current media item
-                StartNext(this._currentPlaytime);
-            }
-            else
-            {
-                // We have to dial back the current position here, because start next will straight away increment it
-                this.currentSequence--;
-
-                // Resume the current media item
-                StartNext(0);
-            }
-
-            this._isPaused = false;
         }
 
         /// <summary>

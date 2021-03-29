@@ -970,9 +970,9 @@ namespace XiboClient
         public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, Point point)
         {
             // If we're interrupting we don't process any actions.
-            if (currentLayout == null || currentLayout.IsPaused)
+            if (currentLayout == null)
             {
-                Debug.WriteLine("HandleActionTrigger: Skipping Action as current Layout is paused.", "MainWindow");
+                Debug.WriteLine("HandleActionTrigger: Skipping Action as current Layout is not set.", "MainWindow");
                 return;
             }
 

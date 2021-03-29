@@ -391,27 +391,23 @@ namespace XiboClient
         /// </summary>
         public void PreviousLayout()
         {
-            Debug.WriteLine("PreviousLayout: called. Interrupting: " + this._interrupting, "Schedule");
+            Debug.WriteLine("PreviousLayout: called.", "Schedule");
 
-            // Only active if we aren't interrupting
-            if (!_interrupting)
+            // Capture the active layout
+            ScheduleItem activeSchedule = _layoutSchedule[_currentLayout];
+
+            // Move the current layout back
+            // next layout moves it forward, so we actually need to move it back 2.
+            _currentLayout -= 2;
+
+            // If we have dropped below the first layout in the list, we should go to the end of the list instead.
+            if (_currentLayout < 0)
             {
-                // Capture the active layout
-                ScheduleItem activeSchedule = _layoutSchedule[_currentLayout];
-
-                // Move the current layout back
-                // next layout moves it forward, so we actually need to move it back 2.
-                _currentLayout = _currentLayout - 2;
-
-                // If we have dropped below the first layout in the list, we should go to the end of the list instead.
-                if (_currentLayout < 0)
-                {
-                    _currentLayout = _layoutSchedule.Count - 2;
-                }
-
-                // Call Next Layout
-                NextLayout(activeSchedule);
+                _currentLayout = _layoutSchedule.Count - 2;
             }
+
+            // Call Next Layout
+            NextLayout();
         }
 
         /// <summary>
@@ -642,36 +638,6 @@ namespace XiboClient
         private void EmbeddedServerOnDurationReceived(string operation, int sourceId, int duration)
         {
             OnTriggerReceived?.Invoke("duration", operation, sourceId, duration);
-        }
-
-        #region Interrupt Layouts
-
-        /// <summary>
-        /// Indicate we are interrupting
-        /// </summary>
-        public void SetInterrupting()
-        {
-            this._interrupting = true;
-
-            // Inform the schedule manager that we have interrupted.
-            this._scheduleManager.InterruptSetActive();
-        }
-
-        /// <summary>
-        /// Interrupt Media has been Played
-        /// </summary>
-        public void SetInterruptMediaPlayed()
-        {
-            // Call interrupt end to switch back to the normal schedule
-            this._scheduleManager_OnInterruptEnd();
-        }
-
-        /// <summary>
-        /// Indicate there is an error with the Interrupt
-        /// </summary>
-        public void SetInterruptUnableToPlayAndEnd()
-        {
-            this._scheduleManager_OnInterruptEnd();
         }
 
         /// <summary>
