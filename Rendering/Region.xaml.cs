@@ -1,10 +1,29 @@
-﻿using System;
+﻿/**
+ * Copyright (C) 2021 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Xml;
-using XiboClient.Logic;
 using XiboClient.Stats;
 
 namespace XiboClient.Rendering
@@ -28,16 +47,6 @@ namespace XiboClient.Rendering
         /// Has this Region Expired?
         /// </summary>
         public bool IsExpired = false;
-
-        /// <summary>
-        /// Is this region paused?
-        /// </summary>
-        private bool _isPaused = false;
-
-        /// <summary>
-        /// Is Pause Pending?
-        /// </summary>
-        private bool IsPausePending = false;
 
         /// <summary>
         /// Region Dimensions
@@ -81,7 +90,6 @@ namespace XiboClient.Rendering
         private bool _sizeResetRequired;
         private bool _dimensionsSet = false;
         private int _audioSequence;
-        private double _currentPlaytime;
 
         /// <summary>
         /// Event to indicate that this Region's duration has elapsed
@@ -722,20 +730,6 @@ namespace XiboClient.Rendering
                 return;
             }
 
-            // If we are now paused, we don't start the next media
-            if (this._isPaused)
-            {
-                Debug.WriteLine("DurationElapsedEvent: Paused, therefore we don't StartNext", "Region");
-                return;
-            }
-
-            // If Pause Pending, then stop here as we will be removed
-            if (IsPausePending)
-            {
-                Debug.WriteLine("DurationElapsedEvent: Pause Pending, therefore we don't StartNext", "Region");
-                return;
-            }
-
             // TODO:
             // Animate out at this point if we need to
             // the result of the animate out complete event should then move us on.
@@ -833,13 +827,13 @@ namespace XiboClient.Rendering
             // if we are a normal layout, then we resume the current one.
             if (isInterrupt)
             {
-                if (this._media.Count <= 1)
+                if (this.options.mediaNodes.Count <= 1)
                 {
                     this.currentSequence--;
                 }
 
-                // Start media item
-                StartNext(0);
+                // Resume the current media item
+                StartNext(this._currentPlaytime);
             }
             else
             {
@@ -847,7 +841,7 @@ namespace XiboClient.Rendering
                 this.currentSequence--;
 
                 // Resume the current media item
-                StartNext(this._currentPlaytime);
+                StartNext(0);
             }
 
             this._isPaused = false;

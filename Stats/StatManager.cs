@@ -199,6 +199,12 @@ namespace XiboClient.Stats
                     LayoutId = layoutId
                 };
 
+                // Start location
+                if (ApplicationSettings.Default.IsRecordGeoLocationOnProofOfPlay)
+                {
+                    AnnotateWithLocation(stat);
+                }
+
                 this.proofOfPlay.Add(key, stat);
             }
         }
@@ -231,7 +237,10 @@ namespace XiboClient.Stats
                     duration = (stat.To - stat.From).TotalSeconds;
 
                     // GeoLocation
-                    AnnotateWithLocation(stat, duration);
+                    if (ApplicationSettings.Default.IsRecordGeoLocationOnProofOfPlay)
+                    {
+                        AnnotateWithLocationUpdate(stat, duration);
+                    }
 
                     if (ApplicationSettings.Default.StatsEnabled && statEnabled)
                     {
@@ -272,6 +281,12 @@ namespace XiboClient.Stats
                     WidgetId = widgetId
                 };
 
+                // Start location
+                if (ApplicationSettings.Default.IsRecordGeoLocationOnProofOfPlay)
+                {
+                    AnnotateWithLocation(stat);
+                }
+
                 this.proofOfPlay.Add(key, stat);
             }
         }
@@ -307,7 +322,10 @@ namespace XiboClient.Stats
                     duration = (stat.To - stat.From).TotalSeconds;
 
                     // GeoLocation
-                    AnnotateWithLocation(stat, duration);
+                    if (ApplicationSettings.Default.IsRecordGeoLocationOnProofOfPlay)
+                    {
+                        AnnotateWithLocationUpdate(stat, duration);
+                    }
 
                     if (ApplicationSettings.Default.StatsEnabled && statEnabled)
                     {
@@ -329,8 +347,7 @@ namespace XiboClient.Stats
         /// Annotate a stat record with an engagement
         /// </summary>
         /// <param name="stat"></param>
-        /// <param name="duration"></param>
-        private void AnnotateWithLocation(Stat stat, double duration)
+        private void AnnotateWithLocation(Stat stat)
         {
             // Do we have any engagements to record?
             if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
@@ -338,11 +355,44 @@ namespace XiboClient.Stats
                 // Annotate our stat with the current geolocation
                 Engagement engagement = new Engagement
                 {
-                    Tag = "LOCATION:" + ClientInfo.Instance.CurrentGeoLocation.Latitude + ":" + ClientInfo.Instance.CurrentGeoLocation.Longitude,
-                    Duration = duration,
+                    Tag = "LOCATION:" + ClientInfo.Instance.CurrentGeoLocation.Latitude + "," + ClientInfo.Instance.CurrentGeoLocation.Longitude,
+                    Duration = 0,
                     Count = 1
                 };
                 stat.Engagements.Add("LOCATION", engagement);
+            }
+        }
+
+        /// <summary>
+        /// Upate a stat record with an engagement
+        /// </summary>
+        /// <param name="stat"></param>
+        /// <param name="duration"></param>
+        private void AnnotateWithLocationUpdate(Stat stat, double duration)
+        {
+            if (stat.Engagements.ContainsKey("LOCATION"))
+            {
+                // Update the existing tag
+                stat.Engagements["LOCATION"].Duration = duration;
+                if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+                {
+                    stat.Engagements["LOCATION"].Tag += "|" + ClientInfo.Instance.CurrentGeoLocation.Latitude + "," + ClientInfo.Instance.CurrentGeoLocation.Longitude;
+                }
+            }
+            else
+            {
+                // New one
+                if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+                {
+                    // Annotate our stat with the current geolocation
+                    Engagement engagement = new Engagement
+                    {
+                        Tag = "LOCATION:" + ClientInfo.Instance.CurrentGeoLocation.Latitude + "," + ClientInfo.Instance.CurrentGeoLocation.Longitude,
+                        Duration = duration,
+                        Count = 1
+                    };
+                    stat.Engagements.Add("LOCATION", engagement);
+                }
             }
         }
 

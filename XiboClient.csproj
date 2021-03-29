@@ -134,7 +134,6 @@
     <Compile Include="Logic\CacheManager.cs" />
     <Compile Include="Logic\HardwareKey.cs" />
     <Compile Include="Logic\Hashes.cs" />
-    <Compile Include="Logic\InterruptState.cs" />
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
     <Compile Include="Logic\MediaDictionary.cs" />
@@ -145,7 +144,6 @@
     <Compile Include="Logic\RequiredFiles.cs" />
     <Compile Include="Logic\Schedule.cs" />
     <Compile Include="Logic\ScheduleItem.cs" />
-    <Compile Include="Logic\ScheduleItemComparer.cs" />
     <Compile Include="Logic\ScheduleManager.cs" />
     <Compile Include="Logic\ScreenShot.cs" />
     <Compile Include="Logic\XmlHelper.cs" />
