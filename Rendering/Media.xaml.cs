@@ -625,6 +625,9 @@ namespace XiboClient.Rendering
                 case "datasetview":
                 case "ticker":
                 case "text":
+                    media = new WebCef(options);
+                    break;
+
                 case "webpage":
                     media = WebMedia.GetConfiguredWebMedia(options);
                     break;
@@ -727,10 +730,18 @@ namespace XiboClient.Rendering
                 {
                     options.FromDt = DateTime.Parse(nodeAttributes["fromDt"].Value, CultureInfo.InvariantCulture);
                 }
+                else
+                {
+                    options.FromDt = DateTime.MinValue;
+                }
 
                 if (nodeAttributes["toDt"] != null)
                 {
                     options.ToDt = DateTime.Parse(nodeAttributes["toDt"].Value, CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    options.ToDt = DateTime.MaxValue;
                 }
             }
             catch
