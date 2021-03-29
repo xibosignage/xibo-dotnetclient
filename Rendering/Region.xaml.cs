@@ -648,6 +648,9 @@ namespace XiboClient.Rendering
                 case "datasetview":
                 case "ticker":
                 case "text":
+                    media = new WebCef(options);
+                    break;
+
                 case "webpage":
                     media = WebMedia.GetConfiguredWebMedia(options);
                     break;
