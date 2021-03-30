@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
+using XiboClient.Action;
 using XiboClient.Logic;
 
 namespace XiboClient
@@ -50,7 +51,7 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "3 R300.1";
+        public string ClientVersion { get; } = "3 R300.2";
         public string Version { get; } = "5";
         public int ClientCodeVersion { get; } = 300;
 
@@ -580,6 +581,7 @@ namespace XiboClient
         public bool PreventSleep { get; set; }
         public bool ScreenShotRequested { get; set; }
         public bool FallbackToInternetExplorer { get; set; }
+        public bool IsRecordGeoLocationOnProofOfPlay { get; set; }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;

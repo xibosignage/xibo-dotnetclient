@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO.Ports;
 using System.Linq;
 
-namespace XiboClient.Logic
+namespace XiboClient.Action
 {
     public class Rs232Command
     {
@@ -49,7 +49,7 @@ namespace XiboClient.Logic
                 }
 
                 // Read
-                if (_command.notifyStatus())
+                if (_command.IsValidationRequired())
                 {
                     _port.ReadTimeout = 5000;
                     response = _port.ReadLine();

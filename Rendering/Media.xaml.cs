@@ -356,7 +356,7 @@ namespace XiboClient.Rendering
                             To = 0,
                             Duration = TimeSpan.FromMilliseconds(duration)
                         };
-                        animation.Completed += Animation_Completed;
+                        animation.Completed += Stop_Animation_Completed;
                         BeginAnimation(OpacityProperty, animation);
                         break;
                 }
@@ -373,8 +373,21 @@ namespace XiboClient.Rendering
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Animation_Completed(object sender, EventArgs e)
+        private void Start_Animation_Completed(object sender, EventArgs e)
         {
+            // Do we need to do anything in here?
+            Debug.WriteLine("In", "Start_Animation_Completed");
+        }
+
+        /// <summary>
+        /// Animation completed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Stop_Animation_Completed(object sender, EventArgs e)
+        {
+            Debug.WriteLine("In", "Stop_Animation_Completed");
+
             // Indicate we have stopped (only once)
             if (!this._stopped)
             {
@@ -394,13 +407,25 @@ namespace XiboClient.Rendering
             // We might not need both of these, but we add them just in case we have a mid-way compass point
             var trans = new TranslateTransform();
 
-            DoubleAnimation doubleAnimationX = new DoubleAnimation();
-            doubleAnimationX.Duration = TimeSpan.FromMilliseconds(duration);
-            doubleAnimationX.Completed += Animation_Completed;
+            DoubleAnimation doubleAnimationX = new DoubleAnimation
+            {
+                Duration = TimeSpan.FromMilliseconds(duration)
+            };
+            DoubleAnimation doubleAnimationY = new DoubleAnimation
+            {
+                Duration = TimeSpan.FromMilliseconds(duration)
+            };
 
-            DoubleAnimation doubleAnimationY = new DoubleAnimation();
-            doubleAnimationY.Duration = TimeSpan.FromMilliseconds(duration);
-            doubleAnimationY.Completed += Animation_Completed;
+            if (isInbound)
+            {
+                doubleAnimationX.Completed += Start_Animation_Completed;
+                doubleAnimationY.Completed += Start_Animation_Completed;
+            }
+            else
+            {
+                doubleAnimationX.Completed += Stop_Animation_Completed;
+                doubleAnimationY.Completed += Stop_Animation_Completed;
+            }
 
             // Get the viewable window width and height
             int screenWidth = options.PlayerWidth;
@@ -438,7 +463,7 @@ namespace XiboClient.Rendering
                         doubleAnimationY.From = top;
                     }
 
-                    BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
+                    trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
                     break;
 
                 case "NE":
@@ -456,7 +481,6 @@ namespace XiboClient.Rendering
 
                     trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
                     trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
-                    RenderTransform = trans;
                     break;
 
                 case "E":
@@ -477,7 +501,7 @@ namespace XiboClient.Rendering
 
                     }
 
-                    BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
+                    trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
                     break;
 
                 case "SE":
@@ -494,7 +518,6 @@ namespace XiboClient.Rendering
 
                     trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
                     trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
-                    RenderTransform = trans;
                     break;
 
                 case "S":
@@ -507,7 +530,7 @@ namespace XiboClient.Rendering
                         doubleAnimationX.From = -top;
                     }
 
-                    BeginAnimation(TranslateTransform.YProperty, doubleAnimationX);
+                    trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationX);
                     break;
 
                 case "SW":
@@ -524,7 +547,6 @@ namespace XiboClient.Rendering
 
                     trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
                     trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
-                    RenderTransform = trans;
                     break;
 
                 case "W":
@@ -538,7 +560,6 @@ namespace XiboClient.Rendering
                     }
 
                     trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
-                    RenderTransform = trans;
                     break;
 
                 case "NW":
@@ -555,9 +576,11 @@ namespace XiboClient.Rendering
 
                     trans.BeginAnimation(TranslateTransform.XProperty, doubleAnimationX);
                     trans.BeginAnimation(TranslateTransform.YProperty, doubleAnimationY);
-                    RenderTransform = trans;
                     break;
             }
+
+            // Set this Media's render transform
+            RenderTransform = trans;
         }
 
         /// <summary>
@@ -602,6 +625,9 @@ namespace XiboClient.Rendering
                 case "datasetview":
                 case "ticker":
                 case "text":
+                    media = new WebCef(options);
+                    break;
+
                 case "webpage":
                     media = WebMedia.GetConfiguredWebMedia(options);
                     break;
@@ -704,10 +730,18 @@ namespace XiboClient.Rendering
                 {
                     options.FromDt = DateTime.Parse(nodeAttributes["fromDt"].Value, CultureInfo.InvariantCulture);
                 }
+                else
+                {
+                    options.FromDt = DateTime.MinValue;
+                }
 
                 if (nodeAttributes["toDt"] != null)
                 {
                     options.ToDt = DateTime.Parse(nodeAttributes["toDt"].Value, CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    options.ToDt = DateTime.MaxValue;
                 }
             }
             catch

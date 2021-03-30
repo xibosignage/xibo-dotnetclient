@@ -467,7 +467,7 @@ namespace XiboClient.Rendering
             {
                 return new WebIe(options);
             }
-            else if (!string.IsNullOrEmpty(ApplicationSettings.Default.EdgeBrowserWhitelist))
+            else if (!string.IsNullOrEmpty(options.uri) && !string.IsNullOrEmpty(ApplicationSettings.Default.EdgeBrowserWhitelist))
             {
                 // Decode the URL
                 string url = Uri.UnescapeDataString(options.uri);

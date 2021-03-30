@@ -40,9 +40,9 @@ namespace XiboClient.Logic
         public int ShareOfVoice;
 
         /// <summary>
-        /// Seconds Played
+        /// The duration of this event
         /// </summary>
-        public double SecondsPlayed;
+        public int Duration;
 
         // Geo Schedule
         public bool IsGeoAware = false;
@@ -60,14 +60,14 @@ namespace XiboClient.Logic
         public bool Refresh = false;
 
         /// <summary>
-        /// Is this schedule item fulfilled - used for Interrupts
-        /// </summary>
-        public bool IsFulfilled = false;
-
-        /// <summary>
         /// Point we have tested against for GeoSchedule
         /// </summary>
         private Point testedAgainst;
+
+        /// <summary>
+        /// Duration committed
+        /// </summary>
+        private int durationCommitted = 0;
 
         /// <summary>
         /// ToString
@@ -75,7 +75,10 @@ namespace XiboClient.Logic
         /// <returns></returns>
         public override string ToString()
         {
-            return string.Format("[{0}] From {1} to {2} with priority {3}. {4} dependents.", id, FromDt.ToString(), ToDt.ToString(), Priority, Dependents.Count);
+            return "[" + id + "] "
+                + (IsInterrupt() ? "(I) " : " ")
+                + "P" + Priority
+                ;
         }
 
         /// <summary>
@@ -185,36 +188,29 @@ namespace XiboClient.Logic
         }
 
         /// <summary>
-        /// Calculate a Rank for this Item
+        /// Add to the committed duration
         /// </summary>
-        /// <param name="secondsToPeriodEnd"></param>
-        /// <returns></returns>
-        public double CalculateRank(int secondsToPeriodEnd)
+        /// <param name="duration"></param>
+        public void AddCommittedDuration(int duration)
         {
-            if (ShareOfVoice <= 0 || SecondsPlayed >= ShareOfVoice)
-            {
-                return 0;
-            }
-            else
-            {
-                double completeDifficulty = (ShareOfVoice - SecondsPlayed) / Convert.ToDouble(ShareOfVoice);
-                double scheduleDifficulty = (secondsToPeriodEnd - RemainingScheduledTime()) / secondsToPeriodEnd;
-
-                return completeDifficulty + scheduleDifficulty;
-            }
+            this.durationCommitted += duration;
         }
 
         /// <summary>
-        /// Get remaining scheduled time in seconds
+        /// Is the duration requested satisfied?
         /// </summary>
         /// <returns></returns>
-        public double RemainingScheduledTime()
+        public bool IsDurationSatisfied()
         {
-            DateTime now = DateTime.Now;
-            DateTime endOfHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddHours(1);
-            DateTime endOfScheduleOrHour = (endOfHour > ToDt) ? ToDt : endOfHour;
+            return this.durationCommitted >= this.ShareOfVoice;
+        }
 
-            return (endOfScheduleOrHour - now).TotalSeconds;
+        /// <summary>
+        /// Reset the committed duration for another pass.
+        /// </summary>
+        public void ResetCommittedDuration()
+        {
+            this.durationCommitted = 0;
         }
     }
 }

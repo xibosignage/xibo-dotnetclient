@@ -1,9 +1,29 @@
-﻿using System;
+﻿/**
+ * Copyright (C) 2021 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 
-namespace XiboClient.Logic
+namespace XiboClient.Action
 {
     [Serializable]
     public class Command
@@ -12,7 +32,7 @@ namespace XiboClient.Logic
         public string CommandString;
         public string Validation;
 
-        public bool notifyStatus()
+        public bool IsValidationRequired()
         {
             return !string.IsNullOrEmpty(Validation);
         }
@@ -32,7 +52,7 @@ namespace XiboClient.Logic
                 Rs232Command rs232 = new Rs232Command(this);
                 string line = rs232.Run();
 
-                if (notifyStatus())
+                if (IsValidationRequired())
                 {
                     return line == Validation;
                 }
@@ -50,6 +70,20 @@ namespace XiboClient.Logic
                 
                 return true;
             }
+            else if (CommandString.StartsWith("http|"))
+            {
+                HttpCommand command = new HttpCommand(this);
+                var httpStatus = command.RunAsync();
+
+                if (IsValidationRequired())
+                {
+                    return httpStatus.Result + "" == Validation;
+                }
+                else
+                {
+                    return true;
+                }
+            }
             else
             {
                 // Process with CMD
@@ -63,13 +97,13 @@ namespace XiboClient.Logic
                     startInfo.Arguments = "/C " + CommandString;
                     startInfo.UseShellExecute = false;
 
-                    if (notifyStatus())
+                    if (IsValidationRequired())
                         startInfo.RedirectStandardOutput = true;
 
                     process.StartInfo = startInfo;
                     process.Start();
 
-                    if (notifyStatus())
+                    if (IsValidationRequired())
                     {
                         string line = "";
                         while (!process.StandardOutput.EndOfStream)

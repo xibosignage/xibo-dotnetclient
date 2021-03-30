@@ -104,6 +104,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Action\Command.cs" />
+    <Compile Include="Action\HttpCommand.cs" />
+    <Compile Include="Action\HttpCommandConfig.cs" />
     <Compile Include="Action\LayoutChangePlayerAction.cs" />
     <Compile Include="Action\OverlayLayoutPlayerAction.cs" />
     <Compile Include="Action\PlayerAction.cs" />
@@ -132,7 +134,6 @@
     <Compile Include="Logic\CacheManager.cs" />
     <Compile Include="Logic\HardwareKey.cs" />
     <Compile Include="Logic\Hashes.cs" />
-    <Compile Include="Logic\InterruptState.cs" />
     <Compile Include="Logic\KeyInterceptor.cs" />
     <Compile Include="Logic\KeyStore.cs" />
     <Compile Include="Logic\MediaDictionary.cs" />
@@ -143,7 +144,6 @@
     <Compile Include="Logic\RequiredFiles.cs" />
     <Compile Include="Logic\Schedule.cs" />
     <Compile Include="Logic\ScheduleItem.cs" />
-    <Compile Include="Logic\ScheduleItemComparer.cs" />
     <Compile Include="Logic\ScheduleManager.cs" />
     <Compile Include="Logic\ScreenShot.cs" />
     <Compile Include="Logic\XmlHelper.cs" />
@@ -301,6 +301,12 @@
     </PackageReference>
     <PackageReference Include="EmbedIO">
       <Version>3.4.3</Version>
+    </PackageReference>
+    <PackageReference Include="Flurl">
+      <Version>3.0.1</Version>
+    </PackageReference>
+    <PackageReference Include="Flurl.Http">
+      <Version>3.0.1</Version>
     </PackageReference>
     <PackageReference Include="GeoJSON.Net">
       <Version>1.2.19</Version>
