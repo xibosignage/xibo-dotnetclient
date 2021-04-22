@@ -760,8 +760,11 @@ namespace XiboClient
 
             // Now we combine both schedules together, spreading the interrupts evenly
             int pickCount = Math.Max(resolvedNormal.Count, resolvedInterrupt.Count);
-            int normalPick = (int)Math.Floor(1.0 * pickCount / resolvedNormal.Count);
-            int interruptPick = (int)Math.Floor(1.0 * pickCount / resolvedInterrupt.Count);
+
+            // We use ceiling here so that in the case of uneven lists we pick more aggressively
+            // using floor would mean a schedule longer than the hour overall and interrupts may underplay
+            int normalPick = (int)Math.Ceiling(1.0 * pickCount / resolvedNormal.Count);
+            int interruptPick = (int)Math.Ceiling(1.0 * pickCount / resolvedInterrupt.Count);
             int normalIndex = 0;
             int interruptIndex = 0;
 
