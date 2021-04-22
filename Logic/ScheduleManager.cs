@@ -1283,7 +1283,7 @@ namespace XiboClient
                 layoutsInSchedule += "Invalid: " + layoutSchedule.ToString() + Environment.NewLine;
             }
 
-            Trace.WriteLine(new LogMessage("ScheduleManager", "LayoutsInSchedule: " + layoutsInSchedule), LogType.Audit.ToString());
+            //Debug.WriteLine("LayoutsInSchedule: " + layoutsInSchedule, "ScheduleManager");
 
             return layoutsInSchedule;
         }
