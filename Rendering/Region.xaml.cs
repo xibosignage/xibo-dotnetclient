@@ -368,6 +368,10 @@ namespace XiboClient.Rendering
                     {
                         SetDimensions(0, 0, this.options.PlayerWidth, this.options.PlayerHeight);
 
+                        // Set the new media Width/Height
+                        newMedia.Width = Width;
+                        newMedia.Height = Height;
+
                         // Set size reset for the next time around.
                         _sizeResetRequired = true;
                     }
@@ -774,16 +778,6 @@ namespace XiboClient.Rendering
             HorizontalAlignment = HorizontalAlignment.Left;
             VerticalAlignment = VerticalAlignment.Top;
             Margin = new Thickness(left, top, 0, 0);
-        }
-
-        /// <summary>
-        /// Set Dimensions
-        /// </summary>
-        /// <param name="location"></param>
-        /// <param name="size"></param>
-        private void SetDimensions(Point location, Size size)
-        {
-            SetDimensions((int)location.X, (int)location.Y, (int)size.Width, (int)size.Height);
         }
 
         /// <summary>
