@@ -942,6 +942,8 @@ namespace XiboClient
         /// <param name="duration"></param>
         public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, int duration)
         {
+            Debug.WriteLine("HandleActionTrigger: triggerType: " + triggerType + ", triggerCode: " + triggerCode, "MainForm");
+
             if (triggerType == "duration")
             {
                 try
@@ -1046,64 +1048,68 @@ namespace XiboClient
         /// <param name="action"></param>
         public void ExecuteAction(Action.Action action)
         {
-            // Target can be `screen` or `region`
-            // What type of action are we?
-            switch (action.ActionType)
+            // UI thread
+            Dispatcher.Invoke(new System.Action(() =>
             {
-                case "next":
-                    // Trigger the next layout/widget
-                    if (action.Target == "screen")
-                    {
-                        // Next Layout
-                        _schedule.NextLayout();
-                    }
-                    else
-                    {
-                        // Next Widget in the named region
-                        currentLayout.RegionNext("" + action.TargetId);
-                    }
-                    break;
+                // Target can be `screen` or `region`
+                // What type of action are we?
+                switch (action.ActionType)
+                {
+                    case "next":
+                        // Trigger the next layout/widget
+                        if (action.Target == "screen")
+                        {
+                            // Next Layout
+                            _schedule.NextLayout();
+                        }
+                        else
+                        {
+                            // Next Widget in the named region
+                            currentLayout.RegionNext("" + action.TargetId);
+                        }
+                        break;
 
-                case "previous":
-                    // Trigger the previous layout/widget
-                    if (action.Target == "screen")
-                    {
-                        // Previous Layout
-                        _schedule.PreviousLayout();
-                    }
-                    else
-                    {
-                        // Previous Widget in the named region
-                        currentLayout.RegionPrevious("" + action.TargetId);
-                    }
-                    break;
+                    case "previous":
+                        // Trigger the previous layout/widget
+                        if (action.Target == "screen")
+                        {
+                            // Previous Layout
+                            _schedule.PreviousLayout();
+                        }
+                        else
+                        {
+                            // Previous Widget in the named region
+                            currentLayout.RegionPrevious("" + action.TargetId);
+                        }
+                        break;
 
-                case "navLayout":
-                    // Navigate to the provided Layout
-                    // target is always screen
-                    ChangeToNextLayout(_schedule.GetScheduleItemForLayoutCode(action.LayoutCode));
+                    case "navLayout":
+                        // Navigate to the provided Layout
+                        // target is always screen
+                        ChangeToNextLayout(_schedule.GetScheduleItemForLayoutCode(action.LayoutCode));
 
-                    break;
+                        break;
 
-                case "navWidget":
-                    // Navigate to the provided Widget
-                    if (action.Target == "screen")
-                    {
-                        // Expect a shell command.
-                        currentLayout.ExecuteWidget(action.WidgetId);
-                    }
-                    else
-                    {
-                        // Provided Widget in the named region
-                        currentLayout.RegionChangeToWidget(action.TargetId + "", action.WidgetId);
-                    }
+                    case "navWidget":
+                        // Navigate to the provided Widget
+                        if (action.Target == "screen")
+                        {
+                            // Expect a shell command.
+                            currentLayout.ExecuteWidget(action.WidgetId);
+                        }
+                        else
+                        {
+                            // Provided Widget in the named region
+                            currentLayout.RegionChangeToWidget(action.TargetId + "", action.WidgetId);
+                        }
 
-                    break;
+                        break;
 
-                default:
-                    Trace.WriteLine(new LogMessage("MainWindow", "ExecuteAction: unknown type: " + action.ActionType), LogType.Error.ToString());
-                    break;
-            }
+                    default:
+                        Trace.WriteLine(new LogMessage("MainWindow", "ExecuteAction: unknown type: " + action.ActionType), LogType.Error.ToString());
+                        break;
+                }
+            }));
         }
 
         /// <summary>
@@ -1114,21 +1120,25 @@ namespace XiboClient
         /// <param name="duration"></param>
         public void ExecuteDurationTrigger(string operation, int sourceId, int duration)
         {
-            switch (operation)
+            // UI thread
+            Dispatcher.Invoke(new System.Action(() =>
             {
-                case "expire":
-                    // Next Widget in the named region
-                    currentLayout.RegionNext("" + sourceId);
-                    break;
+                switch (operation)
+                {
+                    case "expire":
+                        // Next Widget in the named region
+                        currentLayout.RegionNext("" + sourceId);
+                        break;
 
-                case "extend":
-                    currentLayout.RegionExtend("" + sourceId, duration);
-                    break;
+                    case "extend":
+                        currentLayout.RegionExtend("" + sourceId, duration);
+                        break;
 
-                case "set":
-                    currentLayout.RegionSetDuration("" + sourceId, duration);
-                    break;
-            }
+                    case "set":
+                        currentLayout.RegionSetDuration("" + sourceId, duration);
+                        break;
+                }
+            }));
         }
 
         /// <summary>

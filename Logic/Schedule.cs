@@ -347,6 +347,11 @@ namespace XiboClient
                     }
 
                     break;
+
+                case TriggerWebhookAction.Name:
+                    TriggerWebhookAction webhookAction = (TriggerWebhookAction)action;
+                    EmbeddedServerOnTriggerReceived(webhookAction.triggerCode, 0);
+                    break;
             }
         }
 

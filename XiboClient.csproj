@@ -113,6 +113,7 @@
     <Compile Include="Action\RevertToSchedulePlayerAction.cs" />
     <Compile Include="Action\Rs232Command.cs" />
     <Compile Include="Action\ScheduleCommand.cs" />
+    <Compile Include="Action\TriggerWebhookAction.cs" />
     <Compile Include="Action\XmrSubscriber.cs" />
     <Compile Include="Control\DurationController.cs" />
     <Compile Include="Control\DurationRequest.cs" />
