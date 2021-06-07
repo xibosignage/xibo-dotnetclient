@@ -172,7 +172,7 @@ namespace XiboClient.Rendering
             this.currentSequence -= 2;
 
             // If we're less than 0, move back one from the end
-            if (this.currentSequence < 0)
+            if (this.currentSequence < -1)
             {
                 this.currentSequence = this._media.Count - 2;
             }
