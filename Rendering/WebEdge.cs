@@ -67,24 +67,32 @@ namespace XiboClient.Rendering
         private async void InitialiseWebView()
         {
             // Environment
+            CoreWebView2EnvironmentOptions environmentOptions;
+
             // NTLM/Auth Server White Lists.
             if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
             {
                 string command = "--auth-server-whitelist " + ApplicationSettings.Default.AuthServerWhitelist;
                 command += " --auth-negotiate-delegate-whitelist " + ApplicationSettings.Default.AuthServerWhitelist;
 
-                await this.webView.EnsureCoreWebView2Async(await CoreWebView2Environment.CreateAsync(null, null, new CoreWebView2EnvironmentOptions(command)));
+                environmentOptions = new CoreWebView2EnvironmentOptions(command);
             }
             else
             {
-                await this.webView.EnsureCoreWebView2Async();
+                environmentOptions = new CoreWebView2EnvironmentOptions();
             }
+
+            await this.webView.EnsureCoreWebView2Async(
+                await CoreWebView2Environment.CreateAsync(
+                        null,
+                        ApplicationSettings.Default.LibraryPath,
+                        environmentOptions));
 
             // Proxy
             // Not yet supported https://github.com/MicrosoftEdge/WebView2Feedback/issues/132
             /*if (!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
             {
-                webView.RequestHandler = new ProxyRequestHandler();
+                
             }*/
         }
 
