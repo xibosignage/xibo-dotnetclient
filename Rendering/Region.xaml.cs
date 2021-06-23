@@ -172,7 +172,7 @@ namespace XiboClient.Rendering
             this.currentSequence -= 2;
 
             // If we're less than 0, move back one from the end
-            if (this.currentSequence < 0)
+            if (this.currentSequence < -1)
             {
                 this.currentSequence = this._media.Count - 2;
             }
@@ -367,6 +367,10 @@ namespace XiboClient.Rendering
                     if (newMedia.RegionSizeChangeRequired())
                     {
                         SetDimensions(0, 0, this.options.PlayerWidth, this.options.PlayerHeight);
+
+                        // Set the new media Width/Height
+                        newMedia.Width = Width;
+                        newMedia.Height = Height;
 
                         // Set size reset for the next time around.
                         _sizeResetRequired = true;
@@ -774,16 +778,6 @@ namespace XiboClient.Rendering
             HorizontalAlignment = HorizontalAlignment.Left;
             VerticalAlignment = VerticalAlignment.Top;
             Margin = new Thickness(left, top, 0, 0);
-        }
-
-        /// <summary>
-        /// Set Dimensions
-        /// </summary>
-        /// <param name="location"></param>
-        /// <param name="size"></param>
-        private void SetDimensions(Point location, Size size)
-        {
-            SetDimensions((int)location.X, (int)location.Y, (int)size.Width, (int)size.Height);
         }
 
         /// <summary>
