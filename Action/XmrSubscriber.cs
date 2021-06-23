@@ -1,4 +1,24 @@
-﻿using NetMQ;
+﻿/**
+ * Copyright (C) 2021 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+using NetMQ;
 using NetMQ.Sockets;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Crypto;
@@ -6,10 +26,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using XiboClient.Action;
 using XiboClient.Log;
+using XiboClient.Logic;
 
-namespace XiboClient.Logic
+namespace XiboClient.Action
 {
     class XmrSubscriber
     {
@@ -209,7 +229,6 @@ namespace XiboClient.Logic
             switch (action.action)
             {
                 case "commandAction":
-
                     // Create a schedule command out of the message
                     Dictionary<string, string> obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(opened);
                     ScheduleCommand command = new ScheduleCommand();
@@ -222,29 +241,26 @@ namespace XiboClient.Logic
 
                 case "collectNow":
                 case RevertToSchedulePlayerAction.Name:
-                    if (OnAction != null)
-                        OnAction(action);
+                    OnAction?.Invoke(action);
                     break;
 
                 case LayoutChangePlayerAction.Name:
-
                     LayoutChangePlayerAction changeLayout = JsonConvert.DeserializeObject<LayoutChangePlayerAction>(opened);
-
-                    if (OnAction != null)
-                        OnAction(changeLayout);
-
+                    OnAction?.Invoke(changeLayout);
                     break;
 
                 case OverlayLayoutPlayerAction.Name:
                     OverlayLayoutPlayerAction overlayLayout = JsonConvert.DeserializeObject<OverlayLayoutPlayerAction>(opened);
-
-                    if (OnAction != null)
-                        OnAction(overlayLayout);
+                    OnAction?.Invoke(overlayLayout);
                     break;
 
                 case "screenShot":
                     ScreenShot.TakeAndSend();
                     ClientInfo.Instance.NotifyStatusToXmds();
+                    break;
+
+                case TriggerWebhookAction.Name:
+                    OnAction?.Invoke(JsonConvert.DeserializeObject<TriggerWebhookAction>(opened));
                     break;
 
                 default:

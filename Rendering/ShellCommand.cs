@@ -20,6 +20,7 @@
  */
 using System;
 using System.Diagnostics;
+using XiboClient.Action;
 using XiboClient.Logic;
 
 namespace XiboClient.Rendering
@@ -33,9 +34,12 @@ namespace XiboClient.Rendering
         bool _useTaskKill = false;
         int _processId;
 
-        public ShellCommand(RegionOptions options) : base(options)
+        public ShellCommand(MediaOptions options) : base(options)
         {
-            _command = Uri.UnescapeDataString(options.Dictionary.Get("windowsCommand")).Replace('+', ' ');
+            // Is there a windows command, or if not, a global command?
+            _command = Uri.UnescapeDataString(
+                options.Dictionary.Get("windowsCommand", options.Dictionary.Get("globalCommand"))
+                ).Replace('+', ' ');
             _code = options.Dictionary.Get("commandCode");
 
             // Default to launching through CMS for backwards compatiblity

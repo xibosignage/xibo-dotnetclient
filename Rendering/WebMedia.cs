@@ -39,11 +39,6 @@ namespace XiboClient.Rendering
         protected string _localWebPath;
 
         /// <summary>
-        /// Region Optiosn
-        /// </summary>
-        private RegionOptions _options;
-
-        /// <summary>
         /// Count of times DocumentComplete has been called
         /// </summary>
         private int _documentCompletedCount = 0;
@@ -68,24 +63,20 @@ namespace XiboClient.Rendering
         /// Constructor
         /// </summary>
         /// <param name="options"></param>
-        public WebMedia(RegionOptions options)
+        public WebMedia(MediaOptions options)
             : base(options)
         {
-            // Collect some options from the Region Options passed in
-            // and store them in member variables.
-            _options = options;
-
             // Set the file path/local web path
             if (IsNativeOpen())
             {
                 // If we are modeid == 1, then just open the webpage without adjusting the file path
-                _filePath = Uri.UnescapeDataString(_options.uri).Replace('+', ' ');
+                _filePath = Uri.UnescapeDataString(options.uri).Replace('+', ' ');
             }
             else
             {
                 // Set the file path
-                _filePath = ApplicationSettings.Default.LibraryPath + @"\" + _options.mediaid + ".htm";
-                _localWebPath = ApplicationSettings.Default.EmbeddedServerAddress + _options.mediaid + ".htm";
+                _filePath = ApplicationSettings.Default.LibraryPath + @"\" + options.mediaid + ".htm";
+                _localWebPath = ApplicationSettings.Default.EmbeddedServerAddress + options.mediaid + ".htm";
             }
         }
 
@@ -95,7 +86,7 @@ namespace XiboClient.Rendering
         /// <returns></returns>
         protected virtual bool IsNativeOpen()
         {
-            string modeId = _options.Dictionary.Get("modeid");
+            string modeId = Options.Dictionary.Get("modeid");
             return modeId != string.Empty && modeId == "1";
         }
 
@@ -105,15 +96,15 @@ namespace XiboClient.Rendering
         public void ConfigureForHtmlPackage()
         {
             // Force native rendering
-            _options.Dictionary.Replace("modeid", "1");
+            Options.Dictionary.Replace("modeid", "1");
 
-            string pathToMediaFile = Path.Combine(ApplicationSettings.Default.LibraryPath, _options.uri);
-            string pathToPackageFolder = Path.Combine(ApplicationSettings.Default.LibraryPath, "package_" + _options.FileId);
+            string pathToMediaFile = Path.Combine(ApplicationSettings.Default.LibraryPath, Options.uri);
+            string pathToPackageFolder = Path.Combine(ApplicationSettings.Default.LibraryPath, "package_" + Options.FileId);
             string pathToStatusFile = Path.Combine(pathToPackageFolder, "_updated");
-            string nominatedFile = Uri.UnescapeDataString(_options.Dictionary.Get("nominatedFile", "index.html")).Replace('+', ' ');
+            string nominatedFile = Uri.UnescapeDataString(Options.Dictionary.Get("nominatedFile", "index.html")).Replace('+', ' ');
 
             // Configure the file path to indicate which file should be opened by the browser
-            _filePath = ApplicationSettings.Default.EmbeddedServerAddress + "package_" + _options.FileId + "/" + nominatedFile;
+            _filePath = ApplicationSettings.Default.EmbeddedServerAddress + "package_" + Options.FileId + "/" + nominatedFile;
 
             // Check to see if our package has been extracted already
             // if not, then extract it
@@ -214,7 +205,7 @@ namespace XiboClient.Rendering
             DateTime lastWriteDate = File.GetLastWriteTime(_filePath);
 
             // Does it update every time?
-            if (_options.updateInterval == 0)
+            if (Options.updateInterval == 0)
             {
                 // Comment in to force a re-request with each reload of the widget
                 //_reloadOnXmdsRefresh = true;
@@ -227,7 +218,7 @@ namespace XiboClient.Rendering
             }
             // Compare the last time it was updated to the layout modified time (always refresh when the layout has been modified)
             // Also compare to the update interval (refresh if it has not been updated for longer than the update interval)
-            else if (_options.LayoutModifiedDate.CompareTo(lastWriteDate) > 0 || DateTime.Now.CompareTo(lastWriteDate.AddMinutes(_options.updateInterval)) > 0)
+            else if (Options.LayoutModifiedDate.CompareTo(lastWriteDate) > 0 || DateTime.Now.CompareTo(lastWriteDate.AddMinutes(Options.updateInterval)) > 0)
             {
                 // File exists but needs updating.
                 RefreshFromXmds();
@@ -280,7 +271,7 @@ namespace XiboClient.Rendering
             xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=getResource";
             xmds.GetResourceCompleted += new XiboClient.xmds.GetResourceCompletedEventHandler(xmds_GetResourceCompleted);
 
-            xmds.GetResourceAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, _options.layoutId, _options.regionId, _options.mediaid, ApplicationSettings.Default.Version);
+            xmds.GetResourceAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, Options.layoutId, Options.regionId, Options.mediaid, ApplicationSettings.Default.Version);
         }
 
         /// <summary>
@@ -470,13 +461,13 @@ namespace XiboClient.Rendering
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        public static WebMedia GetConfiguredWebMedia(RegionOptions options)
+        public static WebMedia GetConfiguredWebMedia(MediaOptions options)
         {
             if (ApplicationSettings.Default.FallbackToInternetExplorer)
             {
                 return new WebIe(options);
             }
-            else if (!string.IsNullOrEmpty(ApplicationSettings.Default.EdgeBrowserWhitelist))
+            else if (!string.IsNullOrEmpty(options.uri) && !string.IsNullOrEmpty(ApplicationSettings.Default.EdgeBrowserWhitelist))
             {
                 // Decode the URL
                 string url = Uri.UnescapeDataString(options.uri);
@@ -495,7 +486,7 @@ namespace XiboClient.Rendering
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        public static WebMedia GetConfiguredWebMedia(RegionOptions options, string type)
+        public static WebMedia GetConfiguredWebMedia(MediaOptions options, string type)
         {
             WebMedia media;
             if (type == "ie")

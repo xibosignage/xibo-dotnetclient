@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -20,10 +20,8 @@
  */
 using EmbedIO;
 using EmbedIO.Files;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace XiboClient.Control
@@ -40,6 +38,11 @@ namespace XiboClient.Control
 
         protected override async Task OnRequestAsync(IHttpContext context)
         {
+            if (!context.Request.IsLocal)
+            {
+                throw HttpException.Forbidden();
+            }
+
             if (_restrictedPaths.Any(o => context.RequestedPath.StartsWith(o)))
             {
                 throw HttpException.Forbidden();

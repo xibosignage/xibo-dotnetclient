@@ -66,7 +66,7 @@ namespace XiboClient.Rendering
         /// Constructor
         /// </summary>
         /// <param name="options"></param>
-        public Video(RegionOptions options) : base(options)
+        public Video(MediaOptions options) : base(options)
         {
             // Videos should be visible
             this.ShouldBeVisible = true;

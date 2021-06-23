@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
+using XiboClient.Action;
 using XiboClient.Logic;
 
 namespace XiboClient
@@ -50,9 +51,9 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "2 R257.1";
+        public string ClientVersion { get; } = "3 R300.5";
         public string Version { get; } = "5";
-        public int ClientCodeVersion { get; } = 257;
+        public int ClientCodeVersion { get; } = 300;
 
         private ApplicationSettings()
         {
@@ -465,6 +466,7 @@ namespace XiboClient
         public string DownloadEndWindow { get; set; }
 
         // Embedded web server config
+        public bool EmbeddedServerAllowWan { get; set; }
         public int EmbeddedServerPort { get; set; }
         public string EmbeddedServerAddress
         {

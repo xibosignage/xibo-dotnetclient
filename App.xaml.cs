@@ -106,19 +106,13 @@ namespace XiboClient
             Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
 
             KeyInterceptor.SetHook();
-            if (screenSaver)
-            {
-                MouseInterceptor.SetHook();
-            }
+            MouseInterceptor.SetHook();
 
             MainWindow windowMain = new MainWindow(screenSaver);
             windowMain.ShowDialog();
 
             KeyInterceptor.UnsetHook();
-            if (screenSaver)
-            {
-                MouseInterceptor.UnsetHook();
-            }
+            MouseInterceptor.UnsetHook();
         }
 
         #region Exception Handlers

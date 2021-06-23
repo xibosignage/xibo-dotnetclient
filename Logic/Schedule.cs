@@ -42,6 +42,9 @@ namespace XiboClient
         public delegate void OverlayChangeDelegate(List<ScheduleItem> overlays);
         public event OverlayChangeDelegate OverlayChangeEvent;
 
+        public delegate void OnTriggerReceivedDelegate(string triggerType, string triggerCode, int sourceId, int duration);
+        public event OnTriggerReceivedDelegate OnTriggerReceived;
+
         /// <summary>
         /// Current Schedule of Normal Layouts
         /// </summary>
@@ -158,8 +161,12 @@ namespace XiboClient
             // Embedded Server
             _server = new EmbeddedServer();
             _server.OnServerClosed += _server_OnServerClosed;
-            _serverThread = new Thread(new ThreadStart(_server.Run));
-            _serverThread.Name = "EmbeddedServer";
+            _server.OnTriggerReceived += EmbeddedServerOnTriggerReceived;
+            _server.OnDurationReceived += EmbeddedServerOnDurationReceived;
+            _serverThread = new Thread(new ThreadStart(_server.Run))
+            {
+                Name = "EmbeddedServer"
+            };
         }
 
         /// <summary>
@@ -340,6 +347,11 @@ namespace XiboClient
                     }
 
                     break;
+
+                case TriggerWebhookAction.Name:
+                    TriggerWebhookAction webhookAction = (TriggerWebhookAction)action;
+                    EmbeddedServerOnTriggerReceived(webhookAction.triggerCode, 0);
+                    break;
             }
         }
 
@@ -377,6 +389,30 @@ namespace XiboClient
             {
                 Trace.WriteLine(new LogMessage("Schedule - restartXmr", "Unable to restart XMR: " + e.Message), LogType.Error.ToString());
             }
+        }
+
+        /// <summary>
+        /// Moves to the previous Layout
+        /// </summary>
+        public void PreviousLayout()
+        {
+            Debug.WriteLine("PreviousLayout: called.", "Schedule");
+
+            // Capture the active layout
+            ScheduleItem activeSchedule = _layoutSchedule[_currentLayout];
+
+            // Move the current layout back
+            // next layout moves it forward, so we actually need to move it back 2.
+            _currentLayout -= 2;
+
+            // If we have dropped below the first layout in the list, we should go to the end of the list instead.
+            if (_currentLayout < 0)
+            {
+                _currentLayout = _layoutSchedule.Count - 2;
+            }
+
+            // Call Next Layout
+            NextLayout();
         }
 
         /// <summary>
@@ -546,6 +582,9 @@ namespace XiboClient
 
             // Stop the embedded server
             _server.Stop();
+            _server.OnTriggerReceived -= EmbeddedServerOnTriggerReceived;
+            _server.OnDurationReceived -= EmbeddedServerOnDurationReceived;
+            _server.OnServerClosed -= _server_OnServerClosed;
         }
 
         /// <summary>
@@ -560,6 +599,50 @@ namespace XiboClient
             {
                 _layoutSchedule.Add(ScheduleItem.Splash());
             }
+        }
+
+        /// <summary>
+        /// Get a Schedule Item for the given LayoutId
+        /// </summary>
+        /// <param name="layoutCode"></param>
+        /// <returns></returns>
+        public ScheduleItem GetScheduleItemForLayoutCode(string layoutCode)
+        {
+            // Find the layoutId we want.
+            int layoutId = CacheManager.Instance.GetLayoutId(layoutCode);
+
+            // Check that this Layout is valid
+            if (!CacheManager.Instance.IsValidPath(layoutId + ".xlf") || CacheManager.Instance.IsUnsafeLayout(layoutId))
+            {
+                throw new Exception("Layout Invalid. Id = " + layoutId);
+            }
+
+            return new ScheduleItem()
+            {
+                id = layoutId,
+                layoutFile = ApplicationSettings.Default.LibraryPath + @"\" + layoutId + @".xlf"
+            };
+        }
+
+        /// <summary>
+        /// Trigger received form an embedded server
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        /// <param name="sourceId"></param>
+        private void EmbeddedServerOnTriggerReceived(string triggerCode, int sourceId)
+        {
+            OnTriggerReceived?.Invoke("webhook", triggerCode, sourceId, 0);
+        }
+
+        /// <summary>
+        /// Trigger received form an embedded server
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="duration"></param>
+        private void EmbeddedServerOnDurationReceived(string operation, int sourceId, int duration)
+        {
+            OnTriggerReceived?.Invoke("duration", operation, sourceId, duration);
         }
 
         /// <summary>

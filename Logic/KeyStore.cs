@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -57,8 +58,7 @@ namespace XiboClient
         public bool PreFilterMessage(ref Message m)
         {
             bool handled = false;
-            Keys key = Keys.None;
-
+            Keys key;
             switch (m.Msg)
             {
                 case WM_KEYUP:
@@ -88,23 +88,19 @@ namespace XiboClient
         /// <param name="lParam"></param>
         public void HandleRawKey(IntPtr wParam, IntPtr lParam)
         {
-            bool handled = false;
-            Keys key = Keys.None;
-
             if (wParam == (IntPtr)WM_KEYDOWN)
             {
-                key = (Keys)Marshal.ReadInt32(lParam);
-                handled = HandleModifier(key, false);
+                Keys key = (Keys)Marshal.ReadInt32(lParam);
+                HandleModifier(key, true);
             }
             else if (wParam == (IntPtr)WM_KEYUP)
             {
-                key = (Keys)Marshal.ReadInt32(lParam);
-                handled = HandleModifier(key, true);
-                if (false == handled)
+                Keys key = (Keys)Marshal.ReadInt32(lParam);
+                if (HandleModifier(key, false) == false)
                 {
                     // If one of the defined keys was pressed then we
                     // raise an event.
-                    handled = HandleDefinedKey(key);
+                    HandleDefinedKey(key);
                 }
             }
         }
@@ -121,12 +117,13 @@ namespace XiboClient
 
             Keys combined = key;
             if (_shift) combined |= Keys.Shift;
-            if (_control) combined |= Keys.Control;
+            if (_control) combined |= Keys.Control; 
+            
+            Debug.WriteLine(key.ToString() + "shift: " + _shift + ", control: " + _control, "KeyStore");
 
             // If we have found a matching combination then we
             // raise an event.
-            string name = null;
-            if (true == _definitions.TryGetValue(combined, out name))
+            if (true == _definitions.TryGetValue(combined, out string name))
             {
                 OnKeyPress(name);
 
@@ -137,6 +134,8 @@ namespace XiboClient
                 OnKeyPress("ScreenSaver");
                 handled = true;
             }
+
+            Debug.WriteLine("HandleDefinedKey: " + key.ToString() + ", handled: " + handled, "KeyStore");
             return handled;
         }
 
@@ -153,18 +152,23 @@ namespace XiboClient
 
             switch (key)
             {
+                case Keys.LControlKey:
                 case Keys.RControlKey:
                 case Keys.ControlKey:
                     _control = isDown;
                     handled = true;
                     break;
 
+                case Keys.LShiftKey:
                 case Keys.RShiftKey:
                 case Keys.ShiftKey:
                     _shift = isDown;
                     handled = true;
                     break;
             }
+
+            Debug.WriteLine("HandleModifier: " + key.ToString() + " isDown: " + isDown + ", handled: " + handled 
+                + ", shift: " + _shift + ", control: " + _control, "KeyStore");
 
             return handled;
         }
@@ -176,15 +180,17 @@ namespace XiboClient
         private void OnKeyPress(string name)
         {
             // Raise event
-            if (null != KeyPress) KeyPress(name);
+            KeyPress?.Invoke(name);
 
             // Check if modifier keys were released in the mean time.
             _control =
                 -127 == GetKeyState(Keys.ControlKey) ||
+                -127 == GetKeyState(Keys.LControlKey) ||
                 -127 == GetKeyState(Keys.RControlKey);
 
             _shift =
                 -127 == GetKeyState(Keys.ShiftKey) ||
+                -127 == GetKeyState(Keys.LShiftKey) ||
                 -127 == GetKeyState(Keys.RShiftKey);
 
         }

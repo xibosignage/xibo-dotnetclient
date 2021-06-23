@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -18,17 +18,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-namespace XiboClient.Rendering
+namespace XiboClient.Action
 {
-    /// <summary>
-    /// This doesn't put anything on the screen at all, it just has a timer.
-    /// </summary>
-    class Spacer : Media
+    class TriggerWebhookAction : PlayerActionInterface
     {
-        public Spacer(MediaOptions options) : base(options)
-        {
+        public const string Name = "triggerWebhook";
+        public string triggerCode;
 
+        public string GetActionName()
+        {
+            return Name;
         }
     }
 }

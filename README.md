@@ -7,7 +7,7 @@ If you are looking for more information about Xibo please refer to [our website]
 
 ## Licence
 
-Xibo - Digital Signage - http://xibo.org.uk - Copyright (C) 2006-2020 Xibo Signage Ltd
+Xibo - Digital Signage - http://xibo.org.uk - Copyright (C) 2006-2021 Xibo Signage Ltd
 
 Xibo is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -30,7 +30,10 @@ We have a number of branches
 
 - master: our stable branch, currently on version 2
 - develop: our next release work in progress
-- feature/wpf: v2 R252 onward, our WPF player
+- feature/finlay: our work in progress for v3 R300
+- release/winforms: our v2 compatible player, up to R202 using Windows Forms
+- release/tempel: our v1.8 compatible player
+- release/tuttle: our v1.7 compatible player
 
 # Issues
 

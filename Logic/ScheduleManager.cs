@@ -424,6 +424,15 @@ namespace XiboClient
                 newSchedule = ResolveNormalAndInterrupts(parsedSchedule);
             }
 
+            // If we have come out of this process without any schedule, then we ought to assign the default
+            if (newSchedule.Count <= 0)
+            {
+                newSchedule = new List<ScheduleItem>()
+                {
+                    CurrentDefaultLayout
+                };
+            }
+
             // Should we force a change 
             // (broadly this depends on whether or not the schedule has changed.)
             bool forceChange = false;
@@ -751,7 +760,9 @@ namespace XiboClient
 
             // Now we combine both schedules together, spreading the interrupts evenly
             int pickCount = Math.Max(resolvedNormal.Count, resolvedInterrupt.Count);
-            int normalPick = (int)Math.Floor(1.0 * pickCount / resolvedNormal.Count);
+
+            // Take the ceiling of normal and the floor of interrupt
+            int normalPick = (int)Math.Ceiling(1.0 * pickCount / resolvedNormal.Count);
             int interruptPick = (int)Math.Floor(1.0 * pickCount / resolvedInterrupt.Count);
             int normalIndex = 0;
             int interruptIndex = 0;
@@ -1271,7 +1282,7 @@ namespace XiboClient
                 layoutsInSchedule += "Invalid: " + layoutSchedule.ToString() + Environment.NewLine;
             }
 
-            Trace.WriteLine(new LogMessage("ScheduleManager", "LayoutsInSchedule: " + layoutsInSchedule), LogType.Audit.ToString());
+            //Debug.WriteLine("LayoutsInSchedule: " + layoutsInSchedule, "ScheduleManager");
 
             return layoutsInSchedule;
         }
