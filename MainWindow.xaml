@@ -6,6 +6,8 @@
         xmlns:local="clr-namespace:XiboClient"
         mc:Ignorable="d"
         Title="Player" 
+        Top="0"
+        Left="0"
         Height="450" 
         Width="800"
         WindowStyle="None" 

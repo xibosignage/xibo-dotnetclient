@@ -902,8 +902,6 @@ namespace XiboClient
         /// </summary>
         private void SetMainWindowSize()
         {
-            Debug.WriteLine("SetMainWindowSize: IN");
-
             // Override the default size if necessary
             if (ApplicationSettings.Default.SizeX != 0 || ApplicationSettings.Default.SizeY != 0)
             {
@@ -947,7 +945,9 @@ namespace XiboClient
             // Use the client size we've calculated to set the actual size of the form
             WindowState = WindowState.Normal;
 
-            Debug.WriteLine("SetMainWindowSize: OUT");
+            Trace.WriteLine(
+                new LogMessage("MainForm", string.Format("SetMainWindowSize: window set to {0},{1}-{2}x{3}", Top, Left, Width, Height))
+                , LogType.Audit.ToString());
         }
 
         /// <summary>
