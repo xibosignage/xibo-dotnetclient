@@ -526,6 +526,23 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
+        /// Get the regionId for an active widget
+        /// </summary>
+        /// <param name="widgetId"></param>
+        /// <returns>The regionId or null</returns>
+        public string GetRegionIdByActiveWidgetId(string widgetId)
+        {
+            foreach (Region region in _regions)
+            {
+                if (region.GetCurrentWidgetId() == widgetId)
+                {
+                    return region.Id;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Is the provided widgetId playing
         /// </summary>
         /// <param name="widgetId"></param>

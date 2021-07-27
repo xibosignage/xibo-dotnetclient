@@ -50,6 +50,7 @@ namespace XiboClient.Rendering
             {
                 Name = "region_" + this.regionId
             };
+            webView.RequestContext = new CefSharp.RequestContext();
 
             // Configure run time CEF settings?
             if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist)
@@ -57,24 +58,31 @@ namespace XiboClient.Rendering
             {
                 CefSharp.Cef.UIThreadTaskFactory.StartNew(() =>
                 {
-                    // NTLM/Auth Server White Lists.
-                    if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
+                    try
                     {
-                        if (!webView.RequestContext.SetPreference("auth.server_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error))
+                        // NTLM/Auth Server White Lists.
+                        if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
                         {
-                            Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.server_whitelist. e = " + error), LogType.Error.ToString());
+                            if (!webView.RequestContext.SetPreference("auth.server_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error))
+                            {
+                                Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.server_whitelist. e = " + error), LogType.Info.ToString());
+                            }
+
+                            if (!webView.RequestContext.SetPreference("auth.negotiate_delegate_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error2))
+                            {
+                                Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.negotiate_delegate_whitelist. e = " + error2), LogType.Info.ToString());
+                            }
                         }
 
-                        if (!webView.RequestContext.SetPreference("auth.negotiate_delegate_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error2))
+                        // Proxy
+                        if (!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
                         {
-                            Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.negotiate_delegate_whitelist. e = " + error2), LogType.Error.ToString());
+                            webView.RequestHandler = new ProxyRequestHandler();
                         }
-                    }
-
-                    // Proxy
-                    if (!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+                    } 
+                    catch (Exception e)
                     {
-                        webView.RequestHandler = new ProxyRequestHandler();
+                        Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: Exception setting auto policies on cef. e = " + e.Message), LogType.Info.ToString());
                     }
                 });
             }
@@ -123,17 +131,6 @@ namespace XiboClient.Rendering
             // If we aren't expired yet, we should show it
             if (e.Frame.IsMain && !Expired)
             {
-                // Show the browser after some time
-                if (!Dispatcher.CheckAccess())
-                {
-                    Dispatcher.BeginInvoke(new System.Action(() =>
-                    {
-                        webView.Visibility = System.Windows.Visibility.Visible;
-
-                        //this.TransitionIn();
-                    }));
-                }
-
                 // Initialise Interactive Control
                 webView.GetBrowser().MainFrame.ExecuteJavaScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
                     + ApplicationSettings.Default.EmbeddedServerPort + "})");
@@ -149,13 +146,13 @@ namespace XiboClient.Rendering
         {
             Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Navigate Completed", "CefWebView");
 
-            /*// Show the browser after some time
+            // Show the browser after some time
             if (!Expired)
             {
                 webView.Visibility = System.Windows.Visibility.Visible;
 
                 //this.TransitionIn();
-            }*/
+            }
 
             // We've finished rendering the control
             DocumentCompleted();
