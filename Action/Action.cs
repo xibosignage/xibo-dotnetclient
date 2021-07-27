@@ -156,6 +156,12 @@ namespace XiboClient.Action
         /// <returns></returns>
         public bool IsPointInside(Point point)
         {
+            // Perhaps counter intuitiative, but a rectangle with no dimensions should always be considered active.
+            if (Rect.Width == 0 && Rect.Height == 0)
+            {
+                return true;
+            }
+
             return Rect.Contains(point);
         }
     }
