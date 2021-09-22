@@ -45,12 +45,16 @@ namespace XiboClient.Rendering
         {
             Debug.WriteLine("Created CEF Renderer for " + this.regionId, "WebCef");
 
+            // Set a cache path
+            string cachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
+            var requestContextSettings = new CefSharp.RequestContextSettings { CachePath = cachePath };
+
             // Create the web view we will use
             webView = new ChromiumWebBrowser()
             {
                 Name = "region_" + this.regionId
             };
-            webView.RequestContext = new CefSharp.RequestContext();
+            webView.RequestContext = new CefSharp.RequestContext(requestContextSettings);
 
             // Configure run time CEF settings?
             if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist)
