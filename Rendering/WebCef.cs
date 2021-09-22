@@ -57,39 +57,32 @@ namespace XiboClient.Rendering
             webView.RequestContext = new CefSharp.RequestContext(requestContextSettings);
 
             // Configure run time CEF settings?
-            if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist)
-                || !string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+            CefSharp.Cef.UIThreadTaskFactory.StartNew(() =>
             {
-                CefSharp.Cef.UIThreadTaskFactory.StartNew(() =>
+                try
                 {
-                    try
-                    {
-                        // NTLM/Auth Server White Lists.
-                        if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
-                        {
-                            if (!webView.RequestContext.SetPreference("auth.server_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error))
-                            {
-                                Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.server_whitelist. e = " + error), LogType.Info.ToString());
-                            }
+                    // Provide our own request handler.
+                    webView.RequestHandler = new XiboRequestHandler(!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser));
 
-                            if (!webView.RequestContext.SetPreference("auth.negotiate_delegate_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error2))
-                            {
-                                Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.negotiate_delegate_whitelist. e = " + error2), LogType.Info.ToString());
-                            }
+                    // NTLM/Auth Server White Lists.
+                    if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
+                    {
+                        if (!webView.RequestContext.SetPreference("auth.server_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error))
+                        {
+                            Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.server_whitelist. e = " + error), LogType.Info.ToString());
                         }
 
-                        // Proxy
-                        if (!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+                        if (!webView.RequestContext.SetPreference("auth.negotiate_delegate_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error2))
                         {
-                            webView.RequestHandler = new ProxyRequestHandler();
+                            Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.negotiate_delegate_whitelist. e = " + error2), LogType.Info.ToString());
                         }
-                    } 
-                    catch (Exception e)
-                    {
-                        Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: Exception setting auto policies on cef. e = " + e.Message), LogType.Info.ToString());
                     }
-                });
-            }
+                } 
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: Exception setting auto policies on cef. e = " + e.Message), LogType.Info.ToString());
+                }
+            });
 
             webView.Visibility = System.Windows.Visibility.Hidden;
             webView.Loaded += WebView_Loaded;
