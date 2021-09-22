@@ -619,6 +619,7 @@ namespace XiboClient.Rendering
                     break;
 
                 case "embedded":
+                    options.IsPinchToZoomEnabled = true;
                     media = WebMedia.GetConfiguredWebMedia(options, WebMedia.ReadBrowserType(options.text));
                     break;
 
@@ -629,6 +630,7 @@ namespace XiboClient.Rendering
                     break;
 
                 case "webpage":
+                    options.IsPinchToZoomEnabled = true;
                     media = WebMedia.GetConfiguredWebMedia(options);
                     break;
 
@@ -642,6 +644,7 @@ namespace XiboClient.Rendering
                     break;
 
                 case "htmlpackage":
+                    options.IsPinchToZoomEnabled = true;
                     media = WebMedia.GetConfiguredWebMedia(options);
                     ((WebMedia)media).ConfigureForHtmlPackage();
                     break;
@@ -703,6 +706,9 @@ namespace XiboClient.Rendering
 
             // Stats enabled?
             options.isStatEnabled = (nodeAttributes["enableStat"] == null) ? true : (int.Parse(nodeAttributes["enableStat"].Value) == 1);
+
+            // Pinch to Zoom enabled?
+            options.IsPinchToZoomEnabled = false;
 
             // Parse the options for this media node
             // Type and Duration will always be on the media node

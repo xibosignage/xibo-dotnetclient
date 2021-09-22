@@ -292,7 +292,7 @@
       <Version>1.8.9</Version>
     </PackageReference>
     <PackageReference Include="CefSharp.Wpf">
-      <Version>91.1.211</Version>
+      <Version>93.1.140</Version>
     </PackageReference>
     <PackageReference Include="Crc32.NET">
       <Version>1.2.0</Version>
@@ -322,7 +322,7 @@
       <Version>14.0.1016.290</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.864.35</Version>
+      <Version>1.0.961.33</Version>
     </PackageReference>
     <PackageReference Include="NetMQ">
       <Version>4.0.1.6</Version>

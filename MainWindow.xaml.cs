@@ -360,6 +360,7 @@ namespace XiboClient
                 LogSeverity = CefSharp.LogSeverity.Fatal
             };
             settings.CefCommandLineArgs["autoplay-policy"] = "no-user-gesture-required";
+            settings.CefCommandLineArgs["disable-pinch"] = "1";
 
             CefSharp.Cef.Initialize(settings);
         }

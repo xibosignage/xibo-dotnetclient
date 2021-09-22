@@ -57,6 +57,7 @@ namespace XiboClient.Rendering
                 DefaultBackgroundColor = System.Drawing.Color.Transparent,
                 Focusable = false,
             };
+            this.webView.CoreWebView2.Settings.IsPinchZoomEnabled = options.IsPinchToZoomEnabled;
             this.webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
             this.webView.NavigationCompleted += WebView_NavigationCompleted;
 
