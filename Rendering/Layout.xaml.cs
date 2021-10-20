@@ -578,24 +578,6 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
-        /// Get Current Widget Id for the provided Region
-        /// </summary>
-        /// <param name="point"></param>
-        /// <returns></returns>
-        public string GetCurrentInteractiveWidgetIdForRegion(Point point)
-        {
-            foreach (Region region in _regions)
-            {
-                if (region.Dimensions.Contains(point))
-                {
-                    return region.GetCurrentInteractiveWidgetId();
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
         /// Execute a Widget
         /// </summary>
         /// <param name="widgetId"></param>

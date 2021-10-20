@@ -141,16 +141,14 @@ namespace XiboClient.Rendering
         /// <returns></returns>
         public string GetCurrentWidgetId()
         {
-            return this.currentMedia?.Id;
-        }
-
-        /// <summary>
-        /// Get Current WidgetId
-        /// </summary>
-        /// <returns></returns>
-        public string GetCurrentInteractiveWidgetId()
-        {
-            return this.navigatedMedia?.Id;
+            if (this.navigatedMedia != null)
+            {
+                return this.navigatedMedia.Id;
+            }
+            else
+            {
+                return this.currentMedia?.Id;
+            }
         }
 
         /// <summary>

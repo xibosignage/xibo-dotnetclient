@@ -1014,15 +1014,9 @@ namespace XiboClient
                     continue;
                 }
                 // If the source of the action is a widget, it must currently be active.
-                else if (triggerType == "touch" && !action.IsDrawer && action.Source == "widget" && currentLayout.GetCurrentWidgetIdForRegion(point) != "" + action.SourceId)
+                else if (triggerType == "touch" && action.Source == "widget" && currentLayout.GetCurrentWidgetIdForRegion(point) != "" + action.SourceId)
                 {
                     Debug.WriteLine(point.ToString() + " not active widget: " + action.SourceId, "HandleActionTrigger");
-                    continue;
-                }
-                // If for a drawer widget, it has to be active
-                else if (triggerType == "touch" && action.IsDrawer && action.Source == "widget" && currentLayout.GetCurrentInteractiveWidgetIdForRegion(point) != ""+action.SourceId)
-                {
-                    Debug.WriteLine(point.ToString() + " not active drawer widget: " + action.SourceId, "HandleActionTrigger");
                     continue;
                 }
                 
