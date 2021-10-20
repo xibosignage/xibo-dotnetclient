@@ -162,9 +162,9 @@ namespace XiboClient.Rendering
         /// <param name="e"></param>
         private void WebView_LoadError(object sender, CefSharp.LoadErrorEventArgs e)
         {
-            Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Cannot navigate. e = " + e.ToString()), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Cannot navigate. e = " + e.ErrorText + ", code = " + e.ErrorCode), LogType.Error.ToString());
 
-            // This should exipre the media
+            // This should expire the media
             Duration = 5;
             base.RestartTimer();
         }
