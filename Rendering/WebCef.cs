@@ -28,8 +28,13 @@ namespace XiboClient.Rendering
     class WebCef : WebMedia
     {
         private ChromiumWebBrowser webView;
-        private string regionId;
-        private bool hasBackgroundColor = false;
+        private readonly string regionId;
+        private readonly bool hasBackgroundColor = false;
+
+        /// <summary>
+        /// A flag to indicate whether we have loaded web content or not.
+        /// </summary>
+        private bool hasLoaded = false;
 
         public WebCef(MediaOptions options)
             : base(options)
@@ -125,8 +130,11 @@ namespace XiboClient.Rendering
         {
             Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Frame Loaded", "CefWebView");
 
+            // Flag that we've opened.
+            hasLoaded = true;
+
             // If we aren't expired yet, we should show it
-            if (e.Frame.IsMain && !Expired)
+            if (e.Frame.IsMain && !Expired && !IsNativeOpen())
             {
                 // Initialise Interactive Control
                 webView.GetBrowser().MainFrame.ExecuteJavaScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
@@ -142,6 +150,9 @@ namespace XiboClient.Rendering
         private void WebView_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Navigate Completed", "CefWebView");
+
+            // Flag that we've opened.
+            hasLoaded = true;
 
             // Show the browser after some time
             if (!Expired)
@@ -162,11 +173,19 @@ namespace XiboClient.Rendering
         /// <param name="e"></param>
         private void WebView_LoadError(object sender, CefSharp.LoadErrorEventArgs e)
         {
-            Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Cannot navigate. e = " + e.ErrorText + ", code = " + e.ErrorCode), LogType.Error.ToString());
+            // We are not interested in aborted errors.
+            if (e.ErrorCode == CefSharp.CefErrorCode.Aborted && hasLoaded)
+            {
+                Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Abort received, ignoring."), LogType.Audit.ToString());
+            }
+            else
+            {
+                Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Cannot navigate. e = " + e.ErrorText + ", code = " + e.ErrorCode), LogType.Error.ToString());
 
-            // This should expire the media
-            Duration = 5;
-            base.RestartTimer();
+                // This should expire the media
+                Duration = 5;
+                base.RestartTimer();
+            }
         }
 
         /// <summary>

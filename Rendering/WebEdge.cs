@@ -36,6 +36,11 @@ namespace XiboClient.Rendering
         private readonly WebView2 webView;
         private bool _webViewInitialised = false;
         private bool _webViewError = false;
+        
+        /// <summary>
+        /// A flag to indicate whether we have loaded web content or not.
+        /// </summary>
+        private bool hasLoaded = false;
 
         private readonly bool hasBackgroundColor = false;
         private bool _renderCalled = false;
@@ -194,12 +199,17 @@ namespace XiboClient.Rendering
             if (e.IsSuccess)
             {
                 Debug.WriteLine("WebView_NavigationCompleted: Navigate Completed", "WebView");
+                hasLoaded = true;
 
                 DocumentCompleted();
 
                 // Initialise Interactive Control
                 webView.ExecuteScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
                     + ApplicationSettings.Default.EmbeddedServerPort + "})");
+            }
+            else if (hasLoaded && e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted)
+            {
+                Trace.WriteLine(new LogMessage("WebView", "WebView_LoadError: Abort received, ignoring."), LogType.Audit.ToString());
             }
             else
             {
