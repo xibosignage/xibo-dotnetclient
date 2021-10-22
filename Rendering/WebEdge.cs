@@ -43,6 +43,7 @@ namespace XiboClient.Rendering
         private bool hasLoaded = false;
 
         private readonly bool hasBackgroundColor = false;
+        private readonly bool isPinchToZoomEnabled = false;
         private bool _renderCalled = false;
         private double _position;
 
@@ -62,9 +63,9 @@ namespace XiboClient.Rendering
                 DefaultBackgroundColor = System.Drawing.Color.Transparent,
                 Focusable = false,
             };
-            this.webView.CoreWebView2.Settings.IsPinchZoomEnabled = options.IsPinchToZoomEnabled;
             this.webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
             this.webView.NavigationCompleted += WebView_NavigationCompleted;
+            this.isPinchToZoomEnabled = options.IsPinchToZoomEnabled;
 
             // Initialise the web view
             InitialiseWebView();
@@ -127,6 +128,7 @@ namespace XiboClient.Rendering
         {
             if (e.IsSuccess)
             {
+                webView.CoreWebView2.Settings.IsPinchZoomEnabled = isPinchToZoomEnabled;
                 _webViewInitialised = true;
             }
             else
