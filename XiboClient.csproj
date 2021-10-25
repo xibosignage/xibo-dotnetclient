@@ -184,6 +184,7 @@
     <Compile Include="OptionsForm.xaml.cs">
       <DependentUpon>OptionsForm.xaml</DependentUpon>
     </Compile>
+    <Compile Include="XmdsAgents\FaultsAgent.cs" />
     <Compile Include="XmdsAgents\FileAgent.cs" />
     <Compile Include="XmdsAgents\LibraryAgent.cs" />
     <Compile Include="XmdsAgents\LogAgent.cs" />
@@ -254,7 +255,7 @@
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
-    <None Include="Web References\xmds\service_v5.wsdl" />
+    <None Include="Web References\xmds\service_v6.wsdl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -275,10 +276,10 @@
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="https://raw.githubusercontent.com/xibosignage/xibo-cms/develop/lib/Xmds/service_v5.wsdl">
+    <WebReferenceUrl Include="https://raw.githubusercontent.com/xibosignage/xibo-cms/develop/lib/Xmds/service_v6.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>https://raw.githubusercontent.com/xibosignage/xibo-cms/develop/lib/Xmds/service_v5.wsdl</UpdateFromURL>
+      <UpdateFromURL>https://raw.githubusercontent.com/xibosignage/xibo-cms/develop/lib/Xmds/service_v6.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>

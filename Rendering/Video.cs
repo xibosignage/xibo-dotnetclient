@@ -108,7 +108,7 @@ namespace XiboClient.Rendering
             this._openCalled = true;
 
             // Add this to a temporary blacklist so that we don't repeat it too quickly
-            CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, LayoutId, Id, "Video Failed: " + e.ErrorException.Message, 120);
+            CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.VideoUnexpected, LayoutId, Id, "Video Failed: " + e.ErrorException.Message, 120);
 
             // Expire
             SignalElapsedEvent();
@@ -167,7 +167,7 @@ namespace XiboClient.Rendering
                     Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: " + this.Id + " Open not called after 4 seconds, marking unsafe and Expiring."), LogType.Error.ToString());
                     
                     // Add this to a temporary blacklist so that we don't repeat it too quickly
-                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, LayoutId, Id, "Video Failed: Open not called after 4 seconds", 120);
+                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.VideoUnexpected, LayoutId, Id, "Video Failed: Open not called after 4 seconds", 120);
 
                     // Expire
                     SignalElapsedEvent();

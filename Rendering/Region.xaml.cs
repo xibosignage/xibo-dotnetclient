@@ -315,7 +315,7 @@ namespace XiboClient.Rendering
                 if (!SetNextMediaNodeInOptions())
                 {
                     // For some reason we cannot set a media node... so we need this region to become invalid
-                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Region, options.layoutId, options.regionId, "Unable to set any region media nodes.", _widgetAvailableTtl);
+                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Region, UnsafeFaultCodes.XlfNoContent, options.layoutId, options.regionId, "Unable to set any region media nodes.", _widgetAvailableTtl);
 
                     // Throw this out so we remove the Layout
                     throw new InvalidOperationException("Unable to set any region media nodes.");

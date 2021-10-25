@@ -85,6 +85,10 @@ namespace XiboClient
         private LogAgent _logAgent;
         Thread _logAgentThread;
 
+        // Faults Agent
+        private FaultsAgent _faultsAgent;
+        Thread _faultsAgentThread;
+
         // XMR Subscriber
         private XmrSubscriber _xmrSubscriber;
         Thread _xmrSubscriberThread;
@@ -149,6 +153,16 @@ namespace XiboClient
             _logAgentThread = new Thread(new ThreadStart(_logAgent.Run));
             _logAgentThread.Name = "LogAgent";
 
+            // Faults Agent
+            _faultsAgent = new FaultsAgent
+            {
+                HardwareKey = _hardwareKey.Key
+            };
+            _faultsAgentThread = new Thread(new ThreadStart(_faultsAgent.Run))
+            {
+                Name = "FaultsAgent"
+            };
+
             // XMR Subscriber
             _xmrSubscriber = new XmrSubscriber();
             _xmrSubscriber.HardwareKey = _hardwareKey;
@@ -188,6 +202,9 @@ namespace XiboClient
 
             // Start the LogAgent thread
             _logAgentThread.Start();
+
+            // Start the Faults thread
+            _faultsAgentThread.Start();
 
             // Start the Proof of Play thread
             StatManager.Instance.Start();
@@ -274,6 +291,7 @@ namespace XiboClient
             return _registerAgentThread.IsAlive &&
                 _scheduleAndRfAgentThread.IsAlive &&
                 _logAgentThread.IsAlive &&
+                _faultsAgentThread.IsAlive &&
                 _libraryAgentThread.IsAlive &&
                 _xmrSubscriberThread.IsAlive;
         }
@@ -373,6 +391,7 @@ namespace XiboClient
             _registerAgent.WakeUp();
             _scheduleAndRfAgent.WakeUp();
             _logAgent.WakeUp();
+            _faultsAgent.WakeUp();
         }
 
         /// <summary>
@@ -570,6 +589,9 @@ namespace XiboClient
 
             // Stop the LogAgent Thread
             _logAgent.Stop();
+
+            // Stop the Faults Agent Thread
+            _faultsAgent.Stop();
 
             // Stop the Proof of Play Thread
             StatManager.Instance.Stop();
