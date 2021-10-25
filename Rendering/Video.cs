@@ -280,6 +280,13 @@ namespace XiboClient.Rendering
             // Open has been called.
             this._openCalled = true;
 
+            // If we have been given a duration, restart the timer
+            // we are trying to cater for any time lost opening the media
+            if (!_detectEnd)
+            {
+                RestartTimer();
+            }
+
             // Try to seek
             if (this._position > 0)
             {
