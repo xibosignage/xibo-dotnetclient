@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Windows.Threading;
 using XiboClient.Action;
 using XiboClient.Control;
 using XiboClient.Log;
@@ -370,6 +371,10 @@ namespace XiboClient
                     TriggerWebhookAction webhookAction = (TriggerWebhookAction)action;
                     EmbeddedServerOnTriggerReceived(webhookAction.triggerCode, 0);
                     break;
+
+                case "purgeAll":
+                    _libraryAgent.PurgeAll();
+                    break;
             }
         }
 
@@ -389,9 +394,18 @@ namespace XiboClient
         public void wakeUpXmds()
         {
             _registerAgent.WakeUp();
-            _scheduleAndRfAgent.WakeUp();
             _logAgent.WakeUp();
             _faultsAgent.WakeUp();
+
+            // Wake up schedule/rf in 20 seconds to give time for register to complete, which will update our CRC's.
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+            timer.Tick += (timerSender, args) =>
+            {
+                // You only tick once
+                timer.Stop();
+                _scheduleAndRfAgent.WakeUp();
+            };
+            timer.Start();
         }
 
         /// <summary>
