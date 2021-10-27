@@ -40,6 +40,11 @@ namespace XiboClient.Logic
         public int ShareOfVoice;
 
         /// <summary>
+        /// Is this schedule item an adspace exchange item
+        /// </summary>
+        public bool IsAdspaceExchange = false;
+
+        /// <summary>
         /// The duration of this event
         /// </summary>
         public int Duration;
@@ -120,6 +125,25 @@ namespace XiboClient.Logic
             {
                 id = 0,
                 scheduleid = 0
+            };
+        }
+
+        /// <summary>
+        /// Create a schedule item for adspace exchange
+        /// </summary>
+        /// <param name="duration"></param>
+        /// <param name="shareOfVoice"></param>
+        /// <returns></returns>
+        public static ScheduleItem CreateForAdspaceExchange(int duration, int shareOfVoice)
+        {
+            return new ScheduleItem
+            {
+                id = -1,
+                IsAdspaceExchange = true,
+                ShareOfVoice = shareOfVoice,
+                Duration = duration,
+                FromDt = DateTime.MinValue,
+                ToDt = DateTime.MaxValue
             };
         }
 

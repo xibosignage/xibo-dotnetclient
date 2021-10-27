@@ -28,6 +28,7 @@ using System.Text;
 using System.Threading;
 using System.Xml;
 using XiboClient.Action;
+using XiboClient.Adspace;
 using XiboClient.Log;
 using XiboClient.Logic;
 
@@ -69,6 +70,9 @@ namespace XiboClient
         private bool _refreshSchedule;
         private DateTime _lastScreenShotDate;
 
+        // Adspace Exchange Manager
+        private ExchangeManager exchangeManager;
+
         /// <summary>
         /// Creates a new schedule Manager
         /// </summary>
@@ -91,6 +95,9 @@ namespace XiboClient
 
             // Screenshot
             _lastScreenShotDate = DateTime.MinValue;
+
+            // Create a new exchange manager
+            exchangeManager = new ExchangeManager();
         }
 
         #endregion
@@ -415,6 +422,21 @@ namespace XiboClient
 
             // Load a new overlay schedule
             List<ScheduleItem> overlaySchedule = LoadNewOverlaySchedule();
+
+            // Load any adspace exchange schedules
+            if (ApplicationSettings.Default.IsAdspaceEnabled)
+            {
+                exchangeManager.SetActive(true);
+                exchangeManager.Configure();
+                if (exchangeManager.ShareOfVoice > 0)
+                {
+                    parsedSchedule.Add(ScheduleItem.CreateForAdspaceExchange(exchangeManager.AverageAdDuration, exchangeManager.ShareOfVoice));
+                }
+            }
+            else
+            {
+                exchangeManager.SetActive(false);
+            }
 
             // Do we have any change layout actions?
             List<ScheduleItem> newSchedule = GetOverrideSchedule(parsedSchedule);
@@ -1413,6 +1435,17 @@ namespace XiboClient
                     RefreshSchedule = true;
                 }
             }
+        }
+
+        /// <summary>
+        /// Get an ad from the exchange
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
+        public Ad GetAd(int width, int height)
+        {
+            return exchangeManager.GetAd(width, height);
         }
 
         #endregion

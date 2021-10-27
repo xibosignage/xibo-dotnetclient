@@ -115,6 +115,9 @@
     <Compile Include="Action\ScheduleCommand.cs" />
     <Compile Include="Action\TriggerWebhookAction.cs" />
     <Compile Include="Action\XmrSubscriber.cs" />
+    <Compile Include="Adspace\Ad.cs" />
+    <Compile Include="Adspace\AdspaceNoAdException.cs" />
+    <Compile Include="Adspace\ExchangeManager.cs" />
     <Compile Include="Control\DurationController.cs" />
     <Compile Include="Control\DurationRequest.cs" />
     <Compile Include="Control\EmbeddedServer.cs" />
@@ -355,6 +358,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>echo F|xcopy /Y "$(TargetPath)" "$(TargetDir)\Xibo.scr"</PostBuildEvent>

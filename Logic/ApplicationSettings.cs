@@ -582,6 +582,7 @@ namespace XiboClient
         public bool ScreenShotRequested { get; set; }
         public bool FallbackToInternetExplorer { get; set; }
         public bool IsRecordGeoLocationOnProofOfPlay { get; set; }
+        public bool IsAdspaceEnabled { get; set; }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;

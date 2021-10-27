@@ -56,4 +56,5 @@
   <FallbackToInternetExplorer>false</FallbackToInternetExplorer>
   <AggregationLevel>individual</AggregationLevel>
   <IsRecordGeoLocationOnProofOfPlay>false</IsRecordGeoLocationOnProofOfPlay>
+  <IsAdspaceEnabled>false</IsAdspaceEnabled>
 </ApplicationSettings>
