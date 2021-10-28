@@ -129,6 +129,7 @@
     <Compile Include="Error\LayoutInvalidException.cs" />
     <Compile Include="Error\ShowSplashScreenException.cs" />
     <Compile Include="Helpers\CefJsDialogHandler.cs" />
+    <Compile Include="Helpers\Strings.cs" />
     <Compile Include="Helpers\XiboRequestHandler.cs" />
     <Compile Include="InfoScreen.xaml.cs">
       <DependentUpon>InfoScreen.xaml</DependentUpon>

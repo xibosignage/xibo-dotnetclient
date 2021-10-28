@@ -29,6 +29,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml;
+using XiboClient.Adspace;
 using XiboClient.Error;
 using XiboClient.Logic;
 using XiboClient.Stats;
@@ -112,18 +113,11 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
-        /// Load this Layout from its File
+        /// Load this Layout from its file
         /// </summary>
         /// <param name="scheduleItem"></param>
-        public void loadFromFile(ScheduleItem scheduleItem)
+        public void LoadFromFile(ScheduleItem scheduleItem)
         {
-            // Store the Schedule and LayoutIds
-            this.ScheduleItem = scheduleItem;
-            this.ScheduleId = scheduleItem.scheduleid;
-            this._layoutId = scheduleItem.id;
-            this.isOverlay = scheduleItem.IsOverlay;
-            this.isInterrupt = scheduleItem.IsInterrupt();
-
             // Get this layouts XML
             XmlDocument layoutXml = new XmlDocument();
 
@@ -147,7 +141,22 @@ namespace XiboClient.Rendering
                 throw;
             }
 
-            layoutModifiedTime = File.GetLastWriteTime(scheduleItem.layoutFile);
+            LoadFromFile(scheduleItem, layoutXml, File.GetLastWriteTime(scheduleItem.layoutFile));
+        }
+
+        /// <summary>
+        /// Load this Layout from its XML
+        /// </summary>
+        /// <param name="scheduleItem"></param>
+        public void LoadFromFile(ScheduleItem scheduleItem, XmlDocument layoutXml, DateTime modifiedDt)
+        {
+            // Store the Schedule and LayoutIds
+            this.ScheduleItem = scheduleItem;
+            this.ScheduleId = scheduleItem.scheduleid;
+            this._layoutId = scheduleItem.id;
+            this.isOverlay = scheduleItem.IsOverlay;
+            this.isInterrupt = scheduleItem.IsInterrupt();
+            layoutModifiedTime = modifiedDt;
 
             // Attributes of the main layout node
             XmlNode layoutNode = layoutXml.SelectSingleNode("/layout");
@@ -399,6 +408,58 @@ namespace XiboClient.Rendering
             // Null stuff
             listRegions = null;
             listMedia = null;
+        }
+
+        /// <summary>
+        /// Load this Layout from the Ad provided.
+        /// </summary>
+        /// <param name="scheduleItem"></param>
+        /// <param name="ad"></param>
+        public void LoadFromAd(ScheduleItem scheduleItem, Ad ad)
+        {
+            // Create an XLF representing this ad.
+            XmlDocument document = new XmlDocument();
+            XmlElement layout = document.CreateElement("layout");
+            XmlElement region = document.CreateElement("region");
+            XmlElement media = document.CreateElement("media");
+            XmlElement mediaOptions = document.CreateElement("options");
+            XmlElement urlOption = document.CreateElement("option");
+
+            // Layout properties
+            layout.SetAttribute("width", "" + Width);
+            layout.SetAttribute("height", "" + Height);
+            layout.SetAttribute("bgcolor", "#000000");
+            layout.SetAttribute("enableStat", "0");
+
+            // Region properties
+            region.SetAttribute("id", "axe");
+            region.SetAttribute("width", "" + Width);
+            region.SetAttribute("height", "" + Height);
+            region.SetAttribute("top", "0");
+            region.SetAttribute("left", "0");
+
+            // Media properties
+            media.SetAttribute("type", ad.XiboType);
+            media.SetAttribute("id", Guid.NewGuid().ToString());
+            media.SetAttribute("duration", "" + ad.GetDuration());
+            media.SetAttribute("enableStat", "0");
+
+            // Url
+            urlOption.SetAttribute("name", "uri");
+            urlOption.InnerText = ad.File;
+
+            // Add all these nodes to the docs
+            mediaOptions.AppendChild(urlOption);
+            media.AppendChild(mediaOptions);
+            region.AppendChild(media);
+            layout.AppendChild(region);
+            document.AppendChild(layout);
+
+            // Pass this XML document to our usual load method
+            LoadFromFile(scheduleItem, document, DateTime.Now);
+
+            // Set our impression URLs which we will call on stop.
+            _regions[0].SetAdspaceExchangeImpressionUrls(ad.ImpressionUrls);
         }
 
         /// <summary>

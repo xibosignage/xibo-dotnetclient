@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Windows.Threading;
 using XiboClient.Action;
+using XiboClient.Adspace;
 using XiboClient.Control;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -705,6 +706,17 @@ namespace XiboClient
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Get an Ad
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
+        public Ad GetAd(double width, double height)
+        {
+            return _scheduleManager.GetAd(width, height);
         }
     }
 }

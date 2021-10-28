@@ -18,6 +18,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Flurl;
+using Flurl.Http;
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
 using System;
@@ -298,8 +300,9 @@ namespace XiboClient.Stats
         /// <param name="layoutId"></param>
         /// <param name="widgetId"></param>
         /// <param name="statEnabled"></param>
+        /// <param name="urls"></param>
         /// <returns>Duration</returns>
-        public double WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled)
+        public double WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled, List<string> urls)
         {
             Debug.WriteLine(string.Format("WidgetStop: scheduleId: {0}, layoutId: {1}, widgetId: {2}", scheduleId, layoutId, widgetId), "StatManager");
 
@@ -332,6 +335,28 @@ namespace XiboClient.Stats
                         // Record
                         RecordStat(stat);
                     }
+
+                    // Format and save Urls.
+                    if (urls != null)
+                    {
+                        foreach (string url in urls)
+                        {
+                            // We append parameters to the URL and then send or queue
+                            string annotatedUrl = url + "&t=" + ((DateTimeOffset)stat.To).ToUnixTimeMilliseconds();
+
+                            if (stat.GeoEnd != null)
+                            {
+                                annotatedUrl += "&lat=" + stat.GeoEnd.Latitude + "&lng=" + stat.GeoEnd.Longitude;
+                            }
+                            if (stat.GeoStart != null)
+                            {
+                                annotatedUrl += "&latStart=" + stat.GeoStart.Latitude + "&lngStart=" + stat.GeoStart.Longitude;
+                            }
+
+                            // Call Impress on a new thread
+                            Task.Factory.StartNew(() => Impress(url));
+                        }
+                    }
                 }
                 else
                 {
@@ -360,6 +385,7 @@ namespace XiboClient.Stats
                     Count = 1
                 };
                 stat.Engagements.Add("LOCATION", engagement);
+                stat.GeoStart = ClientInfo.Instance.CurrentGeoLocation;
             }
         }
 
@@ -377,6 +403,7 @@ namespace XiboClient.Stats
                 if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
                 {
                     stat.Engagements["LOCATION"].Tag += "|" + ClientInfo.Instance.CurrentGeoLocation.Latitude + "," + ClientInfo.Instance.CurrentGeoLocation.Longitude;
+                    stat.GeoEnd = ClientInfo.Instance.CurrentGeoLocation;
                 }
             }
             else
@@ -392,6 +419,7 @@ namespace XiboClient.Stats
                         Count = 1
                     };
                     stat.Engagements.Add("LOCATION", engagement);
+                    stat.GeoEnd = ClientInfo.Instance.CurrentGeoLocation;
                 }
             }
         }
@@ -819,6 +847,29 @@ namespace XiboClient.Stats
 
                 var result = cmd.ExecuteScalar();
                 return result == null ? 0 : Convert.ToInt32(result);
+            }
+        }
+
+        /// <summary>
+        /// Send an impression, queue on failure
+        /// </summary>
+        /// <param name="url"></param>
+        private void Impress(string uri)
+        {
+            try
+            {
+                // Make a URL
+                var url = new Url(uri);
+                _ = url.GetAsync().Result;
+            } 
+            catch (FlurlHttpTimeoutException)
+            {
+                // Queue and resend
+                // TODO
+            }
+            catch
+            {
+                Trace.WriteLine(new LogMessage("StatManager", "Impress: unexpected error calling impression url. Url: " + uri), LogType.Error.ToString());
             }
         }
     }

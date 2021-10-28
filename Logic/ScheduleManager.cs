@@ -1443,7 +1443,7 @@ namespace XiboClient
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <returns></returns>
-        public Ad GetAd(int width, int height)
+        public Ad GetAd(double width, double height)
         {
             return exchangeManager.GetAd(width, height);
         }

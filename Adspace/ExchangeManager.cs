@@ -46,8 +46,8 @@ namespace XiboClient.Adspace
         private bool isActive;
         private DateTime lastFillDate;
         private DateTime lastPrefetchDate;
-        private List<string> prefetchUrls;
-        private List<Ad> adBuffet;
+        private List<string> prefetchUrls = new List<string>();
+        private List<Ad> adBuffet = new List<Ad>();
 
         public int ShareOfVoice { get; private set; } = 0;
         public int AverageAdDuration { get; private set; } = 0;
@@ -91,7 +91,7 @@ namespace XiboClient.Adspace
                 // Transitioning to active
                 if (prefetchUrls.Count > 0)
                 {
-                    // TODO: prefetch
+                    Task.Factory.StartNew(() => Prefetch());
                 }
             }
             else if (isActive != active)
@@ -125,7 +125,7 @@ namespace XiboClient.Adspace
             // Should we also prefetch?
             if (lastPrefetchDate < DateTime.Now.AddHours(-24))
             {
-                // TODO: prefetch
+                Task.Factory.StartNew(() => Prefetch());
             }
         }
 
@@ -135,7 +135,7 @@ namespace XiboClient.Adspace
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <returns></returns>
-        public Ad GetAd(int width, int height)
+        public Ad GetAd(double width, double height)
         {
             if (!IsAdAvailable)
             {
@@ -169,7 +169,7 @@ namespace XiboClient.Adspace
             }
 
             // Determine Size
-            if ((double) width / height != ad.AspectRatio)
+            if (width / height != ad.AspectRatio)
             {
                 ReportError(ad.ErrorUrls, 203);
                 adBuffet.Remove(ad);
@@ -179,7 +179,7 @@ namespace XiboClient.Adspace
             // TODO: check fault status
 
             // Download it (we hope its already there)
-            ad.Download();
+            Task.Factory.StartNew(() => ad.Download());
 
             // We've converted it into a play
             adBuffet.Remove(ad);
@@ -190,25 +190,26 @@ namespace XiboClient.Adspace
         /// <summary>
         /// Prefetch any resources which might play
         /// </summary>
-        public async void Prefetch()
+        public void Prefetch()
         {
             List<Url> urls = new List<Url>();
             
             foreach (Url url in urls)
             {
                 // Get a JSON string from the URL.
-                var result = await url.GetJsonAsync<List<string>>();
+                var result = url.GetJsonAsync<List<string>>().Result;
 
-                // Queue each one for download.
-                // TODO: this needs to be improved.
+                // Download each one
                 foreach (string fetchUrl in result) {
                     string fileName = "axe_" + fetchUrl.Split('/').Last();
                     if (!CacheManager.Instance.IsValidPath(fileName))
                     {
                         // We should download it.
-                        var downloadUrl = new Url(fetchUrl);
-                        await downloadUrl.DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName);
-                        CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
+                        new Url(fetchUrl).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName).ContinueWith(t =>
+                        {
+                            CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
+                        },
+                        TaskContinuationOptions.OnlyOnRanToCompletion);
                     }
                 }
             }
@@ -240,7 +241,7 @@ namespace XiboClient.Adspace
             var url = new Url(AdspaceUrl);
             url = url.AppendPathSegment("request")
                 .AppendPathSegment(ApplicationSettings.Default.HardwareKey)
-                .AppendPathSegment(ApplicationSettings.Default.ServerUri);
+                .SetQueryParam("ownerKey", ApplicationSettings.Default.ServerUri);
 
             if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
             {
@@ -304,7 +305,7 @@ namespace XiboClient.Adspace
                     {
                         try
                         {
-                            ShareOfVoice = int.Parse(averageAdDurationHeader);
+                            AverageAdDuration = int.Parse(averageAdDurationHeader);
                         }
                         catch
                         {
@@ -318,7 +319,7 @@ namespace XiboClient.Adspace
                 document.LoadXml(body);
 
                 // Expect one or more ad nodes.
-                foreach (XmlNode adNode in document.ChildNodes)
+                foreach (XmlNode adNode in document.DocumentElement.ChildNodes)
                 {
                     // If we have a wrapped ad, resolve it.
                     Ad ad;
@@ -545,7 +546,11 @@ namespace XiboClient.Adspace
                 try
                 {
                     var url = new Url(uri.Replace("[ERRORCODE]", "" + errorCode));
-                    url.WithTimeout(10).GetAsync();
+                    url.WithTimeout(10).GetAsync().ContinueWith(t =>
+                    {
+                        Trace.WriteLine(new LogMessage("ExchangeManager", "ReportError: failed to report error to " + uri + ", code: " + errorCode), LogType.Error.ToString());
+                    },
+                    TaskContinuationOptions.OnlyOnFaulted);
                 }
                 catch (Exception e)
                 {

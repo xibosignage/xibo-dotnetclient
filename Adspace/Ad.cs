@@ -29,13 +29,10 @@ using System;
 using System.Collections.Generic;
 using System.Device.Location;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace XiboClient.Adspace
 {
-    class Ad
+    public class Ad
     {
         public string Id;
         public string AdId;
@@ -69,6 +66,16 @@ namespace XiboClient.Adspace
         }
 
         /// <summary>
+        /// Get the duration in seconds
+        /// </summary>
+        /// <returns></returns>
+        public int GetDuration()
+        {
+            // Duration is a string
+            return (int)TimeSpan.Parse(Duration).TotalSeconds;
+        }
+
+        /// <summary>
         /// Download this ad
         /// </summary>
         public void Download()
@@ -76,9 +83,10 @@ namespace XiboClient.Adspace
             if (!CacheManager.Instance.IsValidPath(File))
             {
                 // We should download it.
-                var downloadUrl = new Url(Url);
-                _ = downloadUrl.DownloadFileAsync(ApplicationSettings.Default.LibraryPath, File).Result;
-                CacheManager.Instance.Add(File, CacheManager.Instance.GetMD5(File));
+                new Url(Url).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, File).ContinueWith(t =>
+                {
+                    CacheManager.Instance.Add(File, CacheManager.Instance.GetMD5(File));
+                }, System.Threading.Tasks.TaskContinuationOptions.OnlyOnRanToCompletion);
             }
         }
 

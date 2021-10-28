@@ -26,6 +26,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using XiboClient.Action;
+using XiboClient.Helpers;
 using XiboClient.Logic;
 
 namespace XiboClient
@@ -344,12 +345,13 @@ namespace XiboClient
                     // Match these to settings
                     try
                     {
-                        if (lazy.Value[node.Name] != null)
+                        string nodeName = Strings.FirstCharToUpper(node.Name);
+                        if (lazy.Value[nodeName] != null)
                         {
-                            value = Convert.ChangeType(value, lazy.Value[node.Name].GetType());
+                            value = Convert.ChangeType(value, lazy.Value[nodeName].GetType());
                         }
 
-                        lazy.Value[node.Name] = value;
+                        lazy.Value[nodeName] = value;
                     }
                     catch
                     {

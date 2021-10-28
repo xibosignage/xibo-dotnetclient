@@ -31,6 +31,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using XiboClient.Adspace;
 using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -691,12 +692,31 @@ namespace XiboClient
                         Height = Height,
                         Schedule = _schedule
                     };
-                    layout.loadFromFile(scheduleItem);
+
+                    // Is this an Adspace Exchange Layout?
+                    if (scheduleItem.IsAdspaceExchange)
+                    {
+                        // Get an ad
+                        Ad ad = _schedule.GetAd(Width, Height);
+                        if (ad == null)
+                        {
+                            throw new LayoutInvalidException("No ad to play");
+                        }
+
+                        layout.LoadFromAd(scheduleItem, ad);
+                    }
+                    else
+                    {
+                        layout.LoadFromFile(scheduleItem);
+                    }
                     return layout;
                 }
                 catch (IOException)
                 {
-                    CacheManager.Instance.Remove(scheduleItem.layoutFile);
+                    if (!scheduleItem.IsAdspaceExchange)
+                    {
+                        CacheManager.Instance.Remove(scheduleItem.layoutFile);
+                    }
 
                     throw new LayoutInvalidException("IO Exception");
                 }

@@ -19,6 +19,7 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
@@ -82,6 +83,11 @@ namespace XiboClient.Rendering
         /// Media we have navigated to, interrupting the usual flow
         /// </summary>
         private Media navigatedMedia;
+
+        /// <summary>
+        /// A list of impression Urls to call on stop.
+        /// </summary>
+        private List<string> adspaceExchangeImpressionUrls = new List<string>();
 
         /// <summary>
         /// Track the current sequence
@@ -653,7 +659,7 @@ namespace XiboClient.Rendering
             try
             {
                 // Close the stat record
-                StatManager.Instance.WidgetStop(media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled);
+                StatManager.Instance.WidgetStop(media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled, adspaceExchangeImpressionUrls);
 
                 // Media Stopped Event removes the media from the scene
                 media.MediaStoppedEvent += Media_MediaStoppedEvent;
@@ -799,6 +805,15 @@ namespace XiboClient.Rendering
             {
                 Trace.WriteLine(new LogMessage("Region - Clear", "Error closing off stat record"), LogType.Error.ToString());
             }
+        }
+
+        /// <summary>
+        /// Set any adspace exchange impression urls.
+        /// </summary>
+        /// <param name="urls"></param>
+        public void SetAdspaceExchangeImpressionUrls(List<string> urls)
+        {
+            adspaceExchangeImpressionUrls = urls;
         }
     }
 }

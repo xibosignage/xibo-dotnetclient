@@ -20,6 +20,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Device.Location;
 
 namespace XiboClient.Stats
 {
@@ -34,6 +35,9 @@ namespace XiboClient.Stats
         public string Tag;
         public int Duration;
         public int Count;
+
+        public GeoCoordinate GeoStart;
+        public GeoCoordinate GeoEnd;
 
         /// <summary>
         /// Engagements (such as geo-location, tags)
