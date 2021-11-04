@@ -127,6 +127,16 @@ namespace XiboClient.Stats
                     // Set the DB version to 2
                     SetDbVersion(connection, 2);
                 }
+
+                // Add the impressions table
+                if (version <= 2)
+                {
+                    using (var command = new SqliteCommand("CREATE TABLE IF NOT EXISTS impressions (_id INTEGER PRIMARY KEY, url TEXT, processing INT)", connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    SetDbVersion(connection, 3);
+                }
             }
         }
 
@@ -859,17 +869,103 @@ namespace XiboClient.Stats
             try
             {
                 // Make a URL
-                var url = new Url(uri);
+                var url = new Url(uri).WithTimeout(10);
                 _ = url.GetAsync().Result;
             } 
             catch (FlurlHttpTimeoutException)
             {
                 // Queue and resend
-                // TODO
+                try
+                {
+                    using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+                    {
+                        connection.Open();
+
+                        SqliteCommand command = new SqliteCommand
+                        {
+                            Connection = connection,
+                            CommandText = "INSERT INTO impressions (url, processing) VALUES (@url, @processing)"
+                        };
+
+                        command.Parameters.AddWithValue("@url", uri);
+                        command.Parameters.AddWithValue("@processing", 0);
+
+                        // Execute and don't wait for the result
+                        command.ExecuteNonQueryAsync().ContinueWith(t =>
+                        {
+                            var aggException = t.Exception.Flatten();
+                            foreach (var exception in aggException.InnerExceptions)
+                            {
+                                Trace.WriteLine(new LogMessage("StatManager", "Impress: Error saving uri to database. Ex = " + exception.Message), LogType.Error.ToString());
+                            }
+                        },
+                        TaskContinuationOptions.OnlyOnFaulted);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("StatManager", "Impress: Error saving uri to database. Ex = " + ex.Message), LogType.Error.ToString());
+                }
             }
             catch
             {
                 Trace.WriteLine(new LogMessage("StatManager", "Impress: unexpected error calling impression url. Url: " + uri), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Send any queued impress urls
+        /// </summary>
+        public void DispatchQueuedImpressUrls(int marker)
+        {
+            // Mark records for send.
+            using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+            {
+                connection.Open();
+
+                using (SqliteCommand cmd = new SqliteCommand())
+                {
+                    cmd.Connection = connection;
+                    cmd.CommandText = "UPDATE impressions SET processing = @processing WHERE _id IN (" +
+                        "SELECT _id FROM stat WHERE ifnull(processing, 0) = 0 ORDER BY _id LIMIT @limit" +
+                        ")";
+
+                    // Set the marker
+                    cmd.Parameters.AddWithValue("@processing", marker);
+                    cmd.Parameters.AddWithValue("@limit", 10);
+
+                    int records = cmd.ExecuteNonQuery();
+
+                    if (records <= 0)
+                    {
+                        return;
+                    }
+                }
+
+                // Select the ones we've marked and process them
+                using (SqliteCommand cmd = new SqliteCommand())
+                {
+                    cmd.Connection = connection;
+                    cmd.CommandText = "SELECT url FROM impressions WHERE processing = @processing";
+                    cmd.Parameters.AddWithValue("processing", marker);
+
+                    using (SqliteDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Impress(reader.GetString(0));
+                        }
+                    }
+                }
+
+                // Delete them
+                using (SqliteCommand cmd = new SqliteCommand())
+                {
+                    cmd.Connection = connection;
+                    cmd.CommandText = "DELETE FROM impressions WHERE processing = @processing";
+                    cmd.Parameters.AddWithValue("processing", marker);
+                    cmd.ExecuteScalar();
+                }
             }
         }
     }

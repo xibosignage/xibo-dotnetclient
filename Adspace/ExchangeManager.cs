@@ -278,7 +278,7 @@ namespace XiboClient.Adspace
             // Make a request for new ads
             try
             {
-                var response = url.GetAsync().Result;
+                var response = url.WithTimeout(10).GetAsync().Result;
                 var body = response.GetStringAsync().Result;
 
                 if (string.IsNullOrEmpty(body))

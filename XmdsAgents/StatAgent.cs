@@ -122,6 +122,9 @@ namespace XiboClient.XmdsAgents
                     }
                 }
 
+                // Process any impression urls
+                StatManager.Instance.DispatchQueuedImpressUrls(processing);
+
                 if (retryAfterSeconds > 0)
                 {
                     // Sleep this thread until we've fulfilled our try after
