@@ -32,9 +32,11 @@ namespace XiboClient.Rendering
         private string scaleType;
         private System.Windows.HorizontalAlignment hAlign;
         private System.Windows.VerticalAlignment vAlign;
+        private readonly string regionId;
 
         public Image(MediaOptions options) : base(options)
         {
+            this.regionId = options.regionId;
             this.filePath = options.uri;
             this.scaleType = options.Dictionary.Get("scaleType", "stretch");
 
@@ -91,7 +93,7 @@ namespace XiboClient.Rendering
             // Set the bitmap as the source of our image
             this.image = new System.Windows.Controls.Image()
             {
-                Name = "Img" + this.Id,
+                Name = "Img" + this.regionId,
                 Source = bitmap
             };
 

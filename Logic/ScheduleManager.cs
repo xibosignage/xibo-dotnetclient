@@ -774,6 +774,12 @@ namespace XiboClient
                     ? CacheManager.Instance.GetLayoutDuration(item.id, 60) 
                     : item.Duration;
 
+                // Protect against 0 durations
+                if (duration <= 0)
+                {
+                    duration = 10;
+                }
+
                 normalSecondsInHour -= duration;
                 resolvedNormal.Add(item);
 

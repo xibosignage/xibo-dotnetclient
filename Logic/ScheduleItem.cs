@@ -124,7 +124,8 @@ namespace XiboClient.Logic
             return new ScheduleItem
             {
                 id = 0,
-                scheduleid = 0
+                scheduleid = 0,
+                Duration = 10
             };
         }
 
@@ -143,7 +144,8 @@ namespace XiboClient.Logic
                 ShareOfVoice = shareOfVoice,
                 Duration = duration,
                 FromDt = DateTime.MinValue,
-                ToDt = DateTime.MaxValue
+                ToDt = DateTime.MaxValue,
+                layoutFile = "axe"
             };
         }
 

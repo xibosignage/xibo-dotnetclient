@@ -80,14 +80,11 @@ namespace XiboClient.Adspace
         /// </summary>
         public void Download()
         {
-            if (!CacheManager.Instance.IsValidPath(File))
+            // We should download it.
+            new Url(Url).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, File).ContinueWith(t =>
             {
-                // We should download it.
-                new Url(Url).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, File).ContinueWith(t =>
-                {
-                    CacheManager.Instance.Add(File, CacheManager.Instance.GetMD5(File));
-                }, System.Threading.Tasks.TaskContinuationOptions.OnlyOnRanToCompletion);
-            }
+                CacheManager.Instance.Add(File, CacheManager.Instance.GetMD5(File));
+            }, System.Threading.Tasks.TaskContinuationOptions.OnlyOnRanToCompletion);
         }
 
         /// <summary>
@@ -99,7 +96,7 @@ namespace XiboClient.Adspace
         {
             if (!IsGeoAware)
             {
-                return false;
+                return true;
             }
             else if (geoCoordinate == null || geoCoordinate.IsUnknown)
             {

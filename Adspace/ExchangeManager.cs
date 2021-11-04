@@ -178,8 +178,11 @@ namespace XiboClient.Adspace
 
             // TODO: check fault status
 
-            // Download it (we hope its already there)
-            Task.Factory.StartNew(() => ad.Download());
+            // Check to see if the file is already there, and if not, download it.
+            if (!CacheManager.Instance.IsValidPath(ad.File))
+            {
+                Task.Factory.StartNew(() => ad.Download());
+            }
 
             // We've converted it into a play
             adBuffet.Remove(ad);
@@ -417,36 +420,36 @@ namespace XiboClient.Adspace
                     if (inlineNode != null)
                     {
                         // Title
-                        XmlNode titleNode = inlineNode.SelectSingleNode("./Title");
+                        XmlNode titleNode = inlineNode.SelectSingleNode("./AdTitle");
                         if (titleNode != null)
                         {
-                            ad.Title = titleNode.Value;
+                            ad.Title = titleNode.InnerText;
                         }
 
                         // Get and impression/error URLs included with this wrap
                         XmlNode errorUrlNode = inlineNode.SelectSingleNode("./Error");
                         if (errorUrlNode != null)
                         {
-                            ad.ErrorUrls.Add(errorUrlNode.Value);
+                            ad.ErrorUrls.Add(errorUrlNode.InnerText);
                         }
 
                         XmlNode impressionUrlNode = inlineNode.SelectSingleNode("./Impression");
                         if (impressionUrlNode != null)
                         {
-                            ad.ImpressionUrls.Add(impressionUrlNode.Value);
+                            ad.ImpressionUrls.Add(impressionUrlNode.InnerText);
                         }
 
                         // Creatives
-                        XmlNode creativeNode = inlineNode.SelectSingleNode("./Creative");
+                        XmlNode creativeNode = inlineNode.SelectSingleNode("./Creatives/Creative");
                         if (creativeNode != null)
                         {
                             ad.CreativeId = creativeNode.Attributes["id"].Value;
 
                             // Get the duration.
-                            XmlNode creativeDurationNode = creativeNode.SelectSingleNode("./Duration");
+                            XmlNode creativeDurationNode = creativeNode.SelectSingleNode("./Linear/Duration");
                             if (creativeDurationNode != null)
                             {
-                                ad.Duration = creativeDurationNode.Value;
+                                ad.Duration = creativeDurationNode.InnerText;
                             }
                             else
                             {
@@ -455,10 +458,10 @@ namespace XiboClient.Adspace
                             }
 
                             // Get the media file
-                            XmlNode creativeMediaNode = creativeNode.SelectSingleNode("./MediaFile");
+                            XmlNode creativeMediaNode = creativeNode.SelectSingleNode("./Linear/MediaFiles/MediaFile");
                             if (creativeMediaNode != null)
                             {
-                                ad.Url = creativeMediaNode.Value;
+                                ad.Url = creativeMediaNode.InnerText;
                                 ad.Width = int.Parse(creativeMediaNode.Attributes["width"].Value);
                                 ad.Height = int.Parse(creativeMediaNode.Attributes["height"].Value);
                                 ad.Type = creativeMediaNode.Attributes["type"].Value;
@@ -510,6 +513,12 @@ namespace XiboClient.Adspace
 
                         // We are good to go.
                         ad.File = "axe_" + ad.Url.Split('/').Last();
+
+                        // Download if necessary
+                        if (!CacheManager.Instance.IsValidPath(ad.File))
+                        {
+                            Task.Factory.StartNew(() => ad.Download());
+                        }
 
                         // Ad this to our list
                         buffet.Add(ad);

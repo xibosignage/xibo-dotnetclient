@@ -423,7 +423,7 @@ namespace XiboClient.Rendering
             XmlElement region = document.CreateElement("region");
             XmlElement media = document.CreateElement("media");
             XmlElement mediaOptions = document.CreateElement("options");
-            XmlElement urlOption = document.CreateElement("option");
+            XmlElement urlOption = document.CreateElement("uri");
 
             // Layout properties
             layout.SetAttribute("width", "" + Width);
@@ -445,7 +445,6 @@ namespace XiboClient.Rendering
             media.SetAttribute("enableStat", "0");
 
             // Url
-            urlOption.SetAttribute("name", "uri");
             urlOption.InnerText = ad.File;
 
             // Add all these nodes to the docs

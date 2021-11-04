@@ -90,6 +90,11 @@ namespace XiboClient.Rendering
         private List<string> adspaceExchangeImpressionUrls = new List<string>();
 
         /// <summary>
+        /// Is this an adspace exchange region?
+        /// </summary>
+        private bool isAdspaceExchange = false;
+
+        /// <summary>
         /// Track the current sequence
         /// </summary>
         private int currentSequence = -1;
@@ -321,7 +326,11 @@ namespace XiboClient.Rendering
                 if (!SetNextMediaNodeInOptions())
                 {
                     // For some reason we cannot set a media node... so we need this region to become invalid
-                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Region, UnsafeFaultCodes.XlfNoContent, options.layoutId, options.regionId, "Unable to set any region media nodes.", _widgetAvailableTtl);
+                    // we don't do this for adspace exchange, because they all share the same layout.
+                    if (!isAdspaceExchange)
+                    {
+                        CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Region, UnsafeFaultCodes.XlfNoContent, options.layoutId, options.regionId, "Unable to set any region media nodes.", _widgetAvailableTtl);
+                    }
 
                     // Throw this out so we remove the Layout
                     throw new InvalidOperationException("Unable to set any region media nodes.");
@@ -813,6 +822,7 @@ namespace XiboClient.Rendering
         /// <param name="urls"></param>
         public void SetAdspaceExchangeImpressionUrls(List<string> urls)
         {
+            isAdspaceExchange = true;
             adspaceExchangeImpressionUrls = urls;
         }
     }
