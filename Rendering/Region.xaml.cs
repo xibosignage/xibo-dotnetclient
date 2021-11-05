@@ -62,7 +62,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// The list of media for this Region
         /// </summary>
-        private XmlNodeList _media;
+        private List<XmlNode> _media;
 
         /// <summary>
         /// The Region Options
@@ -126,7 +126,7 @@ namespace XiboClient.Rendering
             ZIndex = 0;
         }
 
-        public void LoadFromOptions(string id, RegionOptions options, XmlNodeList media)
+        public void LoadFromOptions(string id, RegionOptions options, List<XmlNode> media)
         {
             // Store dimensions
             Dimensions = new Rect

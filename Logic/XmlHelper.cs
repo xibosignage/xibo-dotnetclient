@@ -37,5 +37,15 @@ namespace XiboClient.Logic
 
             return (list.Count <= 0) ? defaultValue : list.Item(0).InnerText;
         }
+
+        public static string GetAttrib(XmlNode node, string attrib, string defVal)
+        {
+            XmlAttribute xmlAttrib = node.Attributes[attrib];
+            if (xmlAttrib == null)
+                return defVal;
+
+            string val = xmlAttrib.Value;
+            return val ?? defVal;
+        }
     }
 }

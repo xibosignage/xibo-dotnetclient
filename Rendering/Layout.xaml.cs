@@ -31,6 +31,7 @@ using System.Windows.Media.Imaging;
 using System.Xml;
 using XiboClient.Adspace;
 using XiboClient.Error;
+using XiboClient.Log;
 using XiboClient.Logic;
 using XiboClient.Stats;
 
@@ -270,7 +271,7 @@ namespace XiboClient.Rendering
 
             // Get the regions
             XmlNodeList listRegions = layoutXml.SelectNodes("/layout/region");
-            XmlNodeList listMedia = layoutXml.SelectNodes("/layout/region/media");
+            int countMedia = layoutXml.SelectNodes("/layout/region/media").Count;
             _drawer = layoutXml.SelectNodes("/layout/drawer/media");
 
             // Drawer actions
@@ -287,10 +288,10 @@ namespace XiboClient.Rendering
             }
 
             // Check to see if there are any regions on this layout.
-            if (listRegions.Count == 0 || listMedia.Count == 0)
+            if (listRegions.Count == 0 || countMedia == 0)
             {
                 Trace.WriteLine(new LogMessage("PrepareLayout",
-                    string.Format("A layout with {0} regions and {1} media has been detected.", listRegions.Count.ToString(), listMedia.Count.ToString())),
+                    string.Format("A layout with {0} regions and {1} media has been detected.", listRegions.Count.ToString(), countMedia)),
                     LogType.Info.ToString());
 
                 // Add this to our unsafe list.
@@ -345,7 +346,94 @@ namespace XiboClient.Rendering
                 options.backgroundTop = options.top * -1;
 
                 // All the media nodes for this region / layout combination
-                XmlNodeList mediaNodes = region.SelectNodes("media");
+                Dictionary<string, List<XmlNode>> parsedMedia = new Dictionary<string, List<XmlNode>>
+                {
+                    { "flat", new List<XmlNode>() }
+                };
+
+                // Cycle based playback
+                // --------------------
+                // Are any of this Region's media nodes enabled for cycle playback, and if so, which of the media nodes should we
+                // add to the node list we provide to the region.
+                foreach (XmlNode media in region.SelectNodes("media"))
+                {
+                    bool isCyclePlayback = XmlHelper.GetAttrib(media, "cyclePlayback", "0") == "1";
+
+                    if (isCyclePlayback)
+                    {
+                        string groupKey = XmlHelper.GetAttrib(media, "parentWidgetId", "0");
+                        
+                        if (!parsedMedia.ContainsKey(groupKey))
+                        {
+                            parsedMedia.Add(groupKey, new List<XmlNode>());
+
+                            // Add the first one of these to retain our place
+                            // this will get swapped out
+                            parsedMedia["flat"].Add(media);
+                        }
+                        parsedMedia[groupKey].Add(media);
+                    }
+                    else
+                    {
+                        parsedMedia["flat"].Add(media);
+                    }
+                }
+
+                List<XmlNode> mediaNodes = new List<XmlNode>();
+
+                // Process the resulting flat list
+                foreach (XmlNode media in parsedMedia["flat"])
+                {
+                    // Is this a cycle based playback node?
+                    bool isCyclePlayback = XmlHelper.GetAttrib(media, "cyclePlayback", "0") == "1";
+
+                    if (isCyclePlayback)
+                    {
+                        // Yes, so replace it with the correct node from our corresponding list
+                        string groupKey = XmlHelper.GetAttrib(media, "parentWidgetId", "0");
+                        bool isRandom = XmlHelper.GetAttrib(media, "isRandom", "0") == "1";
+                        int playCount = int.Parse(XmlHelper.GetAttrib(media, "playCount", "1"));
+
+                        int sequence = ClientInfo.Instance.GetWidgetGroupSequence(groupKey);
+
+                        // If the play count is greater than 1, we need to grab the count plays for the current widget
+                        if (playCount > 1 && ClientInfo.Instance.GetWidgetGroupPlaycount(groupKey) < playCount)
+                        {
+                            // Stick with the current widget
+                            mediaNodes.Add(parsedMedia[groupKey][sequence]);
+
+                            // Bump plays
+                            ClientInfo.Instance.IncrementWidgetGroupPlaycount(groupKey);
+                        }
+                        else
+                        {
+                            // Plays of the current widget have been met, so pick a new one.
+                            if (isRandom)
+                            {
+                                // If we are random, then just pick a random number between 0 and the number of widgets
+                                sequence = new Random().Next(0, (parsedMedia[groupKey].Count - 1));
+                            }
+                            else
+                            {
+                                // Sequential
+                                sequence++;
+                                if (sequence > parsedMedia[groupKey].Count)
+                                {
+                                    sequence = 0;
+                                }
+                            }
+                            // Pull out the appropriate widget
+                            mediaNodes.Add(parsedMedia[groupKey][sequence]);
+
+                            ClientInfo.Instance.SetWidgetGroupSequence(groupKey, sequence);
+                        }
+                    }
+                    else
+                    {
+                        // Take it as is.
+                        mediaNodes.Add(media);
+                    }
+                }
 
                 // Pull out any actions
                 try
@@ -407,7 +495,6 @@ namespace XiboClient.Rendering
 
             // Null stuff
             listRegions = null;
-            listMedia = null;
         }
 
         /// <summary>
