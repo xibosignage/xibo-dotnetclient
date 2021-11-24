@@ -443,7 +443,7 @@ namespace XiboClient
             if (newSchedule.Count <= 0)
             {
                 // No overrides, so we parse in our normal/interrupt layout mix.
-                newSchedule = ResolveNormalAndInterrupts(parsedSchedule);
+                newSchedule = ResolveNormalAndInterrupts(ParseCyclePlayback(parsedSchedule));
             }
 
             // If we have come out of this process without any schedule, then we ought to assign the default
