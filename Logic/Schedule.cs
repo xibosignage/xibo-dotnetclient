@@ -233,6 +233,12 @@ namespace XiboClient
             // Set the current pointer to 0
             _currentLayout = 0;
 
+            // Record the playback if this is a cycle playback item
+            if (_layoutSchedule[0].IsCyclePlayback)
+            {
+                ClientInfo.Instance.IncrementCampaignGroupPlaycount(_layoutSchedule[0].CycleGroupKey);
+            }
+
             // Raise a schedule change event
             ScheduleChangeEvent(_layoutSchedule[0]);
 
@@ -480,7 +486,7 @@ namespace XiboClient
                 int sequence = ClientInfo.Instance.GetCampaignGroupSequence(nextLayout.CycleGroupKey);
 
                 // Pull out the layout (schedule item) at this group sequence.
-                if (nextLayout.CyclePlayCount > 1 && ClientInfo.Instance.GetCampaignGroupPlaycount(nextLayout.CycleGroupKey) >= nextLayout.CyclePlayCount)
+                if (ClientInfo.Instance.GetCampaignGroupPlaycount(nextLayout.CycleGroupKey) >= nextLayout.CyclePlayCount)
                 {
                     // Next sequence
                     sequence++;

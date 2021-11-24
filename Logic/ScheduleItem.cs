@@ -154,7 +154,8 @@ namespace XiboClient.Logic
                 Duration = duration,
                 FromDt = DateTime.MinValue,
                 ToDt = DateTime.MaxValue,
-                layoutFile = "axe"
+                layoutFile = "axe",
+                IsCyclePlayback = false
             };
         }
 

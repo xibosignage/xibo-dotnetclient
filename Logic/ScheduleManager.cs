@@ -628,6 +628,9 @@ namespace XiboClient
             resolved.Add("flat", new List<ScheduleItem>());
             foreach (ScheduleItem item in schedule)
             {
+                // Clear any existing cycles
+                item.CycleScheduleItems.Clear();
+
                 // Is this item cycle playback enabled?
                 if (item.IsCyclePlayback)
                 {
