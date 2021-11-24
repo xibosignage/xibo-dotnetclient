@@ -618,6 +618,52 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Parse cycle playback out of a schedule
+        /// </summary>
+        /// <param name="schedule"></param>
+        /// <returns></returns>
+        private List<ScheduleItem> ParseCyclePlayback(List<ScheduleItem> schedule)
+        {
+            Dictionary<string, List<ScheduleItem>> resolved = new Dictionary<string, List<ScheduleItem>>();
+            resolved.Add("flat", new List<ScheduleItem>());
+            foreach (ScheduleItem item in schedule)
+            {
+                // Is this item cycle playback enabled?
+                if (item.IsCyclePlayback)
+                {
+                    if (!resolved.ContainsKey(item.CycleGroupKey))
+                    {
+                        // First time we've seen this group key, so add it to the flat list to mark its position.
+                        resolved["flat"].Add(item);
+
+                        // Add a new empty list
+                        resolved.Add(item.CycleGroupKey, new List<ScheduleItem>());
+                    }
+
+                    resolved[item.CycleGroupKey].Add(item);
+                }
+                else
+                {
+                    resolved["flat"].Add(item);
+                }
+            }
+
+            // Now we go through again and add in
+            foreach (ScheduleItem item in resolved["flat"])
+            {
+                if (item.IsCyclePlayback)
+                {
+                    // Pull the relevant list and join in.
+                    // We add an empty one first so that we can use the main item as sequence 0.
+                    item.CycleScheduleItems.Add(new ScheduleItem());
+                    item.CycleScheduleItems.AddRange(resolved[item.CycleGroupKey]);
+                }
+            }
+
+            return resolved["flat"];
+        }
+
+        /// <summary>
         /// Get Normal Schedule
         /// </summary>
         /// <param name="schedule"></param>
@@ -1103,6 +1149,18 @@ namespace XiboClient
                     {
                         temp.Duration = 0;
                     }
+                }
+
+                // Cycle playback
+                try
+                {
+                    temp.IsCyclePlayback = int.Parse(XmlHelper.GetAttrib(node, "cyclePlayback", "0")) == 1;
+                    temp.CycleGroupKey = XmlHelper.GetAttrib(node, "groupKey", "");
+                    temp.CyclePlayCount = int.Parse(XmlHelper.GetAttrib(node, "playCount", "1"));
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "ParseNodeIntoScheduleItem: invalid cycle playback configuration."), LogType.Audit.ToString());
                 }
             }
 

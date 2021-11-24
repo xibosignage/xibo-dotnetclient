@@ -467,7 +467,41 @@ namespace XiboClient
 
             ScheduleItem nextLayout = _layoutSchedule[_currentLayout];
 
-            Debug.WriteLine(string.Format("NextLayout: {0}, Interrupt: {1}", nextLayout.layoutFile, nextLayout.IsInterrupt()), "Schedule");
+            Debug.WriteLine(string.Format("NextLayout: {0}, Interrupt: {1}, Cycle based: {2}", 
+                nextLayout.layoutFile, 
+                nextLayout.IsInterrupt(), 
+                nextLayout.IsCyclePlayback
+                ), "Schedule");
+
+            // If we are cycle playback, then resolve the actual layout we want to play out of the group we have.
+            if (nextLayout.IsCyclePlayback)
+            {
+                // The main layout is sequence 0
+                int sequence = ClientInfo.Instance.GetCampaignGroupSequence(nextLayout.CycleGroupKey);
+
+                // Pull out the layout (schedule item) at this group sequence.
+                if (nextLayout.CyclePlayCount > 1 && ClientInfo.Instance.GetCampaignGroupPlaycount(nextLayout.CycleGroupKey) >= nextLayout.CyclePlayCount)
+                {
+                    // Next sequence
+                    sequence++;
+                }
+
+                // Make sure we can get this sequence
+                if (sequence > nextLayout.CycleScheduleItems.Count)
+                {
+                    sequence = 0;
+                }
+
+                // Set the next layout
+                if (sequence > 0)
+                {
+                    nextLayout = nextLayout.CycleScheduleItems[sequence];
+                }
+
+                // Set the sequence and increment the playcount
+                ClientInfo.Instance.SetCampaignGroupSequence(nextLayout.CycleGroupKey, sequence);
+                ClientInfo.Instance.IncrementCampaignGroupPlaycount(nextLayout.CycleGroupKey);
+            }
 
             // Raise the event
             ScheduleChangeEvent?.Invoke(nextLayout);

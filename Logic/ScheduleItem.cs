@@ -30,6 +30,9 @@ namespace XiboClient.Logic
         /// </summary>
         public bool IsOverlay = false;
 
+        /// <summary>
+        /// The date/times this item is active from/to
+        /// </summary>
         public DateTime FromDt;
         public DateTime ToDt;
 
@@ -53,6 +56,12 @@ namespace XiboClient.Logic
         public bool IsGeoAware = false;
         public bool IsGeoActive = false;
         public string GeoLocation = "";
+
+        // Cycle Playback
+        public bool IsCyclePlayback = false;
+        public string CycleGroupKey = "";
+        public int CyclePlayCount = 0;
+        public List<ScheduleItem> CycleScheduleItems = new List<ScheduleItem>();
 
         /// <summary>
         /// Dependent items
