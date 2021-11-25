@@ -345,6 +345,11 @@ namespace XiboClient.Rendering
                 options.backgroundLeft = options.left * -1;
                 options.backgroundTop = options.top * -1;
 
+                // Adjust our left/top to take into account any centering we've done (options left/top are with respect to this layout control,
+                // which has already been moved).
+                int actionLeft = options.left + (int)leftOverX;
+                int actionTop = options.top + (int)leftOverY;
+
                 // All the media nodes for this region / layout combination
                 Dictionary<string, List<XmlNode>> parsedMedia = new Dictionary<string, List<XmlNode>>
                 {
@@ -439,14 +444,14 @@ namespace XiboClient.Rendering
                 try
                 {
                     // Region Actions
-                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(region.SelectNodes("action"), 
-                        options.top, options.left, options.width, options.height));
+                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(region.SelectNodes("action"),
+                        actionTop, actionLeft, options.width, options.height));
 
                     // Widget Actions
                     foreach (XmlNode media in mediaNodes)
                     {
-                        List<Action.Action> mediaActions = Action.Action.CreateFromXmlNodeList(media.SelectNodes("action"), 
-                            options.top, options.left, options.width, options.height);
+                        List<Action.Action> mediaActions = Action.Action.CreateFromXmlNodeList(media.SelectNodes("action"),
+                            actionTop, actionLeft, options.width, options.height);
 
                         if (mediaActions.Count > 0)
                         {
@@ -464,15 +469,19 @@ namespace XiboClient.Rendering
                 temp.MediaExpiredEvent += Region_MediaExpiredEvent;
 
                 // ZIndex
-                if (nodeAttibutes["zindex"] != null)
+                try
                 {
-                    temp.ZIndex = int.Parse(nodeAttibutes["zindex"].Value);
+                    temp.ZIndex = int.Parse(XmlHelper.GetAttrib(region, "zindex", "0"));
+                }
+                catch
+                {
+                    temp.ZIndex = 0;
                 }
 
                 Debug.WriteLine("loadFromFile: Created new region", "Layout");
 
                 // Load our region
-                temp.LoadFromOptions(options.regionId, options, mediaNodes);
+                temp.LoadFromOptions(options.regionId, options, mediaNodes, actionTop, actionLeft);
 
                 // Add to our list of Regions
                 _regions.Add(temp);
@@ -484,7 +493,7 @@ namespace XiboClient.Rendering
             _actions.Sort((l, r) => Action.Action.PriorityForActionSource(l.Source) < Action.Action.PriorityForActionSource(r.Source) ? -1 : 1);
 
             // Order all Regions by their ZIndex
-            _regions.Sort((l, r) => l.ZIndex < r.ZIndex ? -1 : 1);
+            _regions.Sort((l, r) => l.ZIndex <= r.ZIndex ? -1 : 1);
 
             // Add all Regions to the Scene
             foreach (Region temp in _regions)
@@ -667,7 +676,7 @@ namespace XiboClient.Rendering
             {
                 if (action.IsDrawer && action.Source == "widget" && action.SourceId == widgetId)
                 {
-                    action.Rect = region.Dimensions;
+                    action.Rect = region.DimensionsForActions;
                 }
             }
         }
@@ -711,17 +720,18 @@ namespace XiboClient.Rendering
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public string GetCurrentWidgetIdForRegion(Point point)
+        public List<string> GetCurrentWidgetIdForRegion(Point point)
         {
+            List<string> activeWidgets = new List<string>();
             foreach (Region region in _regions)
             {
-                if (region.Dimensions.Contains(point))
+                if (region.DimensionsForActions.Contains(point))
                 {
-                    return region.GetCurrentWidgetId();
+                    activeWidgets.Add(region.GetCurrentWidgetId());
                 }
             }
 
-            return null;
+            return activeWidgets;
         }
 
         /// <summary>

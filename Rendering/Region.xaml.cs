@@ -55,6 +55,11 @@ namespace XiboClient.Rendering
         public Rect Dimensions { get; set; }
 
         /// <summary>
+        /// Action Dimensions
+        /// </summary>
+        public Rect DimensionsForActions { get; set; }
+
+        /// <summary>
         /// This Regions zIndex
         /// </summary>
         public int ZIndex { get; set; }
@@ -126,7 +131,7 @@ namespace XiboClient.Rendering
             ZIndex = 0;
         }
 
-        public void LoadFromOptions(string id, RegionOptions options, List<XmlNode> media)
+        public void LoadFromOptions(string id, RegionOptions options, List<XmlNode> media, int actionTop, int actionLeft)
         {
             // Store dimensions
             Dimensions = new Rect
@@ -135,6 +140,14 @@ namespace XiboClient.Rendering
                 Height = options.height,
                 X = options.left,
                 Y = options.top
+            };
+            
+            DimensionsForActions = new Rect
+            {
+                Width = options.width,
+                Height = options.height,
+                X = actionLeft,
+                Y = actionTop
             };
 
             // Start of by setting our dimensions

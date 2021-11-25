@@ -1034,7 +1034,7 @@ namespace XiboClient
                     continue;
                 }
                 // If the source of the action is a widget, it must currently be active.
-                else if (triggerType == "touch" && action.Source == "widget" && currentLayout.GetCurrentWidgetIdForRegion(point) != "" + action.SourceId)
+                else if (triggerType == "touch" && action.Source == "widget" && !currentLayout.GetCurrentWidgetIdForRegion(point).Contains("" + action.SourceId))
                 {
                     Debug.WriteLine(point.ToString() + " not active widget: " + action.SourceId, "HandleActionTrigger");
                     continue;
