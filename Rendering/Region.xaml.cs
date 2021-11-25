@@ -121,6 +121,13 @@ namespace XiboClient.Rendering
         public event MediaExpiredDelegate MediaExpiredEvent;
 
         /// <summary>
+        /// Event to trigger a webhook
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        public delegate void TriggerWebhookDelegate(string triggerCode, int sourceId);
+        public event TriggerWebhookDelegate TriggerWebhookEvent;
+
+        /// <summary>
         /// Widget Date WaterMark
         /// </summary>
         private int _widgetAvailableTtl;
@@ -591,6 +598,7 @@ namespace XiboClient.Rendering
 
             // Add event handler for when this completes
             media.DurationElapsedEvent += new Media.DurationElapsedDelegate(Media_DurationElapsedEvent);
+            media.TriggerWebhookEvent += Media_TriggerWebhookEvent;
 
             // Add event handlers for audio
             foreach (Media audio in options.Audio)
@@ -688,6 +696,7 @@ namespace XiboClient.Rendering
 
                 // Tidy Up
                 media.DurationElapsedEvent -= Media_DurationElapsedEvent;
+                media.TriggerWebhookEvent -= Media_TriggerWebhookEvent;
                 media.Stop(regionStopped);
             }
             catch (Exception ex)
@@ -785,6 +794,15 @@ namespace XiboClient.Rendering
 
                 return;
             }
+        }
+
+        /// <summary>
+        /// Trigger web hook event handler.
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        private void Media_TriggerWebhookEvent(string triggerCode, int sourceId)
+        {
+            TriggerWebhookEvent?.Invoke(triggerCode, sourceId);
         }
 
         /// <summary>

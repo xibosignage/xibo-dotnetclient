@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -215,11 +215,20 @@ namespace XiboClient.Rendering
             }
             else
             {
-                Trace.WriteLine(new LogMessage("WebView", "WebView_NavigationCompleted: e = " + e.WebErrorStatus.ToString()), LogType.Error.ToString());
-
                 // This should exipre the media
                 Duration = 5;
                 base.RestartTimer();
+
+                // If we have a trigger to use, then fire it off (we will still expire if this isn't handled)
+                if (!string.IsNullOrEmpty(PageLoadErrorTrigger))
+                {
+                    // Fire off the page load error trigger.
+                    TriggerWebhook(PageLoadErrorTrigger);
+                }
+                else
+                {
+                    Trace.WriteLine(new LogMessage("WebView", "WebView_NavigationCompleted: e = " + e.WebErrorStatus.ToString()), LogType.Error.ToString());
+                }
             }
         }
 

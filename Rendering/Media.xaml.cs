@@ -53,6 +53,13 @@ namespace XiboClient.Rendering
         public event MediaStoppedDelegate MediaStoppedEvent;
 
         /// <summary>
+        /// Trigger web hook
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        public delegate void TriggerWebhookDelegate(string triggerCode, int sourceId);
+        public event TriggerWebhookDelegate TriggerWebhookEvent;
+
+        /// <summary>
         /// Have we stopped?
         /// </summary>
         private bool _stopped = false;
@@ -908,6 +915,26 @@ namespace XiboClient.Rendering
             }
 
             return options;
+        }
+
+        /// <summary>
+        /// Trigger a web hook
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        /// <param name="sourceId"></param>
+        protected void TriggerWebhook(string triggerCode)
+        {
+            int id;
+            try
+            {
+                id = int.Parse(Id);
+            }
+            catch
+            {
+                id = 0;
+            }
+
+            TriggerWebhookEvent?.Invoke(triggerCode, id);
         }
     }
 }

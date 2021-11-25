@@ -467,6 +467,7 @@ namespace XiboClient.Rendering
                 Region temp = new Region();
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(Region_DurationElapsedEvent);
                 temp.MediaExpiredEvent += Region_MediaExpiredEvent;
+                temp.TriggerWebhookEvent += Region_TriggerWebhookEvent;
 
                 // ZIndex
                 try
@@ -605,6 +606,9 @@ namespace XiboClient.Rendering
                     {
                         // Clear the region
                         region.Clear();
+                        region.DurationElapsedEvent -= Region_DurationElapsedEvent;
+                        region.MediaExpiredEvent -= Region_MediaExpiredEvent;
+                        region.TriggerWebhookEvent -= Region_TriggerWebhookEvent;
 
                         // Remove the region from the list of controls
                         this.LayoutScene.Children.Remove(region);
@@ -869,6 +873,15 @@ namespace XiboClient.Rendering
         private void Region_MediaExpiredEvent()
         {
             Trace.WriteLine(new LogMessage("Region", "MediaExpiredEvent: Media Elapsed"), LogType.Audit.ToString());
+        }
+
+        /// <summary>
+        /// Someone wants to trigger a web hook.
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        private void Region_TriggerWebhookEvent(string triggerCode, int sourceId)
+        {
+            Schedule.EmbeddedServerOnTriggerReceived(triggerCode, sourceId);
         }
 
         /// <summary>

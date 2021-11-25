@@ -706,7 +706,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="triggerCode"></param>
         /// <param name="sourceId"></param>
-        private void EmbeddedServerOnTriggerReceived(string triggerCode, int sourceId)
+        public void EmbeddedServerOnTriggerReceived(string triggerCode, int sourceId)
         {
             OnTriggerReceived?.Invoke("webhook", triggerCode, sourceId, 0);
         }
