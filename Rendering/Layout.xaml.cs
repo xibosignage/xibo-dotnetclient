@@ -29,7 +29,9 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml;
+using XiboClient.Adspace;
 using XiboClient.Error;
+using XiboClient.Log;
 using XiboClient.Logic;
 using XiboClient.Stats;
 
@@ -112,18 +114,11 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
-        /// Load this Layout from its File
+        /// Load this Layout from its file
         /// </summary>
         /// <param name="scheduleItem"></param>
-        public void loadFromFile(ScheduleItem scheduleItem)
+        public void LoadFromFile(ScheduleItem scheduleItem)
         {
-            // Store the Schedule and LayoutIds
-            this.ScheduleItem = scheduleItem;
-            this.ScheduleId = scheduleItem.scheduleid;
-            this._layoutId = scheduleItem.id;
-            this.isOverlay = scheduleItem.IsOverlay;
-            this.isInterrupt = scheduleItem.IsInterrupt();
-
             // Get this layouts XML
             XmlDocument layoutXml = new XmlDocument();
 
@@ -147,7 +142,22 @@ namespace XiboClient.Rendering
                 throw;
             }
 
-            layoutModifiedTime = File.GetLastWriteTime(scheduleItem.layoutFile);
+            LoadFromFile(scheduleItem, layoutXml, File.GetLastWriteTime(scheduleItem.layoutFile));
+        }
+
+        /// <summary>
+        /// Load this Layout from its XML
+        /// </summary>
+        /// <param name="scheduleItem"></param>
+        public void LoadFromFile(ScheduleItem scheduleItem, XmlDocument layoutXml, DateTime modifiedDt)
+        {
+            // Store the Schedule and LayoutIds
+            this.ScheduleItem = scheduleItem;
+            this.ScheduleId = scheduleItem.scheduleid;
+            this._layoutId = scheduleItem.id;
+            this.isOverlay = scheduleItem.IsOverlay;
+            this.isInterrupt = scheduleItem.IsInterrupt();
+            layoutModifiedTime = modifiedDt;
 
             // Attributes of the main layout node
             XmlNode layoutNode = layoutXml.SelectSingleNode("/layout");
@@ -261,7 +271,7 @@ namespace XiboClient.Rendering
 
             // Get the regions
             XmlNodeList listRegions = layoutXml.SelectNodes("/layout/region");
-            XmlNodeList listMedia = layoutXml.SelectNodes("/layout/region/media");
+            int countMedia = layoutXml.SelectNodes("/layout/region/media").Count;
             _drawer = layoutXml.SelectNodes("/layout/drawer/media");
 
             // Drawer actions
@@ -278,14 +288,14 @@ namespace XiboClient.Rendering
             }
 
             // Check to see if there are any regions on this layout.
-            if (listRegions.Count == 0 || listMedia.Count == 0)
+            if (listRegions.Count == 0 || countMedia == 0)
             {
                 Trace.WriteLine(new LogMessage("PrepareLayout",
-                    string.Format("A layout with {0} regions and {1} media has been detected.", listRegions.Count.ToString(), listMedia.Count.ToString())),
+                    string.Format("A layout with {0} regions and {1} media has been detected.", listRegions.Count.ToString(), countMedia)),
                     LogType.Info.ToString());
 
                 // Add this to our unsafe list.
-                CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Layout, _layoutId, ""+_layoutId, "No Regions or Widgets");
+                CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Layout, UnsafeFaultCodes.XlfNoContent, _layoutId, ""+_layoutId, "No Regions or Widgets");
 
                 throw new LayoutInvalidException("Layout without any Regions or Widgets");
             }
@@ -335,21 +345,113 @@ namespace XiboClient.Rendering
                 options.backgroundLeft = options.left * -1;
                 options.backgroundTop = options.top * -1;
 
+                // Adjust our left/top to take into account any centering we've done (options left/top are with respect to this layout control,
+                // which has already been moved).
+                int actionLeft = options.left + (int)leftOverX;
+                int actionTop = options.top + (int)leftOverY;
+
                 // All the media nodes for this region / layout combination
-                XmlNodeList mediaNodes = region.SelectNodes("media");
+                Dictionary<string, List<XmlNode>> parsedMedia = new Dictionary<string, List<XmlNode>>
+                {
+                    { "flat", new List<XmlNode>() }
+                };
+
+                // Cycle based playback
+                // --------------------
+                // Are any of this Region's media nodes enabled for cycle playback, and if so, which of the media nodes should we
+                // add to the node list we provide to the region.
+                foreach (XmlNode media in region.SelectNodes("media"))
+                {
+                    bool isCyclePlayback = XmlHelper.GetAttrib(media, "cyclePlayback", "0") == "1";
+
+                    if (isCyclePlayback)
+                    {
+                        string groupKey = XmlHelper.GetAttrib(media, "parentWidgetId", "0");
+                        
+                        if (!parsedMedia.ContainsKey(groupKey))
+                        {
+                            parsedMedia.Add(groupKey, new List<XmlNode>());
+
+                            // Add the first one of these to retain our place
+                            // this will get swapped out
+                            parsedMedia["flat"].Add(media);
+                        }
+                        parsedMedia[groupKey].Add(media);
+                    }
+                    else
+                    {
+                        parsedMedia["flat"].Add(media);
+                    }
+                }
+
+                List<XmlNode> mediaNodes = new List<XmlNode>();
+
+                // Process the resulting flat list
+                foreach (XmlNode media in parsedMedia["flat"])
+                {
+                    // Is this a cycle based playback node?
+                    bool isCyclePlayback = XmlHelper.GetAttrib(media, "cyclePlayback", "0") == "1";
+
+                    if (isCyclePlayback)
+                    {
+                        // Yes, so replace it with the correct node from our corresponding list
+                        string groupKey = XmlHelper.GetAttrib(media, "parentWidgetId", "0");
+                        bool isRandom = XmlHelper.GetAttrib(media, "isRandom", "0") == "1";
+                        int playCount = int.Parse(XmlHelper.GetAttrib(media, "playCount", "1"));
+
+                        int sequence = ClientInfo.Instance.GetWidgetGroupSequence(groupKey);
+
+                        // If the play count is greater than 1, we need to grab the count plays for the current widget
+                        if (playCount > 1 && ClientInfo.Instance.GetWidgetGroupPlaycount(groupKey) < playCount)
+                        {
+                            // Stick with the current widget
+                            mediaNodes.Add(parsedMedia[groupKey][sequence]);
+
+                            // Bump plays
+                            ClientInfo.Instance.IncrementWidgetGroupPlaycount(groupKey);
+                        }
+                        else
+                        {
+                            // Plays of the current widget have been met, so pick a new one.
+                            if (isRandom)
+                            {
+                                // If we are random, then just pick a random number between 0 and the number of widgets
+                                sequence = new Random().Next(0, (parsedMedia[groupKey].Count - 1));
+                            }
+                            else
+                            {
+                                // Sequential
+                                sequence++;
+                                if (sequence > parsedMedia[groupKey].Count)
+                                {
+                                    sequence = 0;
+                                }
+                            }
+                            // Pull out the appropriate widget
+                            mediaNodes.Add(parsedMedia[groupKey][sequence]);
+
+                            ClientInfo.Instance.SetWidgetGroupSequence(groupKey, sequence);
+                        }
+                    }
+                    else
+                    {
+                        // Take it as is.
+                        mediaNodes.Add(media);
+                    }
+                }
 
                 // Pull out any actions
                 try
                 {
                     // Region Actions
-                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(region.SelectNodes("action"), 
-                        options.top, options.left, options.width, options.height));
+                    _actions.AddRange(Action.Action.CreateFromXmlNodeList(region.SelectNodes("action"),
+                        actionTop, actionLeft, options.width, options.height));
 
                     // Widget Actions
                     foreach (XmlNode media in mediaNodes)
                     {
-                        List<Action.Action> mediaActions = Action.Action.CreateFromXmlNodeList(media.SelectNodes("action"), 
-                            options.top, options.left, options.width, options.height);
+                        List<Action.Action> mediaActions = Action.Action.CreateFromXmlNodeList(media.SelectNodes("action"),
+                            actionTop, actionLeft, options.width, options.height);
 
                         if (mediaActions.Count > 0)
                         {
@@ -365,17 +467,22 @@ namespace XiboClient.Rendering
                 Region temp = new Region();
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(Region_DurationElapsedEvent);
                 temp.MediaExpiredEvent += Region_MediaExpiredEvent;
+                temp.TriggerWebhookEvent += Region_TriggerWebhookEvent;
 
                 // ZIndex
-                if (nodeAttibutes["zindex"] != null)
+                try
                 {
-                    temp.ZIndex = int.Parse(nodeAttibutes["zindex"].Value);
+                    temp.ZIndex = int.Parse(XmlHelper.GetAttrib(region, "zindex", "0"));
+                }
+                catch
+                {
+                    temp.ZIndex = 0;
                 }
 
                 Debug.WriteLine("loadFromFile: Created new region", "Layout");
 
                 // Load our region
-                temp.LoadFromOptions(options.regionId, options, mediaNodes);
+                temp.LoadFromOptions(options.regionId, options, mediaNodes, actionTop, actionLeft);
 
                 // Add to our list of Regions
                 _regions.Add(temp);
@@ -387,7 +494,7 @@ namespace XiboClient.Rendering
             _actions.Sort((l, r) => Action.Action.PriorityForActionSource(l.Source) < Action.Action.PriorityForActionSource(r.Source) ? -1 : 1);
 
             // Order all Regions by their ZIndex
-            _regions.Sort((l, r) => l.ZIndex < r.ZIndex ? -1 : 1);
+            _regions.Sort((l, r) => l.ZIndex <= r.ZIndex ? -1 : 1);
 
             // Add all Regions to the Scene
             foreach (Region temp in _regions)
@@ -398,7 +505,57 @@ namespace XiboClient.Rendering
 
             // Null stuff
             listRegions = null;
-            listMedia = null;
+        }
+
+        /// <summary>
+        /// Load this Layout from the Ad provided.
+        /// </summary>
+        /// <param name="scheduleItem"></param>
+        /// <param name="ad"></param>
+        public void LoadFromAd(ScheduleItem scheduleItem, Ad ad)
+        {
+            // Create an XLF representing this ad.
+            XmlDocument document = new XmlDocument();
+            XmlElement layout = document.CreateElement("layout");
+            XmlElement region = document.CreateElement("region");
+            XmlElement media = document.CreateElement("media");
+            XmlElement mediaOptions = document.CreateElement("options");
+            XmlElement urlOption = document.CreateElement("uri");
+
+            // Layout properties
+            layout.SetAttribute("width", "" + Width);
+            layout.SetAttribute("height", "" + Height);
+            layout.SetAttribute("bgcolor", "#000000");
+            layout.SetAttribute("enableStat", "0");
+
+            // Region properties
+            region.SetAttribute("id", "axe");
+            region.SetAttribute("width", "" + Width);
+            region.SetAttribute("height", "" + Height);
+            region.SetAttribute("top", "0");
+            region.SetAttribute("left", "0");
+
+            // Media properties
+            media.SetAttribute("type", ad.XiboType);
+            media.SetAttribute("id", Guid.NewGuid().ToString());
+            media.SetAttribute("duration", "" + ad.GetDuration());
+            media.SetAttribute("enableStat", "0");
+
+            // Url
+            urlOption.InnerText = ad.File;
+
+            // Add all these nodes to the docs
+            mediaOptions.AppendChild(urlOption);
+            media.AppendChild(mediaOptions);
+            region.AppendChild(media);
+            layout.AppendChild(region);
+            document.AppendChild(layout);
+
+            // Pass this XML document to our usual load method
+            LoadFromFile(scheduleItem, document, DateTime.Now);
+
+            // Set our impression URLs which we will call on stop.
+            _regions[0].SetAdspaceExchangeImpressionUrls(ad.ImpressionUrls);
         }
 
         /// <summary>
@@ -449,6 +606,9 @@ namespace XiboClient.Rendering
                     {
                         // Clear the region
                         region.Clear();
+                        region.DurationElapsedEvent -= Region_DurationElapsedEvent;
+                        region.MediaExpiredEvent -= Region_MediaExpiredEvent;
+                        region.TriggerWebhookEvent -= Region_TriggerWebhookEvent;
 
                         // Remove the region from the list of controls
                         this.LayoutScene.Children.Remove(region);
@@ -520,7 +680,7 @@ namespace XiboClient.Rendering
             {
                 if (action.IsDrawer && action.Source == "widget" && action.SourceId == widgetId)
                 {
-                    action.Rect = region.Dimensions;
+                    action.Rect = region.DimensionsForActions;
                 }
             }
         }
@@ -564,35 +724,18 @@ namespace XiboClient.Rendering
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public string GetCurrentWidgetIdForRegion(Point point)
+        public List<string> GetCurrentWidgetIdForRegion(Point point)
         {
+            List<string> activeWidgets = new List<string>();
             foreach (Region region in _regions)
             {
-                if (region.Dimensions.Contains(point))
+                if (region.DimensionsForActions.Contains(point))
                 {
-                    return region.GetCurrentWidgetId();
+                    activeWidgets.Add(region.GetCurrentWidgetId());
                 }
             }
 
-            return null;
-        }
-
-        /// <summary>
-        /// Get Current Widget Id for the provided Region
-        /// </summary>
-        /// <param name="point"></param>
-        /// <returns></returns>
-        public string GetCurrentInteractiveWidgetIdForRegion(Point point)
-        {
-            foreach (Region region in _regions)
-            {
-                if (region.Dimensions.Contains(point))
-                {
-                    return region.GetCurrentInteractiveWidgetId();
-                }
-            }
-
-            return null;
+            return activeWidgets;
         }
 
         /// <summary>
@@ -730,6 +873,15 @@ namespace XiboClient.Rendering
         private void Region_MediaExpiredEvent()
         {
             Trace.WriteLine(new LogMessage("Region", "MediaExpiredEvent: Media Elapsed"), LogType.Audit.ToString());
+        }
+
+        /// <summary>
+        /// Someone wants to trigger a web hook.
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        private void Region_TriggerWebhookEvent(string triggerCode, int sourceId)
+        {
+            Schedule.EmbeddedServerOnTriggerReceived(triggerCode, sourceId);
         }
 
         /// <summary>

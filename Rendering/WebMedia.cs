@@ -48,6 +48,11 @@ namespace XiboClient.Rendering
         /// </summary>
         private bool _reloadOnXmdsRefresh = false;
 
+        /// <summary>
+        /// A string to trigger on page load error
+        /// </summary>
+        protected string PageLoadErrorTrigger;
+
         // Events
         public delegate void HtmlUpdatedDelegate(string url);
         public event HtmlUpdatedDelegate HtmlUpdatedEvent;
@@ -71,6 +76,9 @@ namespace XiboClient.Rendering
             {
                 // If we are modeid == 1, then just open the webpage without adjusting the file path
                 _filePath = Uri.UnescapeDataString(options.uri).Replace('+', ' ');
+
+                // Do we have a page load error trigger?
+                PageLoadErrorTrigger = options.Dictionary.Get("pageLoadErrorTrigger");
             }
             else
             {

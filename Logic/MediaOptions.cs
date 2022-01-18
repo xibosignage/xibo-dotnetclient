@@ -99,6 +99,8 @@ namespace XiboClient
         /// </summary>
         public bool isStatEnabled;
 
+        public bool IsPinchToZoomEnabled { get; set; }
+
         /// <summary>
         /// Decorate this Media Options with Region Options.
         /// </summary>

@@ -19,6 +19,7 @@
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
@@ -54,6 +55,11 @@ namespace XiboClient.Rendering
         public Rect Dimensions { get; set; }
 
         /// <summary>
+        /// Action Dimensions
+        /// </summary>
+        public Rect DimensionsForActions { get; set; }
+
+        /// <summary>
         /// This Regions zIndex
         /// </summary>
         public int ZIndex { get; set; }
@@ -61,7 +67,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// The list of media for this Region
         /// </summary>
-        private XmlNodeList _media;
+        private List<XmlNode> _media;
 
         /// <summary>
         /// The Region Options
@@ -82,6 +88,16 @@ namespace XiboClient.Rendering
         /// Media we have navigated to, interrupting the usual flow
         /// </summary>
         private Media navigatedMedia;
+
+        /// <summary>
+        /// A list of impression Urls to call on stop.
+        /// </summary>
+        private List<string> adspaceExchangeImpressionUrls = new List<string>();
+
+        /// <summary>
+        /// Is this an adspace exchange region?
+        /// </summary>
+        private bool isAdspaceExchange = false;
 
         /// <summary>
         /// Track the current sequence
@@ -105,6 +121,13 @@ namespace XiboClient.Rendering
         public event MediaExpiredDelegate MediaExpiredEvent;
 
         /// <summary>
+        /// Event to trigger a webhook
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        public delegate void TriggerWebhookDelegate(string triggerCode, int sourceId);
+        public event TriggerWebhookDelegate TriggerWebhookEvent;
+
+        /// <summary>
         /// Widget Date WaterMark
         /// </summary>
         private int _widgetAvailableTtl;
@@ -115,7 +138,7 @@ namespace XiboClient.Rendering
             ZIndex = 0;
         }
 
-        public void LoadFromOptions(string id, RegionOptions options, XmlNodeList media)
+        public void LoadFromOptions(string id, RegionOptions options, List<XmlNode> media, int actionTop, int actionLeft)
         {
             // Store dimensions
             Dimensions = new Rect
@@ -124,6 +147,14 @@ namespace XiboClient.Rendering
                 Height = options.height,
                 X = options.left,
                 Y = options.top
+            };
+            
+            DimensionsForActions = new Rect
+            {
+                Width = options.width,
+                Height = options.height,
+                X = actionLeft,
+                Y = actionTop
             };
 
             // Start of by setting our dimensions
@@ -141,16 +172,14 @@ namespace XiboClient.Rendering
         /// <returns></returns>
         public string GetCurrentWidgetId()
         {
-            return this.currentMedia?.Id;
-        }
-
-        /// <summary>
-        /// Get Current WidgetId
-        /// </summary>
-        /// <returns></returns>
-        public string GetCurrentInteractiveWidgetId()
-        {
-            return this.navigatedMedia?.Id;
+            if (this.navigatedMedia != null)
+            {
+                return this.navigatedMedia.Id;
+            }
+            else
+            {
+                return this.currentMedia?.Id;
+            }
         }
 
         /// <summary>
@@ -317,7 +346,11 @@ namespace XiboClient.Rendering
                 if (!SetNextMediaNodeInOptions())
                 {
                     // For some reason we cannot set a media node... so we need this region to become invalid
-                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Region, options.layoutId, options.regionId, "Unable to set any region media nodes.", _widgetAvailableTtl);
+                    // we don't do this for adspace exchange, because they all share the same layout.
+                    if (!isAdspaceExchange)
+                    {
+                        CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Region, UnsafeFaultCodes.XlfNoContent, options.layoutId, options.regionId, "Unable to set any region media nodes.", _widgetAvailableTtl);
+                    }
 
                     // Throw this out so we remove the Layout
                     throw new InvalidOperationException("Unable to set any region media nodes.");
@@ -565,6 +598,7 @@ namespace XiboClient.Rendering
 
             // Add event handler for when this completes
             media.DurationElapsedEvent += new Media.DurationElapsedDelegate(Media_DurationElapsedEvent);
+            media.TriggerWebhookEvent += Media_TriggerWebhookEvent;
 
             // Add event handlers for audio
             foreach (Media audio in options.Audio)
@@ -655,13 +689,14 @@ namespace XiboClient.Rendering
             try
             {
                 // Close the stat record
-                StatManager.Instance.WidgetStop(media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled);
+                StatManager.Instance.WidgetStop(media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled, adspaceExchangeImpressionUrls);
 
                 // Media Stopped Event removes the media from the scene
                 media.MediaStoppedEvent += Media_MediaStoppedEvent;
 
                 // Tidy Up
                 media.DurationElapsedEvent -= Media_DurationElapsedEvent;
+                media.TriggerWebhookEvent -= Media_TriggerWebhookEvent;
                 media.Stop(regionStopped);
             }
             catch (Exception ex)
@@ -762,6 +797,15 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
+        /// Trigger web hook event handler.
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        private void Media_TriggerWebhookEvent(string triggerCode, int sourceId)
+        {
+            TriggerWebhookEvent?.Invoke(triggerCode, sourceId);
+        }
+
+        /// <summary>
         /// Set Dimensions
         /// </summary>
         /// <param name="left"></param>
@@ -801,6 +845,16 @@ namespace XiboClient.Rendering
             {
                 Trace.WriteLine(new LogMessage("Region - Clear", "Error closing off stat record"), LogType.Error.ToString());
             }
+        }
+
+        /// <summary>
+        /// Set any adspace exchange impression urls.
+        /// </summary>
+        /// <param name="urls"></param>
+        public void SetAdspaceExchangeImpressionUrls(List<string> urls)
+        {
+            isAdspaceExchange = true;
+            adspaceExchangeImpressionUrls = urls;
         }
     }
 }

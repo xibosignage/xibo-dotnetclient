@@ -218,6 +218,16 @@ namespace XiboClient.XmdsAgents
                                     _requiredFiles = new RequiredFiles();
                                     _requiredFiles.RequiredFilesXml = xml;
 
+                                    // Purge List
+                                    try
+                                    {
+                                        HandlePurgeList(xml);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Trace.WriteLine(new LogMessage("ScheduleAndFilesAgent", "Run: exception handling purge list. e: " + e.Message), LogType.Error.ToString());
+                                    }
+
                                     // List of Threads to start
                                     // TODO: Track these threads so that we can abort them if the application closes
                                     List<Thread> threadsToStart = new List<Thread>();
@@ -482,6 +492,30 @@ namespace XiboClient.XmdsAgents
                 // Log this message, but dont abort the thread
                 Trace.WriteLine(new LogMessage("ScheduleAgent - Run", "Exception in Run: " + ex.Message), LogType.Error.ToString());
                 ClientInfo.Instance.ScheduleStatus = "Error. " + ex.Message;
+            }
+        }
+
+        /// <summary>
+        /// Handle the purge list
+        /// </summary>
+        /// <param name="xml"></param>
+        private void HandlePurgeList(XmlDocument xml)
+        {
+            foreach (XmlNode item in xml.SelectNodes("//purge/item"))
+            {
+                try
+                {
+                    // Pull the name from the storedAs attribute
+                    string name = item.Attributes.GetNamedItem("storedAs").Value;
+
+                    // Delete and remove from the cache manager
+                    File.Delete(ApplicationSettings.Default.LibraryPath + @"\" + name);
+                    CacheManager.Instance.Remove(name);
+                }
+                catch
+                {
+                    Debug.WriteLine("Unable to process purge item");
+                }
             }
         }
     }

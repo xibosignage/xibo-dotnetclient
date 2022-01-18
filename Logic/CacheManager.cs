@@ -18,12 +18,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using XiboClient.Log;
@@ -342,9 +345,9 @@ namespace XiboClient
         /// <param name="layoutId"></param>
         /// <param name="id"></param>
         /// <param name="reason"></param>
-        public void AddUnsafeItem(UnsafeItemType type, int layoutId, string id, string reason)
+        public void AddUnsafeItem(UnsafeItemType type, UnsafeFaultCodes code, int layoutId, string id, string reason)
         {
-            AddUnsafeItem(type, layoutId, id, reason, 86400);
+            AddUnsafeItem(type, code, layoutId, id, reason, 86400);
         }
 
         /// <summary>
@@ -355,7 +358,7 @@ namespace XiboClient
         /// <param name="id"></param>
         /// <param name="reason"></param>
         /// <param name="ttl"></param>
-        public void AddUnsafeItem(UnsafeItemType type, int layoutId, string id, string reason, int ttl)
+        public void AddUnsafeItem(UnsafeItemType type, UnsafeFaultCodes code, int layoutId, string id, string reason, int ttl)
         {
             if (ttl == 0)
             {
@@ -369,6 +372,7 @@ namespace XiboClient
                     .First();
 
                 item.DateTime = DateTime.Now;
+                item.Code = code;
                 item.Reason = reason;
             }
             catch
@@ -377,6 +381,7 @@ namespace XiboClient
                 {
                     DateTime = DateTime.Now,
                     Type = type,
+                    Code = code,
                     LayoutId = layoutId,
                     Id = id,
                     Reason = reason,
@@ -487,9 +492,73 @@ namespace XiboClient
             string list = "";
             foreach (UnsafeItem item in _unsafeItems)
             {
-                list += item.Type.ToString() + ": " + item.LayoutId + ", " + item.Reason + ", ttl: " + item.Ttl + Environment.NewLine;
+                list += item.Type.ToString() + ": " + item.LayoutId + ", [" + (int)item.Code + "] " + item.Reason + ", ttl: " + item.Ttl + Environment.NewLine;
             }
             return list;
+        }
+
+        /// <summary>
+        /// Get the unsafe list as a JSON string
+        /// </summary>
+        /// <returns></returns>
+        public string UnsafeListAsJsonString()
+        {
+            if (_unsafeItems.Count <= 0)
+            {
+                return "[]";
+            }
+
+            // Go through each and add a JSON string.
+            StringBuilder sb = new StringBuilder();
+            using (StringWriter sw = new StringWriter(sb))
+            {
+                using (JsonWriter writer = new JsonTextWriter(sw))
+                {
+                    writer.Formatting = Newtonsoft.Json.Formatting.None;
+                    writer.WriteStartArray();
+
+                    foreach (UnsafeItem item in _unsafeItems)
+                    {
+                        writer.WriteStartObject();
+                        writer.WritePropertyName("date");
+                        writer.WriteValue(item.DateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
+
+                        writer.WritePropertyName("expires");
+                        writer.WriteValue(item.DateTime.AddSeconds(item.Ttl).ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
+
+                        writer.WritePropertyName("code");
+                        writer.WriteValue((int)item.Code);
+
+                        writer.WritePropertyName("reason");
+                        writer.WriteValue(item.Reason);
+
+                        // IDs
+                        if (item.Type == UnsafeItemType.Media)
+                        {
+                            writer.WritePropertyName("mediaId");
+                            writer.WriteValue(item.Id);
+                        }
+                        else if (item.Type == UnsafeItemType.Widget)
+                        {
+                            writer.WritePropertyName("widgetId");
+                            writer.WriteValue(item.Id);
+                        }
+                        else if (item.Type == UnsafeItemType.Region)
+                        {
+                            writer.WritePropertyName("regionId");
+                            writer.WriteValue(item.Id);
+                        }
+
+                        writer.WritePropertyName("layoutId");
+                        writer.WriteValue(item.LayoutId);
+
+                        writer.WriteEndObject();
+                    }
+                    writer.WriteEndArray();
+                }
+            }
+
+            return sb.ToString();
         }
 
         #endregion
@@ -598,6 +667,7 @@ namespace XiboClient
     {
         public DateTime DateTime { get; set; }
         public UnsafeItemType Type { get; set; }
+        public UnsafeFaultCodes Code { get; set; }
         public int LayoutId { get; set; }
         public string Id { get; set; }
         public string Reason { get; set; }
@@ -613,6 +683,24 @@ namespace XiboClient
         Region,
         Widget,
         Media
+    }
+
+    /// <summary>
+    /// Unsafe fault codes
+    /// </summary>
+    public enum UnsafeFaultCodes
+    {
+        NotLicensed=1000,
+        MemoryRunningLow=1001,
+        MemoryCritical=1002,
+        PowerPointNotAvailable=1003,
+        VideoSource=2001,
+        VideoUnexpected=2099,
+        ImageUnknown=3000,
+        ImageDecode=3001,
+        ImageOutOfMemory=3002,
+        RemteResourceFailed=4404,
+        XlfNoContent=5000
     }
 
     /// <summary>

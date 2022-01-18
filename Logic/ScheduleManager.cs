@@ -28,6 +28,7 @@ using System.Text;
 using System.Threading;
 using System.Xml;
 using XiboClient.Action;
+using XiboClient.Adspace;
 using XiboClient.Log;
 using XiboClient.Logic;
 
@@ -69,6 +70,9 @@ namespace XiboClient
         private bool _refreshSchedule;
         private DateTime _lastScreenShotDate;
 
+        // Adspace Exchange Manager
+        private ExchangeManager exchangeManager;
+
         /// <summary>
         /// Creates a new schedule Manager
         /// </summary>
@@ -91,6 +95,9 @@ namespace XiboClient
 
             // Screenshot
             _lastScreenShotDate = DateTime.MinValue;
+
+            // Create a new exchange manager
+            exchangeManager = new ExchangeManager();
         }
 
         #endregion
@@ -416,12 +423,27 @@ namespace XiboClient
             // Load a new overlay schedule
             List<ScheduleItem> overlaySchedule = LoadNewOverlaySchedule();
 
+            // Load any adspace exchange schedules
+            if (ApplicationSettings.Default.IsAdspaceEnabled)
+            {
+                exchangeManager.SetActive(true);
+                exchangeManager.Configure();
+                if (exchangeManager.ShareOfVoice > 0)
+                {
+                    parsedSchedule.Add(ScheduleItem.CreateForAdspaceExchange(exchangeManager.AverageAdDuration, exchangeManager.ShareOfVoice));
+                }
+            }
+            else
+            {
+                exchangeManager.SetActive(false);
+            }
+
             // Do we have any change layout actions?
             List<ScheduleItem> newSchedule = GetOverrideSchedule(parsedSchedule);
             if (newSchedule.Count <= 0)
             {
                 // No overrides, so we parse in our normal/interrupt layout mix.
-                newSchedule = ResolveNormalAndInterrupts(parsedSchedule);
+                newSchedule = ResolveNormalAndInterrupts(ParseCyclePlayback(parsedSchedule));
             }
 
             // If we have come out of this process without any schedule, then we ought to assign the default
@@ -596,6 +618,55 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Parse cycle playback out of a schedule
+        /// </summary>
+        /// <param name="schedule"></param>
+        /// <returns></returns>
+        private List<ScheduleItem> ParseCyclePlayback(List<ScheduleItem> schedule)
+        {
+            Dictionary<string, List<ScheduleItem>> resolved = new Dictionary<string, List<ScheduleItem>>();
+            resolved.Add("flat", new List<ScheduleItem>());
+            foreach (ScheduleItem item in schedule)
+            {
+                // Clear any existing cycles
+                item.CycleScheduleItems.Clear();
+
+                // Is this item cycle playback enabled?
+                if (item.IsCyclePlayback)
+                {
+                    if (!resolved.ContainsKey(item.CycleGroupKey))
+                    {
+                        // First time we've seen this group key, so add it to the flat list to mark its position.
+                        resolved["flat"].Add(item);
+
+                        // Add a new empty list
+                        resolved.Add(item.CycleGroupKey, new List<ScheduleItem>());
+                    }
+
+                    resolved[item.CycleGroupKey].Add(item);
+                }
+                else
+                {
+                    resolved["flat"].Add(item);
+                }
+            }
+
+            // Now we go through again and add in
+            foreach (ScheduleItem item in resolved["flat"])
+            {
+                if (item.IsCyclePlayback)
+                {
+                    // Pull the relevant list and join in.
+                    // We add an empty one first so that we can use the main item as sequence 0.
+                    item.CycleScheduleItems.Add(new ScheduleItem());
+                    item.CycleScheduleItems.AddRange(resolved[item.CycleGroupKey]);
+                }
+            }
+
+            return resolved["flat"];
+        }
+
+        /// <summary>
         /// Get Normal Schedule
         /// </summary>
         /// <param name="schedule"></param>
@@ -751,6 +822,12 @@ namespace XiboClient
                 int duration = (item.Duration <= 0) 
                     ? CacheManager.Instance.GetLayoutDuration(item.id, 60) 
                     : item.Duration;
+
+                // Protect against 0 durations
+                if (duration <= 0)
+                {
+                    duration = 10;
+                }
 
                 normalSecondsInHour -= duration;
                 resolvedNormal.Add(item);
@@ -1075,6 +1152,18 @@ namespace XiboClient
                     {
                         temp.Duration = 0;
                     }
+                }
+
+                // Cycle playback
+                try
+                {
+                    temp.IsCyclePlayback = int.Parse(XmlHelper.GetAttrib(node, "cyclePlayback", "0")) == 1;
+                    temp.CycleGroupKey = XmlHelper.GetAttrib(node, "groupKey", "");
+                    temp.CyclePlayCount = int.Parse(XmlHelper.GetAttrib(node, "playCount", "1"));
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("ScheduleManager", "ParseNodeIntoScheduleItem: invalid cycle playback configuration."), LogType.Audit.ToString());
                 }
             }
 
@@ -1413,6 +1502,17 @@ namespace XiboClient
                     RefreshSchedule = true;
                 }
             }
+        }
+
+        /// <summary>
+        /// Get an ad from the exchange
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
+        public Ad GetAd(double width, double height)
+        {
+            return exchangeManager.GetAd(width, height);
         }
 
         #endregion

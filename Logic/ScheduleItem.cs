@@ -30,6 +30,9 @@ namespace XiboClient.Logic
         /// </summary>
         public bool IsOverlay = false;
 
+        /// <summary>
+        /// The date/times this item is active from/to
+        /// </summary>
         public DateTime FromDt;
         public DateTime ToDt;
 
@@ -40,6 +43,11 @@ namespace XiboClient.Logic
         public int ShareOfVoice;
 
         /// <summary>
+        /// Is this schedule item an adspace exchange item
+        /// </summary>
+        public bool IsAdspaceExchange = false;
+
+        /// <summary>
         /// The duration of this event
         /// </summary>
         public int Duration;
@@ -48,6 +56,12 @@ namespace XiboClient.Logic
         public bool IsGeoAware = false;
         public bool IsGeoActive = false;
         public string GeoLocation = "";
+
+        // Cycle Playback
+        public bool IsCyclePlayback = false;
+        public string CycleGroupKey = "";
+        public int CyclePlayCount = 0;
+        public List<ScheduleItem> CycleScheduleItems = new List<ScheduleItem>();
 
         /// <summary>
         /// Dependent items
@@ -119,7 +133,29 @@ namespace XiboClient.Logic
             return new ScheduleItem
             {
                 id = 0,
-                scheduleid = 0
+                scheduleid = 0,
+                Duration = 10
+            };
+        }
+
+        /// <summary>
+        /// Create a schedule item for adspace exchange
+        /// </summary>
+        /// <param name="duration"></param>
+        /// <param name="shareOfVoice"></param>
+        /// <returns></returns>
+        public static ScheduleItem CreateForAdspaceExchange(int duration, int shareOfVoice)
+        {
+            return new ScheduleItem
+            {
+                id = -1,
+                IsAdspaceExchange = true,
+                ShareOfVoice = shareOfVoice,
+                Duration = duration,
+                FromDt = DateTime.MinValue,
+                ToDt = DateTime.MaxValue,
+                layoutFile = "axe",
+                IsCyclePlayback = false
             };
         }
 

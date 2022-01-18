@@ -263,6 +263,10 @@ namespace XiboClient.Action
                     OnAction?.Invoke(JsonConvert.DeserializeObject<TriggerWebhookAction>(opened));
                     break;
 
+                case "purgeAll":
+                    OnAction?.Invoke(action);
+                    break;
+
                 default:
                     Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Unknown Message: " + action.action), LogType.Info.ToString());
                     break;
