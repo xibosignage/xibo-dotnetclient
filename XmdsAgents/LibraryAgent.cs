@@ -48,10 +48,6 @@ namespace XiboClient.XmdsAgents
         }
         private CacheManager _cacheManager;
 
-        /// <summary>
-        /// Required Files Object
-        /// </summary>
-        private RequiredFiles _requiredFiles;
 
         public LibraryAgent()
         {
@@ -64,6 +60,14 @@ namespace XiboClient.XmdsAgents
             _persistentFiles.Add("id_rsa");
             _persistentFiles.Add("pop.db");
             _persistentFiles.Add("interrupt.json");
+        }
+
+        /// <summary>
+        /// Wake Up
+        /// </summary>
+        public void WakeUp()
+        {
+            _manualReset.Set();
         }
 
         /// <summary>
@@ -102,9 +106,9 @@ namespace XiboClient.XmdsAgents
                         DateTime testDate = DateTime.Now.AddDays(ApplicationSettings.Default.LibraryAgentInterval * -1);
 
                         // Get required files from disk
-                        _requiredFiles = RequiredFiles.LoadFromDisk();
+                        RequiredFiles requiredFiles = RequiredFiles.LoadFromDisk();
 
-                        Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Number of required files = " + _requiredFiles.RequiredFileList.Count), LogType.Audit.ToString());
+                        Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Number of required files = " + requiredFiles.RequiredFileList.Count), LogType.Audit.ToString());
 
                         // Build a list of files in the library
                         DirectoryInfo directory = new DirectoryInfo(ApplicationSettings.Default.LibraryPath);
@@ -122,7 +126,7 @@ namespace XiboClient.XmdsAgents
                             // Delete files that were accessed over N days ago
                             try
                             {
-                                RequiredFile file = _requiredFiles.GetRequiredFile(fileInfo.Name);
+                                RequiredFile file = requiredFiles.GetRequiredFile(fileInfo.Name);
                             }
                             catch
                             {
@@ -162,6 +166,35 @@ namespace XiboClient.XmdsAgents
             }
 
             Trace.WriteLine(new LogMessage("LibraryAgent - Run", "Thread Stopped"), LogType.Info.ToString());
+        }
+
+        /// <summary>
+        /// Purge all required files
+        /// </summary>
+        public void PurgeAll()
+        {
+            try
+            {
+                // Get required files from disk
+                foreach (RequiredFile item in RequiredFiles.LoadFromDisk().RequiredFileList)
+                {
+                    try
+                    {
+                        // Delete and remove from the cache manager
+                        File.Delete(ApplicationSettings.Default.LibraryPath + @"\" + item.SaveAs);
+                        CacheManager.Instance.Remove(item.SaveAs);
+                    }
+                    catch
+                    {
+                        Debug.WriteLine("Unable to process purge item");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log this message, but dont abort the thread
+                Trace.WriteLine(new LogMessage("LibraryAgent", "PurgeAll: Exception: " + ex.Message), LogType.Error.ToString());
+            }
         }
     }
 }

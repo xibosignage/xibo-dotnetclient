@@ -20,6 +20,7 @@
  */
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Device.Location;
 using System.Diagnostics;
 using System.IO;
@@ -103,6 +104,26 @@ namespace XiboClient.Log
         /// Players current GeoCoordinate.
         /// </summary>
         public GeoCoordinate CurrentGeoLocation { get; set; }
+
+        /// <summary>
+        /// Widget Group State
+        /// </summary>
+        private Dictionary<string, int> widgetGroupState = new Dictionary<string, int>();
+
+        /// <summary>
+        /// Widget Group State Playcount
+        /// </summary>
+        private Dictionary<string, int> widgetGroupStatePlaycount = new Dictionary<string, int>();
+
+        /// <summary>
+        /// Widget Group State
+        /// </summary>
+        private Dictionary<string, int> campaignGroupState = new Dictionary<string, int>();
+
+        /// <summary>
+        /// Widget Group State Playcount
+        /// </summary>
+        private Dictionary<string, int> campaignGroupStatePlaycount = new Dictionary<string, int>();
 
         /// <summary>
         /// Client Info Object
@@ -275,5 +296,167 @@ namespace XiboClient.Log
                 return -1;
             }
         }
+
+        #region "Widget Group State"
+
+        /// <summary>
+        /// Get the widget group playcount of the provided group key
+        /// </summary>
+        /// <param name="groupKey"></param>
+        /// <returns></returns>
+        public int GetWidgetGroupPlaycount(string groupKey)
+        {
+            if (widgetGroupStatePlaycount.ContainsKey(groupKey))
+            {
+                return widgetGroupStatePlaycount[groupKey];
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Get the widget group sequence of the provided group key
+        /// </summary>
+        /// <param name="groupKey"></param>
+        /// <returns></returns>
+        public int GetWidgetGroupSequence(string groupKey)
+        {
+            if (widgetGroupState.ContainsKey(groupKey))
+            {
+                return widgetGroupState[groupKey];
+            }
+            else
+            {
+                return -1;
+            }    
+        }
+
+        /// <summary>
+        /// Set the widget group sequence
+        /// </summary>
+        /// <param name="groupKey"></param>
+        /// <param name="sequence"></param>
+        public void SetWidgetGroupSequence(string groupKey, int sequence)
+        {
+            if (widgetGroupState.ContainsKey(groupKey))
+            {
+                widgetGroupState[groupKey] = sequence;
+            }
+            else
+            {
+                widgetGroupState.Add(groupKey, sequence);
+            }
+
+            // Reset plays to 1.
+            if (widgetGroupStatePlaycount.ContainsKey(groupKey))
+            {
+                widgetGroupStatePlaycount[groupKey] = 1;
+            }
+            else
+            {
+                widgetGroupStatePlaycount.Add(groupKey, 1);
+            }
+        }
+
+        /// <summary>
+        /// Increment widget group playcount
+        /// </summary>
+        /// <param name="groupKey"></param>
+        public void IncrementWidgetGroupPlaycount(string groupKey)
+        {
+            if (widgetGroupStatePlaycount.ContainsKey(groupKey))
+            {
+                widgetGroupStatePlaycount[groupKey]++;
+            }
+            else
+            {
+                widgetGroupStatePlaycount.Add(groupKey, 1);
+            }
+        }
+
+        #endregion
+
+        #region Campaign Group state
+
+        /// <summary>
+        /// Get the campaign group playcount of the provided group key
+        /// </summary>
+        /// <param name="groupKey"></param>
+        /// <returns></returns>
+        public int GetCampaignGroupPlaycount(string groupKey)
+        {
+            if (campaignGroupStatePlaycount.ContainsKey(groupKey))
+            {
+                return campaignGroupStatePlaycount[groupKey];
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Get the campaign group sequence of the provided group key
+        /// </summary>
+        /// <param name="groupKey"></param>
+        /// <returns></returns>
+        public int GetCampaignGroupSequence(string groupKey)
+        {
+            if (campaignGroupState.ContainsKey(groupKey))
+            {
+                return campaignGroupState[groupKey];
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Set the widget group sequence
+        /// </summary>
+        /// <param name="groupKey"></param>
+        /// <param name="sequence"></param>
+        public void SetCampaignGroupSequence(string groupKey, int sequence)
+        {
+            if (campaignGroupState.ContainsKey(groupKey))
+            {
+                campaignGroupState[groupKey] = sequence;
+            }
+            else
+            {
+                campaignGroupState.Add(groupKey, sequence);
+            }
+
+            // Reset plays to 1.
+            if (campaignGroupStatePlaycount.ContainsKey(groupKey))
+            {
+                campaignGroupStatePlaycount[groupKey] = 1;
+            }
+            else
+            {
+                campaignGroupStatePlaycount.Add(groupKey, 1);
+            }
+        }
+
+        /// <summary>
+        /// Increment widget group playcount
+        /// </summary>
+        /// <param name="groupKey"></param>
+        public void IncrementCampaignGroupPlaycount(string groupKey)
+        {
+            if (campaignGroupStatePlaycount.ContainsKey(groupKey))
+            {
+                campaignGroupStatePlaycount[groupKey]++;
+            }
+            else
+            {
+                campaignGroupStatePlaycount.Add(groupKey, 1);
+            }
+        }
+
+        #endregion
     }
 }

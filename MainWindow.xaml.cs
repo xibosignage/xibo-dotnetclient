@@ -31,6 +31,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using XiboClient.Adspace;
 using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -354,11 +355,13 @@ namespace XiboClient
             // Settings for Init
             CefSharp.Wpf.CefSettings settings = new CefSharp.Wpf.CefSettings
             {
+                RootCachePath = ApplicationSettings.Default.LibraryPath + @"\CEF",
                 CachePath = ApplicationSettings.Default.LibraryPath + @"\CEF",
                 LogFile = ApplicationSettings.Default.LibraryPath + @"\CEF\cef.log",
                 LogSeverity = CefSharp.LogSeverity.Fatal
             };
             settings.CefCommandLineArgs["autoplay-policy"] = "no-user-gesture-required";
+            settings.CefCommandLineArgs["disable-pinch"] = "1";
 
             CefSharp.Cef.Initialize(settings);
         }
@@ -689,12 +692,31 @@ namespace XiboClient
                         Height = Height,
                         Schedule = _schedule
                     };
-                    layout.loadFromFile(scheduleItem);
+
+                    // Is this an Adspace Exchange Layout?
+                    if (scheduleItem.IsAdspaceExchange)
+                    {
+                        // Get an ad
+                        Ad ad = _schedule.GetAd(Width, Height);
+                        if (ad == null)
+                        {
+                            throw new LayoutInvalidException("No ad to play");
+                        }
+
+                        layout.LoadFromAd(scheduleItem, ad);
+                    }
+                    else
+                    {
+                        layout.LoadFromFile(scheduleItem);
+                    }
                     return layout;
                 }
                 catch (IOException)
                 {
-                    CacheManager.Instance.Remove(scheduleItem.layoutFile);
+                    if (!scheduleItem.IsAdspaceExchange)
+                    {
+                        CacheManager.Instance.Remove(scheduleItem.layoutFile);
+                    }
 
                     throw new LayoutInvalidException("IO Exception");
                 }
@@ -1012,15 +1034,9 @@ namespace XiboClient
                     continue;
                 }
                 // If the source of the action is a widget, it must currently be active.
-                else if (triggerType == "touch" && !action.IsDrawer && action.Source == "widget" && currentLayout.GetCurrentWidgetIdForRegion(point) != "" + action.SourceId)
+                else if (triggerType == "touch" && action.Source == "widget" && !currentLayout.GetCurrentWidgetIdForRegion(point).Contains("" + action.SourceId))
                 {
                     Debug.WriteLine(point.ToString() + " not active widget: " + action.SourceId, "HandleActionTrigger");
-                    continue;
-                }
-                // If for a drawer widget, it has to be active
-                else if (triggerType == "touch" && action.IsDrawer && action.Source == "widget" && currentLayout.GetCurrentInteractiveWidgetIdForRegion(point) != ""+action.SourceId)
-                {
-                    Debug.WriteLine(point.ToString() + " not active drawer widget: " + action.SourceId, "HandleActionTrigger");
                     continue;
                 }
                 

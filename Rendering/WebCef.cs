@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -28,8 +28,13 @@ namespace XiboClient.Rendering
     class WebCef : WebMedia
     {
         private ChromiumWebBrowser webView;
-        private string regionId;
-        private bool hasBackgroundColor = false;
+        private readonly string regionId;
+        private readonly bool hasBackgroundColor = false;
+
+        /// <summary>
+        /// A flag to indicate whether we have loaded web content or not.
+        /// </summary>
+        private bool hasLoaded = false;
 
         public WebCef(MediaOptions options)
             : base(options)
@@ -45,47 +50,44 @@ namespace XiboClient.Rendering
         {
             Debug.WriteLine("Created CEF Renderer for " + this.regionId, "WebCef");
 
+            // Set a cache path
+            string cachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
+            var requestContextSettings = new CefSharp.RequestContextSettings { CachePath = cachePath };
+
             // Create the web view we will use
             webView = new ChromiumWebBrowser()
             {
                 Name = "region_" + this.regionId
             };
-            webView.RequestContext = new CefSharp.RequestContext();
+            webView.RequestContext = new CefSharp.RequestContext(requestContextSettings);
 
             // Configure run time CEF settings?
-            if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist)
-                || !string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+            CefSharp.Cef.UIThreadTaskFactory.StartNew(() =>
             {
-                CefSharp.Cef.UIThreadTaskFactory.StartNew(() =>
+                try
                 {
-                    try
-                    {
-                        // NTLM/Auth Server White Lists.
-                        if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
-                        {
-                            if (!webView.RequestContext.SetPreference("auth.server_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error))
-                            {
-                                Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.server_whitelist. e = " + error), LogType.Info.ToString());
-                            }
+                    // Provide our own request handler.
+                    webView.RequestHandler = new XiboRequestHandler(!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser));
 
-                            if (!webView.RequestContext.SetPreference("auth.negotiate_delegate_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error2))
-                            {
-                                Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.negotiate_delegate_whitelist. e = " + error2), LogType.Info.ToString());
-                            }
+                    // NTLM/Auth Server White Lists.
+                    if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
+                    {
+                        if (!webView.RequestContext.SetPreference("auth.server_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error))
+                        {
+                            Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.server_whitelist. e = " + error), LogType.Info.ToString());
                         }
 
-                        // Proxy
-                        if (!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+                        if (!webView.RequestContext.SetPreference("auth.negotiate_delegate_whitelist", ApplicationSettings.Default.AuthServerWhitelist, out string error2))
                         {
-                            webView.RequestHandler = new ProxyRequestHandler();
+                            Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: auth.negotiate_delegate_whitelist. e = " + error2), LogType.Info.ToString());
                         }
-                    } 
-                    catch (Exception e)
-                    {
-                        Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: Exception setting auto policies on cef. e = " + e.Message), LogType.Info.ToString());
                     }
-                });
-            }
+                } 
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("WebCef", "RenderMedia: Exception setting auto policies on cef. e = " + e.Message), LogType.Info.ToString());
+                }
+            });
 
             webView.Visibility = System.Windows.Visibility.Hidden;
             webView.Loaded += WebView_Loaded;
@@ -128,8 +130,11 @@ namespace XiboClient.Rendering
         {
             Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Frame Loaded", "CefWebView");
 
+            // Flag that we've opened.
+            hasLoaded = true;
+
             // If we aren't expired yet, we should show it
-            if (e.Frame.IsMain && !Expired)
+            if (e.Frame.IsMain && !Expired && !IsNativeOpen())
             {
                 // Initialise Interactive Control
                 webView.GetBrowser().MainFrame.ExecuteJavaScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
@@ -145,6 +150,9 @@ namespace XiboClient.Rendering
         private void WebView_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             Debug.WriteLine(DateTime.Now.ToLongTimeString() + " Navigate Completed", "CefWebView");
+
+            // Flag that we've opened.
+            hasLoaded = true;
 
             // Show the browser after some time
             if (!Expired)
@@ -165,11 +173,29 @@ namespace XiboClient.Rendering
         /// <param name="e"></param>
         private void WebView_LoadError(object sender, CefSharp.LoadErrorEventArgs e)
         {
-            Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Cannot navigate. e = " + e.ToString()), LogType.Error.ToString());
+            // We are not interested in aborted errors.
+            if (e.ErrorCode == CefSharp.CefErrorCode.Aborted && hasLoaded)
+            {
+                Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Abort received, ignoring."), LogType.Audit.ToString());
+            }
+            else
+            {
+                // This should expire the media in a short while
+                Duration = 5;
+                base.RestartTimer();
 
-            // This should exipre the media
-            Duration = 5;
-            base.RestartTimer();
+                // If we have a trigger to use, then fire it off (we will still expire if this isn't handled)
+                if (!string.IsNullOrEmpty(PageLoadErrorTrigger))
+                {
+                    // Fire off the page load error trigger.
+                    TriggerWebhook(PageLoadErrorTrigger);
+                } 
+                else
+                {
+                    // Unexpected, so log.
+                    Trace.WriteLine(new LogMessage("WebCef", "WebView_LoadError: Cannot navigate. e = " + e.ErrorText + ", code = " + e.ErrorCode), LogType.Error.ToString());
+                }
+            }
         }
 
         /// <summary>

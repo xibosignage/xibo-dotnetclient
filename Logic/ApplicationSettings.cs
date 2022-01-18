@@ -26,6 +26,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using XiboClient.Action;
+using XiboClient.Helpers;
 using XiboClient.Logic;
 
 namespace XiboClient
@@ -51,9 +52,9 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "3 R301.1";
-        public string Version { get; } = "5";
-        public int ClientCodeVersion { get; } = 301;
+        public string ClientVersion { get; } = "3 R302.4";
+        public string Version { get; } = "6";
+        public int ClientCodeVersion { get; } = 302;
 
         private ApplicationSettings()
         {
@@ -344,12 +345,13 @@ namespace XiboClient
                     // Match these to settings
                     try
                     {
-                        if (lazy.Value[node.Name] != null)
+                        string nodeName = Strings.FirstCharToUpper(node.Name);
+                        if (lazy.Value[nodeName] != null)
                         {
-                            value = Convert.ChangeType(value, lazy.Value[node.Name].GetType());
+                            value = Convert.ChangeType(value, lazy.Value[nodeName].GetType());
                         }
 
-                        lazy.Value[node.Name] = value;
+                        lazy.Value[nodeName] = value;
                     }
                     catch
                     {
@@ -582,6 +584,7 @@ namespace XiboClient
         public bool ScreenShotRequested { get; set; }
         public bool FallbackToInternetExplorer { get; set; }
         public bool IsRecordGeoLocationOnProofOfPlay { get; set; }
+        public bool IsAdspaceEnabled { get; set; }
 
         // XMDS Status Flags
         private DateTime _xmdsLastConnection;

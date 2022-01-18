@@ -53,6 +53,13 @@ namespace XiboClient.Rendering
         public event MediaStoppedDelegate MediaStoppedEvent;
 
         /// <summary>
+        /// Trigger web hook
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        public delegate void TriggerWebhookDelegate(string triggerCode, int sourceId);
+        public event TriggerWebhookDelegate TriggerWebhookEvent;
+
+        /// <summary>
         /// Have we stopped?
         /// </summary>
         private bool _stopped = false;
@@ -619,6 +626,7 @@ namespace XiboClient.Rendering
                     break;
 
                 case "embedded":
+                    options.IsPinchToZoomEnabled = true;
                     media = WebMedia.GetConfiguredWebMedia(options, WebMedia.ReadBrowserType(options.text));
                     break;
 
@@ -629,6 +637,7 @@ namespace XiboClient.Rendering
                     break;
 
                 case "webpage":
+                    options.IsPinchToZoomEnabled = true;
                     media = WebMedia.GetConfiguredWebMedia(options);
                     break;
 
@@ -642,6 +651,7 @@ namespace XiboClient.Rendering
                     break;
 
                 case "htmlpackage":
+                    options.IsPinchToZoomEnabled = true;
                     media = WebMedia.GetConfiguredWebMedia(options);
                     ((WebMedia)media).ConfigureForHtmlPackage();
                     break;
@@ -704,6 +714,9 @@ namespace XiboClient.Rendering
             // Stats enabled?
             options.isStatEnabled = (nodeAttributes["enableStat"] == null) ? true : (int.Parse(nodeAttributes["enableStat"].Value) == 1);
 
+            // Pinch to Zoom enabled?
+            options.IsPinchToZoomEnabled = false;
+
             // Parse the options for this media node
             // Type and Duration will always be on the media node
             options.type = nodeAttributes["type"].Value;
@@ -750,7 +763,7 @@ namespace XiboClient.Rendering
             }
 
             // We cannot have a 0 duration here... not sure why we would... but
-            if (options.duration == 0 && options.type != "video" && options.type != "localvideo")
+            if (options.duration == 0 && options.type != "video" && options.type != "localvideo" && options.type != "audio")
             {
                 int emptyLayoutDuration = int.Parse(ApplicationSettings.Default.EmptyLayoutDuration.ToString());
                 options.duration = (emptyLayoutDuration == 0) ? 10 : emptyLayoutDuration;
@@ -902,6 +915,26 @@ namespace XiboClient.Rendering
             }
 
             return options;
+        }
+
+        /// <summary>
+        /// Trigger a web hook
+        /// </summary>
+        /// <param name="triggerCode"></param>
+        /// <param name="sourceId"></param>
+        protected void TriggerWebhook(string triggerCode)
+        {
+            int id;
+            try
+            {
+                id = int.Parse(Id);
+            }
+            catch
+            {
+                id = 0;
+            }
+
+            TriggerWebhookEvent?.Invoke(triggerCode, id);
         }
     }
 }

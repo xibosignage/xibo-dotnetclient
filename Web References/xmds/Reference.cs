@@ -23,7 +23,7 @@ namespace XiboClient.xmds {
     
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="xmdsBinding", Namespace="urn:xmds")]
@@ -37,7 +37,7 @@ namespace XiboClient.xmds {
         
         private System.Threading.SendOrPostCallback ScheduleOperationCompleted;
         
-        private System.Threading.SendOrPostCallback BlackListOperationCompleted;
+        private System.Threading.SendOrPostCallback ReportFaultsOperationCompleted;
         
         private System.Threading.SendOrPostCallback SubmitLogOperationCompleted;
         
@@ -102,7 +102,7 @@ namespace XiboClient.xmds {
         public event ScheduleCompletedEventHandler ScheduleCompleted;
         
         /// <remarks/>
-        public event BlackListCompletedEventHandler BlackListCompleted;
+        public event ReportFaultsCompletedEventHandler ReportFaultsCompleted;
         
         /// <remarks/>
         public event SubmitLogCompletedEventHandler SubmitLogCompleted;
@@ -275,40 +275,36 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
-        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#BlackList", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#ReportFaults", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("success")]
-        public bool BlackList(string serverKey, string hardwareKey, int mediaId, string type, string reason) {
-            object[] results = this.Invoke("BlackList", new object[] {
+        public bool ReportFaults(string serverKey, string hardwareKey, string fault) {
+            object[] results = this.Invoke("ReportFaults", new object[] {
                         serverKey,
                         hardwareKey,
-                        mediaId,
-                        type,
-                        reason});
+                        fault});
             return ((bool)(results[0]));
         }
         
         /// <remarks/>
-        public void BlackListAsync(string serverKey, string hardwareKey, int mediaId, string type, string reason) {
-            this.BlackListAsync(serverKey, hardwareKey, mediaId, type, reason, null);
+        public void ReportFaultsAsync(string serverKey, string hardwareKey, string fault) {
+            this.ReportFaultsAsync(serverKey, hardwareKey, fault, null);
         }
         
         /// <remarks/>
-        public void BlackListAsync(string serverKey, string hardwareKey, int mediaId, string type, string reason, object userState) {
-            if ((this.BlackListOperationCompleted == null)) {
-                this.BlackListOperationCompleted = new System.Threading.SendOrPostCallback(this.OnBlackListOperationCompleted);
+        public void ReportFaultsAsync(string serverKey, string hardwareKey, string fault, object userState) {
+            if ((this.ReportFaultsOperationCompleted == null)) {
+                this.ReportFaultsOperationCompleted = new System.Threading.SendOrPostCallback(this.OnReportFaultsOperationCompleted);
             }
-            this.InvokeAsync("BlackList", new object[] {
+            this.InvokeAsync("ReportFaults", new object[] {
                         serverKey,
                         hardwareKey,
-                        mediaId,
-                        type,
-                        reason}, this.BlackListOperationCompleted, userState);
+                        fault}, this.ReportFaultsOperationCompleted, userState);
         }
         
-        private void OnBlackListOperationCompleted(object arg) {
-            if ((this.BlackListCompleted != null)) {
+        private void OnReportFaultsOperationCompleted(object arg) {
+            if ((this.ReportFaultsCompleted != null)) {
                 System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
-                this.BlackListCompleted(this, new BlackListCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+                this.ReportFaultsCompleted(this, new ReportFaultsCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
             }
         }
         
@@ -540,11 +536,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void RegisterDisplayCompletedEventHandler(object sender, RegisterDisplayCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class RegisterDisplayCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -566,11 +562,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void RequiredFilesCompletedEventHandler(object sender, RequiredFilesCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class RequiredFilesCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -592,11 +588,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void GetFileCompletedEventHandler(object sender, GetFileCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class GetFileCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -618,11 +614,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void ScheduleCompletedEventHandler(object sender, ScheduleCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class ScheduleCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -644,18 +640,18 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
-    public delegate void BlackListCompletedEventHandler(object sender, BlackListCompletedEventArgs e);
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    public delegate void ReportFaultsCompletedEventHandler(object sender, ReportFaultsCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class BlackListCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+    public partial class ReportFaultsCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
         
         private object[] results;
         
-        internal BlackListCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+        internal ReportFaultsCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
                 base(exception, cancelled, userState) {
             this.results = results;
         }
@@ -670,11 +666,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void SubmitLogCompletedEventHandler(object sender, SubmitLogCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class SubmitLogCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -696,11 +692,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void SubmitStatsCompletedEventHandler(object sender, SubmitStatsCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class SubmitStatsCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -722,11 +718,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void MediaInventoryCompletedEventHandler(object sender, MediaInventoryCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class MediaInventoryCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -748,11 +744,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void GetResourceCompletedEventHandler(object sender, GetResourceCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class GetResourceCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -774,11 +770,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void NotifyStatusCompletedEventHandler(object sender, NotifyStatusCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class NotifyStatusCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -800,11 +796,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     public delegate void SubmitScreenShotCompletedEventHandler(object sender, SubmitScreenShotCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.3752.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class SubmitScreenShotCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {

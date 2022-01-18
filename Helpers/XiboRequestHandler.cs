@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -20,14 +20,28 @@
  */
 using CefSharp;
 using CefSharp.Handler;
+using System.Diagnostics;
 
 namespace XiboClient.Helpers
 {
-    class ProxyRequestHandler : RequestHandler
+    class XiboRequestHandler : RequestHandler
     {
+        private bool _isConfigureProxy;
+
+        public XiboRequestHandler(bool isConfigureProxy)
+        {
+            _isConfigureProxy = isConfigureProxy;
+        }
+
+        protected override void OnRenderProcessTerminated(IWebBrowser chromiumWebBrowser, IBrowser browser, CefTerminationStatus status)
+        {
+            // If the render process crashed, we should just log.
+            Trace.WriteLine(new LogMessage("XiboRequestHandler", "OnRenderProcessTerminate: a cef sub process has terminated. " + status.ToString()), LogType.Error.ToString());
+        }
+
         protected override bool GetAuthCredentials(IWebBrowser chromiumWebBrowser, IBrowser browser, string originUrl, bool isProxy, string host, int port, string realm, string scheme, IAuthCallback callback)
         {
-            if (isProxy)
+            if (_isConfigureProxy && isProxy)
             {
                 callback.Continue(ApplicationSettings.Default.ProxyUser, ApplicationSettings.Default.ProxyPassword);
 

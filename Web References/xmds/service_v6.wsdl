@@ -46,14 +46,12 @@
   <message name="ScheduleResponse">
     <part name="ScheduleXml" type="xsd:string" />
   </message>
-  <message name="BlackListRequest">
+  <message name="ReportFaultsRequest">
     <part name="serverKey" type="xsd:string" />
     <part name="hardwareKey" type="xsd:string" />
-    <part name="mediaId" type="xsd:int" />
-    <part name="type" type="xsd:string" />
-    <part name="reason" type="xsd:string" />
+    <part name="fault" type="xsd:string" />
   </message>
-  <message name="BlackListResponse">
+  <message name="ReportFaultsResponse">
     <part name="success" type="xsd:boolean" />
   </message>
   <message name="SubmitLogRequest">
@@ -127,10 +125,10 @@
       <input message="tns:ScheduleRequest" />
       <output message="tns:ScheduleResponse" />
     </operation>
-    <operation name="BlackList">
-      <documentation>Set media to be blacklisted</documentation>
-      <input message="tns:BlackListRequest" />
-      <output message="tns:BlackListResponse" />
+    <operation name="ReportFaults">
+      <documentation>Report Player faults</documentation>
+      <input message="tns:ReportFaultsRequest" />
+      <output message="tns:ReportFaultsResponse" />
     </operation>
     <operation name="SubmitLog">
       <documentation>Submit Logging from the Client</documentation>
@@ -201,8 +199,8 @@
         <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
       </output>
     </operation>
-    <operation name="BlackList">
-      <soap:operation soapAction="urn:xmds#BlackList" style="rpc" />
+    <operation name="ReportFaults">
+      <soap:operation soapAction="urn:xmds#ReportFaults" style="rpc" />
       <input>
         <soap:body use="encoded" namespace="urn:xmds" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
       </input>

@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -18,6 +18,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Flurl;
+using Flurl.Http;
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
 using System;
@@ -124,6 +126,16 @@ namespace XiboClient.Stats
 
                     // Set the DB version to 2
                     SetDbVersion(connection, 2);
+                }
+
+                // Add the impressions table
+                if (version <= 2)
+                {
+                    using (var command = new SqliteCommand("CREATE TABLE IF NOT EXISTS impressions (_id INTEGER PRIMARY KEY, url TEXT, processing INT)", connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    SetDbVersion(connection, 3);
                 }
             }
         }
@@ -298,8 +310,9 @@ namespace XiboClient.Stats
         /// <param name="layoutId"></param>
         /// <param name="widgetId"></param>
         /// <param name="statEnabled"></param>
+        /// <param name="urls"></param>
         /// <returns>Duration</returns>
-        public double WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled)
+        public double WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled, List<string> urls)
         {
             Debug.WriteLine(string.Format("WidgetStop: scheduleId: {0}, layoutId: {1}, widgetId: {2}", scheduleId, layoutId, widgetId), "StatManager");
 
@@ -332,6 +345,28 @@ namespace XiboClient.Stats
                         // Record
                         RecordStat(stat);
                     }
+
+                    // Format and save Urls.
+                    if (urls != null)
+                    {
+                        foreach (string url in urls)
+                        {
+                            // We append parameters to the URL and then send or queue
+                            string annotatedUrl = url + "&t=" + ((DateTimeOffset)stat.To).ToUnixTimeMilliseconds();
+
+                            if (stat.GeoEnd != null)
+                            {
+                                annotatedUrl += "&lat=" + stat.GeoEnd.Latitude + "&lng=" + stat.GeoEnd.Longitude;
+                            }
+                            if (stat.GeoStart != null)
+                            {
+                                annotatedUrl += "&latStart=" + stat.GeoStart.Latitude + "&lngStart=" + stat.GeoStart.Longitude;
+                            }
+
+                            // Call Impress on a new thread
+                            Task.Factory.StartNew(() => Impress(url));
+                        }
+                    }
                 }
                 else
                 {
@@ -360,6 +395,7 @@ namespace XiboClient.Stats
                     Count = 1
                 };
                 stat.Engagements.Add("LOCATION", engagement);
+                stat.GeoStart = ClientInfo.Instance.CurrentGeoLocation;
             }
         }
 
@@ -377,6 +413,7 @@ namespace XiboClient.Stats
                 if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
                 {
                     stat.Engagements["LOCATION"].Tag += "|" + ClientInfo.Instance.CurrentGeoLocation.Latitude + "," + ClientInfo.Instance.CurrentGeoLocation.Longitude;
+                    stat.GeoEnd = ClientInfo.Instance.CurrentGeoLocation;
                 }
             }
             else
@@ -392,6 +429,7 @@ namespace XiboClient.Stats
                         Count = 1
                     };
                     stat.Engagements.Add("LOCATION", engagement);
+                    stat.GeoEnd = ClientInfo.Instance.CurrentGeoLocation;
                 }
             }
         }
@@ -819,6 +857,115 @@ namespace XiboClient.Stats
 
                 var result = cmd.ExecuteScalar();
                 return result == null ? 0 : Convert.ToInt32(result);
+            }
+        }
+
+        /// <summary>
+        /// Send an impression, queue on failure
+        /// </summary>
+        /// <param name="url"></param>
+        private void Impress(string uri)
+        {
+            try
+            {
+                // Make a URL
+                var url = new Url(uri).WithTimeout(10);
+                _ = url.GetAsync().Result;
+            } 
+            catch (FlurlHttpTimeoutException)
+            {
+                // Queue and resend
+                try
+                {
+                    using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+                    {
+                        connection.Open();
+
+                        SqliteCommand command = new SqliteCommand
+                        {
+                            Connection = connection,
+                            CommandText = "INSERT INTO impressions (url, processing) VALUES (@url, @processing)"
+                        };
+
+                        command.Parameters.AddWithValue("@url", uri);
+                        command.Parameters.AddWithValue("@processing", 0);
+
+                        // Execute and don't wait for the result
+                        command.ExecuteNonQueryAsync().ContinueWith(t =>
+                        {
+                            var aggException = t.Exception.Flatten();
+                            foreach (var exception in aggException.InnerExceptions)
+                            {
+                                Trace.WriteLine(new LogMessage("StatManager", "Impress: Error saving uri to database. Ex = " + exception.Message), LogType.Error.ToString());
+                            }
+                        },
+                        TaskContinuationOptions.OnlyOnFaulted);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(new LogMessage("StatManager", "Impress: Error saving uri to database. Ex = " + ex.Message), LogType.Error.ToString());
+                }
+            }
+            catch
+            {
+                Trace.WriteLine(new LogMessage("StatManager", "Impress: unexpected error calling impression url. Url: " + uri), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Send any queued impress urls
+        /// </summary>
+        public void DispatchQueuedImpressUrls(int marker)
+        {
+            // Mark records for send.
+            using (var connection = new SqliteConnection("Filename=" + this.databasePath))
+            {
+                connection.Open();
+
+                using (SqliteCommand cmd = new SqliteCommand())
+                {
+                    cmd.Connection = connection;
+                    cmd.CommandText = "UPDATE impressions SET processing = @processing WHERE _id IN (" +
+                        "SELECT _id FROM stat WHERE ifnull(processing, 0) = 0 ORDER BY _id LIMIT @limit" +
+                        ")";
+
+                    // Set the marker
+                    cmd.Parameters.AddWithValue("@processing", marker);
+                    cmd.Parameters.AddWithValue("@limit", 10);
+
+                    int records = cmd.ExecuteNonQuery();
+
+                    if (records <= 0)
+                    {
+                        return;
+                    }
+                }
+
+                // Select the ones we've marked and process them
+                using (SqliteCommand cmd = new SqliteCommand())
+                {
+                    cmd.Connection = connection;
+                    cmd.CommandText = "SELECT url FROM impressions WHERE processing = @processing";
+                    cmd.Parameters.AddWithValue("processing", marker);
+
+                    using (SqliteDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Impress(reader.GetString(0));
+                        }
+                    }
+                }
+
+                // Delete them
+                using (SqliteCommand cmd = new SqliteCommand())
+                {
+                    cmd.Connection = connection;
+                    cmd.CommandText = "DELETE FROM impressions WHERE processing = @processing";
+                    cmd.Parameters.AddWithValue("processing", marker);
+                    cmd.ExecuteScalar();
+                }
             }
         }
     }

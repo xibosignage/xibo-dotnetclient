@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2021 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -36,8 +36,14 @@ namespace XiboClient.Rendering
         private readonly WebView2 webView;
         private bool _webViewInitialised = false;
         private bool _webViewError = false;
+        
+        /// <summary>
+        /// A flag to indicate whether we have loaded web content or not.
+        /// </summary>
+        private bool hasLoaded = false;
 
         private readonly bool hasBackgroundColor = false;
+        private readonly bool isPinchToZoomEnabled = false;
         private bool _renderCalled = false;
         private double _position;
 
@@ -59,6 +65,7 @@ namespace XiboClient.Rendering
             };
             this.webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
             this.webView.NavigationCompleted += WebView_NavigationCompleted;
+            this.isPinchToZoomEnabled = options.IsPinchToZoomEnabled;
 
             // Initialise the web view
             InitialiseWebView();
@@ -121,6 +128,7 @@ namespace XiboClient.Rendering
         {
             if (e.IsSuccess)
             {
+                webView.CoreWebView2.Settings.IsPinchZoomEnabled = isPinchToZoomEnabled;
                 _webViewInitialised = true;
             }
             else
@@ -193,6 +201,7 @@ namespace XiboClient.Rendering
             if (e.IsSuccess)
             {
                 Debug.WriteLine("WebView_NavigationCompleted: Navigate Completed", "WebView");
+                hasLoaded = true;
 
                 DocumentCompleted();
 
@@ -200,13 +209,26 @@ namespace XiboClient.Rendering
                 webView.ExecuteScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
                     + ApplicationSettings.Default.EmbeddedServerPort + "})");
             }
+            else if (hasLoaded && e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted)
+            {
+                Trace.WriteLine(new LogMessage("WebView", "WebView_LoadError: Abort received, ignoring."), LogType.Audit.ToString());
+            }
             else
             {
-                Trace.WriteLine(new LogMessage("WebView", "WebView_NavigationCompleted: e = " + e.WebErrorStatus.ToString()), LogType.Error.ToString());
-
                 // This should exipre the media
                 Duration = 5;
                 base.RestartTimer();
+
+                // If we have a trigger to use, then fire it off (we will still expire if this isn't handled)
+                if (!string.IsNullOrEmpty(PageLoadErrorTrigger))
+                {
+                    // Fire off the page load error trigger.
+                    TriggerWebhook(PageLoadErrorTrigger);
+                }
+                else
+                {
+                    Trace.WriteLine(new LogMessage("WebView", "WebView_NavigationCompleted: e = " + e.WebErrorStatus.ToString()), LogType.Error.ToString());
+                }
             }
         }
 

@@ -22,7 +22,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Windows.Threading;
 using XiboClient.Action;
+using XiboClient.Adspace;
 using XiboClient.Control;
 using XiboClient.Log;
 using XiboClient.Logic;
@@ -84,6 +86,10 @@ namespace XiboClient
         // Log Agent
         private LogAgent _logAgent;
         Thread _logAgentThread;
+
+        // Faults Agent
+        private FaultsAgent _faultsAgent;
+        Thread _faultsAgentThread;
 
         // XMR Subscriber
         private XmrSubscriber _xmrSubscriber;
@@ -149,6 +155,16 @@ namespace XiboClient
             _logAgentThread = new Thread(new ThreadStart(_logAgent.Run));
             _logAgentThread.Name = "LogAgent";
 
+            // Faults Agent
+            _faultsAgent = new FaultsAgent
+            {
+                HardwareKey = _hardwareKey.Key
+            };
+            _faultsAgentThread = new Thread(new ThreadStart(_faultsAgent.Run))
+            {
+                Name = "FaultsAgent"
+            };
+
             // XMR Subscriber
             _xmrSubscriber = new XmrSubscriber();
             _xmrSubscriber.HardwareKey = _hardwareKey;
@@ -189,6 +205,9 @@ namespace XiboClient
             // Start the LogAgent thread
             _logAgentThread.Start();
 
+            // Start the Faults thread
+            _faultsAgentThread.Start();
+
             // Start the Proof of Play thread
             StatManager.Instance.Start();
 
@@ -213,6 +232,12 @@ namespace XiboClient
 
             // Set the current pointer to 0
             _currentLayout = 0;
+
+            // Record the playback if this is a cycle playback item
+            if (_layoutSchedule[0].IsCyclePlayback)
+            {
+                ClientInfo.Instance.IncrementCampaignGroupPlaycount(_layoutSchedule[0].CycleGroupKey);
+            }
 
             // Raise a schedule change event
             ScheduleChangeEvent(_layoutSchedule[0]);
@@ -274,6 +299,7 @@ namespace XiboClient
             return _registerAgentThread.IsAlive &&
                 _scheduleAndRfAgentThread.IsAlive &&
                 _logAgentThread.IsAlive &&
+                _faultsAgentThread.IsAlive &&
                 _libraryAgentThread.IsAlive &&
                 _xmrSubscriberThread.IsAlive;
         }
@@ -352,6 +378,10 @@ namespace XiboClient
                     TriggerWebhookAction webhookAction = (TriggerWebhookAction)action;
                     EmbeddedServerOnTriggerReceived(webhookAction.triggerCode, 0);
                     break;
+
+                case "purgeAll":
+                    _libraryAgent.PurgeAll();
+                    break;
             }
         }
 
@@ -371,8 +401,18 @@ namespace XiboClient
         public void wakeUpXmds()
         {
             _registerAgent.WakeUp();
-            _scheduleAndRfAgent.WakeUp();
             _logAgent.WakeUp();
+            _faultsAgent.WakeUp();
+
+            // Wake up schedule/rf in 20 seconds to give time for register to complete, which will update our CRC's.
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+            timer.Tick += (timerSender, args) =>
+            {
+                // You only tick once
+                timer.Stop();
+                _scheduleAndRfAgent.WakeUp();
+            };
+            timer.Start();
         }
 
         /// <summary>
@@ -433,7 +473,41 @@ namespace XiboClient
 
             ScheduleItem nextLayout = _layoutSchedule[_currentLayout];
 
-            Debug.WriteLine(string.Format("NextLayout: {0}, Interrupt: {1}", nextLayout.layoutFile, nextLayout.IsInterrupt()), "Schedule");
+            Debug.WriteLine(string.Format("NextLayout: {0}, Interrupt: {1}, Cycle based: {2}", 
+                nextLayout.layoutFile, 
+                nextLayout.IsInterrupt(), 
+                nextLayout.IsCyclePlayback
+                ), "Schedule");
+
+            // If we are cycle playback, then resolve the actual layout we want to play out of the group we have.
+            if (nextLayout.IsCyclePlayback)
+            {
+                // The main layout is sequence 0
+                int sequence = ClientInfo.Instance.GetCampaignGroupSequence(nextLayout.CycleGroupKey);
+
+                // Pull out the layout (schedule item) at this group sequence.
+                if (ClientInfo.Instance.GetCampaignGroupPlaycount(nextLayout.CycleGroupKey) >= nextLayout.CyclePlayCount)
+                {
+                    // Next sequence
+                    sequence++;
+                }
+
+                // Make sure we can get this sequence
+                if (sequence > nextLayout.CycleScheduleItems.Count)
+                {
+                    sequence = 0;
+                }
+
+                // Set the next layout
+                if (sequence > 0)
+                {
+                    nextLayout = nextLayout.CycleScheduleItems[sequence];
+                }
+
+                // Set the sequence and increment the playcount
+                ClientInfo.Instance.SetCampaignGroupSequence(nextLayout.CycleGroupKey, sequence);
+                ClientInfo.Instance.IncrementCampaignGroupPlaycount(nextLayout.CycleGroupKey);
+            }
 
             // Raise the event
             ScheduleChangeEvent?.Invoke(nextLayout);
@@ -571,6 +645,9 @@ namespace XiboClient
             // Stop the LogAgent Thread
             _logAgent.Stop();
 
+            // Stop the Faults Agent Thread
+            _faultsAgent.Stop();
+
             // Stop the Proof of Play Thread
             StatManager.Instance.Stop();
 
@@ -629,7 +706,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="triggerCode"></param>
         /// <param name="sourceId"></param>
-        private void EmbeddedServerOnTriggerReceived(string triggerCode, int sourceId)
+        public void EmbeddedServerOnTriggerReceived(string triggerCode, int sourceId)
         {
             OnTriggerReceived?.Invoke("webhook", triggerCode, sourceId, 0);
         }
@@ -669,6 +746,17 @@ namespace XiboClient
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Get an Ad
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
+        public Ad GetAd(double width, double height)
+        {
+            return _scheduleManager.GetAd(width, height);
         }
     }
 }
