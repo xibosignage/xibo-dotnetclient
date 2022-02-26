@@ -297,7 +297,7 @@
       <Version>1.8.9</Version>
     </PackageReference>
     <PackageReference Include="CefSharp.Wpf">
-      <Version>96.0.180</Version>
+      <Version>98.1.210</Version>
     </PackageReference>
     <PackageReference Include="Crc32.NET">
       <Version>1.2.0</Version>
