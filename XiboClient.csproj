@@ -297,7 +297,7 @@
       <Version>1.8.9</Version>
     </PackageReference>
     <PackageReference Include="CefSharp.Wpf">
-      <Version>96.0.180</Version>
+      <Version>99.2.90</Version>
     </PackageReference>
     <PackageReference Include="Crc32.NET">
       <Version>1.2.0</Version>
@@ -309,10 +309,10 @@
       <Version>3.4.3</Version>
     </PackageReference>
     <PackageReference Include="Flurl">
-      <Version>3.0.2</Version>
+      <Version>3.0.4</Version>
     </PackageReference>
     <PackageReference Include="Flurl.Http">
-      <Version>3.2.0</Version>
+      <Version>3.2.2</Version>
     </PackageReference>
     <PackageReference Include="GeoJSON.Net">
       <Version>1.2.19</Version>
@@ -321,16 +321,16 @@
       <Version>0.3.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Data.Sqlite">
-      <Version>6.0.1</Version>
+      <Version>6.0.3</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.SqlServer.Types">
       <Version>14.0.1016.290</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.1072.54</Version>
+      <Version>1.0.1108.44</Version>
     </PackageReference>
     <PackageReference Include="NetMQ">
-      <Version>4.0.1.6</Version>
+      <Version>4.0.1.8</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.1</Version>
