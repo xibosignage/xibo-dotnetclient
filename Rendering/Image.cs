@@ -1,5 +1,5 @@
 ﻿/**
-* Copyright (C) 2020 Xibo Signage Ltd
+* Copyright (C) 2022 Xibo Signage Ltd
 *
 * Xibo - Digital Signage - http://www.xibo.org.uk
 *
@@ -102,14 +102,18 @@ namespace XiboClient.Rendering
             {
                 this.image.Stretch = System.Windows.Media.Stretch.Fill;
             }
+            else if (this.scaleType == "fit")
+            {
+                this.image.Stretch = System.Windows.Media.Stretch.UniformToFill;
+            }
             else
             {
                 this.image.Stretch = System.Windows.Media.Stretch.Uniform;
-
-                // Further worry about alignment
-                this.image.HorizontalAlignment = this.hAlign;
-                this.image.VerticalAlignment = this.vAlign;
             }
+
+            // Further worry about alignment
+            this.image.HorizontalAlignment = this.hAlign;
+            this.image.VerticalAlignment = this.vAlign;
 
             this.MediaScene.Children.Add(this.image);
 
