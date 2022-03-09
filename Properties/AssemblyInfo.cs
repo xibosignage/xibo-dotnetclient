@@ -10,7 +10,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Xibo Digital Signage")]
 [assembly: AssemblyProduct("Xibo")]
-[assembly: AssemblyCopyright("Copyright © Xibo Signage Ltd 2021")]
+[assembly: AssemblyCopyright("Copyright © Xibo Signage Ltd 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -49,6 +49,6 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("3.302.4.0")]
-[assembly: AssemblyFileVersion("3.302.4.0")]
+[assembly: AssemblyVersion("3.303.0.0")]
+[assembly: AssemblyFileVersion("3.303.0.0")]
 [assembly: Guid("3bd467a4-4ef9-466a-b156-a79c13a863f7")]

@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -52,9 +52,9 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "3 R302.4";
+        public string ClientVersion { get; } = "3 R303.0";
         public string Version { get; } = "6";
-        public int ClientCodeVersion { get; } = 302;
+        public int ClientCodeVersion { get; } = 303;
 
         private ApplicationSettings()
         {
