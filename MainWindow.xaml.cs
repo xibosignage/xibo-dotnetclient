@@ -480,7 +480,7 @@ namespace XiboClient
 
             try
             {
-                // Destroy the Current Layout
+                // Stop the Current Layout
                 try
                 {
                     if (this.currentLayout != null)
@@ -498,8 +498,6 @@ namespace XiboClient
                         Debug.WriteLine("ChangeToNextLayout: stopping the current Layout", "MainWindow");
 
                         this.currentLayout.Stop();
-
-                        DestroyLayout(this.currentLayout);
 
                         Debug.WriteLine("ChangeToNextLayout: stopped and removed the current Layout", "MainWindow");
                     }
@@ -601,6 +599,9 @@ namespace XiboClient
         private void StartLayout(Layout layout)
         {
             Debug.WriteLine("StartLayout: Starting...", "MainWindow");
+
+            // Bind to Layout finished
+            layout.OnLayoutStopped += Layout_OnLayoutStopped;
 
             // Match Background Colors
             this.Background = layout.BackgroundColor;
@@ -794,13 +795,24 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Event called when a Layout has been stopped
+        /// </summary>
+        private void Layout_OnLayoutStopped(Layout layout)
+        {
+            Debug.WriteLine("Layout_OnLayoutStopped: Layout completely stopped", "MainWindow");
+
+            DestroyLayout(layout);
+        }
+
+        /// <summary>
         /// Disposes Layout - removes the controls
         /// </summary>
         private void DestroyLayout(Layout layout)
         {
-            Debug.WriteLine("DestoryLayout: Destroying Layout", "MainForm");
+            Debug.WriteLine("DestroyLayout: Destroying Layout", "MainWindow");
 
             layout.Remove();
+            layout.OnLayoutStopped -= Layout_OnLayoutStopped;
 
             this.Scene.Children.Remove(layout);
         }

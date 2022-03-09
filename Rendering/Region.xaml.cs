@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -48,6 +48,11 @@ namespace XiboClient.Rendering
         /// Has this Region Expired?
         /// </summary>
         public bool IsExpired = false;
+
+        /// <summary>
+        /// Is stopped?
+        /// </summary>
+        public bool IsStopped = false;
 
         /// <summary>
         /// Region Dimensions
@@ -121,6 +126,12 @@ namespace XiboClient.Rendering
         public event MediaExpiredDelegate MediaExpiredEvent;
 
         /// <summary>
+        /// Event to indicate that a Region has stopped.
+        /// </summary>
+        public delegate void OnRegionStoppedDelegate();
+        public event OnRegionStoppedDelegate OnRegionStopped;
+
+        /// <summary>
         /// Event to trigger a webhook
         /// </summary>
         /// <param name="triggerCode"></param>
@@ -188,6 +199,7 @@ namespace XiboClient.Rendering
         public void Start()
         {
             // Start this region
+            IsStopped = false;
             this.currentSequence = -1;
             StartNext(0);
         }
@@ -474,7 +486,7 @@ namespace XiboClient.Rendering
             {
                 try
                 {
-                    // Unbind any events and dispose
+                    // Unbind any events and dispose, no transition
                     audio.DurationElapsedEvent -= Audio_DurationElapsedEvent;
                     audio.Stop(false);
                 }
@@ -673,17 +685,7 @@ namespace XiboClient.Rendering
         /// <param name="media"></param>
         private void StopMedia(Media media)
         {
-            StopMedia(media, false);
-        }
-
-        /// <summary>
-        /// Stop normal media node
-        /// </summary>
-        /// <param name="media"></param>
-        /// <param name="regionStopped"></param>
-        private void StopMedia(Media media, bool regionStopped)
-        {
-            Trace.WriteLine(new LogMessage("Region", "StopMedia: " + media.Id + " stopping, region stopped " + regionStopped), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("Region", "StopMedia: " + media.Id + " stopping, region stopped " + IsStopped), LogType.Audit.ToString());
 
             // Dispose of the current media
             try
@@ -697,7 +699,16 @@ namespace XiboClient.Rendering
                 // Tidy Up
                 media.DurationElapsedEvent -= Media_DurationElapsedEvent;
                 media.TriggerWebhookEvent -= Media_TriggerWebhookEvent;
-                media.Stop(regionStopped);
+
+                // Should we override the transition if we have one?
+                if (IsStopped && !string.IsNullOrEmpty(options.TransitionType))
+                {
+                    // This region is stopped, so provide the opportunity for a region exit transition instead of a media transition.
+                    media.OverrideTransitionOut(options.TransitionType, options.TransitionDuration, options.TransitionDirection);
+                }
+
+                // Stop with transition.
+                media.Stop(true);
             }
             catch (Exception ex)
             {
@@ -705,6 +716,9 @@ namespace XiboClient.Rendering
 
                 // Remove the controls
                 RegionScene.Children.Remove(media);
+
+                // We are stopped
+                OnRegionStopped?.Invoke();
             }
         }
 
@@ -721,6 +735,12 @@ namespace XiboClient.Rendering
 
             // Remove the controls
             RegionScene.Children.Remove(media);
+
+            // Does this media stop finish stopping the region?
+            if (IsStopped)
+            {
+                OnRegionStopped?.Invoke();
+            }
         }
 
         /// <summary>
@@ -769,11 +789,6 @@ namespace XiboClient.Rendering
                 Debug.WriteLine("DurationElapsedEvent: Layout Expired, therefore we don't StartNext", "Region");
                 return;
             }
-
-            // TODO:
-            // Animate out at this point if we need to
-            // the result of the animate out complete event should then move us on.
-            // this.currentMedia.TransitionOut();
 
             // make some decisions about what to do next
             try
@@ -828,8 +843,10 @@ namespace XiboClient.Rendering
         /// Clears the Region of anything that it shouldnt still have... 
         /// called when Destroying a Layout and when Removing an Overlay
         /// </summary>
-        public void Clear()
+        public void Stop()
         {
+            IsStopped = true;
+
             try
             {
                 // Stop Audio
@@ -840,10 +857,15 @@ namespace XiboClient.Rendering
                 {
                     StopMedia(this.currentMedia);
                 }
+                else
+                {
+                    // We are stopped immediately
+                    OnRegionStopped?.Invoke();
+                }
             }
             catch
             {
-                Trace.WriteLine(new LogMessage("Region - Clear", "Error closing off stat record"), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Region", "Stop: error stopping region"), LogType.Error.ToString());
             }
         }
 

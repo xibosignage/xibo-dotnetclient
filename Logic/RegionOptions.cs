@@ -59,6 +59,11 @@ namespace XiboClient
         public int PlayerWidth { get; set; }
         public int PlayerHeight { get; set; }
 
+        // Region out transition
+        public string TransitionType;
+        public int TransitionDuration;
+        public string TransitionDirection;
+
         public override string ToString()
         {
             return string.Format("({0},{1},{2},{3},{4},{5})", width, height, top, left, layoutId, regionId);
