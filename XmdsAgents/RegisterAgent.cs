@@ -42,6 +42,9 @@ namespace XiboClient.XmdsAgents
         public delegate void OnXmrReconfigureDelegate();
         public event OnXmrReconfigureDelegate OnXmrReconfigure;
 
+        public delegate void OnRegisterCompleteDelegate(bool error);
+        public event OnRegisterCompleteDelegate OnRegisterComplete;
+
         /// <summary>
         /// Wake Up
         /// </summary>
@@ -181,6 +184,9 @@ namespace XiboClient.XmdsAgents
                                 }
                             }
                         }
+
+                        // Complete
+                        OnRegisterComplete?.Invoke(false);
                     }
                     catch (WebException webEx) when (webEx.Response is HttpWebResponse httpWebResponse && (int)httpWebResponse.StatusCode == 429)
                     {
@@ -189,6 +195,9 @@ namespace XiboClient.XmdsAgents
 
                         // Log it.
                         Trace.WriteLine(new LogMessage("LogAgent", "Run: 429 received, waiting for " + retryAfterSeconds + " seconds."), LogType.Info.ToString());
+
+                        // Complete, failed
+                        OnRegisterComplete?.Invoke(true);
                     }
                     catch (WebException webEx)
                     {
@@ -197,11 +206,17 @@ namespace XiboClient.XmdsAgents
 
                         // Log this message, but dont abort the thread
                         Trace.WriteLine(new LogMessage("RegisterAgent - Run", "WebException in Run: " + webEx.Message), LogType.Info.ToString());
+
+                        // Complete, failed
+                        OnRegisterComplete?.Invoke(true);
                     }
                     catch (Exception ex)
                     {
                         // Log this message, but dont abort the thread
                         Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Exception in Run: " + ex.Message), LogType.Info.ToString());
+
+                        // Complete, failed
+                        OnRegisterComplete?.Invoke(true);
                     }
                 }
 
