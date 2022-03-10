@@ -31,6 +31,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using XiboClient.Action;
 using XiboClient.Adspace;
 using XiboClient.Error;
 using XiboClient.Log;
@@ -499,7 +500,7 @@ namespace XiboClient
 
                         this.currentLayout.Stop();
 
-                        Debug.WriteLine("ChangeToNextLayout: stopped and removed the current Layout", "MainWindow");
+                        Debug.WriteLine("ChangeToNextLayout: stopped and removed the current Layout: " + this.currentLayout.UniqueId, "MainWindow");
                     }
                 }
                 catch (Exception e)
@@ -987,6 +988,9 @@ namespace XiboClient
                 actions.AddRange(overlay.GetActions());
             }
 
+            // Add the current schedule actions
+            actions.AddRange(_schedule.GetActions());
+
             return actions;
         }
 
@@ -1182,8 +1186,9 @@ namespace XiboClient
                     case "navLayout":
                         // Navigate to the provided Layout
                         // target is always screen
-                        ChangeToNextLayout(_schedule.GetScheduleItemForLayoutCode(action.LayoutCode));
+                        Debug.WriteLine("MainWindow", "ExecuteAction: change to next layout with code " + action.LayoutCode);
 
+                        ChangeToNextLayout(_schedule.GetScheduleItemForLayoutCode(action.LayoutCode));
                         break;
 
                     case "navWidget":
@@ -1223,6 +1228,28 @@ namespace XiboClient
                             }
                         }
 
+                        break;
+
+                    case "command":
+                        // Run a command directly
+                        if (action.Target == "screen")
+                        {
+                            // Expect a stored command.
+                            try
+                            {
+                                Command command = Command.GetByCode(action.CommandCode);
+                                command.Run();
+                            }
+                            catch (Exception e)
+                            {
+                                Trace.WriteLine(new LogMessage("MainWindow", "ExecuteAction: cannot run Command: " + e.Message), LogType.Error.ToString());
+                            }
+                        }
+                        else
+                        {
+                            // Not supported
+                            Trace.WriteLine(new LogMessage("MainWindow", "ExecuteAction: command actions must be targeted to the screen."), LogType.Audit.ToString());
+                        }
                         break;
 
                     default:

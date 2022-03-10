@@ -652,6 +652,7 @@ namespace XiboClient.Rendering
                     try
                     {
                         // Clear the region
+                        region.Clear();
                         region.DurationElapsedEvent -= Region_DurationElapsedEvent;
                         region.MediaExpiredEvent -= Region_MediaExpiredEvent;
                         region.OnRegionStopped -= Region_OnRegionStopped;

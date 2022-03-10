@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -782,6 +782,15 @@ namespace XiboClient
         public Ad GetAd(double width, double height)
         {
             return _scheduleManager.GetAd(width, height);
+        }
+
+        /// <summary>
+        /// Get the current actions schedule
+        /// </summary>
+        /// <returns></returns>
+        public List<Action.Action> GetActions()
+        {
+            return _scheduleManager.CurrentActionsSchedule;
         }
     }
 }

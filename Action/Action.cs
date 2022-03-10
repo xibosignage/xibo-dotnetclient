@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -43,6 +43,7 @@ namespace XiboClient.Action
         public string LayoutCode { get; set; }
         public bool Bubble { get; set; }
         public bool IsDrawer { get; set; }
+        public string CommandCode { get; set; }
 
         public Rect Rect { get; set; }
 
@@ -70,6 +71,34 @@ namespace XiboClient.Action
                 Bubble = false,
                 IsDrawer = isDrawer,
                 Rect = new Rect(left, top, width, height)
+            };
+        }
+
+        /// <summary>
+        /// Create an action from a schedule XML node
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        public static Action CreateFromScheduleNode(XmlNode node)
+        {
+            XmlAttributeCollection attributes = node.Attributes;
+
+            return new Action
+            {
+                Id = int.Parse(attributes["scheduleid"].Value),
+                ActionType = attributes["actionType"]?.Value,
+                TriggerType = "webhook",
+                TriggerCode = attributes["triggerCode"]?.Value,
+                WidgetId = 0,
+                SourceId = 0,
+                Source = "schedule",
+                TargetId = 0,
+                Target = "screen",
+                LayoutCode = attributes["layoutCode"]?.Value,
+                Bubble = false,
+                IsDrawer = false,
+                CommandCode = attributes["commandCode"]?.Value,
+                Rect = new Rect(0, 0, 0, 0)
             };
         }
 

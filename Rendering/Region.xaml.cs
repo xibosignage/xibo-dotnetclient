@@ -239,6 +239,8 @@ namespace XiboClient.Rendering
         /// <param name="media">A Media XmlNode</param>
         public void NavigateToWidget(XmlNode node)
         {
+            Debug.WriteLine("Region", "Navigating to widget in Region: " + Id);
+
             // Create the options and media node
             Media media = CreateNextMediaNode(Media.ParseOptions(node));
 
@@ -268,6 +270,9 @@ namespace XiboClient.Rendering
 
                     // Switch-a-roo
                     navigatedMedia = media;
+
+                    // Current media is still set.
+                    Debug.WriteLine("Region", "Navigated to widget in Region: " + Id);
                 } 
                 catch (Exception e)
                 {
@@ -853,7 +858,11 @@ namespace XiboClient.Rendering
                 StopAudio();
 
                 // Stop the current media item
-                if (this.currentMedia != null)
+                if (this.navigatedMedia != null)
+                {
+                    StopMedia(this.navigatedMedia);
+                }
+                else if (this.currentMedia != null)
                 {
                     StopMedia(this.currentMedia);
                 }
@@ -866,6 +875,22 @@ namespace XiboClient.Rendering
             catch
             {
                 Trace.WriteLine(new LogMessage("Region", "Stop: error stopping region"), LogType.Error.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Clear out any remaining stuff.
+        /// </summary>
+        public void Clear()
+        {
+            if (this.navigatedMedia != null)
+            {
+                this.navigatedMedia = null;
+            }
+            
+            if (this.currentMedia != null)
+            {
+                this.currentMedia = null;
             }
         }
 
