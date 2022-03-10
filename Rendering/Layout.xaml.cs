@@ -853,6 +853,24 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
+        /// Does this layout have a widget in its drawer matching the provided ID
+        /// </summary>
+        /// <param name="widgetId"></param>
+        /// <returns></returns>
+        public bool HasWidgetIdInDrawer(int widgetId)
+        {
+            try
+            {
+                GetWidgetFromDrawer(widgetId);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Get Actions
         /// </summary>
         /// <returns></returns>
