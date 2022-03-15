@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -98,6 +98,12 @@ namespace XiboClient.Rendering
         // Layout state
         public bool IsRunning { get; set; }
         public bool IsExpired { get; private set; }
+
+        /// <summary>
+        /// Event to indicate that a Layout has stopped.
+        /// </summary>
+        public delegate void OnLayoutStoppedDelegate(Layout layout);
+        public event OnLayoutStoppedDelegate OnLayoutStopped;
 
         /// <summary>
         /// Layout
@@ -310,7 +316,7 @@ namespace XiboClient.Rendering
                     continue;
                 }
 
-                // Region loop setting
+                // Region options: loop, transitions.
                 options.RegionLoop = false;
 
                 XmlNode regionOptionsNode = region.SelectSingleNode("options");
@@ -320,11 +326,32 @@ namespace XiboClient.Rendering
                     foreach (XmlNode option in regionOptionsNode.ChildNodes)
                     {
                         if (option.Name == "loop" && option.InnerText == "1")
+                        {
                             options.RegionLoop = true;
+                        }
+                        else if (option.Name == "transitionType")
+                        {
+                            options.TransitionType = option.InnerText;
+                        }
+                        else if (option.Name == "transitionDuration" && !string.IsNullOrEmpty(option.InnerText))
+                        {
+                            try
+                            {
+                                options.TransitionDuration = int.Parse(option.InnerText);
+                            }
+                            catch
+                            {
+                                options.TransitionDuration = 2000;
+                            }
+                        }
+                        else if (option.Name == "transitionDirection")
+                        {
+                            options.TransitionDirection = option.InnerText;
+                        }
                     }
                 }
 
-                //each region
+                // Each region
                 XmlAttributeCollection nodeAttibutes = region.Attributes;
 
                 options.scheduleId = ScheduleId;
@@ -467,6 +494,7 @@ namespace XiboClient.Rendering
                 Region temp = new Region();
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(Region_DurationElapsedEvent);
                 temp.MediaExpiredEvent += Region_MediaExpiredEvent;
+                temp.OnRegionStopped += Region_OnRegionStopped;
                 temp.TriggerWebhookEvent += Region_TriggerWebhookEvent;
 
                 // ZIndex
@@ -587,6 +615,25 @@ namespace XiboClient.Rendering
             // Record final duration of this layout in memory cache
             CacheManager.Instance.RecordLayoutDuration(_layoutId, (int)Math.Ceiling(duration));
 
+            // Stop each region and let their transitions play out (if any)
+            lock (_regions)
+            {
+                foreach (Region region in _regions)
+                {
+                    try
+                    {
+                        region.Stop();
+                    }
+                    catch (Exception e)
+                    {
+                        // If we can't dispose we should log to understand why
+                        Trace.WriteLine(new LogMessage("Layout", "Remove: " + e.Message), LogType.Info.ToString());
+
+                        this.LayoutScene.Children.Remove(region);
+                    }
+                }
+            }
+
             IsRunning = false;
         }
 
@@ -608,9 +655,9 @@ namespace XiboClient.Rendering
                         region.Clear();
                         region.DurationElapsedEvent -= Region_DurationElapsedEvent;
                         region.MediaExpiredEvent -= Region_MediaExpiredEvent;
+                        region.OnRegionStopped -= Region_OnRegionStopped;
                         region.TriggerWebhookEvent -= Region_TriggerWebhookEvent;
 
-                        // Remove the region from the list of controls
                         this.LayoutScene.Children.Remove(region);
                     }
                     catch (Exception e)
@@ -762,8 +809,8 @@ namespace XiboClient.Rendering
                 // Execute this media node immediately.
                 media.RenderMedia(0);
 
-                // Stop it
-                media.Stop(true);
+                // Stop it (no transition)
+                media.Stop(false);
                 media = null;
             }));
         }
@@ -804,6 +851,24 @@ namespace XiboClient.Rendering
             }
 
             throw new Exception("Drawer does not contain a Widget with widgetId " + widgetId);
+        }
+
+        /// <summary>
+        /// Does this layout have a widget in its drawer matching the provided ID
+        /// </summary>
+        /// <param name="widgetId"></param>
+        /// <returns></returns>
+        public bool HasWidgetIdInDrawer(int widgetId)
+        {
+            try
+            {
+                GetWidgetFromDrawer(widgetId);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -873,6 +938,31 @@ namespace XiboClient.Rendering
         private void Region_MediaExpiredEvent()
         {
             Trace.WriteLine(new LogMessage("Region", "MediaExpiredEvent: Media Elapsed"), LogType.Audit.ToString());
+        }
+
+        /// <summary>
+        /// A region has stopped.
+        /// </summary>
+        private void Region_OnRegionStopped()
+        {
+            Debug.WriteLine("Region_OnRegionStopped: Region stopped", "Layout");
+
+            foreach (Region temp in _regions)
+            {
+                if (!temp.IsStopped)
+                {
+                    return;
+                }
+            }
+
+            Debug.WriteLine("Region_OnRegionStopped: All regions stopped", "Layout");
+
+            // All regions have stopped.
+            // Yield and then call stop.
+            Dispatcher.BeginInvoke(new System.Action(() =>
+            {
+                OnLayoutStopped?.Invoke(this);
+            }));
         }
 
         /// <summary>

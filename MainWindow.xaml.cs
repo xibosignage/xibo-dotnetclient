@@ -31,6 +31,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using XiboClient.Action;
 using XiboClient.Adspace;
 using XiboClient.Error;
 using XiboClient.Log;
@@ -480,7 +481,7 @@ namespace XiboClient
 
             try
             {
-                // Destroy the Current Layout
+                // Stop the Current Layout
                 try
                 {
                     if (this.currentLayout != null)
@@ -499,9 +500,7 @@ namespace XiboClient
 
                         this.currentLayout.Stop();
 
-                        DestroyLayout(this.currentLayout);
-
-                        Debug.WriteLine("ChangeToNextLayout: stopped and removed the current Layout", "MainWindow");
+                        Debug.WriteLine("ChangeToNextLayout: stopped and removed the current Layout: " + this.currentLayout.UniqueId, "MainWindow");
                     }
                 }
                 catch (Exception e)
@@ -601,6 +600,9 @@ namespace XiboClient
         private void StartLayout(Layout layout)
         {
             Debug.WriteLine("StartLayout: Starting...", "MainWindow");
+
+            // Bind to Layout finished
+            layout.OnLayoutStopped += Layout_OnLayoutStopped;
 
             // Match Background Colors
             this.Background = layout.BackgroundColor;
@@ -794,13 +796,24 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Event called when a Layout has been stopped
+        /// </summary>
+        private void Layout_OnLayoutStopped(Layout layout)
+        {
+            Debug.WriteLine("Layout_OnLayoutStopped: Layout completely stopped", "MainWindow");
+
+            DestroyLayout(layout);
+        }
+
+        /// <summary>
         /// Disposes Layout - removes the controls
         /// </summary>
         private void DestroyLayout(Layout layout)
         {
-            Debug.WriteLine("DestoryLayout: Destroying Layout", "MainForm");
+            Debug.WriteLine("DestroyLayout: Destroying Layout", "MainWindow");
 
             layout.Remove();
+            layout.OnLayoutStopped -= Layout_OnLayoutStopped;
 
             this.Scene.Children.Remove(layout);
         }
@@ -956,6 +969,84 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Get actions
+        /// </summary>
+        /// <returns></returns>
+        private List<Action.Action> GetActions()
+        {
+            List<Action.Action> actions = new List<Action.Action>();
+
+            // Pull actions from the main layout and any overlays
+            if (currentLayout != null)
+            {
+                actions.AddRange(currentLayout.GetActions());
+            }
+
+            // Add overlays
+            foreach (Layout overlay in _overlays)
+            {
+                actions.AddRange(overlay.GetActions());
+            }
+
+            // Add the current schedule actions
+            actions.AddRange(_schedule.GetActions());
+
+            return actions;
+        }
+
+        /// <summary>
+        /// Is the provided widgetId playing?
+        /// </summary>
+        /// <param name="sourceId"></param>
+        /// <returns></returns>
+        private bool IsWidgetIdPlaying(int sourceId)
+        {
+            if (currentLayout != null)
+            {
+                if (currentLayout.IsWidgetIdPlaying("" + sourceId))
+                {
+                    return true;
+                }
+            }
+
+            foreach (Layout overlay in _overlays)
+            {
+                if (overlay.IsWidgetIdPlaying("" + sourceId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Is the provided widgetId playing?
+        /// </summary>
+        /// <param name="sourceId"></param>
+        /// <returns></returns>
+        private bool IsWidgetIdPlayingInRegion(Point point, int sourceId)
+        {
+            if (currentLayout != null)
+            {
+                if (currentLayout.GetCurrentWidgetIdForRegion(point).Contains("" + sourceId))
+                {
+                    return true;
+                }
+            }
+
+            foreach (Layout overlay in _overlays)
+            {
+                if (overlay.GetCurrentWidgetIdForRegion(point).Contains("" + sourceId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Handle Action trigger from a Trigger
         /// </summary>
         /// <param name="triggerType"></param>
@@ -993,16 +1084,9 @@ namespace XiboClient
         /// <param name="duration"></param>
         public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, Point point)
         {
-            // If we're interrupting we don't process any actions.
-            if (currentLayout == null)
-            {
-                Debug.WriteLine("HandleActionTrigger: Skipping Action as current Layout is not set.", "MainWindow");
-                return;
-            }
-
             // Do we have any actions which match this trigger type?
             // These are in order, with Widgets first.
-            foreach (Action.Action action in currentLayout.GetActions())
+            foreach (Action.Action action in GetActions())
             {
                 // Match the trigger type
                 if (action.TriggerType != triggerType)
@@ -1022,7 +1106,7 @@ namespace XiboClient
                     continue;
                 }
                 // Webhooks coming from a Widget must be active somewhere on the Layout
-                else if (triggerType == "webhook" && action.Source == "widget" && !currentLayout.IsWidgetIdPlaying("" + action.SourceId))
+                else if (triggerType == "webhook" && action.Source == "widget" && !IsWidgetIdPlaying(action.SourceId))
                 {
                     Debug.WriteLine(point.ToString() + " webhook matches widget which isn't playing: " + action.SourceId, "HandleActionTrigger");
                     continue;
@@ -1034,7 +1118,7 @@ namespace XiboClient
                     continue;
                 }
                 // If the source of the action is a widget, it must currently be active.
-                else if (triggerType == "touch" && action.Source == "widget" && !currentLayout.GetCurrentWidgetIdForRegion(point).Contains("" + action.SourceId))
+                else if (triggerType == "touch" && action.Source == "widget" && !IsWidgetIdPlayingInRegion(point, action.SourceId))
                 {
                     Debug.WriteLine(point.ToString() + " not active widget: " + action.SourceId, "HandleActionTrigger");
                     continue;
@@ -1102,23 +1186,70 @@ namespace XiboClient
                     case "navLayout":
                         // Navigate to the provided Layout
                         // target is always screen
-                        ChangeToNextLayout(_schedule.GetScheduleItemForLayoutCode(action.LayoutCode));
+                        Debug.WriteLine("MainWindow", "ExecuteAction: change to next layout with code " + action.LayoutCode);
 
+                        ChangeToNextLayout(_schedule.GetScheduleItemForLayoutCode(action.LayoutCode));
                         break;
 
                     case "navWidget":
                         // Navigate to the provided Widget
-                        if (action.Target == "screen")
+                        // A widget action could come from a normal Layout or an overlay, which is it?
+                        if (currentLayout.HasWidgetIdInDrawer(action.WidgetId))
                         {
-                            // Expect a shell command.
-                            currentLayout.ExecuteWidget(action.WidgetId);
+                            if (action.Target == "screen")
+                            {
+                                // Expect a shell command.
+                                currentLayout.ExecuteWidget(action.WidgetId);
+                            }
+                            else
+                            {
+                                // Provided Widget in the named region
+                                currentLayout.RegionChangeToWidget(action.TargetId + "", action.WidgetId);
+                            }
                         }
                         else
                         {
-                            // Provided Widget in the named region
-                            currentLayout.RegionChangeToWidget(action.TargetId + "", action.WidgetId);
+                            // Check in overlays
+                            foreach (Layout overlay in _overlays)
+                            {
+                                if (overlay.HasWidgetIdInDrawer(action.WidgetId))
+                                {
+                                    if (action.Target == "screen")
+                                    {
+                                        // Expect a shell command.
+                                        overlay.ExecuteWidget(action.WidgetId);
+                                    }
+                                    else
+                                    {
+                                        // Provided Widget in the named region
+                                        overlay.RegionChangeToWidget(action.TargetId + "", action.WidgetId);
+                                    }
+                                }
+                            }
                         }
 
+                        break;
+
+                    case "command":
+                        // Run a command directly
+                        if (action.Target == "screen")
+                        {
+                            // Expect a stored command.
+                            try
+                            {
+                                Command command = Command.GetByCode(action.CommandCode);
+                                command.Run();
+                            }
+                            catch (Exception e)
+                            {
+                                Trace.WriteLine(new LogMessage("MainWindow", "ExecuteAction: cannot run Command: " + e.Message), LogType.Error.ToString());
+                            }
+                        }
+                        else
+                        {
+                            // Not supported
+                            Trace.WriteLine(new LogMessage("MainWindow", "ExecuteAction: command actions must be targeted to the screen."), LogType.Audit.ToString());
+                        }
                         break;
 
                     default:

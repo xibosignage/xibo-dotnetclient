@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -63,6 +63,11 @@ namespace XiboClient
         /// </summary>
         private bool _stopCalled = false;
 
+        /// <summary>
+        /// Should we trigger a schedule call on register complete?
+        /// </summary>
+        private bool _triggerScheduleOnRegisterComplete = false;
+
         #region Threads and Agents
         // Key
         private HardwareKey _hardwareKey;
@@ -117,6 +122,7 @@ namespace XiboClient
             // Create a Register Agent
             _registerAgent = new RegisterAgent();
             _registerAgent.OnXmrReconfigure += _registerAgent_OnXmrReconfigure;
+            _registerAgent.OnRegisterComplete += _registerAgent_OnRegisterComplete;
             _registerAgentThread = new Thread(new ThreadStart(_registerAgent.Run));
             _registerAgentThread.Name = "RegisterAgentThread";
 
@@ -313,6 +319,21 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Regiser call has completed.
+        /// </summary>
+        /// <param name="error"></param>
+        private void _registerAgent_OnRegisterComplete(bool error)
+        {
+            if (!error && _triggerScheduleOnRegisterComplete)
+            {
+                _scheduleAndRfAgent.WakeUp();
+            }
+
+            // Reset
+            _triggerScheduleOnRegisterComplete = false;
+        }
+
+        /// <summary>
         /// XMR Subscriber Action
         /// </summary>
         void _xmrSubscriber_OnAction(Action.PlayerActionInterface action)
@@ -400,17 +421,20 @@ namespace XiboClient
         /// </summary>
         public void wakeUpXmds()
         {
+            // Wake up schedule/rf after the register call, which will update our CRC's.
+            _triggerScheduleOnRegisterComplete = true;
             _registerAgent.WakeUp();
-            _logAgent.WakeUp();
-            _faultsAgent.WakeUp();
 
-            // Wake up schedule/rf in 20 seconds to give time for register to complete, which will update our CRC's.
+            // Wake up other calls in a little while (give the rest time to complete so we send the latest info)
             var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
             timer.Tick += (timerSender, args) =>
             {
                 // You only tick once
                 timer.Stop();
-                _scheduleAndRfAgent.WakeUp();
+
+                // Wake
+                _logAgent.WakeUp();
+                _faultsAgent.WakeUp();
             };
             timer.Start();
         }
@@ -631,6 +655,7 @@ namespace XiboClient
             _stopCalled = true;
 
             // Stop the register agent
+            _registerAgent.OnRegisterComplete -= _registerAgent_OnRegisterComplete;
             _registerAgent.Stop();
 
             // Stop the requiredfiles agent
@@ -757,6 +782,15 @@ namespace XiboClient
         public Ad GetAd(double width, double height)
         {
             return _scheduleManager.GetAd(width, height);
+        }
+
+        /// <summary>
+        /// Get the current actions schedule
+        /// </summary>
+        /// <returns></returns>
+        public List<Action.Action> GetActions()
+        {
+            return _scheduleManager.CurrentActionsSchedule;
         }
     }
 }

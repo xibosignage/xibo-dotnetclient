@@ -257,11 +257,11 @@ namespace XiboClient.Rendering
 
         /// <summary>
         /// Stop this Media
-        /// <param name="regionStopped"/>
+        /// <param name="isShouldTransition"/>
         /// </summary>
-        public void Stop(bool regionStopped)
+        public void Stop(bool isShouldTransition)
         {
-            if (regionStopped)
+            if (!isShouldTransition)
             {
                 this._stopped = true;
                 this.MediaStoppedEvent?.Invoke(this);
@@ -373,6 +373,19 @@ namespace XiboClient.Rendering
                 this._stopped = true;
                 this.MediaStoppedEvent?.Invoke(this);
             }
+        }
+
+        /// <summary>
+        /// Override the out transition with a new one
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="duration"></param>
+        /// <param name="direction"></param>
+        public void OverrideTransitionOut(string type, int duration, string direction)
+        {
+            this.options.Dictionary.Replace("transOut", type);
+            this.options.Dictionary.Replace("transOutDuration", "" + duration);
+            this.options.Dictionary.Replace("transOutDirection", direction);
         }
 
         /// <summary>

@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -41,8 +41,9 @@ namespace XiboClient.Action
 
         /// <summary>
         /// Last Heartbeat packet received
+        /// Assume a successful connection so that a check doesn't immediately tear down the socket.
         /// </summary>
-        public DateTime LastHeartBeat = DateTime.MinValue;
+        public DateTime LastHeartBeat = DateTime.Now;
 
         // Events
         public delegate void OnActionDelegate(PlayerActionInterface action);
@@ -66,11 +67,6 @@ namespace XiboClient.Action
         private NetMQPoller _poller;
 
         /// <summary>
-        /// The Init Address
-        /// </summary>
-        private string _address;
-
-        /// <summary>
         /// Runs the agent
         /// </summary>
         public void Run()
@@ -89,9 +85,6 @@ namespace XiboClient.Action
                         // Check we have an address to connect to.
                         if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && ApplicationSettings.Default.XmrNetworkAddress != "DISABLED")
                         {
-                            // Cache the address for this socket (the setting may change outside).
-                            _address = ApplicationSettings.Default.XmrNetworkAddress;
-
                             // Get the Private Key
                             AsymmetricCipherKeyPair rsaKey = _hardwareKey.getXmrKey();
 
@@ -278,21 +271,22 @@ namespace XiboClient.Action
         /// </summary>
         public void Restart()
         {
+            // Stop the poller
             try
             {
-                // Stop the poller
                 if (_poller != null)
                 {
                     _poller.Stop();
+                    _poller.Dispose();
                 }
-
-                // Wakeup
-                _manualReset.Set();
             }
             catch (Exception e)
             {
-                Trace.WriteLine(new LogMessage("XmrSubscriber - Restart", "Unable to Restart XMR: " + e.Message), LogType.Info.ToString());
+                Trace.WriteLine(new LogMessage("XmrSubscriber - Restart", "Unable to stop XMR during restart: " + e.Message), LogType.Info.ToString());
             }
+
+            // Wakeup
+            _manualReset.Set();
         }
 
         /// <summary>
@@ -306,18 +300,19 @@ namespace XiboClient.Action
                 if (_poller != null)
                 {
                     _poller.Stop();
+                    _poller.Dispose();
                 }
-
-                // Stop the thread at the next loop
-                _forceStop = true;
-
-                // Wakeup
-                _manualReset.Set();
             }
             catch (Exception e)
             {
                 Trace.WriteLine(new LogMessage("XmrSubscriber - Stop", "Unable to Stop XMR: " + e.Message), LogType.Info.ToString());
             }
+            
+            // Stop the thread at the next loop
+            _forceStop = true;
+
+            // Wakeup
+            _manualReset.Set();
         }
     }
 }
