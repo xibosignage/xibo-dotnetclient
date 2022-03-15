@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Device.Location;
 using System.Diagnostics;
+using XiboClient.Helpers;
 
 namespace XiboClient.Logic
 {
@@ -194,29 +195,17 @@ namespace XiboClient.Logic
             }
             else
             {
-                try
+                // Current location.
+                Point current = new Point(new Position(geoCoordinate.Latitude, geoCoordinate.Longitude));
+
+                // Have we already tested this?
+                if (this.testedAgainst == null || !testedAgainst.Equals(current))
                 {
-                    // Current location.
-                    Point current = new Point(new Position(geoCoordinate.Latitude, geoCoordinate.Longitude));
+                    // Not tested yet, or position changed.
+                    this.testedAgainst = current;
 
-                    // Have we already tested this?
-                    if (this.testedAgainst == null || !testedAgainst.Equals(current))
-                    {
-                        // Not tested yet, or position changed.
-                        this.testedAgainst = current;
-
-                        // Test against the geo location
-                        var geo = JsonConvert.DeserializeObject<Feature>(GeoLocation);
-
-                        // Use SQL spatial helper to calculate intersection or not
-                        SqlGeometry polygon = (geo.Geometry as Polygon).ToSqlGeometry();
-
-                        IsGeoActive = current.ToSqlGeometry().STIntersects(polygon).Value;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Trace.WriteLine(new LogMessage("ScheduleItem", "SetIsGeoActive: Cannot parse geo location: e = " + e.Message), LogType.Audit.ToString());
+                    // Test
+                    IsGeoActive = GeoHelper.IsGeoInPoint(GeoLocation, current);
                 }
             }
 

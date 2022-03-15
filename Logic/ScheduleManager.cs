@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -29,6 +29,7 @@ using System.Threading;
 using System.Xml;
 using XiboClient.Action;
 using XiboClient.Adspace;
+using XiboClient.Helpers;
 using XiboClient.Log;
 using XiboClient.Logic;
 
@@ -65,6 +66,7 @@ namespace XiboClient
         private List<ScheduleCommand> _commands;
         private List<ScheduleItem> _overlaySchedule;
         private List<ScheduleItem> _invalidSchedule;
+        private List<Action.Action> _actionsSchedule;
 
         // State
         private bool _refreshSchedule;
@@ -92,6 +94,10 @@ namespace XiboClient
             CurrentOverlaySchedule = new List<ScheduleItem>();
             _overlaySchedule = new List<ScheduleItem>();
             _overlayLayoutActions = new List<OverlayLayoutPlayerAction>();
+
+            // Action schedules
+            CurrentActionsSchedule = new List<Action.Action>();
+            _actionsSchedule = new List<Action.Action>();
 
             // Screenshot
             _lastScreenShotDate = DateTime.MinValue;
@@ -134,6 +140,11 @@ namespace XiboClient
         /// Get the current overlay schedule
         /// </summary>
         public List<ScheduleItem> CurrentOverlaySchedule { get; private set; }
+
+        /// <summary>
+        /// The current scheduled actions
+        /// </summary>
+        public List<Action.Action> CurrentActionsSchedule { get; private set; }
 
         #endregion
 
@@ -395,6 +406,9 @@ namespace XiboClient
                     // Clear the list of overlays
                     _overlaySchedule.Clear();
 
+                    // Clear the list of actions
+                    _actionsSchedule.Clear();
+
                     // Load in the schedule
                     LoadScheduleFromFile();
 
@@ -502,6 +516,9 @@ namespace XiboClient
 
             // Set the new Overlay schedule
             CurrentOverlaySchedule = overlaySchedule;
+
+            // Set the Actions schedule
+            CurrentActionsSchedule = _actionsSchedule;
 
             // Return True if we want to refresh the schedule OR false if we are OK to leave the current one.
             // We can update the current schedule and still return false - this will not trigger a schedule change event.
@@ -1034,6 +1051,10 @@ namespace XiboClient
                         _overlaySchedule.Add(ParseNodeIntoScheduleItem(overlayNode));
                     }
                 }
+                else if (node.Name == "actions")
+                {
+                    ParseNodeListIntoActions(node.ChildNodes);
+                }
                 else
                 {
                     _layoutSchedule.Add(ParseNodeIntoScheduleItem(node));
@@ -1183,6 +1204,67 @@ namespace XiboClient
             }
 
             return temp;
+        }
+
+        /// <summary>
+        /// Parse a node list of actions into actual actions
+        /// </summary>
+        /// <param name="nodes"></param>
+        private void ParseNodeListIntoActions(XmlNodeList nodes)
+        {
+            // Track the highest priority
+            int highestPriority = 0;
+
+            foreach (XmlNode node in nodes)
+            {
+                XmlAttributeCollection attributes = node.Attributes;
+
+                // Priority flag
+                int actionPriority;
+                try
+                {
+                    actionPriority = int.Parse(attributes["priority"].Value);
+                }
+                catch
+                {
+                    actionPriority = 0;
+                }
+
+                // Get the fromdt,todt
+                DateTime fromDt = DateTime.Parse(attributes["fromdt"].Value, CultureInfo.InvariantCulture);
+                DateTime toDt = DateTime.Parse(attributes["todt"].Value, CultureInfo.InvariantCulture);
+
+                if (DateTime.Now > fromDt && DateTime.Now < toDt)
+                {
+                    // Geo Schedule
+                    if (attributes["isGeoAware"] != null && attributes["isGeoAware"].Value == "1")
+                    {
+                        // Test the geo location and skip if we're outside
+                        string geoLocation = attributes["geoLocation"] != null ? attributes["geoLocation"].Value : "";
+                        if (string.IsNullOrEmpty(geoLocation)
+                            || ClientInfo.Instance.CurrentGeoLocation == null
+                            || ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+                        {
+                            continue;
+                        }
+
+                        // Test the geolocation
+                        if (!GeoHelper.IsGeoInPoint(geoLocation, ClientInfo.Instance.CurrentGeoLocation))
+                        {
+                            continue;
+                        }
+                    }
+
+                    // is this a new high watermark for priority
+                    if (actionPriority > highestPriority)
+                    {
+                        _actionsSchedule.Clear();
+                        highestPriority = actionPriority;
+                    }
+
+                    _actionsSchedule.Add(Action.Action.CreateFromScheduleNode(node));
+                }
+            }
         }
 
         /// <summary>
