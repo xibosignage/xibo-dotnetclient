@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -77,10 +77,19 @@ namespace XiboClient.Rendering
             }
             else
             {
-                // shell command
+                // AdHoc Shell command
+                // does this command use one of our helpers?
+                Command command = new Command
+                {
+                    CommandString = _command
+                };
 
-                // Is this module enabled?
-                if (ApplicationSettings.Default.EnableShellCommands)
+                if (command.IsUsesHelper())
+                {
+                    // Run this command as if it was a stored command.
+                    command.Run();
+                }
+                else if (ApplicationSettings.Default.EnableShellCommands)
                 {
                     // Check to see if we have an allow list
                     if (!string.IsNullOrEmpty(ApplicationSettings.Default.ShellCommandAllowList))
