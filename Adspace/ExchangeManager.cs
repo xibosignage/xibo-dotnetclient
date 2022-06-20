@@ -380,7 +380,10 @@ namespace XiboClient.Adspace
                                     break;
 
                                 case "validType":
-                                    ad.AllowedWrapperType = extensionNode.InnerText;
+                                    if (!string.IsNullOrEmpty(extensionNode.InnerText))
+                                    {
+                                        ad.AllowedWrapperTypes = extensionNode.InnerText.Split(',').ToList();
+                                    }
                                     break;
 
                                 case "validDuration":
@@ -487,9 +490,8 @@ namespace XiboClient.Adspace
                         // Did this resolve from a wrapper? if so do some extra checks.
                         if (ad.IsWrapper)
                         {
-                            if (!string.IsNullOrEmpty(ad.AllowedWrapperType)
-                                    && ad.AllowedWrapperType.ToLower() != "all"
-                                    && ad.Type.ToLower() != ad.AllowedWrapperType.ToLower())
+                            if (!ad.AllowedWrapperTypes.Contains("all", StringComparer.OrdinalIgnoreCase)
+                                && !ad.AllowedWrapperTypes.Contains(ad.Type.ToLower(), StringComparer.OrdinalIgnoreCase))
                             {
                                 ReportError(ad.ErrorUrls, 200);
                                 continue;
