@@ -522,7 +522,7 @@ namespace XiboClient.Adspace
                 if (buffet.Count <= 0)
                 {
                     // Nothing added this time.
-                    throw new Exception("No ads returned this time");
+                    Trace.WriteLine(new LogMessage("ExchangeManager", "Request: No ads returned this time"), LogType.Info.ToString());
                 }
             }
             catch (Exception e)
