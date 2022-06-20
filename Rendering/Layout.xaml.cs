@@ -307,6 +307,7 @@ namespace XiboClient.Rendering
             }
 
             // Parse the regions
+            int maxLayer = 0;
             foreach (XmlNode region in listRegions)
             {
                 // Is there any media
@@ -504,8 +505,10 @@ namespace XiboClient.Rendering
                 }
                 catch
                 {
-                    temp.ZIndex = 0;
+                    // Use the ordering of this region as the z-index
+                    temp.ZIndex = maxLayer + 1;
                 }
+                maxLayer = Math.Max(temp.ZIndex, maxLayer);
 
                 Debug.WriteLine("loadFromFile: Created new region", "Layout");
 
@@ -522,7 +525,7 @@ namespace XiboClient.Rendering
             _actions.Sort((l, r) => Action.Action.PriorityForActionSource(l.Source) < Action.Action.PriorityForActionSource(r.Source) ? -1 : 1);
 
             // Order all Regions by their ZIndex
-            _regions.Sort((l, r) => l.ZIndex <= r.ZIndex ? -1 : 1);
+            _regions.Sort((l, r) => l.ZIndex.CompareTo(r.ZIndex));
 
             // Add all Regions to the Scene
             foreach (Region temp in _regions)
