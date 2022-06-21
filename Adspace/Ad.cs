@@ -51,7 +51,7 @@ namespace XiboClient.Adspace
 
         public bool IsWrapper;
         public int CountWraps = 0;
-        public string AllowedWrapperType;
+        public List<string> AllowedWrapperTypes = new List<string>();
         public string AllowedWrapperDuration;
 
         public bool IsGeoAware = false;
