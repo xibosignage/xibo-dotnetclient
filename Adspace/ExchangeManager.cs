@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -24,23 +24,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using XiboClient.Log;
-using XiboClient.Logic;
 
 namespace XiboClient.Adspace
 {
     class ExchangeManager
     {
-#if DEBUG
-        private readonly string AdspaceUrl = @"https://test-exchange.xibo-adspace.com/vast/device";
-#else
         private readonly string AdspaceUrl = @"https://exchange.xibo-adspace.com/vast/device";
-#endif
 
         // State
         private bool isActive;
@@ -388,7 +380,10 @@ namespace XiboClient.Adspace
                                     break;
 
                                 case "validType":
-                                    ad.AllowedWrapperType = extensionNode.InnerText;
+                                    if (!string.IsNullOrEmpty(extensionNode.InnerText))
+                                    {
+                                        ad.AllowedWrapperTypes = extensionNode.InnerText.Split(',').ToList();
+                                    }
                                     break;
 
                                 case "validDuration":
@@ -495,9 +490,8 @@ namespace XiboClient.Adspace
                         // Did this resolve from a wrapper? if so do some extra checks.
                         if (ad.IsWrapper)
                         {
-                            if (!string.IsNullOrEmpty(ad.AllowedWrapperType)
-                                    && ad.AllowedWrapperType.ToLower() != "all"
-                                    && ad.Type.ToLower() != ad.AllowedWrapperType.ToLower())
+                            if (!ad.AllowedWrapperTypes.Contains("all", StringComparer.OrdinalIgnoreCase)
+                                && !ad.AllowedWrapperTypes.Contains(ad.Type.ToLower(), StringComparer.OrdinalIgnoreCase))
                             {
                                 ReportError(ad.ErrorUrls, 200);
                                 continue;
@@ -528,7 +522,7 @@ namespace XiboClient.Adspace
                 if (buffet.Count <= 0)
                 {
                     // Nothing added this time.
-                    throw new Exception("No ads returned this time");
+                    Trace.WriteLine(new LogMessage("ExchangeManager", "Request: No ads returned this time"), LogType.Info.ToString());
                 }
             }
             catch (Exception e)
@@ -550,12 +544,17 @@ namespace XiboClient.Adspace
         /// <param name="errorCode"></param>
         private void ReportError(List<string> urls, int errorCode)
         {
-            foreach (string uri in urls)
+            foreach (string url in urls)
             {
                 try
                 {
-                    var url = new Url(uri.Replace("[ERRORCODE]", "" + errorCode));
-                    url.WithTimeout(10).GetAsync().ContinueWith(t =>
+                    // Macros
+                    string uri = url
+                        .Replace("[TIMESTAMP]", "" + DateTime.Now.ToString("o", System.Globalization.CultureInfo.InvariantCulture))
+                        .Replace("[ERRORCODE]", "" + errorCode);
+
+                    // Call the URL
+                    new Url(uri).WithTimeout(10).GetAsync().ContinueWith(t =>
                     {
                         Trace.WriteLine(new LogMessage("ExchangeManager", "ReportError: failed to report error to " + uri + ", code: " + errorCode), LogType.Error.ToString());
                     },
@@ -563,7 +562,7 @@ namespace XiboClient.Adspace
                 }
                 catch (Exception e)
                 {
-                    Trace.WriteLine(new LogMessage("ExchangeManager", "ReportError: failed to report error to " + uri + ", code: " + errorCode + ". e: " + e.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("ExchangeManager", "ReportError: failed to report error to " + url + ", code: " + errorCode + ". e: " + e.Message), LogType.Error.ToString());
                 }
             }
         }

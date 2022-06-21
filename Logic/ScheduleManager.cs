@@ -823,6 +823,12 @@ namespace XiboClient
                 index++;
             }
 
+            // If the interrupt schedule is a full hour, then just resolve 1 item covering the whole lot
+            if (interruptSecondsInHour >= 3600)
+            {
+                return interrupt;
+            }
+
             // We will have some time remaining, so go through the normal layouts and produce a schedule
             // to consume this remaining time
             int normalSecondsInHour = 3600 - interruptSecondsInHour;

@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -32,6 +32,21 @@ namespace XiboClient.Action
         public string CommandString;
         public string Validation;
 
+        /// <summary>
+        /// Does this command use a helper?
+        /// </summary>
+        /// <returns></returns>
+        public bool IsUsesHelper()
+        {
+            return CommandString.StartsWith("rs232")
+                || CommandString == "SoftRestart"
+                || CommandString.StartsWith("http|");
+        }
+
+        /// <summary>
+        /// Is validation required?
+        /// </summary>
+        /// <returns></returns>
         public bool IsValidationRequired()
         {
             return !string.IsNullOrEmpty(Validation);

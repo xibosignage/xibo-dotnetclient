@@ -352,8 +352,14 @@ namespace XiboClient.Stats
                         foreach (string url in urls)
                         {
                             // We append parameters to the URL and then send or queue
+                            // TODO: the ACTUAL_IMP count can come from a third party source such as Admobilize.
                             string annotatedUrl = url + "&t=" + ((DateTimeOffset)stat.To).ToUnixTimeMilliseconds();
+                            annotatedUrl = annotatedUrl
+                                .Replace("[DURATION]", "" + duration)
+                                .Replace("[ACTUAL_IMP]", "1")
+                                .Replace("[TIMESTAMP]", "" + stat.From.ToString("o", CultureInfo.InvariantCulture));
 
+                            // Geo
                             if (stat.GeoEnd != null)
                             {
                                 annotatedUrl += "&lat=" + stat.GeoEnd.Latitude + "&lng=" + stat.GeoEnd.Longitude;
@@ -364,7 +370,7 @@ namespace XiboClient.Stats
                             }
 
                             // Call Impress on a new thread
-                            Task.Factory.StartNew(() => Impress(url));
+                            Task.Factory.StartNew(() => Impress(annotatedUrl));
                         }
                     }
                 }
