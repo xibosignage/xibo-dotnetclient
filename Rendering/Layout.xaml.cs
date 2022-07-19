@@ -450,7 +450,7 @@ namespace XiboClient.Rendering
                             {
                                 // Sequential
                                 sequence++;
-                                if (sequence > parsedMedia[groupKey].Count)
+                                if (sequence >= parsedMedia[groupKey].Count)
                                 {
                                     sequence = 0;
                                 }
