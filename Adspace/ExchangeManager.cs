@@ -174,6 +174,10 @@ namespace XiboClient.Adspace
             if (!CacheManager.Instance.IsValidPath(ad.File))
             {
                 Task.Factory.StartNew(() => ad.Download());
+
+                // Don't show it this time
+                adBuffet.Remove(ad);
+                throw new AdspaceNoAdException("Creative pending download");
             }
 
             // We've converted it into a play
