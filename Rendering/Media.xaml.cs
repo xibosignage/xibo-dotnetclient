@@ -720,7 +720,7 @@ namespace XiboClient.Rendering
             // Check isnt blacklisted
             if (CacheManager.Instance.IsUnsafeMedia(options.mediaid))
             {
-                Trace.WriteLine(new LogMessage("Media", string.Format("ParseOptions: MediaID [{0}] has been blacklisted.", options.mediaid)), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("Media", string.Format("ParseOptions: MediaID [{0}] has been blacklisted.", options.mediaid)), LogType.Info.ToString());
                 throw new Exception("Unsafe Media");
             }
 
