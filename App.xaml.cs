@@ -141,7 +141,7 @@ namespace XiboClient
 
             // What happens if we cannot start?
             Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + source + ": " + e.Message), LogType.Error.ToString());
-            Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Info.ToString());
+            Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
 
             // Should we quit or continue
             if (quit)

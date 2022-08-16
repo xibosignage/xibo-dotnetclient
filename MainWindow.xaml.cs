@@ -216,7 +216,10 @@ namespace XiboClient
         {
             if (_screenSaver)
             {
-                System.Windows.Application.Current.Shutdown();
+                if (System.Windows.Application.Current != null)
+                {
+                    System.Windows.Application.Current.Shutdown();
+                }
             }
         }
 
