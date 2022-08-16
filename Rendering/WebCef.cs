@@ -137,8 +137,15 @@ namespace XiboClient.Rendering
             if (e.Frame.IsMain && !Expired && !IsNativeOpen())
             {
                 // Initialise Interactive Control
-                webView.GetBrowser().MainFrame.ExecuteJavaScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
-                    + ApplicationSettings.Default.EmbeddedServerPort + "})");
+                try
+                {
+                    webView.GetBrowser().MainFrame.ExecuteJavaScriptAsync("xiboIC.config({hostname:\"localhost\", port: "
+                        + ApplicationSettings.Default.EmbeddedServerPort + "})");
+                }
+                catch
+                {
+                    Trace.WriteLine(new LogMessage("WebCef: WebView_FrameLoadEnd", "Cant execute xiboIC"), LogType.Info.ToString());
+                }
             }
         }
 

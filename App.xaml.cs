@@ -79,7 +79,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                HandleUnhandledException(ex, false);
+                HandleUnhandledException(ex, "Startup", false);
             }
 
             // Always flush at the end
@@ -118,30 +118,30 @@ namespace XiboClient
         #region Exception Handlers
         static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
-            HandleUnhandledException(e.Exception, true);
+            HandleUnhandledException(e.Exception, "ThreadException", true);
         }
 
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            HandleUnhandledException(e.ExceptionObject, true);
+            HandleUnhandledException(e.ExceptionObject, "UnhandledException", true);
         }
 
         static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            HandleUnhandledException(e.Exception, false);
+            HandleUnhandledException(e.Exception, "UnobservedTaskException", false);
         }
 
         /// <summary>
         /// Event for unhandled exceptions
         /// </summary>
         /// <param name="o"></param>
-        static void HandleUnhandledException(Object o, bool quit)
+        static void HandleUnhandledException(Object o, string source, bool quit)
         {
             Exception e = o as Exception;
 
             // What happens if we cannot start?
-            Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + e.Message), LogType.Error.ToString());
-            Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Audit.ToString());
+            Trace.WriteLine(new LogMessage("Main", "Unhandled Exception: " + source + ": " + e.Message), LogType.Error.ToString());
+            Trace.WriteLine(new LogMessage("Main", "Stack Trace: " + e.StackTrace), LogType.Error.ToString());
 
             // Should we quit or continue
             if (quit)
