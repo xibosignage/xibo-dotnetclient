@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -216,7 +216,10 @@ namespace XiboClient
         {
             if (_screenSaver)
             {
-                System.Windows.Application.Current.Shutdown();
+                if (System.Windows.Application.Current != null)
+                {
+                    System.Windows.Application.Current.Shutdown();
+                }
             }
         }
 
@@ -509,7 +512,6 @@ namespace XiboClient
                     this.Scene.Children.Clear();
 
                     Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Destroy Layout Failed. Exception raised was: " + e.Message), LogType.Info.ToString());
-                    throw e;
                 }
 
                 // Prepare the next layout

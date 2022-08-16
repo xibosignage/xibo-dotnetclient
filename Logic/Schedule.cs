@@ -517,7 +517,7 @@ namespace XiboClient
                 }
 
                 // Make sure we can get this sequence
-                if (sequence > nextLayout.CycleScheduleItems.Count)
+                if (sequence >= nextLayout.CycleScheduleItems.Count)
                 {
                     sequence = 0;
                 }

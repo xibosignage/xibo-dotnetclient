@@ -866,6 +866,7 @@ namespace XiboClient
             int interruptPick = (int)Math.Floor(1.0 * pickCount / resolvedInterrupt.Count);
             int normalIndex = 0;
             int interruptIndex = 0;
+            int totalSecondsAllocated = 0;
 
             // Pick as many times as we need to consume the larger list
             for (int i = 0; i < pickCount; i++)
@@ -878,6 +879,7 @@ namespace XiboClient
                         normalIndex = 0;
                     }
                     resolved.Add(resolvedNormal[normalIndex]);
+                    totalSecondsAllocated += resolvedNormal[normalIndex].Duration;
                     normalIndex++;
                 }
 
@@ -885,8 +887,25 @@ namespace XiboClient
                 if (i % interruptPick == 0 && interruptIndex < resolvedInterrupt.Count)
                 {
                     resolved.Add(resolvedInterrupt[interruptIndex]);
+                    totalSecondsAllocated += resolvedInterrupt[interruptIndex].Duration;
                     interruptIndex++;
                 }
+            }
+
+            // We might have some time left over at the end
+            // Our pick indexes are ceiling/floor
+            // https://github.com/xibosignage/xibo-dotnetclient/issues/263
+            while (totalSecondsAllocated < 3600)
+            {
+                // We fill up the rest of the schedule with normal events.
+                // continuing from where we left off
+                if (normalIndex >= resolvedNormal.Count)
+                {
+                    normalIndex = 0;
+                }
+                resolved.Add(resolvedNormal[normalIndex]);
+                totalSecondsAllocated += resolvedNormal[normalIndex].Duration;
+                normalIndex++;
             }
 
             return resolved;
