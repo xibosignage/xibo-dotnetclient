@@ -367,11 +367,24 @@ namespace XiboClient.Stats
                                     .Replace("LAT", "" + stat.GeoEnd.Latitude)
                                     .Replace("LNG", "" + stat.GeoEnd.Longitude);
                             }
+                            else
+                            {
+                                annotatedUrl = annotatedUrl
+                                    .Replace("LAT", "")
+                                    .Replace("LNG", "");
+                            }
+
                             if (stat.GeoStart != null)
                             {
                                 annotatedUrl = annotatedUrl
                                     .Replace("LAT_START", "" + stat.GeoStart.Latitude)
                                     .Replace("LNG_START", "" + stat.GeoStart.Longitude);
+                            }
+                            else
+                            {
+                                annotatedUrl = annotatedUrl
+                                    .Replace("LAT_START", "")
+                                    .Replace("LNG_START", "");
                             }
 
                             // Call Impress on a new thread

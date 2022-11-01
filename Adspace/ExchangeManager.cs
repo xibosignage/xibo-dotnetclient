@@ -381,6 +381,27 @@ namespace XiboClient.Adspace
             return Request(url, null);
         }
 
+        private List<Ad> Request(string url, Ad wrappedAd)
+        {
+            if (wrappedAd != null)
+            {
+                if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
+                {
+                    url = url
+                        .Replace("[LAT]", "" + ClientInfo.Instance.CurrentGeoLocation.Latitude)
+                        .Replace("[LNG]", "" + ClientInfo.Instance.CurrentGeoLocation.Longitude);
+                }
+                else
+                {
+                    url = url
+                        .Replace("[LAT]", "")
+                        .Replace("[LNG]", "");
+                }
+            }
+
+            return Request(new Url(url), wrappedAd);
+        }
+
         /// <summary>
         /// Request new ads
         /// </summary>
@@ -607,7 +628,7 @@ namespace XiboClient.Adspace
                         {
                             if (ad.IsWrapperOpenImmediately && !IsUnwrapRateThreshold(ad.WrapperPartner))
                             {
-                                buffet.AddRange(Request(new Url(ad.AdTagUri), ad));
+                                buffet.AddRange(Request(ad.AdTagUri, ad));
                             }
                             else
                             {
@@ -808,7 +829,7 @@ namespace XiboClient.Adspace
                         // Make a request to unwrap this ad.
                         try
                         {
-                            unwrappedAds.AddRange(Request(new Url(ad.AdTagUri), ad));
+                            unwrappedAds.AddRange(Request(ad.AdTagUri, ad));
                         }
                         catch (Exception e)
                         {
