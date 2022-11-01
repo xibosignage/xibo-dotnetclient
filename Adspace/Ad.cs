@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -29,6 +29,7 @@ using System;
 using System.Collections.Generic;
 using System.Device.Location;
 using System.Diagnostics;
+using System.Linq;
 
 namespace XiboClient.Adspace
 {
@@ -39,20 +40,32 @@ namespace XiboClient.Adspace
         public string Title;
         public string CreativeId;
         public string Duration;
-        public string File;
         public string Type;
         public string XiboType;
         public int Width;
         public int Height;
 
+        public string AdTagUri;
         public string Url;
         public List<string> ImpressionUrls = new List<string>();
         public List<string> ErrorUrls = new List<string>();
 
+        // Wrapper settings
+        //  many of these come from Xibo specific extensions.
         public bool IsWrapper;
+        public bool IsWrapperResolved = false;
+        public bool IsWrapperOpenImmediately = false;
+        public bool IsWrapperResolving = false;
         public int CountWraps = 0;
-        public List<string> AllowedWrapperTypes = new List<string>();
-        public string AllowedWrapperDuration;
+
+        public List<string> WrapperAllowedTypes = new List<string>();
+        public string WrapperAllowedDuration;
+        public string WrapperPartner;
+        public string WrapperFileScheme = "creativeId";
+        public string WrapperExtendUrl = "";
+        public string WrapperHttpMethod = "GET";
+        public int WrapperMaxDuration = 0;
+        public int WrapperRateLimit = 0;
 
         public bool IsGeoAware = false;
         public string GeoLocation = "";
@@ -76,14 +89,36 @@ namespace XiboClient.Adspace
         }
 
         /// <summary>
+        /// Get the duration in seconds
+        /// </summary>
+        /// <returns></returns>
+        public int GetWrapperAllowedDuration()
+        {
+            return (int)TimeSpan.Parse(WrapperAllowedDuration).TotalSeconds;
+        }
+
+        public string GetFileName()
+        {
+            if (WrapperFileScheme == "fileName")
+            {
+                return "axe_" + Url.Split('/').Last();
+            }
+            else
+            {
+                return "axe_" + CreativeId;
+            }
+        }
+
+        /// <summary>
         /// Download this ad
         /// </summary>
         public void Download()
         {
             // We should download it.
-            new Url(Url).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, File).ContinueWith(t =>
+            string fileName = GetFileName();
+            new Url(Url).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName).ContinueWith(t =>
             {
-                CacheManager.Instance.Add(File, CacheManager.Instance.GetMD5(File));
+                CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
             }, System.Threading.Tasks.TaskContinuationOptions.OnlyOnRanToCompletion);
         }
 

@@ -20,9 +20,13 @@
  */
 using Flurl;
 using Flurl.Http;
+using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Crypto.Engines;
+using Swan;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.EnterpriseServices;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
@@ -35,11 +39,15 @@ namespace XiboClient.Adspace
         private readonly string AdspaceUrl = @"https://exchange.xibo-adspace.com/vast/device";
 
         // State
+        private readonly object buffetLock = new object();
         private bool isActive;
+        private bool isNewPrefetchAdded = false;
         private DateTime lastFillDate;
         private DateTime lastPrefetchDate;
         private List<string> prefetchUrls = new List<string>();
         private List<Ad> adBuffet = new List<Ad>();
+        private Dictionary<string, int> lastUnwrapRateLimits = new Dictionary<string, int>();
+        private Dictionary<string, DateTime> lastUnwrapDates = new Dictionary<string, DateTime>();
 
         public int ShareOfVoice { get; private set; } = 0;
         public int AverageAdDuration { get; private set; } = 0;
@@ -47,7 +55,7 @@ namespace XiboClient.Adspace
         public ExchangeManager()
         {
             lastFillDate = DateTime.Now.AddYears(-1);
-            lastPrefetchDate = DateTime.Now.AddYears(-1);
+            lastPrefetchDate = DateTime.Now.AddHours(1);
         }
 
         /// <summary>
@@ -101,6 +109,16 @@ namespace XiboClient.Adspace
         /// </summary>
         public void Configure()
         {
+            // If our last fill date is really old, clear out ads and refresh
+            if (lastFillDate < DateTime.Now.AddHours(-1))
+            {
+                lock (buffetLock)
+                {
+                    adBuffet.Clear();
+                }
+            }
+
+            // Should we configure
             if (IsAdAvailable && ShareOfVoice > 0)
             {
                 Trace.WriteLine(new LogMessage("ExchangeManager", "Configure: we do not need to configure this time around"), LogType.Audit.ToString());
@@ -134,7 +152,16 @@ namespace XiboClient.Adspace
                 throw new AdspaceNoAdException();
             }
 
-            Ad ad = adBuffet[0];
+            Ad ad;
+            try
+            {
+                ad = GetAvailableAd();
+            }
+            catch
+            {
+                Trace.WriteLine(new LogMessage("ExchangeManager", "GetAd: no available ad returned while unwrapping"), LogType.Error.ToString());
+                throw new AdspaceNoAdException("No ad returned");
+            }
 
             // Check geo fence
             if (!ad.IsGeoActive(ClientInfo.Instance.CurrentGeoLocation))
@@ -171,7 +198,7 @@ namespace XiboClient.Adspace
             // TODO: check fault status
 
             // Check to see if the file is already there, and if not, download it.
-            if (!CacheManager.Instance.IsValidPath(ad.File))
+            if (!CacheManager.Instance.IsValidPath(ad.GetFileName()))
             {
                 Task.Factory.StartNew(() => ad.Download());
 
@@ -187,39 +214,120 @@ namespace XiboClient.Adspace
         }
 
         /// <summary>
-        /// Prefetch any resources which might play
+        /// Get an available ad
         /// </summary>
-        public void Prefetch()
+        /// <returns></returns>
+        /// <exception cref="AdspaceNoAdException"></exception>
+        private Ad GetAvailableAd()
         {
-            List<Url> urls = new List<Url>();
-            
-            foreach (Url url in urls)
+            if (adBuffet.Count > 0)
             {
-                // Get a JSON string from the URL.
-                var result = url.GetJsonAsync<List<string>>().Result;
-
-                // Download each one
-                foreach (string fetchUrl in result) {
-                    string fileName = "axe_" + fetchUrl.Split('/').Last();
-                    if (!CacheManager.Instance.IsValidPath(fileName))
+                bool isResolveRequested = false;
+                Ad chosenAd = null;
+                foreach (Ad ad in adBuffet)
+                {
+                    if (ad.IsWrapper && !ad.IsWrapperResolved)
                     {
-                        // We should download it.
-                        new Url(fetchUrl).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName).ContinueWith(t =>
+                        // Resolve one
+                        // we only want to do this one time per getAvailableAd, and only if that
+                        // ad isn't already resolving (no need to fire loads of events which won't
+                        // do anything).
+                        if (!isResolveRequested && !ad.IsWrapperResolving)
                         {
-                            CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
-                        },
-                        TaskContinuationOptions.OnlyOnRanToCompletion);
+                            isResolveRequested = true;
+                        }
+                        continue;
                     }
+
+                    // Not a wrapper or a wrapper already resolved.
+                    chosenAd = ad;
+                    break;
+                }
+
+                if (isResolveRequested)
+                {
+                    Trace.WriteLine(new LogMessage("ExchangeManager", "GetAvailableAd: will call to unwrap an ad, there are " + CountAvailableAds), LogType.Info.ToString());
+                    Task.Factory.StartNew(() => UnwrapAds());
+                }
+
+                if (chosenAd != null)
+                {
+                    return chosenAd;
                 }
             }
+            throw new AdspaceNoAdException();
         }
 
         /// <summary>
-        /// Fill the ad buffet
+        /// Prefetch any resources which might play
         /// </summary>
-        public void Fill()
-        {
-            Fill(false);
+        public void Prefetch()
+        {           
+            foreach (string url in prefetchUrls)
+            {
+                try
+                {
+                    // Do we have a simple URL or a URL with a key
+                    string resolvedUrl = url;
+                    string urlProp = null;
+                    string idProp = null;
+                    if (url.Contains("||"))
+                    {
+                        // Split the URL
+                        string[] splits = url.Split(new string[] { "||" }, StringSplitOptions.None);
+                        resolvedUrl = splits[0];
+                        urlProp = splits[1];
+                        idProp = splits[2];
+                    }
+
+                    // We either expect a list of strings or a list of objects.
+                    if (urlProp != null && idProp != null)
+                    {
+                        // Expect an array of objects.
+                        var result = resolvedUrl.GetJsonAsync<List<JObject>>().Result;
+
+                        // Download each one
+                        foreach (JObject creative in result)
+                        {
+                            string fetchUrl = creative.GetValue(urlProp).ToString();
+                            string fileName = "axe_" + creative.GetValue(idProp).ToString();
+                            if (!CacheManager.Instance.IsValidPath(fileName))
+                            {
+                                // We should download it.
+                                new Url(fetchUrl).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName).ContinueWith(t =>
+                                {
+                                    CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
+                                },
+                                TaskContinuationOptions.OnlyOnRanToCompletion);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Get a JSON string from the URL.
+                        var result = url.GetJsonAsync<List<string>>().Result;
+
+                        // Download each one
+                        foreach (string fetchUrl in result)
+                        {
+                            string fileName = "axe_" + fetchUrl.Split('/').Last();
+                            if (!CacheManager.Instance.IsValidPath(fileName))
+                            {
+                                // We should download it.
+                                new Url(fetchUrl).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName).ContinueWith(t =>
+                                {
+                                    CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
+                                },
+                                TaskContinuationOptions.OnlyOnRanToCompletion);
+                            }
+                        }
+                    }
+                } 
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("ExchangeManager", "Prefetch: failed to call prefetch. e = " + e.Message.ToString()), LogType.Error.ToString());
+                }
+            }
         }
 
         /// <summary>
@@ -248,7 +356,19 @@ namespace XiboClient.Adspace
                     .SetQueryParam("lng", ClientInfo.Instance.CurrentGeoLocation.Longitude);
             }
 
-            adBuffet.AddRange(Request(url));
+            // Request new ads and then lock the buffet while we update it
+            List<Ad> newAds = Request(url);
+            lock (buffetLock)
+            {
+                adBuffet.AddRange(newAds);
+            }
+
+            // Did we add any new prefetch URLs?
+            if (isNewPrefetchAdded)
+            {
+                Task.Factory.StartNew(() => Prefetch());
+                isNewPrefetchAdded = false;
+            }
         }
 
         /// <summary>
@@ -269,12 +389,27 @@ namespace XiboClient.Adspace
         /// <returns></returns>
         private List<Ad> Request(Url url, Ad wrappedAd)
         {
-            List<Ad> buffet = new List<Ad>();
+            LogMessage.Trace("ExchangeManager", "Request", url.ToString());
+
+            // Track the last time we unwrap an ad for each partner.
+            if (wrappedAd != null)
+            {
+                SetUnwrapLast(wrappedAd.WrapperPartner);
+            }
 
             // Make a request for new ads
+            List<Ad> buffet = new List<Ad>();
             try
             {
-                var response = url.WithTimeout(10).GetAsync().Result;
+                IFlurlResponse response = null;
+                if (wrappedAd != null && wrappedAd.WrapperHttpMethod == "POST")
+                {
+                    response = url.WithTimeout(10).PostAsync().Result;
+                }
+                else
+                {
+                    response = url.WithTimeout(10).GetAsync().Result;
+                }
                 var body = response.GetStringAsync().Result;
 
                 if (string.IsNullOrEmpty(body))
@@ -324,8 +459,10 @@ namespace XiboClient.Adspace
                     Ad ad;
                     if (wrappedAd == null)
                     {
-                        ad = new Ad();
-                        ad.Id = adNode.Attributes["id"].Value;
+                        ad = new Ad
+                        {
+                            Id = adNode.Attributes["id"].Value
+                        };
                     }
                     else
                     {
@@ -354,52 +491,128 @@ namespace XiboClient.Adspace
                             continue;
                         }
 
-                        // Make a Url from it.
-                        Url adTagUrl = new Url(adTagUrlNode.Value);
+                        // Capture the URL
+                        ad.AdTagUri = adTagUrlNode.InnerText.Trim();
 
                         // Get and impression/error URLs included with this wrap
                         XmlNode errorUrlNode = wrapper.SelectSingleNode("./Error");
                         if (errorUrlNode != null)
                         {
-                            ad.ErrorUrls.Add(errorUrlNode.Value);
+                            ad.ErrorUrls.Add(errorUrlNode.InnerText.Trim());
                         }
 
                         XmlNode impressionUrlNode = wrapper.SelectSingleNode("./Impression");
                         if (impressionUrlNode != null)
                         {
-                            ad.ImpressionUrls.Add(impressionUrlNode.Value);
+                            ad.ImpressionUrls.Add(impressionUrlNode.InnerText.Trim());
                         }
 
                         // Extensions
-                        XmlNodeList extensionNodes = wrapper.SelectNodes("./Extension");
+                        XmlNodeList extensionNodes = wrapper.SelectNodes(".//Extension");
                         foreach (XmlNode extensionNode in extensionNodes)
                         {
                             switch (extensionNode.Attributes["type"].Value)
                             {
                                 case "prefetch":
-                                    if (prefetchUrls.Contains(extensionNode.InnerText))
+                                case "xiboPrefetch":
+                                    if (!prefetchUrls.Contains(extensionNode.InnerText))
                                     {
                                         prefetchUrls.Add(extensionNode.InnerText);
+                                        isNewPrefetchAdded = true;
                                     }
                                     break;
 
                                 case "validType":
+                                case "xiboValidType":
                                     if (!string.IsNullOrEmpty(extensionNode.InnerText))
                                     {
-                                        ad.AllowedWrapperTypes = extensionNode.InnerText.Split(',').ToList();
+                                        ad.WrapperAllowedTypes = extensionNode.InnerText.Split(',').ToList();
                                     }
                                     break;
 
                                 case "validDuration":
-                                    ad.AllowedWrapperDuration = extensionNode.InnerText;
+                                case "xiboValidDuration":
+                                    ad.WrapperAllowedDuration = extensionNode.InnerText;
+                                    break;
+
+                                case "xiboMaxDuration":
+                                    try
+                                    {
+                                        ad.WrapperMaxDuration = int.Parse(extensionNode.InnerText.Trim());
+                                    }
+                                    catch
+                                    {
+                                        LogMessage.Trace("ExchangeManager", "Request", "Invalid xiboIsWrapperRateLimit");
+
+                                    }
+                                    break;
+
+                                case "xiboIsWrapperOpenImmediately":
+                                    try
+                                    {
+                                        ad.IsWrapperOpenImmediately = int.Parse(extensionNode.InnerText.Trim()) == 1;
+                                    }
+                                    catch
+                                    {
+                                        LogMessage.Trace("ExchangeManager", "Request", "Invalid xiboIsWrapperRateLimit");
+
+                                    }
+                                    break;
+
+                                case "xiboPartner":
+                                    ad.WrapperPartner = extensionNode.InnerText.Trim();
+                                    break;
+
+                                case "xiboIsWrapperRateLimit":
+                                    try
+                                    {
+                                        ad.WrapperRateLimit = int.Parse(extensionNode.InnerText.Trim());
+                                    }
+                                    catch
+                                    {
+                                        LogMessage.Trace("ExchangeManager", "Request", "Invalid xiboIsWrapperRateLimit");
+
+                                    }
+                                    break;
+
+                                case "xiboFileScheme":
+                                    ad.WrapperFileScheme = extensionNode.InnerText.Trim();
+                                    break;
+
+                                case "xiboExtendUrl":
+                                    ad.WrapperExtendUrl = extensionNode.InnerText.Trim();
+                                    break;
+
+                                case "xiboHttpMethod":
+                                    ad.WrapperHttpMethod = extensionNode.InnerText.Trim();
+                                    break;
+
+                                default:
+                                    LogMessage.Trace("ExchangeManager", "Request", "Unknown extension");
                                     break;
                             }
                         }
 
-                        // Resolve our new wrapper
+                        ad.IsWrapperResolved = false;
+
+                        // Record our rate limit if we have one
+                        if (ad.WrapperRateLimit > 0 && !string.IsNullOrEmpty(ad.WrapperPartner))
+                        {
+                            SetUnwrapRateThreshold(ad.WrapperPartner, ad.WrapperRateLimit);
+                        }
+
+                        // If we need to unwrap these immediately, then do so, but only
+                        // if we haven't exceeded the rate threshold for this partner.
                         try
                         {
-                            buffet.AddRange(Request(adTagUrl, ad));
+                            if (ad.IsWrapperOpenImmediately && !IsUnwrapRateThreshold(ad.WrapperPartner))
+                            {
+                                buffet.AddRange(Request(new Url(ad.AdTagUri), ad));
+                            }
+                            else
+                            {
+                                buffet.Add(ad);
+                            }
                         }
                         catch
                         {
@@ -422,20 +635,28 @@ namespace XiboClient.Adspace
                         XmlNode titleNode = inlineNode.SelectSingleNode("./AdTitle");
                         if (titleNode != null)
                         {
-                            ad.Title = titleNode.InnerText;
+                            ad.Title = titleNode.InnerText.Trim();
                         }
 
                         // Get and impression/error URLs included with this wrap
                         XmlNode errorUrlNode = inlineNode.SelectSingleNode("./Error");
                         if (errorUrlNode != null)
                         {
-                            ad.ErrorUrls.Add(errorUrlNode.InnerText);
+                            string errorUrl = errorUrlNode.InnerText.Trim();
+                            if (errorUrl != "about:blank")
+                            {
+                                ad.ErrorUrls.Add(errorUrl + ad.WrapperExtendUrl);
+                            }
                         }
 
                         XmlNode impressionUrlNode = inlineNode.SelectSingleNode("./Impression");
                         if (impressionUrlNode != null)
                         {
-                            ad.ImpressionUrls.Add(impressionUrlNode.InnerText);
+                            string impressionUrl = impressionUrlNode.InnerText.Trim();
+                            if (impressionUrl != "about:blank")
+                            {
+                                ad.ImpressionUrls.Add(impressionUrl + ad.WrapperExtendUrl);
+                            }
                         }
 
                         // Creatives
@@ -448,7 +669,7 @@ namespace XiboClient.Adspace
                             XmlNode creativeDurationNode = creativeNode.SelectSingleNode("./Linear/Duration");
                             if (creativeDurationNode != null)
                             {
-                                ad.Duration = creativeDurationNode.InnerText;
+                                ad.Duration = creativeDurationNode.InnerText.Trim();
                             }
                             else
                             {
@@ -460,7 +681,7 @@ namespace XiboClient.Adspace
                             XmlNode creativeMediaNode = creativeNode.SelectSingleNode("./Linear/MediaFiles/MediaFile");
                             if (creativeMediaNode != null)
                             {
-                                ad.Url = creativeMediaNode.InnerText;
+                                ad.Url = creativeMediaNode.InnerText.Trim();
                                 ad.Width = int.Parse(creativeMediaNode.Attributes["width"].Value);
                                 ad.Height = int.Parse(creativeMediaNode.Attributes["height"].Value);
                                 ad.Type = creativeMediaNode.Attributes["type"].Value;
@@ -494,26 +715,36 @@ namespace XiboClient.Adspace
                         // Did this resolve from a wrapper? if so do some extra checks.
                         if (ad.IsWrapper)
                         {
-                            if (!ad.AllowedWrapperTypes.Contains("all", StringComparer.OrdinalIgnoreCase)
-                                && !ad.AllowedWrapperTypes.Contains(ad.Type.ToLower(), StringComparer.OrdinalIgnoreCase))
+                            // Type
+                            if (!ad.WrapperAllowedTypes.Contains("all", StringComparer.OrdinalIgnoreCase)
+                                && !ad.WrapperAllowedTypes.Contains(ad.Type.ToLower(), StringComparer.OrdinalIgnoreCase))
                             {
                                 ReportError(ad.ErrorUrls, 200);
                                 continue;
                             }
 
-                            if (!string.IsNullOrEmpty(ad.AllowedWrapperDuration)
-                                && ad.Duration != ad.AllowedWrapperDuration)
+                            // Duration
+                            if (!string.IsNullOrEmpty(ad.WrapperAllowedDuration)
+                                && ad.GetDuration() != ad.GetWrapperAllowedDuration())
                             {
-                                ReportError(ad.ErrorUrls, 302);
+                                ReportError(ad.ErrorUrls, 202);
                                 continue;
                             }
+
+                            // Max duration
+                            if (ad.WrapperMaxDuration > 0
+                                && ad.GetDuration() > ad.WrapperMaxDuration)
+                            {
+                                ReportError(ad.ErrorUrls, 202);
+                                continue;
+                            }
+
+                            // Wrapper is resolved
+                            ad.IsWrapperResolved = true;
                         }
 
-                        // We are good to go.
-                        ad.File = "axe_" + ad.Url.Split('/').Last();
-
                         // Download if necessary
-                        if (!CacheManager.Instance.IsValidPath(ad.File))
+                        if (!CacheManager.Instance.IsValidPath(ad.GetFileName()))
                         {
                             Task.Factory.StartNew(() => ad.Download());
                         }
@@ -539,6 +770,59 @@ namespace XiboClient.Adspace
             }
 
             return buffet;
+        }
+
+        /// <summary>
+        /// Unwrap ads
+        /// </summary>
+        private void UnwrapAds()
+        {
+            lock (buffetLock)
+            {
+                // Keep a list of ads we add
+                List<Ad> unwrappedAds = new List<Ad>();
+
+                // Backwards loop
+                for (int i = adBuffet.Count - 1; i >= 0; i--)
+                {
+                    Ad ad = adBuffet[i];
+                    if (ad.IsWrapper && !ad.IsWrapperResolved)
+                    {
+                        if (ad.IsWrapperResolving)
+                        {
+                            continue;
+                        }
+
+                        // Is this partner rate limited
+                        if (IsUnwrapRateThreshold(ad.WrapperPartner))
+                        {
+                            continue;
+                        }
+
+                        LogMessage.Info("ExchangeManager", "UnwrapAds", "resolving " + ad.Id);
+
+                        // Remove this ad (we're resolving it)
+                        ad.IsWrapperResolving = true;
+                        adBuffet.RemoveAt(i);
+
+                        // Make a request to unwrap this ad.
+                        try
+                        {
+                            unwrappedAds.AddRange(Request(new Url(ad.AdTagUri), ad));
+                        }
+                        catch (Exception e)
+                        {
+                            LogMessage.Error("ExchangeManager", "UnwrapAds", "wrapped ad did not resolve: " + e.Message.ToString());
+                        }
+                    }    
+                }
+
+                LogMessage.Trace("ExchangeManager", "UnwrapAds", unwrappedAds.Count + " unwrapped");
+
+                // Add in any new ones we've got as a result
+                adBuffet.AddRange(unwrappedAds);
+                unwrappedAds.Clear();
+            }
         }
 
         /// <summary>
@@ -569,6 +853,60 @@ namespace XiboClient.Adspace
                     Trace.WriteLine(new LogMessage("ExchangeManager", "ReportError: failed to report error to " + url + ", code: " + errorCode + ". e: " + e.Message), LogType.Error.ToString());
                 }
             }
+        }
+
+        private void SetUnwrapRateThreshold(string partner, int seconds)
+        {
+            if (!string.IsNullOrEmpty(partner))
+            {
+                lastUnwrapRateLimits[partner] = seconds;
+            }
+        }
+
+        private void SetUnwrapLast(string partner)
+        {
+            if (!string.IsNullOrEmpty(partner))
+            {
+                lastUnwrapDates[partner] = DateTime.Now;
+            }
+        }
+
+
+        /// <summary>
+        /// Is the unwrap rate limit reached for this parnter?
+        /// </summary>
+        /// <param name="partner"></param>
+        /// <returns></returns>
+        private bool IsUnwrapRateThreshold(string partner)
+        {
+            if (String.IsNullOrEmpty(partner))
+            {
+                return false;
+            }
+
+            if (!lastUnwrapRateLimits.ContainsKey(partner))
+            {
+                return false;
+            }
+
+            int rateLimit = lastUnwrapRateLimits[partner];
+            if (rateLimit <= 0)
+            {
+                return false;
+            }
+
+            if (!lastUnwrapDates.ContainsKey(partner))
+            {
+                return false;
+            }
+
+            DateTime lastUnwrap = lastUnwrapDates[partner];
+            if (lastUnwrap == null)
+            {
+                return false;
+            }
+
+            return lastUnwrap.AddSeconds(rateLimit) > DateTime.Now;
         }
     }
 }

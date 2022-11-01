@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -353,8 +353,9 @@ namespace XiboClient.Stats
                         {
                             // We append parameters to the URL and then send or queue
                             // TODO: the ACTUAL_IMP count can come from a third party source such as Admobilize.
-                            string annotatedUrl = url + "&t=" + ((DateTimeOffset)stat.To).ToUnixTimeMilliseconds();
+                            string annotatedUrl = url;
                             annotatedUrl = annotatedUrl
+                                .Replace("[UNIX_TIMESTAMP]", "" + ((DateTimeOffset)stat.To).ToUnixTimeMilliseconds())
                                 .Replace("[DURATION]", "" + duration)
                                 .Replace("[ACTUAL_IMP]", "1")
                                 .Replace("[TIMESTAMP]", "" + stat.From.ToString("o", CultureInfo.InvariantCulture));
@@ -362,11 +363,15 @@ namespace XiboClient.Stats
                             // Geo
                             if (stat.GeoEnd != null)
                             {
-                                annotatedUrl += "&lat=" + stat.GeoEnd.Latitude + "&lng=" + stat.GeoEnd.Longitude;
+                                annotatedUrl = annotatedUrl
+                                    .Replace("LAT", "" + stat.GeoEnd.Latitude)
+                                    .Replace("LNG", "" + stat.GeoEnd.Longitude);
                             }
                             if (stat.GeoStart != null)
                             {
-                                annotatedUrl += "&latStart=" + stat.GeoStart.Latitude + "&lngStart=" + stat.GeoStart.Longitude;
+                                annotatedUrl = annotatedUrl
+                                    .Replace("LAT_START", "" + stat.GeoStart.Latitude)
+                                    .Replace("LNG_START", "" + stat.GeoStart.Longitude);
                             }
 
                             // Call Impress on a new thread

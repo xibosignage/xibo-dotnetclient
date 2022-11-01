@@ -573,7 +573,7 @@ namespace XiboClient.Rendering
             media.SetAttribute("enableStat", "0");
 
             // Url
-            urlOption.InnerText = ad.File;
+            urlOption.InnerText = ad.GetFileName();
 
             // Add all these nodes to the docs
             mediaOptions.AppendChild(urlOption);
@@ -645,6 +645,8 @@ namespace XiboClient.Rendering
         /// </summary>
         public void Remove()
         {
+            Debug.WriteLine("Remove: " + UniqueId, "Layout");
+
             if (_regions == null)
                 return;
 
@@ -672,8 +674,6 @@ namespace XiboClient.Rendering
 
                 _regions.Clear();
             }
-
-            _regions = null;
         }
 
         /// <summary>
