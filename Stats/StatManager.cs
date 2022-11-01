@@ -388,7 +388,7 @@ namespace XiboClient.Stats
                             }
 
                             // Call Impress on a new thread
-                            Task.Factory.StartNew(() => Impress(annotatedUrl));
+                            Task.Run(() => Impress(annotatedUrl));
                         }
                     }
                 }

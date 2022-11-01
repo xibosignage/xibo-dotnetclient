@@ -91,7 +91,7 @@ namespace XiboClient.Adspace
                 // Transitioning to active
                 if (prefetchUrls.Count > 0)
                 {
-                    Task.Factory.StartNew(() => Prefetch());
+                    Task.Run(() => Prefetch());
                 }
             }
             else if (isActive != active)
@@ -135,7 +135,7 @@ namespace XiboClient.Adspace
             // Should we also prefetch?
             if (lastPrefetchDate < DateTime.Now.AddHours(-24))
             {
-                Task.Factory.StartNew(() => Prefetch());
+                Task.Run(() => Prefetch());
             }
         }
 
@@ -200,7 +200,7 @@ namespace XiboClient.Adspace
             // Check to see if the file is already there, and if not, download it.
             if (!CacheManager.Instance.IsValidPath(ad.GetFileName()))
             {
-                Task.Factory.StartNew(() => ad.Download());
+                Task.Run(() => ad.Download());
 
                 // Don't show it this time
                 adBuffet.Remove(ad);
@@ -247,7 +247,7 @@ namespace XiboClient.Adspace
                 if (isResolveRequested)
                 {
                     Trace.WriteLine(new LogMessage("ExchangeManager", "GetAvailableAd: will call to unwrap an ad, there are " + CountAvailableAds), LogType.Info.ToString());
-                    Task.Factory.StartNew(() => UnwrapAds());
+                    Task.Run(() => UnwrapAds());
                 }
 
                 if (chosenAd != null)
@@ -366,7 +366,7 @@ namespace XiboClient.Adspace
             // Did we add any new prefetch URLs?
             if (isNewPrefetchAdded)
             {
-                Task.Factory.StartNew(() => Prefetch());
+                Task.Run(() => Prefetch());
                 isNewPrefetchAdded = false;
             }
         }
@@ -767,7 +767,7 @@ namespace XiboClient.Adspace
                         // Download if necessary
                         if (!CacheManager.Instance.IsValidPath(ad.GetFileName()))
                         {
-                            Task.Factory.StartNew(() => ad.Download());
+                            Task.Run(() => ad.Download());
                         }
 
                         // Ad this to our list
