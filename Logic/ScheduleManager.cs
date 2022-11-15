@@ -614,6 +614,14 @@ namespace XiboClient
                 // Look at the Date/Time to see if it should be on the schedule or not
                 if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)
                 {
+                    // Test max plays per hour
+                    if (layout.MaxPlaysPerHour > 0
+                        && CacheManager.Instance.GetPlaysPerHour(layout.scheduleid) >= layout.MaxPlaysPerHour)
+                    {
+                        LogMessage.Trace("ScheduleManager", "LoadNewOverlaySchedule", "Event exceeds max plays per hour");
+                        continue;
+                    }
+
                     // Is it GeoAware?
                     if (layout.IsGeoAware)
                     {
@@ -981,6 +989,14 @@ namespace XiboClient
                 // Look at the Date/Time to see if it should be on the schedule or not
                 if (layout.FromDt <= DateTime.Now && layout.ToDt >= DateTime.Now)
                 {
+                    // Test max plays per hour
+                    if (layout.MaxPlaysPerHour > 0
+                        && CacheManager.Instance.GetPlaysPerHour(layout.scheduleid) >= layout.MaxPlaysPerHour)
+                    {
+                        LogMessage.Trace("ScheduleManager", "LoadNewOverlaySchedule", "Event exceeds max plays per hour");
+                        continue;
+                    }
+
                     // Change Action and Priority layouts should generate their own list
                     if (layout.Override)
                     {
@@ -1210,6 +1226,16 @@ namespace XiboClient
                 catch
                 {
                     Trace.WriteLine(new LogMessage("ScheduleManager", "ParseNodeIntoScheduleItem: invalid cycle playback configuration."), LogType.Audit.ToString());
+                }
+
+                // Max plays per hour
+                try
+                {
+                    temp.MaxPlaysPerHour = int.Parse(XmlHelper.GetAttrib(node, "maxPlaysPerHour", "0"));
+                }
+                catch
+                {
+                    LogMessage.Trace("ScheduleManager", "ParseNodeIntoScheduleItem", "Invalid maxPlaysPerHour");
                 }
             }
 

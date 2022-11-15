@@ -1,6 +1,6 @@
 /*
- * Xibo - Digitial Signage - http://www.xibo.org.uk
- * Copyright (C) 2009-2012 Daniel Garner
+ * Xibo - Digital Signage - https://xibosignage.com
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -35,6 +35,26 @@ namespace XiboClient
         public int _layoutId { get; set; }
         public int _mediaId { get; set; }
         public DateTime LogDate { get; set; }
+
+        public static void Error(string className, string method, string message)
+        {
+            System.Diagnostics.Trace.WriteLine(new LogMessage(className, method + ": " + message), LogType.Error.ToString());
+        }
+
+        public static void Info(string className, string method, string message)
+        {
+            System.Diagnostics.Trace.WriteLine(new LogMessage(className, method + ": " + message), LogType.Info.ToString());
+        }
+
+        public static void Audit(string className, string method, string message)
+        {
+            System.Diagnostics.Trace.WriteLine(new LogMessage(className, method + ": " + message), LogType.Audit.ToString());
+        }
+
+        public static void Trace(string className, string method, string message)
+        {
+            System.Diagnostics.Debug.WriteLine(new LogMessage(className, method + ": " + message), "Trace");
+        }
 
         public LogMessage(String method, String message)
         {

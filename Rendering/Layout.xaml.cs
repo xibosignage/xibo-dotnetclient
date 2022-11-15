@@ -573,7 +573,7 @@ namespace XiboClient.Rendering
             media.SetAttribute("enableStat", "0");
 
             // Url
-            urlOption.InnerText = ad.File;
+            urlOption.InnerText = ad.GetFileName();
 
             // Add all these nodes to the docs
             mediaOptions.AppendChild(urlOption);
@@ -612,6 +612,8 @@ namespace XiboClient.Rendering
         /// </summary>
         public void Stop()
         {
+            LogMessage.Trace("Layout", "Stop", "Stopping: " + UniqueId);
+
             // Stat stop
             double duration = StatManager.Instance.LayoutStop(UniqueId, ScheduleId, _layoutId, this.isStatEnabled);
 
@@ -638,6 +640,18 @@ namespace XiboClient.Rendering
             }
 
             IsRunning = false;
+
+            // Record max plays per hour
+            if (ScheduleItem.MaxPlaysPerHour > 0)
+            {
+                CacheManager.Instance.IncrementPlaysPerHour(ScheduleId);
+
+                if (CacheManager.Instance.GetPlaysPerHour(ScheduleId) >= ScheduleItem.MaxPlaysPerHour)
+                {
+                    LogMessage.Trace("Layout", "Stop", "Waking up schedule manager as max players per hour exceeded");
+                    Schedule.WakeUpScheduleManager();
+                }
+            }
         }
 
         /// <summary>
@@ -645,6 +659,8 @@ namespace XiboClient.Rendering
         /// </summary>
         public void Remove()
         {
+            Debug.WriteLine("Remove: " + UniqueId, "Layout");
+
             if (_regions == null)
                 return;
 
@@ -672,8 +688,6 @@ namespace XiboClient.Rendering
 
                 _regions.Clear();
             }
-
-            _regions = null;
         }
 
         /// <summary>

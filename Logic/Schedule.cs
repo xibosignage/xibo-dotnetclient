@@ -792,5 +792,10 @@ namespace XiboClient
         {
             return _scheduleManager.CurrentActionsSchedule;
         }
+
+        public void WakeUpScheduleManager()
+        {
+            _scheduleManager.RunNow();
+        }
     }
 }
