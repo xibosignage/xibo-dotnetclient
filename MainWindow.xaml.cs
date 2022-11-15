@@ -504,6 +504,8 @@ namespace XiboClient
                         this.currentLayout.Stop();
 
                         Debug.WriteLine("ChangeToNextLayout: stopped and removed the current Layout: " + this.currentLayout.UniqueId, "MainWindow");
+
+                        this.currentLayout = null;
                     }
                 }
                 catch (Exception e)

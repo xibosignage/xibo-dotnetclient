@@ -612,6 +612,8 @@ namespace XiboClient.Rendering
         /// </summary>
         public void Stop()
         {
+            LogMessage.Trace("Layout", "Stop", "Stopping: " + UniqueId);
+
             // Stat stop
             double duration = StatManager.Instance.LayoutStop(UniqueId, ScheduleId, _layoutId, this.isStatEnabled);
 
@@ -638,6 +640,18 @@ namespace XiboClient.Rendering
             }
 
             IsRunning = false;
+
+            // Record max plays per hour
+            if (ScheduleItem.MaxPlaysPerHour > 0)
+            {
+                CacheManager.Instance.IncrementPlaysPerHour(ScheduleId);
+
+                if (CacheManager.Instance.GetPlaysPerHour(ScheduleId) >= ScheduleItem.MaxPlaysPerHour)
+                {
+                    LogMessage.Trace("Layout", "Stop", "Waking up schedule manager as max players per hour exceeded");
+                    Schedule.WakeUpScheduleManager();
+                }
+            }
         }
 
         /// <summary>
