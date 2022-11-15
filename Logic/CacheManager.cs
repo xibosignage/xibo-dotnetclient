@@ -66,6 +66,16 @@ namespace XiboClient
         private Dictionary<int, int> _layoutDurations = new Dictionary<int, int>();
 
         /// <summary>
+        /// Plays Per Hour
+        /// </summary>
+        private Dictionary<int, int> PlaysPerHour = new Dictionary<int, int>();
+
+        /// <summary>
+        /// The date we last recorded a plays per hour
+        /// </summary>
+        private DateTime LastPlaysPerHourRecorded = DateTime.Now;
+
+        /// <summary>
         /// Hide constructor
         /// </summary>
         private CacheManager()
@@ -644,6 +654,47 @@ namespace XiboClient
             else
             {
                 return defaultValue;
+            }
+        }
+
+        #endregion
+
+        #region Max Plays Per Hour
+
+        private void ResetPlaysPerHourIfNecessary()
+        {
+            DateTime now = DateTime.Now;
+            DateTime startOfHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0);
+            if (LastPlaysPerHourRecorded < startOfHour)
+            {
+                PlaysPerHour.Clear();
+            }
+        }
+
+        public void IncrementPlaysPerHour(int scheduleId)
+        {
+            ResetPlaysPerHourIfNecessary();
+
+            if (!PlaysPerHour.ContainsKey(scheduleId))
+            {
+                PlaysPerHour[scheduleId] = 0;
+            }
+
+            LastPlaysPerHourRecorded = DateTime.Now;
+            PlaysPerHour[scheduleId]++;
+        }
+
+        public int GetPlaysPerHour(int scheduleId)
+        {
+            ResetPlaysPerHourIfNecessary();
+
+            if (PlaysPerHour.ContainsKey(scheduleId))
+            {
+                return PlaysPerHour[scheduleId];
+            }
+            else
+            {
+                return 0;
             }
         }
 

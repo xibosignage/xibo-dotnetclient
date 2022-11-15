@@ -64,6 +64,9 @@ namespace XiboClient.Logic
         public int CyclePlayCount = 0;
         public List<ScheduleItem> CycleScheduleItems = new List<ScheduleItem>();
 
+        // Max Plays
+        public int MaxPlaysPerHour = 0;
+
         /// <summary>
         /// Dependent items
         /// </summary>
