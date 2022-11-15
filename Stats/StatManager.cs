@@ -357,7 +357,7 @@ namespace XiboClient.Stats
                             annotatedUrl = annotatedUrl
                                 .Replace("[UNIX_TIMESTAMP]", "" + ((DateTimeOffset)stat.To).ToUnixTimeMilliseconds())
                                 .Replace("[DURATION]", "" + duration)
-                                .Replace("[ACTUAL_IMP]", "1")
+                                .Replace("[ACTUAL_IMP]", "")
                                 .Replace("[TIMESTAMP]", "" + stat.From.ToString("o", CultureInfo.InvariantCulture));
 
                             // Geo

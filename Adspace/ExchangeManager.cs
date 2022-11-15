@@ -737,7 +737,8 @@ namespace XiboClient.Adspace
                         if (ad.IsWrapper)
                         {
                             // Type
-                            if (!ad.WrapperAllowedTypes.Contains("all", StringComparer.OrdinalIgnoreCase)
+                            if (ad.WrapperAllowedTypes.Count > 0
+                                && !ad.WrapperAllowedTypes.Contains("all", StringComparer.OrdinalIgnoreCase)
                                 && !ad.WrapperAllowedTypes.Contains(ad.Type.ToLower(), StringComparer.OrdinalIgnoreCase))
                             {
                                 ReportError(ad.ErrorUrls, 200);
