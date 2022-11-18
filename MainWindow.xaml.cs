@@ -557,16 +557,24 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(new LogMessage("MainForm", "ChangeToNextLayout: Layout Change to " + scheduleItem.layoutFile + " failed. Exception raised was: " + ex.Message), LogType.Error.ToString());
-
                 // Store the active layout count, so that we can remove this one that failed and still see if there is another to try
                 int activeLayouts = _schedule.ActiveLayouts;
 
-                // We could not prepare or start this Layout, so we ought to remove it from the Schedule.
-                _schedule.RemoveLayout(scheduleItem);
+                if (scheduleItem.IsAdspaceExchange)
+                {
+                    LogMessage.Audit("MainForm", "ChangeToNextLayout", "No ad to show");
+                }
+                else
+                {
+                    LogMessage.Info("MainForm", "ChangeToNextLayout", "Layout Change to " + scheduleItem.layoutFile + " failed. Exception raised was: " + ex.Message);
+
+                    // We could not prepare or start this Layout, so we ought to remove it from the Schedule.
+                    _schedule.RemoveLayout(scheduleItem);
+                }
 
                 // Do we have more than one Layout in our Schedule which we can try?
-                if (activeLayouts > 1)
+                // and make sure they aren't solely AXE
+                if (activeLayouts > 1 && activeLayouts > _schedule.ActiveAdspaceExchangeEvents)
                 {
                     _schedule.NextLayout();
                 }

@@ -21,12 +21,10 @@
 using Flurl;
 using Flurl.Http;
 using Newtonsoft.Json.Linq;
-using Org.BouncyCastle.Crypto.Engines;
 using Swan;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.EnterpriseServices;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
@@ -42,6 +40,7 @@ namespace XiboClient.Adspace
         private readonly object buffetLock = new object();
         private bool isActive;
         private bool isNewPrefetchAdded = false;
+        private bool isUnwrapping = false;
         private DateTime lastFillDate;
         private DateTime lastPrefetchDate;
         private List<string> prefetchUrls = new List<string>();
@@ -159,7 +158,7 @@ namespace XiboClient.Adspace
             }
             catch
             {
-                Trace.WriteLine(new LogMessage("ExchangeManager", "GetAd: no available ad returned while unwrapping"), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("ExchangeManager", "GetAd: no available ad returned while unwrapping"), LogType.Info.ToString());
                 throw new AdspaceNoAdException("No ad returned");
             }
 
@@ -167,7 +166,7 @@ namespace XiboClient.Adspace
             if (!ad.IsGeoActive(ClientInfo.Instance.CurrentGeoLocation))
             {
                 ReportError(ad.ErrorUrls, 408);
-                adBuffet.Remove(ad);
+                RemoveFromBuffet(ad);
                 throw new AdspaceNoAdException("Outside geofence");
             }
 
@@ -183,7 +182,7 @@ namespace XiboClient.Adspace
             else
             {
                 ReportError(ad.ErrorUrls, 200);
-                adBuffet.Remove(ad);
+                RemoveFromBuffet(ad);
                 throw new AdspaceNoAdException("Type not recognised");
             }
 
@@ -191,7 +190,7 @@ namespace XiboClient.Adspace
             if (width / height != ad.AspectRatio)
             {
                 ReportError(ad.ErrorUrls, 203);
-                adBuffet.Remove(ad);
+                RemoveFromBuffet(ad);
                 throw new AdspaceNoAdException("Dimensions invalid");
             }
 
@@ -203,7 +202,7 @@ namespace XiboClient.Adspace
                 Task.Run(() => ad.Download());
 
                 // Don't show it this time
-                adBuffet.Remove(ad);
+                RemoveFromBuffet(ad);
                 throw new AdspaceNoAdException("Creative pending download");
             }
 
@@ -211,6 +210,14 @@ namespace XiboClient.Adspace
             adBuffet.Remove(ad);
 
             return ad;
+        }
+
+        private void RemoveFromBuffet(Ad ad)
+        {
+            lock (buffetLock)
+            {
+                adBuffet.Remove(ad);
+            }
         }
 
         /// <summary>
@@ -799,8 +806,16 @@ namespace XiboClient.Adspace
         /// </summary>
         private void UnwrapAds()
         {
+            if (isUnwrapping)
+            {
+                // Don't queue, just unwrap
+                return;
+            }
+
             lock (buffetLock)
             {
+                isUnwrapping = true;
+
                 // Keep a list of ads we add
                 List<Ad> unwrappedAds = new List<Ad>();
 
@@ -844,6 +859,8 @@ namespace XiboClient.Adspace
                 // Add in any new ones we've got as a result
                 adBuffet.AddRange(unwrappedAds);
                 unwrappedAds.Clear();
+
+                isUnwrapping = false;
             }
         }
 

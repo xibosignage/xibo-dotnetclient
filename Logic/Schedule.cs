@@ -558,6 +558,17 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// The number of active adspace exchange events
+        /// </summary>
+        public int ActiveAdspaceExchangeEvents
+        {
+            get
+            {
+                return _layoutSchedule.FindAll(item => item.IsAdspaceExchange).Count;
+            }
+        }
+
+        /// <summary>
         /// A layout file has changed
         /// </summary>
         /// <param name="layoutPath"></param>
