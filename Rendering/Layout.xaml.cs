@@ -587,6 +587,7 @@ namespace XiboClient.Rendering
 
             // Set our impression URLs which we will call on stop.
             _regions[0].SetAdspaceExchangeImpressionUrls(ad.ImpressionUrls);
+            _regions[0].SetAdspaceExchangeErrorUrls(ad.ErrorUrls);
         }
 
         /// <summary>

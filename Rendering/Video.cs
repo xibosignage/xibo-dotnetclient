@@ -110,6 +110,9 @@ namespace XiboClient.Rendering
             // Add this to a temporary blacklist so that we don't repeat it too quickly
             CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.VideoUnexpected, LayoutId, Id, "Video Failed: " + e.ErrorException.Message, 120);
 
+            // Set as failed to play
+            IsFailedToPlay = false;
+
             // Expire
             SignalElapsedEvent();
         }
