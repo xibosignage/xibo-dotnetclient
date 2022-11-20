@@ -562,7 +562,7 @@ namespace XiboClient
 
                 if (scheduleItem.IsAdspaceExchange)
                 {
-                    LogMessage.Audit("MainForm", "ChangeToNextLayout", "No ad to show");
+                    LogMessage.Audit("MainForm", "ChangeToNextLayout", "No ad to show, e: " + ex.Message);
                 }
                 else
                 {

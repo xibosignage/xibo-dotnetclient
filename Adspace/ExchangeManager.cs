@@ -47,6 +47,7 @@ namespace XiboClient.Adspace
         private List<Ad> adBuffet = new List<Ad>();
         private Dictionary<string, int> lastUnwrapRateLimits = new Dictionary<string, int>();
         private Dictionary<string, DateTime> lastUnwrapDates = new Dictionary<string, DateTime>();
+        private List<string> creativesDownloading = new List<string>();
 
         public int ShareOfVoice { get; private set; } = 0;
         public int AverageAdDuration { get; private set; } = 0;
@@ -194,12 +195,10 @@ namespace XiboClient.Adspace
                 throw new AdspaceNoAdException("Dimensions invalid");
             }
 
-            // TODO: check fault status
-
             // Check to see if the file is already there, and if not, download it.
             if (!CacheManager.Instance.IsValidPath(ad.GetFileName()))
             {
-                Task.Run(() => ad.Download());
+                DownloadAd(ad);
 
                 // Don't show it this time
                 RemoveFromBuffet(ad);
@@ -207,11 +206,15 @@ namespace XiboClient.Adspace
             }
 
             // We've converted it into a play
-            adBuffet.Remove(ad);
+            RemoveFromBuffet(ad);
 
             return ad;
         }
 
+        /// <summary>
+        /// Removes an ad from the buffet, respecting the buffet lock
+        /// </summary>
+        /// <param name="ad"></param>
         private void RemoveFromBuffet(Ad ad)
         {
             lock (buffetLock)
@@ -300,12 +303,7 @@ namespace XiboClient.Adspace
                             string fileName = "axe_" + creative.GetValue(idProp).ToString();
                             if (!CacheManager.Instance.IsValidPath(fileName))
                             {
-                                // We should download it.
-                                new Url(fetchUrl).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName).ContinueWith(t =>
-                                {
-                                    CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
-                                },
-                                TaskContinuationOptions.OnlyOnRanToCompletion);
+                                DownloadAd(fetchUrl, fileName);
                             }
                         }
                     }
@@ -320,12 +318,7 @@ namespace XiboClient.Adspace
                             string fileName = "axe_" + fetchUrl.Split('/').Last();
                             if (!CacheManager.Instance.IsValidPath(fileName))
                             {
-                                // We should download it.
-                                new Url(fetchUrl).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName).ContinueWith(t =>
-                                {
-                                    CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
-                                },
-                                TaskContinuationOptions.OnlyOnRanToCompletion);
+                                DownloadAd(fetchUrl, fileName);
                             }
                         }
                     }
@@ -775,7 +768,7 @@ namespace XiboClient.Adspace
                         // Download if necessary
                         if (!CacheManager.Instance.IsValidPath(ad.GetFileName()))
                         {
-                            Task.Run(() => ad.Download());
+                            DownloadAd(ad);
                         }
 
                         // Ad this to our list
@@ -892,6 +885,46 @@ namespace XiboClient.Adspace
                     Trace.WriteLine(new LogMessage("ExchangeManager", "ReportError: failed to report error to " + url + ", code: " + errorCode + ". e: " + e.Message), LogType.Error.ToString());
                 }
             }
+        }
+
+        private void DownloadAd(string url, string fileName)
+        {
+            lock (creativesDownloading)
+            {
+                if (creativesDownloading.Contains(fileName))
+                {
+                    LogMessage.Info("ExchangeManager", "DownloadAd", "Already downloading " + fileName);
+                    return;
+                }
+
+                // Not downloading yet, so do it now
+                creativesDownloading.Add(fileName);
+
+                // We use a task for this so that it happens in the background
+                try
+                {
+                    new Url(url).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName).ContinueWith(t =>
+                    {
+                        // Completed successfully, so add to the cache manager and remove from download queue
+                        CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
+                        creativesDownloading.Remove(fileName);
+                    }, TaskContinuationOptions.OnlyOnRanToCompletion);
+                }
+                catch (Exception e)
+                {
+                    LogMessage.Error("ExchangeManager", "DownloadAd", "Failed to download " + fileName + ", e: " + e.Message);
+                    CacheManager.Instance.Remove(fileName);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Download an ad
+        /// </summary>
+        /// <param name="ad"></param>
+        private void DownloadAd(Ad ad)
+        {
+            DownloadAd(ad.Url, ad.GetFileName());
         }
 
         private void SetUnwrapRateThreshold(string partner, int seconds)

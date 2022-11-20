@@ -18,8 +18,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
-using Flurl;
-using Flurl.Http;
 using GeoJSON.Net.Contrib.MsSqlSpatial;
 using GeoJSON.Net.Feature;
 using GeoJSON.Net.Geometry;
@@ -107,19 +105,6 @@ namespace XiboClient.Adspace
             {
                 return "axe_" + CreativeId;
             }
-        }
-
-        /// <summary>
-        /// Download this ad
-        /// </summary>
-        public void Download()
-        {
-            // We should download it.
-            string fileName = GetFileName();
-            new Url(Url).DownloadFileAsync(ApplicationSettings.Default.LibraryPath, fileName).ContinueWith(t =>
-            {
-                CacheManager.Instance.Add(fileName, CacheManager.Instance.GetMD5(fileName));
-            }, System.Threading.Tasks.TaskContinuationOptions.OnlyOnRanToCompletion);
         }
 
         /// <summary>
