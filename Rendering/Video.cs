@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2022 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -109,6 +109,9 @@ namespace XiboClient.Rendering
 
             // Add this to a temporary blacklist so that we don't repeat it too quickly
             CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.VideoUnexpected, LayoutId, Id, "Video Failed: " + e.ErrorException.Message, 120);
+
+            // Set as failed to play
+            IsFailedToPlay = true;
 
             // Expire
             SignalElapsedEvent();

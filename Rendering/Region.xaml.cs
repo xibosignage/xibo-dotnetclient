@@ -18,10 +18,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Flurl;
+using Flurl.Http;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
+using System.Security.Policy;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Xml;
@@ -98,6 +101,11 @@ namespace XiboClient.Rendering
         /// A list of impression Urls to call on stop.
         /// </summary>
         private List<string> adspaceExchangeImpressionUrls = new List<string>();
+
+        /// <summary>
+        /// Ad list of error ulrs to call on stop.
+        /// </summary>
+        private List<string> adspaceExchangeErrorUrls = new List<string>();
 
         /// <summary>
         /// Is this an adspace exchange region?
@@ -696,7 +704,39 @@ namespace XiboClient.Rendering
             try
             {
                 // Close the stat record
-                StatManager.Instance.WidgetStop(media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled, adspaceExchangeImpressionUrls);
+                if (media.IsFailedToPlay)
+                {
+                    StatManager.Instance.WidgetClearFailed(media.ScheduleId, media.LayoutId, media.Id);
+
+                    if (isAdspaceExchange)
+                    {
+                        foreach (string url in adspaceExchangeErrorUrls)
+                        {
+                            try
+                            {
+                                // Macros
+                                string uri = url
+                                    .Replace("[TIMESTAMP]", "" + DateTime.Now.ToString("o", System.Globalization.CultureInfo.InvariantCulture))
+                                    .Replace("[ERRORCODE]", "201");
+
+                                // Call the URL
+                                new Flurl.Url(uri).WithTimeout(10).GetAsync().ContinueWith(t =>
+                                {
+                                    LogMessage.Error("Region", "StopMedia", "failed to report error to " + uri);
+                                },
+                                TaskContinuationOptions.OnlyOnFaulted);
+                            }
+                            catch
+                            {
+                                LogMessage.Error("Region", "StopMedia", "failed to report error");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    StatManager.Instance.WidgetStop(media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled, adspaceExchangeImpressionUrls);
+                }
 
                 // Media Stopped Event removes the media from the scene
                 media.MediaStoppedEvent += Media_MediaStoppedEvent;
@@ -902,6 +942,15 @@ namespace XiboClient.Rendering
         {
             isAdspaceExchange = true;
             adspaceExchangeImpressionUrls = urls;
+        }
+
+        /// <summary>
+        /// Set any adspace exchange error urls.
+        /// </summary>
+        /// <param name="urls"></param>
+        public void SetAdspaceExchangeErrorUrls(List<string> urls)
+        {
+            adspaceExchangeErrorUrls = urls;
         }
     }
 }

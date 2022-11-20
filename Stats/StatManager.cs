@@ -303,6 +303,19 @@ namespace XiboClient.Stats
             }
         }
 
+        public void WidgetClearFailed(int scheduleId, int layoutId, string widgetId)
+        {
+            lock (_locker)
+            {
+                // Record we expect to already be open in the Dictionary
+                string key = scheduleId + "-" + layoutId + "-" + widgetId;
+
+                LogMessage.Info("StatManager", "WidgetClearFailed", "Removing failed widget: " + key);
+
+                this.proofOfPlay.Remove(key);
+            }
+        }
+
         /// <summary>
         /// Widget Stop Event
         /// </summary>

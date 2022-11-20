@@ -119,6 +119,11 @@ namespace XiboClient.Rendering
         public bool StatsEnabled { get; private set; }
 
         /// <summary>
+        /// Did this media item fail to play?
+        /// </summary>
+        public bool IsFailedToPlay { get; protected set; }
+
+        /// <summary>
         /// Media Object
         /// </summary>
         /// <param name="options"></param>
@@ -132,6 +137,9 @@ namespace XiboClient.Rendering
             ScheduleId = options.scheduleId;
             LayoutId = options.layoutId;
             StatsEnabled = options.isStatEnabled;
+
+            // Start us off in a good state
+            IsFailedToPlay = false;
         }
 
         /// <summary>
