@@ -717,7 +717,7 @@ namespace XiboClient.Rendering
                                 // Macros
                                 string uri = url
                                     .Replace("[TIMESTAMP]", "" + DateTime.Now.ToString("o", System.Globalization.CultureInfo.InvariantCulture))
-                                    .Replace("[ERRORCODE]", "201");
+                                    .Replace("[ERRORCODE]", "405");
 
                                 // Call the URL
                                 new Flurl.Url(uri).WithTimeout(10).GetAsync().ContinueWith(t =>

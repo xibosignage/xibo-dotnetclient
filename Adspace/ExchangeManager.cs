@@ -25,6 +25,8 @@ using Swan;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
@@ -281,6 +283,7 @@ namespace XiboClient.Adspace
                     string resolvedUrl = url;
                     string urlProp = null;
                     string idProp = null;
+                    string mimeTypeProp = null;
                     if (url.Contains("||"))
                     {
                         // Split the URL
@@ -288,6 +291,10 @@ namespace XiboClient.Adspace
                         resolvedUrl = splits[0];
                         urlProp = splits[1];
                         idProp = splits[2];
+                        if (splits.Length > 3)
+                        {
+                            mimeTypeProp = splits[3];
+                        }
                     }
 
                     // We either expect a list of strings or a list of objects.
@@ -301,6 +308,19 @@ namespace XiboClient.Adspace
                         {
                             string fetchUrl = creative.GetValue(urlProp).ToString();
                             string fileName = "axe_" + creative.GetValue(idProp).ToString();
+
+                            // Handle videos.
+                            // we do this because windows won't play videos without a file name (well it will, but not
+                            // reliably)
+                            if (mimeTypeProp != null && !fileName.Contains('.'))
+                            {
+                                string[] parts = creative.GetValue(mimeTypeProp).ToString().Split('/');
+                                if (parts.Length > 1 && parts[0] == "video")
+                                {
+                                    fileName += '.' + parts[1];
+                                }
+                            }
+
                             if (!CacheManager.Instance.IsValidPath(fileName))
                             {
                                 DownloadAd(fetchUrl, fileName);
@@ -895,6 +915,24 @@ namespace XiboClient.Adspace
                 {
                     LogMessage.Info("ExchangeManager", "DownloadAd", "Already downloading " + fileName);
                     return;
+                }
+
+                // Check to see if we already have a matching file without the extension
+                if (fileName.Contains('.'))
+                {
+                    try
+                    {
+                        string pathWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+                        if (File.Exists(ApplicationSettings.Default.LibraryPath + pathWithoutExtension))
+                        {
+                            File.Copy(ApplicationSettings.Default.LibraryPath + pathWithoutExtension, ApplicationSettings.Default.LibraryPath + fileName);
+                            return;
+                        }
+                    }
+                    catch
+                    {
+                        LogMessage.Audit("ExchangeManage", "DownloadAd", "Failed to get filename without extension");
+                    }
                 }
 
                 // Not downloading yet, so do it now
