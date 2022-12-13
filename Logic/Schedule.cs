@@ -514,12 +514,20 @@ namespace XiboClient
                 {
                     // Next sequence
                     sequence++;
-                }
 
-                // Make sure we can get this sequence
-                if (sequence >= nextLayout.CycleScheduleItems.Count)
+                    // Make sure we can get this sequence
+                    if (sequence >= nextLayout.CycleScheduleItems.Count)
+                    {
+                        sequence = 0;
+                    }
+
+                    // Set the sequence and increment the playcount
+                    ClientInfo.Instance.SetCampaignGroupSequence(nextLayout.CycleGroupKey, sequence);
+                }
+                else
                 {
-                    sequence = 0;
+                    // We are playing the same one again, so increment the playcount.
+                    ClientInfo.Instance.IncrementCampaignGroupPlaycount(nextLayout.CycleGroupKey);
                 }
 
                 // Set the next layout
@@ -527,10 +535,6 @@ namespace XiboClient
                 {
                     nextLayout = nextLayout.CycleScheduleItems[sequence];
                 }
-
-                // Set the sequence and increment the playcount
-                ClientInfo.Instance.SetCampaignGroupSequence(nextLayout.CycleGroupKey, sequence);
-                ClientInfo.Instance.IncrementCampaignGroupPlaycount(nextLayout.CycleGroupKey);
             }
 
             // Raise the event

@@ -667,8 +667,11 @@ namespace XiboClient
                         // Add a new empty list
                         resolved.Add(item.CycleGroupKey, new List<ScheduleItem>());
                     }
-
-                    resolved[item.CycleGroupKey].Add(item);
+                    else
+                    {
+                        // We only add the 2nd item onward to our cycle group key.
+                        resolved[item.CycleGroupKey].Add(item);
+                    }
                 }
                 else
                 {
