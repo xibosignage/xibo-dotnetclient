@@ -427,18 +427,10 @@ namespace XiboClient.Rendering
                         bool isRandom = XmlHelper.GetAttrib(media, "isRandom", "0") == "1";
                         int playCount = int.Parse(XmlHelper.GetAttrib(media, "playCount", "1"));
 
+                        // This defaults to 0 if we're the first time here.
                         int sequence = ClientInfo.Instance.GetWidgetGroupSequence(groupKey);
 
-                        // If the play count is greater than 1, we need to grab the count plays for the current widget
-                        if (playCount > 1 && ClientInfo.Instance.GetWidgetGroupPlaycount(groupKey) < playCount)
-                        {
-                            // Stick with the current widget
-                            mediaNodes.Add(parsedMedia[groupKey][sequence]);
-
-                            // Bump plays
-                            ClientInfo.Instance.IncrementWidgetGroupPlaycount(groupKey);
-                        }
-                        else
+                        if (ClientInfo.Instance.GetWidgetGroupPlaycount(groupKey) >= playCount)
                         {
                             // Plays of the current widget have been met, so pick a new one.
                             if (isRandom)
@@ -455,11 +447,19 @@ namespace XiboClient.Rendering
                                     sequence = 0;
                                 }
                             }
-                            // Pull out the appropriate widget
-                            mediaNodes.Add(parsedMedia[groupKey][sequence]);
 
+                            // Set the group sequence (also sets the play count to 1)
                             ClientInfo.Instance.SetWidgetGroupSequence(groupKey, sequence);
                         }
+                        else
+                        {
+                            // Take the same one again (do not adjust sequence)
+                            // Bump plays
+                            ClientInfo.Instance.IncrementWidgetGroupPlaycount(groupKey);
+                        }
+
+                        // Pull out the appropriate widget
+                        mediaNodes.Add(parsedMedia[groupKey][sequence]);
                     }
                     else
                     {
