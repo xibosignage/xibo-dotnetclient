@@ -80,7 +80,7 @@ namespace XiboClient.Action
             {
                 // Call close.
                 Application.Current.Dispatcher.Invoke(new System.Action(() => {
-                    Application.Current.MainWindow.Close();
+                    Application.Current.Shutdown();
                 }));
                 
                 return true;
