@@ -101,8 +101,14 @@ namespace XiboClient.Adspace
             {
                 return "axe_" + Url.Split('/').Last();
             }
-            else
+            else if (Type.StartsWith("video"))
             {
+                // Workaround for MediaElement not supporting videos without an extension.
+                string[] types = Type.Split('/');
+                return "axe_" + CreativeId + "." + types[1];
+            }
+            else
+            { 
                 return "axe_" + CreativeId;
             }
         }

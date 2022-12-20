@@ -667,8 +667,11 @@ namespace XiboClient
                         // Add a new empty list
                         resolved.Add(item.CycleGroupKey, new List<ScheduleItem>());
                     }
-
-                    resolved[item.CycleGroupKey].Add(item);
+                    else
+                    {
+                        // We only add the 2nd item onward to our cycle group key.
+                        resolved[item.CycleGroupKey].Add(item);
+                    }
                 }
                 else
                 {
@@ -912,7 +915,15 @@ namespace XiboClient
                     normalIndex = 0;
                 }
                 resolved.Add(resolvedNormal[normalIndex]);
-                totalSecondsAllocated += resolvedNormal[normalIndex].Duration;
+
+                // Protect against a schedule not having a duration (assume 60)
+                int duration = resolvedNormal[normalIndex].Duration;
+                if (duration <= 0)
+                {
+                    duration = 60;
+                }
+
+                totalSecondsAllocated += duration;
                 normalIndex++;
             }
 
@@ -1203,19 +1214,6 @@ namespace XiboClient
                     }
                 }
 
-                // Duration
-                if (attributes["duration"] != null)
-                {
-                    try
-                    {
-                        temp.Duration = int.Parse(attributes["duration"].Value);
-                    }
-                    catch
-                    {
-                        temp.Duration = 0;
-                    }
-                }
-
                 // Cycle playback
                 try
                 {
@@ -1236,6 +1234,19 @@ namespace XiboClient
                 catch
                 {
                     LogMessage.Trace("ScheduleManager", "ParseNodeIntoScheduleItem", "Invalid maxPlaysPerHour");
+                }
+            }
+
+            // Duration (might exist on the default node too)
+            if (attributes["duration"] != null)
+            {
+                try
+                {
+                    temp.Duration = int.Parse(attributes["duration"].Value);
+                }
+                catch
+                {
+                    temp.Duration = 0;
                 }
             }
 
