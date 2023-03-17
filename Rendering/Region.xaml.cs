@@ -476,7 +476,7 @@ namespace XiboClient.Rendering
 
                 // Open a stat record
                 // options accurately reflect the current media, so we can use them.
-                StatManager.Instance.WidgetStart(this.options.scheduleId, this.options.layoutId, _currentMediaOptions.mediaid);
+                StatManager.Instance.WidgetStart(newMedia.UniqueId, this.options.scheduleId, this.options.layoutId, _currentMediaOptions.mediaid);
             }
         }
 
@@ -706,7 +706,7 @@ namespace XiboClient.Rendering
                 // Close the stat record
                 if (media.IsFailedToPlay)
                 {
-                    StatManager.Instance.WidgetClearFailed(media.ScheduleId, media.LayoutId, media.Id);
+                    StatManager.Instance.WidgetClearFailed(media.UniqueId, media.ScheduleId, media.LayoutId, media.Id);
 
                     if (isAdspaceExchange)
                     {
@@ -735,7 +735,7 @@ namespace XiboClient.Rendering
                 }
                 else
                 {
-                    StatManager.Instance.WidgetStop(media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled, adspaceExchangeImpressionUrls);
+                    StatManager.Instance.WidgetStop(media.UniqueId, media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled, adspaceExchangeImpressionUrls);
                 }
 
                 // Media Stopped Event removes the media from the scene

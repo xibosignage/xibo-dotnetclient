@@ -195,6 +195,7 @@ namespace XiboClient.Stats
         /// <summary>
         /// Layout Start Event
         /// </summary>
+        /// <param name="uniqueId"></param>
         /// <param name="scheduleId"></param>
         /// <param name="layoutId"></param>
         public void LayoutStart(Guid uniqueId, int scheduleId, int layoutId)
@@ -224,6 +225,7 @@ namespace XiboClient.Stats
         /// <summary>
         /// Layout Stop Event
         /// </summary>
+        /// <param name="uniqueId"></param>
         /// <param name="scheduleId"></param>
         /// <param name="layoutId"></param>
         /// <param name="statEnabled"></param>
@@ -273,17 +275,18 @@ namespace XiboClient.Stats
         /// <summary>
         /// Widget Start Event
         /// </summary>
+        /// <param name="uniqueId"></param>
         /// <param name="scheduleId"></param>
         /// <param name="layoutId"></param>
         /// <param name="widgetId"></param>
-        public void WidgetStart(int scheduleId, int layoutId, string widgetId)
+        public void WidgetStart(Guid uniqueId, int scheduleId, int layoutId, string widgetId)
         {
             Debug.WriteLine(string.Format("WidgetStart: scheduleId: {0}, layoutId: {1}, widgetId: {2}", scheduleId, layoutId, widgetId), "StatManager");
 
             lock (_locker)
             {
                 // New record, which we put in the dictionary
-                string key = scheduleId + "-" + layoutId + "-" + widgetId;
+                string key = uniqueId + "-" + scheduleId + "-" + layoutId + "-" + widgetId;
                 Stat stat = new Stat
                 {
                     Type = StatType.Media,
@@ -303,12 +306,19 @@ namespace XiboClient.Stats
             }
         }
 
-        public void WidgetClearFailed(int scheduleId, int layoutId, string widgetId)
+        /// <summary>
+        /// If a widget fails to play we should not record a stat for it.
+        /// </summary>
+        /// <param name="uniqueId"></param>
+        /// <param name="scheduleId"></param>
+        /// <param name="layoutId"></param>
+        /// <param name="widgetId"></param>
+        public void WidgetClearFailed(Guid uniqueId, int scheduleId, int layoutId, string widgetId)
         {
             lock (_locker)
             {
                 // Record we expect to already be open in the Dictionary
-                string key = scheduleId + "-" + layoutId + "-" + widgetId;
+                string key = uniqueId + "-" + scheduleId + "-" + layoutId + "-" + widgetId;
 
                 LogMessage.Info("StatManager", "WidgetClearFailed", "Removing failed widget: " + key);
 
@@ -319,13 +329,14 @@ namespace XiboClient.Stats
         /// <summary>
         /// Widget Stop Event
         /// </summary>
+        /// <param name="uniqueId"></param>
         /// <param name="scheduleId"></param>
         /// <param name="layoutId"></param>
         /// <param name="widgetId"></param>
         /// <param name="statEnabled"></param>
         /// <param name="urls"></param>
         /// <returns>Duration</returns>
-        public double WidgetStop(int scheduleId, int layoutId, string widgetId, bool statEnabled, List<string> urls)
+        public double WidgetStop(Guid uniqueId, int scheduleId, int layoutId, string widgetId, bool statEnabled, List<string> urls)
         {
             Debug.WriteLine(string.Format("WidgetStop: scheduleId: {0}, layoutId: {1}, widgetId: {2}", scheduleId, layoutId, widgetId), "StatManager");
 
@@ -334,7 +345,7 @@ namespace XiboClient.Stats
             lock (_locker)
             {
                 // Record we expect to already be open in the Dictionary
-                string key = scheduleId + "-" + layoutId + "-" + widgetId;
+                string key = uniqueId + "-" + scheduleId + "-" + layoutId + "-" + widgetId;
 
                 if (this.proofOfPlay.TryGetValue(key, out Stat stat))
                 {
