@@ -91,7 +91,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// The Intended Height of this Media
         /// </summary>
-        public int HeightIntended { get { return options.width; } }
+        public int HeightIntended { get { return options.height; } }
 
         /// <summary>
         /// The Media Options
