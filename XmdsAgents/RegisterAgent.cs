@@ -247,7 +247,9 @@ namespace XiboClient.XmdsAgents
                 Environment.OSVersion.ToString(),
                 key.MacAddress,
                 key.Channel,
-                key.getXmrPublicKey());
+                key.getXmrPublicKey(),
+                string.Empty
+            );
         }
 
         public static string ProcessRegisterXml(string xml)

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -92,7 +92,17 @@ namespace XiboClient
                 rf.ChunkSize = 0;
 
                 // Fill in some information that we already know
-                if (rf.FileType == "media")
+                if (rf.FileType == "dependency")
+                {
+                    rf.DependencyId = attributes["id"].Value;
+                    rf.DependencyFileType = attributes["fileType"].Value;
+                    rf.Path = attributes["path"].Value;
+                    rf.SaveAs = attributes["saveAs"].Value;
+                    rf.Http = (attributes["download"].Value == "http");
+                    rf.Size = double.Parse(attributes["size"].Value);
+                    rf.ChunkSize = 512000;
+                }
+                else if (rf.FileType == "media")
                 {
                     rf.Id = int.Parse(attributes["id"].Value);
                     rf.Path = attributes["path"].Value;
@@ -105,6 +115,7 @@ namespace XiboClient
                     rf.Id = int.Parse(attributes["id"].Value);
                     rf.Path = attributes["path"].Value;
                     rf.Http = (attributes["download"].Value == "http");
+                    rf.Size = double.Parse(attributes["size"].Value);
 
                     if (rf.Http)
                     {
@@ -181,10 +192,28 @@ namespace XiboClient
                         continue;
                     }
                 }
-                else
-                    continue;
+                else if (rf.FileType == "widget")
+                {
+                    // Add and skip onward
+                    rf.Id = int.Parse(attributes["id"].Value);
+                    rf.SaveAs = rf.Id + ".json";
+                    rf.UpdateInterval = attributes["updated"] != null ? int.Parse(attributes["updateInterval"].Value) : 120;
 
-                // This stuff only executes for Layout/Files items
+                    // Does this data file already exist? and if so, is it sufficiently up to date.
+                    if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs))
+                    {
+                        rf.Complete = File.GetLastWriteTimeUtc(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs) > DateTime.Now.AddSeconds(-1 * rf.UpdateInterval);
+                    }
+
+                    RequiredFileList.Add(rf);
+                    continue;
+                }
+                else
+                {
+                    continue;
+                }
+
+                // This stuff only executes for Dependencies/Layout/Files items
                 rf.Md5 = attributes["md5"].Value;
                 rf.Size = double.Parse(attributes["size"].Value);
 
@@ -193,10 +222,21 @@ namespace XiboClient
 
                 foreach (RequiredFile existingRf in RequiredFileList)
                 {
-                    if (existingRf.Id == rf.Id && existingRf.FileType == rf.FileType)
+                    if (rf.FileType == "dependency" && rf.FileType == existingRf.FileType)
                     {
-                        found = true;
-                        break;
+                        if (existingRf.DependencyId == rf.DependencyId && existingRf.DependencyFileType == rf.DependencyFileType)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (existingRf.Id == rf.Id && existingRf.FileType == rf.FileType)
+                        {
+                            found = true;
+                            break;
+                        }
                     }
                 }
 
@@ -376,8 +416,25 @@ namespace XiboClient
 
                 foreach (RequiredFile rf in RequiredFileList)
                 {
-                    xml += string.Format("<file type=\"{0}\" id=\"{1}\" complete=\"{2}\" lastChecked=\"{3}\" md5=\"{4}\" />",
-                        rf.FileType, rf.Id.ToString(), (rf.Complete) ? "1" : "0", rf.LastChecked.ToString(), rf.Md5);
+                    if (rf.FileType == "dependency")
+                    {
+                        xml += string.Format("<file type=\"{0}\" id=\"{1}\" fileType=\"{2}\" complete=\"{3}\" lastChecked=\"{4}\" />",
+                            rf.FileType,
+                            rf.DependencyId,
+                            rf.DependencyFileType,
+                            (rf.Complete ? "1" : "0"),
+                            rf.LastChecked.ToString()
+                        );
+                    }
+                    else
+                    {
+                        xml += string.Format("<file type=\"{0}\" id=\"{1}\" complete=\"{2}\" lastChecked=\"{3}\" />",
+                            rf.FileType,
+                            rf.Id.ToString(),
+                            (rf.Complete ? "1" : "0"),
+                            rf.LastChecked.ToString()
+                        );
+                    }
                 }
 
                 xml = string.Format("<files>{0}</files>", xml);
@@ -426,5 +483,12 @@ namespace XiboClient
         public int LayoutId;
         public string RegionId;
         public string MediaId;
+
+        // Dependencies
+        public string DependencyId;
+        public string DependencyFileType;
+
+        // Data
+        public int UpdateInterval;
     }
 }

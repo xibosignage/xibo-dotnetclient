@@ -105,14 +105,18 @@ namespace XiboClient
         {
             Trace.WriteLine(new LogMessage("Main", "Client Started"), LogType.Info.ToString());
 
+#if !DEBUG
             KeyInterceptor.SetHook();
             MouseInterceptor.SetHook();
+#endif
 
             MainWindow windowMain = new MainWindow(screenSaver);
             windowMain.ShowDialog();
 
+#if !DEBUG
             KeyInterceptor.UnsetHook();
             MouseInterceptor.UnsetHook();
+#endif
         }
 
         #region Exception Handlers
