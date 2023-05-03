@@ -260,7 +260,7 @@
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
-    <None Include="Web References\xmds\xmds.wsdl" />
+    <None Include="Web References\xmds\service_v7.wsdl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -281,10 +281,10 @@
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://localhost/xmds.php%3fv=7&amp;wsdl">
+    <WebReferenceUrl Include="https://raw.githubusercontent.com/xibosignage/xibo-cms/westphal/lib/Xmds/service_v7.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>http://localhost/xmds.php%3fv=7&amp;wsdl</UpdateFromURL>
+      <UpdateFromURL>https://raw.githubusercontent.com/xibosignage/xibo-cms/westphal/lib/Xmds/service_v7.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
