@@ -18,12 +18,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Swan;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Windows.Documents;
 
 namespace XiboClient.XmdsAgents
 {
@@ -42,6 +47,13 @@ namespace XiboClient.XmdsAgents
         /// <param name="fileId"></param>
         public delegate void OnPartCompleteDelegate(int fileId);
         public event OnPartCompleteDelegate OnPartComplete;
+
+        /// <summary>
+        /// OnPartComplete delegate
+        /// </summary>
+        /// <param name="fileId"></param>
+        public delegate void OnNewHttpRequiredFileDelegate(int mediaId, double fileSize, string md5, string saveAs, string path);
+        public event OnNewHttpRequiredFileDelegate OnNewHttpRequiredFile;
 
         /// <summary>
         /// Client Hardware key
@@ -136,6 +148,28 @@ namespace XiboClient.XmdsAgents
                         // File completed
                         _requiredFile.Downloading = false;
                         _requiredFile.Complete = true;
+
+                        // Do we have any new required file nodes to parse out from this return.
+                        if (_requiredFile.FileType == "widget")
+                        {
+                            // Load the result into a JSON response.
+                            try
+                            {
+                                JObject json = JsonConvert.DeserializeObject<JObject>(result);
+                                if (json != null && json.ContainsKey("files"))
+                                {
+                                    foreach (JObject file in json.GetValueOrDefault("files").Cast<JObject>())
+                                    {
+                                        // Make a new fileagent somehow, to download this file.
+                                        OnNewHttpRequiredFile?.Invoke(int.Parse(file.GetValue("id").ToString()), double.Parse(file.GetValue("size").ToString()), file.GetValue("md5").ToString(), file.GetValue("saveAs").ToString(), file.GetValue("path").ToString());
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                LogMessage.Error("FileAgent", "Run", "Unable to parse JSON result. e = " + ex.Message);
+                            }
+                        }
                     }
                 }
                 else if (_requiredFile.Http)

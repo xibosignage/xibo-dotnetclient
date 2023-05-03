@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -197,11 +197,12 @@ namespace XiboClient
                 }
 
                 // We need to generate the MD5 and store it for later
-                Md5Resource md5Resource = new Md5Resource();
-
-                md5Resource.path = path;
-                md5Resource.md5 = md5;
-                md5Resource.cacheDate = DateTime.Now;
+                Md5Resource md5Resource = new Md5Resource
+                {
+                    path = path,
+                    md5 = md5,
+                    cacheDate = DateTime.Now
+                };
 
                 // Add the resource to the collection
                 _files.Add(md5Resource);

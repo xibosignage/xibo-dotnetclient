@@ -265,6 +265,7 @@ namespace XiboClient.XmdsAgents
                                         };
                                         fileAgent.OnComplete += new FileAgent.OnCompleteDelegate(fileAgent_OnComplete);
                                         fileAgent.OnPartComplete += new FileAgent.OnPartCompleteDelegate(fileAgent_OnPartComplete);
+                                        fileAgent.OnNewHttpRequiredFile += new FileAgent.OnNewHttpRequiredFileDelegate(OnNewRequiredFile);
 
                                         // Create the thread and add it to the list of threads to start
                                         Thread thread = new Thread(new ThreadStart(fileAgent.Run))
@@ -420,6 +421,79 @@ namespace XiboClient.XmdsAgents
                 // Raise an event to say it is completed
                 OnComplete?.Invoke(rf.SaveAs);
             }
+        }
+
+        /// <summary>
+        /// Silently add and download this need required file
+        /// </summary>
+        /// <param name="mediaId"></param>
+        /// <param name="fileSize"></param>
+        /// <param name="md5"></param>
+        /// <param name="saveAs"></param>
+        /// <param name="path"></param>
+        void OnNewRequiredFile(int mediaId, double fileSize, string md5, string saveAs, string path)
+        {
+            // There is a chance this file already exists and is downloaded.
+            try
+            {
+                _requiredFiles.GetRequiredFile(mediaId, "media");
+                LogMessage.Trace("ScheduleAndFileAgent", "OnNewRequiredFile", "New Required file for mediaId " + mediaId + " already exists");
+                return;
+            }
+            catch
+            {
+
+            }
+            LogMessage.Trace("ScheduleAndFileAgent", "OnNewRequiredFile", "New Required file for mediaId " + mediaId);
+
+            // Add to required files.
+            RequiredFile fileToDownload = new RequiredFile
+            {
+                FileType = "media",
+                Id = mediaId,
+                Size = fileSize,
+                Md5 = md5,
+                SaveAs = saveAs,
+                Path = path,
+                Http = true,
+                Downloading = false,
+                Complete = false,
+                LastChecked = DateTime.Now,
+                ChunkOffset = 0,
+                ChunkSize = 512000
+            };
+
+            _requiredFiles.AssessAndAddRequiredFile(fileToDownload);
+
+            if (fileToDownload.Complete)
+            {
+                LogMessage.Trace("ScheduleAndFileAgent", "OnNewRequiredFile", "File already downloaded");
+                return;
+            }
+
+            // Check we have enough space for this file.
+            long freeSpace = ClientInfo.Instance.GetDriveFreeSpace();
+            if (freeSpace != -1 && fileToDownload.Size > freeSpace)
+            {
+                LogMessage.Error("ScheduleAndFileAgent", "OnNewRequiredFile", "Not enough free space on disk");
+                return;
+            }
+
+            // Spawn a thread to download this file.
+            FileAgent fileAgent = new FileAgent(_requiredFiles, fileToDownload)
+            {
+                FileDownloadLimit = _fileDownloadLimit,
+                HardwareKey = _hardwareKey
+            };
+            fileAgent.OnComplete += new FileAgent.OnCompleteDelegate(fileAgent_OnComplete);
+            fileAgent.OnPartComplete += new FileAgent.OnPartCompleteDelegate(fileAgent_OnPartComplete);
+
+            // Create the thread and add it to the list of threads to start
+            Thread thread = new Thread(new ThreadStart(fileAgent.Run))
+            {
+                Name = "FileAgent_" + fileToDownload.FileType + "_Id_" + fileToDownload.Id.ToString()
+            };
+            thread.Start();
         }
 
         /// <summary>

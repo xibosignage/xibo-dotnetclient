@@ -70,6 +70,57 @@ namespace XiboClient
             };
         }
 
+        public void AssessAndAddRequiredFile(RequiredFile rf)
+        {
+            // Does this file exist?
+            if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs))
+            {
+                // Compare MD5 of the file we currently have, to what we should have
+                if (rf.Md5 != CacheManager.Instance.GetMD5(rf.SaveAs))
+                {
+                    Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "MD5 different for existing file: " + rf.SaveAs), LogType.Info.ToString());
+
+                    // They are different
+                    CacheManager.Instance.Remove(rf.SaveAs);
+
+                    // TODO: Resume the file download under certain conditions. Make sure its not bigger than it should be. 
+                    // Make sure it is fairly fresh
+                    FileInfo info = new FileInfo(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs);
+
+                    if (info.Length < rf.Size && info.LastWriteTime > DateTime.Now.AddDays(-1))
+                    {
+                        // Continue the file
+                        rf.ChunkOffset = (int)info.Length;
+                    }
+                    else
+                    {
+                        // Delete the old file as it is wrong
+                        try
+                        {
+                            File.Delete(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine(new LogMessage("CompareAndCollect", "Unable to delete incorrect file because: " + ex.Message));
+                        }
+                    }
+                }
+                else
+                {
+                    // The MD5 is equal - we already have an up to date version of this file.
+                    rf.Complete = true;
+                    CacheManager.Instance.Add(rf.SaveAs, rf.Md5);
+                }
+            }
+            else
+            {
+                // File does not exist, therefore remove it from the cache manager (on the off chance that it is in there for some reason)
+                CacheManager.Instance.Remove(rf.SaveAs);
+            }
+
+            RequiredFileList.Add(rf);
+        }
+
         /// <summary>
         /// Set required files from the XML document
         /// </summary>
@@ -246,53 +297,7 @@ namespace XiboClient
                     continue;
                 }
 
-                // Does this file exist?
-                if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs))
-                {
-                    // Compare MD5 of the file we currently have, to what we should have
-                    if (rf.Md5 != CacheManager.Instance.GetMD5(rf.SaveAs))
-                    {
-                        Trace.WriteLine(new LogMessage("RequiredFiles - SetRequiredFiles", "MD5 different for existing file: " + rf.SaveAs), LogType.Info.ToString());
-
-                        // They are different
-                        CacheManager.Instance.Remove(rf.SaveAs);
-
-                        // TODO: Resume the file download under certain conditions. Make sure its not bigger than it should be. 
-                        // Make sure it is fairly fresh
-                        FileInfo info = new FileInfo(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs);
-
-                        if (info.Length < rf.Size && info.LastWriteTime > DateTime.Now.AddDays(-1))
-                        {
-                            // Continue the file
-                            rf.ChunkOffset = (int)info.Length;
-                        }
-                        else
-                        {
-                            // Delete the old file as it is wrong
-                            try
-                            {
-                                File.Delete(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs);
-                            }
-                            catch (Exception ex)
-                            {
-                                Trace.WriteLine(new LogMessage("CompareAndCollect", "Unable to delete incorrect file because: " + ex.Message));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // The MD5 is equal - we already have an up to date version of this file.
-                        rf.Complete = true;
-                        CacheManager.Instance.Add(rf.SaveAs, rf.Md5);
-                    }
-                }
-                else
-                {
-                    // File does not exist, therefore remove it from the cache manager (on the off chance that it is in there for some reason)
-                    CacheManager.Instance.Remove(rf.SaveAs);
-                }
-
-                RequiredFileList.Add(rf);
+                AssessAndAddRequiredFile(rf);
             }
         }
 
