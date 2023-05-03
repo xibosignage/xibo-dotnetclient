@@ -377,6 +377,14 @@ namespace XiboClient.XmdsAgents
                     writer.WriteValue(WindowsToIana(TimeZone.CurrentTimeZone.StandardName));
                 }
 
+                // LAN IP address
+                string ipAddress = HardwareKey.LocalIPAddress();
+                if (!string.IsNullOrEmpty(ipAddress))
+                {
+                    writer.WritePropertyName("lanIpAddress");
+                    writer.WriteValue(ipAddress);
+                }
+
                 // Finish
                 writer.WriteEndObject();
 
