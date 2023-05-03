@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="XiboClient_xmds_xmds" Type="(Web Service URL)" Scope="Application">
-      <Value Profile="(Default)">http://localhost/xmds.php?v=7</Value>
+      <Value Profile="(Default)">{{XMDS_LOCATION}}</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -55,6 +55,8 @@ namespace XiboClient.xmds {
         
         private System.Threading.SendOrPostCallback GetDependencyOperationCompleted;
         
+        private System.Threading.SendOrPostCallback GetWeatherOperationCompleted;
+        
         private bool useDefaultCredentialsSetExplicitly;
         
         /// <remarks/>
@@ -131,6 +133,9 @@ namespace XiboClient.xmds {
         
         /// <remarks/>
         public event GetDependencyCompletedEventHandler GetDependencyCompleted;
+        
+        /// <remarks/>
+        public event GetWeatherCompletedEventHandler GetWeatherCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#RegisterDisplay", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
@@ -603,6 +608,38 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#GetWeather", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [return: System.Xml.Serialization.SoapElementAttribute("data")]
+        public string GetWeather(string serverKey, string hardwareKey) {
+            object[] results = this.Invoke("GetWeather", new object[] {
+                        serverKey,
+                        hardwareKey});
+            return ((string)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void GetWeatherAsync(string serverKey, string hardwareKey) {
+            this.GetWeatherAsync(serverKey, hardwareKey, null);
+        }
+        
+        /// <remarks/>
+        public void GetWeatherAsync(string serverKey, string hardwareKey, object userState) {
+            if ((this.GetWeatherOperationCompleted == null)) {
+                this.GetWeatherOperationCompleted = new System.Threading.SendOrPostCallback(this.OnGetWeatherOperationCompleted);
+            }
+            this.InvokeAsync("GetWeather", new object[] {
+                        serverKey,
+                        hardwareKey}, this.GetWeatherOperationCompleted, userState);
+        }
+        
+        private void OnGetWeatherOperationCompleted(object arg) {
+            if ((this.GetWeatherCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.GetWeatherCompleted(this, new GetWeatherCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -955,6 +992,32 @@ namespace XiboClient.xmds {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((byte[])(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
+    public delegate void GetWeatherCompletedEventHandler(object sender, GetWeatherCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class GetWeatherCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal GetWeatherCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public string Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((string)(this.results[0]));
             }
         }
     }
