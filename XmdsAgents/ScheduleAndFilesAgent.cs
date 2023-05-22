@@ -363,8 +363,21 @@ namespace XiboClient.XmdsAgents
 
             foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
             {
-                string percentComplete = (!requiredFile.Complete) ? Math.Round((((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100), 1).ToString() : "100";
-                requiredFilesTextBox = requiredFilesTextBox + requiredFile.FileType + ": " + requiredFile.SaveAs + ". (" + percentComplete + "%)" + Environment.NewLine;
+                string percentComplete;
+                if (requiredFile.Complete)
+                {
+                    percentComplete = "100";
+                } 
+                else if (requiredFile.FileType == "widget")
+                {
+                    percentComplete = "0";
+                }
+                else
+                {
+                    percentComplete = Math.Round((((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100), 1).ToString();
+                }
+
+                requiredFilesTextBox += requiredFile.FileType + ": " + requiredFile.SaveAs + ". (" + percentComplete + "%)" + Environment.NewLine;
             }
 
             return requiredFilesTextBox;
