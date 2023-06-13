@@ -133,6 +133,7 @@ namespace XiboClient.Action
 
                     process.StartInfo = startInfo;
                     process.Start();
+                    process.Exited += Process_Exited;
 
                     string line = "";
                     while (!process.StandardOutput.EndOfStream)
@@ -142,6 +143,15 @@ namespace XiboClient.Action
 
                     return IsValid(line);
                 }
+            }
+        }
+
+        private void Process_Exited(object sender, EventArgs e)
+        {
+            int exitCode = ((Process)sender).ExitCode;
+            if (exitCode != 0)
+            {
+                LogMessage.Audit("Command", "Run", "Non-zero exit code [" + exitCode + "] returned for command " + Code);
             }
         }
 
