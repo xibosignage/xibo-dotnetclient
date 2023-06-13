@@ -298,7 +298,7 @@
       <Version>1.8.9</Version>
     </PackageReference>
     <PackageReference Include="CefSharp.Wpf">
-      <Version>111.2.20</Version>
+      <Version>114.2.100</Version>
     </PackageReference>
     <PackageReference Include="Crc32.NET">
       <Version>1.2.0</Version>
@@ -322,22 +322,22 @@
       <Version>0.3.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Data.Sqlite">
-      <Version>7.0.4</Version>
+      <Version>7.0.5</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.SqlServer.Types">
       <Version>14.0.1016.290</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.1587.40</Version>
+      <Version>1.0.1823.32</Version>
     </PackageReference>
     <PackageReference Include="NetMQ">
-      <Version>4.0.1.11</Version>
+      <Version>4.0.1.12</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>
     </PackageReference>
     <PackageReference Include="NodaTime">
-      <Version>3.1.6</Version>
+      <Version>3.1.9</Version>
     </PackageReference>
     <PackageReference Include="Ookii.Dialogs.Wpf">
       <Version>5.0.1</Version>

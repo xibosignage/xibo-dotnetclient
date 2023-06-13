@@ -995,9 +995,12 @@ namespace XiboClient
             }
 
             // Add overlays
-            foreach (Layout overlay in _overlays)
+            if (_overlays != null)
             {
-                actions.AddRange(overlay.GetActions());
+                foreach (Layout overlay in _overlays)
+                {
+                    actions.AddRange(overlay.GetActions());
+                }
             }
 
             // Add the current schedule actions
