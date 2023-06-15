@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2022 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -158,7 +158,7 @@ namespace XiboClient.Rendering
             }
 
             // We make a watchman to check that the video actually gets loaded.
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(ApplicationSettings.Default.VideoStartTimeout) };
             timer.Tick += (timerSender, args) =>
             {
                 // You only tick once
@@ -167,7 +167,7 @@ namespace XiboClient.Rendering
                 // Check to see if open has been called.
                 if (!_openCalled)
                 {
-                    Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: " + this.Id + " Open not called after 4 seconds, marking unsafe and Expiring."), LogType.Error.ToString());
+                    LogMessage.Error("Video", "MediaElement_Loaded", this.Id + " Open not called after " + ApplicationSettings.Default.VideoStartTimeout + " seconds, marking unsafe and Expiring.");
                     
                     // Add this to a temporary blacklist so that we don't repeat it too quickly
                     CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.VideoUnexpected, LayoutId, Id, "Video Failed: Open not called after 4 seconds", 120);

@@ -571,6 +571,11 @@ namespace XiboClient
         private int _maxLogFileUploads;
         public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 10 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }
 
+        /// <summary>
+        /// The amount of time in seconds we wait before a video is considered timed out on load
+        /// </summary>
+        public int VideoStartTimeout { get; set; }
+
         public bool PowerpointEnabled { get; set; }
         public bool StatsEnabled { get; set; }
         public bool ExpireModifiedLayouts { get; set; }

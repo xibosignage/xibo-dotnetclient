@@ -57,4 +57,5 @@
   <AggregationLevel>individual</AggregationLevel>
   <IsRecordGeoLocationOnProofOfPlay>false</IsRecordGeoLocationOnProofOfPlay>
   <IsAdspaceEnabled>false</IsAdspaceEnabled>
+  <VideoStartTimeout>10</VideoStartTimeout>
 </ApplicationSettings>
