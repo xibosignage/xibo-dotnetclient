@@ -1110,7 +1110,7 @@ namespace XiboClient
                 }
 
                 // Match the sourceId if it has been provided
-                if (sourceId != 0 && sourceId == action.SourceId)
+                if (sourceId != 0 && sourceId != action.SourceId)
                 {
                     continue;
                 }
