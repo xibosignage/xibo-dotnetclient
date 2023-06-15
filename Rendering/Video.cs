@@ -36,6 +36,7 @@ namespace XiboClient.Rendering
         private bool isLooping = false;
         private readonly bool isFullScreenRequest = false;
         private bool _openCalled = false;
+        private bool _stopped = false;
 
         /// <summary>
         /// Should this be visible? Audio sets this to false.
@@ -165,12 +166,12 @@ namespace XiboClient.Rendering
                 timer.Stop();
 
                 // Check to see if open has been called.
-                if (!_openCalled)
+                if (!_openCalled && !IsFailedToPlay && !_stopped)
                 {
                     LogMessage.Error("Video", "MediaElement_Loaded", this.Id + " Open not called after " + ApplicationSettings.Default.VideoStartTimeout + " seconds, marking unsafe and Expiring.");
                     
                     // Add this to a temporary blacklist so that we don't repeat it too quickly
-                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.VideoUnexpected, LayoutId, Id, "Video Failed: Open not called after 4 seconds", 120);
+                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.VideoUnexpected, LayoutId, Id, "Video Failed: Open not called after " + ApplicationSettings.Default.VideoStartTimeout + " seconds", 120);
 
                     // Expire
                     SignalElapsedEvent();
@@ -306,6 +307,9 @@ namespace XiboClient.Rendering
         public override void Stopped()
         {
             Trace.WriteLine(new LogMessage("Video", "Stopped: " + this.Id), LogType.Audit.ToString());
+
+            // We've stopped
+            _stopped = true;
 
             // Remove the event handlers
             this.mediaElement.MediaOpened -= MediaElement_MediaOpened;
