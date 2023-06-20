@@ -672,85 +672,94 @@ namespace XiboClient.Adspace
                     XmlNode inlineNode = adNode.SelectSingleNode("./InLine");
                     if (inlineNode != null)
                     {
-                        // Title
-                        XmlNode titleNode = inlineNode.SelectSingleNode("./AdTitle");
-                        if (titleNode != null)
+                        try
                         {
-                            ad.Title = titleNode.InnerText.Trim();
-                        }
-
-                        // Get and impression/error URLs included with this wrap
-                        XmlNode errorUrlNode = inlineNode.SelectSingleNode("./Error");
-                        if (errorUrlNode != null)
-                        {
-                            string errorUrl = errorUrlNode.InnerText.Trim();
-                            if (errorUrl != "about:blank")
+                            // Title
+                            XmlNode titleNode = inlineNode.SelectSingleNode("./AdTitle");
+                            if (titleNode != null)
                             {
-                                ad.ErrorUrls.Add(errorUrl + ad.WrapperExtendUrl);
+                                ad.Title = titleNode.InnerText.Trim();
                             }
-                        }
 
-                        XmlNode impressionUrlNode = inlineNode.SelectSingleNode("./Impression");
-                        if (impressionUrlNode != null)
-                        {
-                            string impressionUrl = impressionUrlNode.InnerText.Trim();
-                            if (impressionUrl != "about:blank")
+                            // Get and impression/error URLs included with this wrap
+                            XmlNode errorUrlNode = inlineNode.SelectSingleNode("./Error");
+                            if (errorUrlNode != null)
                             {
-                                ad.ImpressionUrls.Add(impressionUrl + ad.WrapperExtendUrl);
+                                string errorUrl = errorUrlNode.InnerText.Trim();
+                                if (errorUrl != "about:blank")
+                                {
+                                    ad.ErrorUrls.Add(errorUrl + ad.WrapperExtendUrl);
+                                }
                             }
-                        }
 
-                        // Creatives
-                        XmlNode creativeNode = inlineNode.SelectSingleNode("./Creatives/Creative");
-                        if (creativeNode != null)
-                        {
-                            ad.CreativeId = creativeNode.Attributes["id"].Value;
-
-                            // Get the duration.
-                            XmlNode creativeDurationNode = creativeNode.SelectSingleNode("./Linear/Duration");
-                            if (creativeDurationNode != null)
+                            XmlNode impressionUrlNode = inlineNode.SelectSingleNode("./Impression");
+                            if (impressionUrlNode != null)
                             {
-                                ad.Duration = creativeDurationNode.InnerText.Trim();
+                                string impressionUrl = impressionUrlNode.InnerText.Trim();
+                                if (impressionUrl != "about:blank")
+                                {
+                                    ad.ImpressionUrls.Add(impressionUrl + ad.WrapperExtendUrl);
+                                }
+                            }
+
+                            // Creatives
+                            XmlNode creativeNode = inlineNode.SelectSingleNode("./Creatives/Creative");
+                            if (creativeNode != null)
+                            {
+                                ad.CreativeId = creativeNode.Attributes["id"].Value;
+
+                                // Get the duration.
+                                XmlNode creativeDurationNode = creativeNode.SelectSingleNode("./Linear/Duration");
+                                if (creativeDurationNode != null)
+                                {
+                                    ad.Duration = creativeDurationNode.InnerText.Trim();
+                                }
+                                else
+                                {
+                                    ReportError(ad.ErrorUrls, 302);
+                                    continue;
+                                }
+
+                                // Get the media file
+                                XmlNode creativeMediaNode = creativeNode.SelectSingleNode("./Linear/MediaFiles/MediaFile");
+                                if (creativeMediaNode != null)
+                                {
+                                    ad.Url = creativeMediaNode.InnerText.Trim();
+                                    ad.Width = int.Parse(creativeMediaNode.Attributes["width"].Value);
+                                    ad.Height = int.Parse(creativeMediaNode.Attributes["height"].Value);
+                                    ad.Type = creativeMediaNode.Attributes["type"].Value;
+                                }
+                                else
+                                {
+                                    ReportError(ad.ErrorUrls, 302);
+                                    continue;
+                                }
                             }
                             else
                             {
-                                ReportError(ad.ErrorUrls, 302);
+                                // Malformed Ad.
+                                ReportError(ad.ErrorUrls, 300);
                                 continue;
                             }
 
-                            // Get the media file
-                            XmlNode creativeMediaNode = creativeNode.SelectSingleNode("./Linear/MediaFiles/MediaFile");
-                            if (creativeMediaNode != null)
+                            // Extensions
+                            XmlNodeList extensionNodes = inlineNode.SelectNodes("./Extension");
+                            foreach (XmlNode extensionNode in extensionNodes)
                             {
-                                ad.Url = creativeMediaNode.InnerText.Trim();
-                                ad.Width = int.Parse(creativeMediaNode.Attributes["width"].Value);
-                                ad.Height = int.Parse(creativeMediaNode.Attributes["height"].Value);
-                                ad.Type = creativeMediaNode.Attributes["type"].Value;
-                            }
-                            else
-                            {
-                                ReportError(ad.ErrorUrls, 302);
-                                continue;
+                                switch (extensionNode.Attributes["type"].Value)
+                                {
+                                    case "geoFence":
+                                        ad.IsGeoAware = true;
+                                        ad.GeoLocation = extensionNode.InnerText;
+                                        break;
+                                }
                             }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            // Malformed Ad.
+                            LogMessage.Audit("ExchangeManager", "Request", "Error parsing response XML. e: " + ex.Message);
                             ReportError(ad.ErrorUrls, 300);
                             continue;
-                        }
-
-                        // Extensions
-                        XmlNodeList extensionNodes = inlineNode.SelectNodes("./Extension");
-                        foreach (XmlNode extensionNode in extensionNodes)
-                        {
-                            switch (extensionNode.Attributes["type"].Value)
-                            {
-                                case "geoFence":
-                                    ad.IsGeoAware = true;
-                                    ad.GeoLocation = extensionNode.InnerText;
-                                    break;
-                            }
                         }
 
                         // Did this resolve from a wrapper? if so do some extra checks.

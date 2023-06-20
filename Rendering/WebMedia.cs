@@ -18,6 +18,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using EmbedIO.Utilities;
 using Ionic.Zip;
 using System;
 using System.Diagnostics;
@@ -479,10 +480,16 @@ namespace XiboClient.Rendering
             {
                 // Decode the URL
                 string url = Uri.UnescapeDataString(options.uri);
-                
-                if (url.Contains(ApplicationSettings.Default.EdgeBrowserWhitelist))
+
+                // Split the white list by comma
+                string[] whiteList = ApplicationSettings.Default.EdgeBrowserWhitelist.Split(',');
+
+                foreach (string white in whiteList)
                 {
-                    return new WebEdge(options);
+                    if (url.Contains(white))
+                    {
+                        return new WebEdge(options);
+                    }
                 }
             }
 
