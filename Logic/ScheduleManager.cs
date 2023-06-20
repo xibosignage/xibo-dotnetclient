@@ -438,13 +438,14 @@ namespace XiboClient
             List<ScheduleItem> overlaySchedule = LoadNewOverlaySchedule();
 
             // Load any adspace exchange schedules
+            ScheduleItem axeScheduleItem = null;
             if (ApplicationSettings.Default.IsAdspaceEnabled)
             {
                 exchangeManager.SetActive(true);
                 exchangeManager.Configure();
                 if (exchangeManager.ShareOfVoice > 0)
                 {
-                    parsedSchedule.Add(ScheduleItem.CreateForAdspaceExchange(exchangeManager.AverageAdDuration, exchangeManager.ShareOfVoice));
+                    axeScheduleItem = ScheduleItem.CreateForAdspaceExchange(exchangeManager.AverageAdDuration, exchangeManager.ShareOfVoice);
                 }
             }
             else
@@ -457,7 +458,7 @@ namespace XiboClient
             if (newSchedule.Count <= 0)
             {
                 // No overrides, so we parse in our normal/interrupt layout mix.
-                newSchedule = ResolveNormalAndInterrupts(ParseCyclePlayback(parsedSchedule));
+                newSchedule = ResolveNormalAndInterrupts(ParseCyclePlayback(parsedSchedule), axeScheduleItem);
             }
 
             // If we have come out of this process without any schedule, then we ought to assign the default
@@ -755,7 +756,7 @@ namespace XiboClient
         /// </summary>
         /// <param name="schedule"></param>
         /// <returns></returns>
-        private List<ScheduleItem> ResolveNormalAndInterrupts(List<ScheduleItem> schedule)
+        private List<ScheduleItem> ResolveNormalAndInterrupts(List<ScheduleItem> schedule, ScheduleItem axeScheduleItem)
         {
             // Clear any currently set durations
             foreach (ScheduleItem item in schedule)
@@ -767,9 +768,24 @@ namespace XiboClient
             List<ScheduleItem> normal = GetNormalSchedule(schedule);
             List<ScheduleItem> interrupt = GetInterruptSchedule(schedule);
 
-            if (interrupt.Count <= 0)
+            // How much time should we give to AXE
+            if (axeScheduleItem != null)
             {
-                return normal;
+                int totalInterruptSov = 0;
+                foreach (ScheduleItem item in interrupt)
+                {
+                    totalInterruptSov += item.ShareOfVoice;
+
+                    LogMessage.Audit("ScheduleManager", "ResolveNormalAndInterrupts", "Reducing AXE SOV by total interrupt SOV: " + totalInterruptSov);
+
+                    axeScheduleItem.ShareOfVoice -= totalInterruptSov;
+
+                    // If we still have some, then add that into our interrupt schedule
+                    if (axeScheduleItem.ShareOfVoice > 0)
+                    {
+                        interrupt.Add(axeScheduleItem);
+                    }
+                }
             }
 
             // If we have an empty normal schedule, pop the default in there
@@ -779,6 +795,12 @@ namespace XiboClient
                 {
                     CurrentDefaultLayout
                 };
+            }
+
+            // If we have an empty interrupt schedule, just return the normal schedule.
+            if (interrupt.Count <= 0)
+            {
+                return normal;
             }
 
             // We do have interrupts
