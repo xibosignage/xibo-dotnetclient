@@ -298,7 +298,7 @@
       <Version>1.8.9</Version>
     </PackageReference>
     <PackageReference Include="CefSharp.Wpf">
-      <Version>114.2.100</Version>
+      <Version>114.2.120</Version>
     </PackageReference>
     <PackageReference Include="Crc32.NET">
       <Version>1.2.0</Version>
@@ -322,7 +322,7 @@
       <Version>0.3.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Data.Sqlite">
-      <Version>7.0.5</Version>
+      <Version>7.0.8</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.SqlServer.Types">
       <Version>14.0.1016.290</Version>

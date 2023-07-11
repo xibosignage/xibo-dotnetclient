@@ -52,7 +52,7 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "3 R310.0";
+        public string ClientVersion { get; } = "3 R310.1";
         public string Version { get; } = "6";
         public int ClientCodeVersion { get; } = 310;
 
@@ -588,6 +588,7 @@ namespace XiboClient
         public bool PreventSleep { get; set; }
         public bool ScreenShotRequested { get; set; }
         public bool FallbackToInternetExplorer { get; set; }
+        public bool FallbackToEdge { get; set; }
         public bool IsRecordGeoLocationOnProofOfPlay { get; set; }
         public bool IsAdspaceEnabled { get; set; }
 
