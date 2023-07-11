@@ -53,6 +53,7 @@
   <EmbeddedServerPort>9696</EmbeddedServerPort>
   <EmbeddedServerAllowWan>false</EmbeddedServerAllowWan>
   <ScreenShotSize>0</ScreenShotSize>
+  <FallbackToEdge>false</FallbackToEdge>
   <FallbackToInternetExplorer>false</FallbackToInternetExplorer>
   <AggregationLevel>individual</AggregationLevel>
   <IsRecordGeoLocationOnProofOfPlay>false</IsRecordGeoLocationOnProofOfPlay>
