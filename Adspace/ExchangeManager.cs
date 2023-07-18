@@ -455,7 +455,11 @@ namespace XiboClient.Adspace
 
                 if (string.IsNullOrEmpty(body))
                 {
-                    throw new Exception("Empty body");
+                    if (wrappedAd != null && wrappedAd.IsWrapper)
+                    {
+                        ReportError(wrappedAd.ErrorUrls, 303);
+                    }
+                    return buffet;
                 }
 
                 // If we are a wrapped ad, then we should attempt to resolve that ad.
@@ -706,7 +710,7 @@ namespace XiboClient.Adspace
                             XmlNode creativeNode = inlineNode.SelectSingleNode("./Creatives/Creative");
                             if (creativeNode != null)
                             {
-                                ad.CreativeId = creativeNode.Attributes["id"].Value;
+                                ad.CreativeId = creativeNode.Attributes["id"] != null ? creativeNode.Attributes["id"].Value : "";
 
                                 // Get the duration.
                                 XmlNode creativeDurationNode = creativeNode.SelectSingleNode("./Linear/Duration");

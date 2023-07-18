@@ -779,12 +779,12 @@ namespace XiboClient
                     LogMessage.Audit("ScheduleManager", "ResolveNormalAndInterrupts", "Reducing AXE SOV by total interrupt SOV: " + totalInterruptSov);
 
                     axeScheduleItem.ShareOfVoice -= totalInterruptSov;
+                }
 
-                    // If we still have some, then add that into our interrupt schedule
-                    if (axeScheduleItem.ShareOfVoice > 0)
-                    {
-                        interrupt.Add(axeScheduleItem);
-                    }
+                // If we still have some, then add that into our interrupt schedule
+                if (axeScheduleItem.ShareOfVoice > 0)
+                {
+                    interrupt.Add(axeScheduleItem);
                 }
             }
 
