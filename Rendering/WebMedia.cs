@@ -469,14 +469,28 @@ namespace XiboClient.Rendering
         /// Get the configured web media engine
         /// </summary>
         /// <param name="options"></param>
+        /// <param name="isHtmlWidget">Is this for a html widget?</param>
         /// <returns></returns>
-        public static WebMedia GetConfiguredWebMedia(MediaOptions options)
+        public static WebMedia GetConfiguredWebMedia(MediaOptions options, bool isHtmlWidget)
         {
+            // IE fallback for legacy players where overlapping regions are not supported
             if (ApplicationSettings.Default.FallbackToInternetExplorer)
             {
                 return new WebIe(options);
             }
-            else if (!string.IsNullOrEmpty(options.uri) && !string.IsNullOrEmpty(ApplicationSettings.Default.EdgeBrowserWhitelist))
+
+            // If this is a HTML widget, then always return with CEF
+            if (isHtmlWidget)
+            {
+                return new WebCef(options);
+            }
+
+            // If we have an edge fallback, use it, otherwise see if the URL provided is in the white list.
+            if (ApplicationSettings.Default.FallbackToEdge)
+            {
+                return new WebEdge(options);
+            }
+            else if (!string.IsNullOrEmpty(options.uri) && !string.IsNullOrEmpty(ApplicationSettings.Default.EdgeBrowserWhitelist)) 
             {
                 // Decode the URL
                 string url = Uri.UnescapeDataString(options.uri);
@@ -518,7 +532,7 @@ namespace XiboClient.Rendering
             }
             else
             {
-                media = GetConfiguredWebMedia(options);
+                media = GetConfiguredWebMedia(options, false);
             }
             return media;
         }
