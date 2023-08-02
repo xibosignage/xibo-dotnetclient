@@ -362,10 +362,11 @@ namespace XiboClient
                 RootCachePath = ApplicationSettings.Default.LibraryPath + @"\CEF",
                 CachePath = ApplicationSettings.Default.LibraryPath + @"\CEF",
                 LogFile = ApplicationSettings.Default.LibraryPath + @"\CEF\cef.log",
-                LogSeverity = CefSharp.LogSeverity.Fatal
+                LogSeverity = CefSharp.LogSeverity.Fatal,
             };
             settings.CefCommandLineArgs["autoplay-policy"] = "no-user-gesture-required";
             settings.CefCommandLineArgs["disable-pinch"] = "1";
+            settings.CefCommandLineArgs["disable-usb-keyboard-detect"] = "1";
 
             CefSharp.Cef.Initialize(settings);
         }
@@ -402,8 +403,10 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message, LogType.Error.ToString());
-                System.Windows.MessageBox.Show("Fatal Error initialising the application. " + ex.Message, "Fatal Error");
+                LogMessage.Error("MainForm", "MainForm_Shown", "Cannot initialise the application, unexpected exception." + ex.Message);
+                LogMessage.Error("MainForm", "MainForm_Shown", ex.StackTrace.ToString());
+                
+                System.Windows.MessageBox.Show("Fatal Error initialising the application. " + ex.Message + ", " + ex.StackTrace.ToString(), "Fatal Error");
                 Close();
             }
         }
@@ -995,9 +998,12 @@ namespace XiboClient
             }
 
             // Add overlays
-            foreach (Layout overlay in _overlays)
+            if (_overlays != null)
             {
-                actions.AddRange(overlay.GetActions());
+                foreach (Layout overlay in _overlays)
+                {
+                    actions.AddRange(overlay.GetActions());
+                }
             }
 
             // Add the current schedule actions
@@ -1107,7 +1113,7 @@ namespace XiboClient
                 }
 
                 // Match the sourceId if it has been provided
-                if (sourceId != 0 && sourceId == action.SourceId)
+                if (sourceId != 0 && sourceId != action.SourceId)
                 {
                     continue;
                 }

@@ -117,8 +117,16 @@ namespace XiboClient.Rendering
             activeX.Silent = true;
 
             // Initialise Interactive Control
-            _webBrowser.InvokeScript("xiboIC.config({hostname:\"localhost\", port: "
-                    + ApplicationSettings.Default.EmbeddedServerPort + "})");
+            try
+            {
+                _webBrowser.InvokeScript("xiboIC.config({hostname:\"localhost\", port: "
+                        + ApplicationSettings.Default.EmbeddedServerPort + "})");
+            } 
+            catch
+            {
+                // Likely xiboIC doesn't exist.
+                LogMessage.Audit("WebIe", "_webBrowser_Navigated", "Cannot invoke script");
+            }
         }
 
         private void IeWebMedia_HtmlUpdatedEvent(string url)

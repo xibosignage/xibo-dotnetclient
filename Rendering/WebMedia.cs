@@ -18,6 +18,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
  */
+using EmbedIO.Utilities;
 using Ionic.Zip;
 using System;
 using System.Diagnostics;
@@ -468,21 +469,41 @@ namespace XiboClient.Rendering
         /// Get the configured web media engine
         /// </summary>
         /// <param name="options"></param>
+        /// <param name="isHtmlWidget">Is this for a html widget?</param>
         /// <returns></returns>
-        public static WebMedia GetConfiguredWebMedia(MediaOptions options)
+        public static WebMedia GetConfiguredWebMedia(MediaOptions options, bool isHtmlWidget)
         {
+            // IE fallback for legacy players where overlapping regions are not supported
             if (ApplicationSettings.Default.FallbackToInternetExplorer)
             {
                 return new WebIe(options);
             }
-            else if (!string.IsNullOrEmpty(options.uri) && !string.IsNullOrEmpty(ApplicationSettings.Default.EdgeBrowserWhitelist))
+
+            // If this is a HTML widget, then always return with CEF
+            if (isHtmlWidget)
+            {
+                return new WebCef(options);
+            }
+
+            // If we have an edge fallback, use it, otherwise see if the URL provided is in the white list.
+            if (ApplicationSettings.Default.FallbackToEdge)
+            {
+                return new WebEdge(options);
+            }
+            else if (!string.IsNullOrEmpty(options.uri) && !string.IsNullOrEmpty(ApplicationSettings.Default.EdgeBrowserWhitelist)) 
             {
                 // Decode the URL
                 string url = Uri.UnescapeDataString(options.uri);
-                
-                if (url.Contains(ApplicationSettings.Default.EdgeBrowserWhitelist))
+
+                // Split the white list by comma
+                string[] whiteList = ApplicationSettings.Default.EdgeBrowserWhitelist.Split(',');
+
+                foreach (string white in whiteList)
                 {
-                    return new WebEdge(options);
+                    if (url.Contains(white))
+                    {
+                        return new WebEdge(options);
+                    }
                 }
             }
 
@@ -511,7 +532,7 @@ namespace XiboClient.Rendering
             }
             else
             {
-                media = GetConfiguredWebMedia(options);
+                media = GetConfiguredWebMedia(options, false);
             }
             return media;
         }

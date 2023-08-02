@@ -36,6 +36,7 @@ namespace XiboClient
             // Add the Xibo Tracelistener
             Trace.Listeners.Add(new XiboTraceListener());
 
+            bool shouldQuit = false;
             try
             {
                 // Check for any passed arguments
@@ -43,6 +44,7 @@ namespace XiboClient
                 {
                     if (e.Args[0].ToString() == "o")
                     {
+                        shouldQuit = true;
                         RunSettings();
                     }
                     else
@@ -79,7 +81,7 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                HandleUnhandledException(ex, "Startup", false);
+                HandleUnhandledException(ex, "Startup", shouldQuit);
             }
 
             // Always flush at the end
@@ -178,7 +180,7 @@ namespace XiboClient
                     // Complete failure, show something to the user in these circumstances.
                     if (quit)
                     {
-                        MessageBox.Show(ex.Message);
+                        MessageBox.Show("Unhandled Exception: " + ex.Message + ". Stack Trace: " + e.StackTrace, "Fatal Error");
                     }
                 }
 

@@ -52,7 +52,7 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "4 R400.1";
+        public string ClientVersion { get; } = "4 R400.2";
         public string Version { get; } = "7";
         public int ClientCodeVersion { get; } = 400;
 
@@ -571,6 +571,11 @@ namespace XiboClient
         private int _maxLogFileUploads;
         public int MaxLogFileUploads { get { return ((_maxLogFileUploads == 0) ? 10 : _maxLogFileUploads); } set { _maxLogFileUploads = value; } }
 
+        /// <summary>
+        /// The amount of time in seconds we wait before a video is considered timed out on load
+        /// </summary>
+        public int VideoStartTimeout { get; set; }
+
         public bool PowerpointEnabled { get; set; }
         public bool StatsEnabled { get; set; }
         public bool ExpireModifiedLayouts { get; set; }
@@ -583,6 +588,7 @@ namespace XiboClient
         public bool PreventSleep { get; set; }
         public bool ScreenShotRequested { get; set; }
         public bool FallbackToInternetExplorer { get; set; }
+        public bool FallbackToEdge { get; set; }
         public bool IsRecordGeoLocationOnProofOfPlay { get; set; }
         public bool IsAdspaceEnabled { get; set; }
 

@@ -104,6 +104,11 @@ namespace XiboClient.Rendering
         protected DateTime _startTick;
 
         /// <summary>
+        /// A unique ID for this instance of media
+        /// </summary>
+        public Guid UniqueId { get; private set; }
+
+        /// <summary>
         /// The ScheduleId
         /// </summary>
         public int ScheduleId { get; private set; }
@@ -130,6 +135,8 @@ namespace XiboClient.Rendering
         public Media(MediaOptions options)
         {
             InitializeComponent();
+
+            UniqueId = Guid.NewGuid();
 
             // Store the options.
             this.options = options;
@@ -654,12 +661,12 @@ namespace XiboClient.Rendering
                 case "datasetview":
                 case "ticker":
                 case "text":
-                    media = new WebCef(options);
+                    media = WebMedia.GetConfiguredWebMedia(options, true);
                     break;
 
                 case "webpage":
                     options.IsPinchToZoomEnabled = true;
-                    media = WebMedia.GetConfiguredWebMedia(options);
+                    media = WebMedia.GetConfiguredWebMedia(options, false);
                     break;
 
                 case "flash":
@@ -673,7 +680,7 @@ namespace XiboClient.Rendering
 
                 case "htmlpackage":
                     options.IsPinchToZoomEnabled = true;
-                    media = WebMedia.GetConfiguredWebMedia(options);
+                    media = WebMedia.GetConfiguredWebMedia(options, false);
                     ((WebMedia)media).ConfigureForHtmlPackage();
                     break;
 
@@ -688,7 +695,7 @@ namespace XiboClient.Rendering
                 default:
                     if (options.render == "html")
                     {
-                        media = WebMedia.GetConfiguredWebMedia(options);
+                        media = WebMedia.GetConfiguredWebMedia(options, true);
                     }
                     else
                     {

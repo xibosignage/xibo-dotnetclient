@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2022 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -21,7 +21,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Shapes;
 
 namespace XiboClient.Action
 {
@@ -53,6 +55,36 @@ namespace XiboClient.Action
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private bool IsValid(string value)
+        {
+            LogMessage.Audit("Command", "IsValid", "Testing if " + Code + " is valid, output to test is [" + value + "]");
+
+            // Do we need to validate?
+            if (IsValidationRequired())
+            {
+                // Is the validation string a regex.
+                try
+                {
+                    Match match = Regex.Match(value, Validation);
+                    return match.Success;
+                }
+                catch
+                {
+                    // Fallback to a string comparison
+                    return value.Contains(Validation);
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
         /// Run the Command
         /// </summary>
         /// <returns>true on success</returns>
@@ -67,14 +99,7 @@ namespace XiboClient.Action
                 Rs232Command rs232 = new Rs232Command(this);
                 string line = rs232.Run();
 
-                if (IsValidationRequired())
-                {
-                    return line == Validation;
-                }
-                else
-                {
-                    return true;
-                }
+                return IsValid(line);
             }
             else if (CommandString == "SoftRestart")
             {
@@ -90,14 +115,7 @@ namespace XiboClient.Action
                 HttpCommand command = new HttpCommand(this);
                 var httpStatus = command.RunAsync();
 
-                if (IsValidationRequired())
-                {
-                    return httpStatus.Result + "" == Validation;
-                }
-                else
-                {
-                    return true;
-                }
+                return IsValid(httpStatus.Result + "");
             }
             else
             {
@@ -111,26 +129,29 @@ namespace XiboClient.Action
                     startInfo.FileName = "cmd.exe";
                     startInfo.Arguments = "/C " + CommandString;
                     startInfo.UseShellExecute = false;
-
-                    if (IsValidationRequired())
-                        startInfo.RedirectStandardOutput = true;
+                    startInfo.RedirectStandardOutput = true;
 
                     process.StartInfo = startInfo;
                     process.Start();
+                    process.Exited += Process_Exited;
 
-                    if (IsValidationRequired())
+                    string line = "";
+                    while (!process.StandardOutput.EndOfStream)
                     {
-                        string line = "";
-                        while (!process.StandardOutput.EndOfStream)
-                        {
-                            line += process.StandardOutput.ReadLine();
-                        }
-
-                        return line == Validation;
+                        line += process.StandardOutput.ReadLine();
                     }
-                    else
-                        return true;
+
+                    return IsValid(line);
                 }
+            }
+        }
+
+        private void Process_Exited(object sender, EventArgs e)
+        {
+            int exitCode = ((Process)sender).ExitCode;
+            if (exitCode != 0)
+            {
+                LogMessage.Audit("Command", "Run", "Non-zero exit code [" + exitCode + "] returned for command " + Code);
             }
         }
 
