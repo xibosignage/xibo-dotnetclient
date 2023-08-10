@@ -59,4 +59,5 @@
   <IsRecordGeoLocationOnProofOfPlay>false</IsRecordGeoLocationOnProofOfPlay>
   <IsAdspaceEnabled>false</IsAdspaceEnabled>
   <VideoStartTimeout>10</VideoStartTimeout>
+  <AllowSingleSignOnUsingOSPrimaryAccount>false</AllowSingleSignOnUsingOSPrimaryAccount>
 </ApplicationSettings>

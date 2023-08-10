@@ -52,7 +52,7 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "4 R400.2";
+        public string ClientVersion { get; } = "4 R400.3";
         public string Version { get; } = "7";
         public int ClientCodeVersion { get; } = 400;
 
@@ -374,6 +374,7 @@ namespace XiboClient
         public bool ForceHttps { get; set; }
         public bool UseFFmpeg { get; set; }
         public bool UseFFmpegForHls { get; set; }
+        public bool AllowSingleSignOnUsingOSPrimaryAccount { get; set; }
 
         public int LibraryAgentInterval { get; set; }
 
