@@ -1681,6 +1681,23 @@ namespace XiboClient
             return exchangeManager.GetAd(width, height);
         }
 
+        /// <summary>
+        /// Get an ad from the exchange
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="isUseWidget">
+        /// <returns></returns>
+        public Ad GetAd(double width, double height, bool isUseWidget)
+        {
+            if (isUseWidget)
+            {
+                exchangeManager.FillForWidget();
+            }
+
+            return exchangeManager.GetAd(width, height);
+        }
+
         #endregion
     }
 }

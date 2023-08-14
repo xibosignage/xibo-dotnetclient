@@ -22,12 +22,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using System.Xml;
+using XiboClient.Adspace;
 using XiboClient.Logic;
 
 namespace XiboClient.Rendering
@@ -127,6 +129,21 @@ namespace XiboClient.Rendering
         /// Did this media item fail to play?
         /// </summary>
         public bool IsFailedToPlay { get; protected set; }
+
+        /// <summary>
+        /// A list of impression Urls to call on stop.
+        /// </summary>
+        public List<string> AdspaceExchangeImpressionUrls = new List<string>();
+
+        /// <summary>
+        /// Ad list of error ulrs to call on stop.
+        /// </summary>
+        public List<string> AdspaceExchangeErrorUrls = new List<string>();
+
+        /// <summary>
+        /// Is this an adspace exchange item?
+        /// </summary>
+        public bool IsAdspaceExchange = false;
 
         /// <summary>
         /// Media Object
@@ -703,6 +720,14 @@ namespace XiboClient.Rendering
                     }
                     break;
             }
+
+            // If this came from an ad, then set the impression/error URLs.
+            if (options.GetAd() != null)
+            {
+                media.SetAdspaceExchangeImpressionUrls(options.GetAd().ImpressionUrls);
+                media.SetAdspaceExchangeErrorUrls(options.GetAd().ErrorUrls);
+            }
+
             return media;
         }
 
@@ -711,7 +736,7 @@ namespace XiboClient.Rendering
         /// </summary>
         /// <param name="node"></param>
         /// <returns></returns>
-        public static MediaOptions ParseOptions(XmlNode node)
+        public static MediaOptions ParseOptions(XmlNode node, Schedule schedule, double width, double height)
         {
             // A brand new media options
             MediaOptions options = new MediaOptions
@@ -720,11 +745,39 @@ namespace XiboClient.Rendering
             };
 
             // Parse node attributes
-            XmlAttributeCollection nodeAttributes = node.Attributes; 
+            XmlAttributeCollection nodeAttributes = node.Attributes;
 
-            // Set the media id
-            if (nodeAttributes["id"].Value != null)
-                options.mediaid = nodeAttributes["id"].Value;
+            // Start with core properties
+            options.mediaid = nodeAttributes["id"].Value ?? Guid.NewGuid().ToString();
+            options.type = nodeAttributes["type"].Value;
+
+            bool isUriProvided = false;
+            if (options.type == "ssp")
+            {
+                // Handle making an ad request and transform this into a new type if necessary.
+                Ad ad = schedule.GetAd(width, height, true);                
+                options.type = ad.XiboType;
+                options.duration = ad.GetDuration();
+
+                // URI
+                isUriProvided = true;
+                options.uri = ad.GetFileName();
+
+                // Impressions/Errors (these will be injected into Media later)
+                options.SetAd(ad);
+            }
+            else
+            {
+                if (nodeAttributes["duration"].Value != "")
+                {
+                    options.duration = int.Parse(nodeAttributes["duration"].Value);
+                }
+                else
+                {
+                    options.duration = 60;
+                    Debug.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
+                }
+            }
 
             // Set the file id
             if (nodeAttributes["fileId"] != null)
@@ -745,24 +798,9 @@ namespace XiboClient.Rendering
             // Pinch to Zoom enabled?
             options.IsPinchToZoomEnabled = false;
 
-            // Parse the options for this media node
-            // Type and Duration will always be on the media node
-            options.type = nodeAttributes["type"].Value;
-
             // Render as
             if (nodeAttributes["render"] != null)
                 options.render = nodeAttributes["render"].Value;
-
-            //TODO: Check the type of node we have, and make sure it is supported.
-            if (nodeAttributes["duration"].Value != "")
-            {
-                options.duration = int.Parse(nodeAttributes["duration"].Value);
-            }
-            else
-            {
-                options.duration = 60;
-                Debug.WriteLine("Duration is Empty, using a default of 60.", "Region - SetNextMediaNode");
-            }
 
             // Widget From/To dates (v2 onward)
             try
@@ -810,7 +848,7 @@ namespace XiboClient.Rendering
                 {
                     options.direction = option.InnerText;
                 }
-                else if (option.Name == "uri")
+                else if (option.Name == "uri" && !isUriProvided)
                 {
                     options.uri = option.InnerText;
                 }
@@ -963,6 +1001,25 @@ namespace XiboClient.Rendering
             }
 
             TriggerWebhookEvent?.Invoke(triggerCode, id);
+        }
+
+        /// <summary>
+        /// Set any adspace exchange impression urls.
+        /// </summary>
+        /// <param name="urls"></param>
+        public void SetAdspaceExchangeImpressionUrls(List<string> urls)
+        {
+            IsAdspaceExchange = true;
+            AdspaceExchangeImpressionUrls = urls;
+        }
+
+        /// <summary>
+        /// Set any adspace exchange error urls.
+        /// </summary>
+        /// <param name="urls"></param>
+        public void SetAdspaceExchangeErrorUrls(List<string> urls)
+        {
+            AdspaceExchangeErrorUrls = urls;
         }
     }
 }
