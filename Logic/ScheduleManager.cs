@@ -1688,11 +1688,11 @@ namespace XiboClient
         /// <param name="height"></param>
         /// <param name="isUseWidget">
         /// <returns></returns>
-        public Ad GetAd(double width, double height, bool isUseWidget)
+        public Ad GetAd(double width, double height, bool isUseWidget, string partner)
         {
             if (isUseWidget)
             {
-                exchangeManager.FillForWidget();
+                exchangeManager.FillForWidget(partner);
             }
 
             return exchangeManager.GetAd(width, height);

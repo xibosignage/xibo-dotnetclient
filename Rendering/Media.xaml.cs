@@ -754,8 +754,19 @@ namespace XiboClient.Rendering
             bool isUriProvided = false;
             if (options.type == "ssp")
             {
+                // Get the partner (if configured)
+                string partner = null;
+                foreach (XmlNode option in node.SelectSingleNode("options").ChildNodes)
+                {
+                    if (option.Name == "partner")
+                    {
+                        partner = option.InnerText;
+                        break;
+                    }
+                }
+
                 // Handle making an ad request and transform this into a new type if necessary.
-                Ad ad = schedule.GetAd(width, height, true);                
+                Ad ad = schedule.GetAd(width, height, true, partner);                
                 options.type = ad.XiboType;
                 options.duration = ad.GetDuration();
 

@@ -714,7 +714,7 @@ namespace XiboClient
                     if (scheduleItem.IsAdspaceExchange)
                     {
                         // Get an ad
-                        Ad ad = _schedule.GetAd(Width, Height, false);
+                        Ad ad = _schedule.GetAd(Width, Height, false, null);
                         if (ad == null)
                         {
                             throw new LayoutInvalidException("No ad to play");
