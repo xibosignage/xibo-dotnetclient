@@ -248,7 +248,7 @@ namespace XiboClient
                     // Add and skip onward
                     rf.Id = int.Parse(attributes["id"].Value);
                     rf.SaveAs = rf.Id + ".json";
-                    rf.UpdateInterval = attributes["updated"] != null ? int.Parse(attributes["updateInterval"].Value) : 120;
+                    rf.UpdateInterval = attributes["updateInterval"] != null ? int.Parse(attributes["updateInterval"].Value) : 120;
 
                     // Does this data file already exist? and if so, is it sufficiently up to date.
                     if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs))
