@@ -10,7 +10,7 @@ namespace XiboClient.Rendering
             // Check if PowerPoint is enabled
             if (!ApplicationSettings.Default.PowerpointEnabled)
             {
-                CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.PowerPointNotAvailable, options.layoutId, options.mediaid, "PowerPoint not enabled on this Display", 300);
+                CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.PowerPointNotAvailable, options.layoutId, options.FileId + "", "PowerPoint not enabled on this Display", 300);
                 throw new Exception("PowerPoint not enabled on this Display");
             }
 

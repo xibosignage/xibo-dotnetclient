@@ -116,6 +116,8 @@ namespace XiboClient.Control
                     .WithController(() => new HookController(this)))
                 .WithWebApi("/duration", m => m
                     .WithController(() => new DurationController(this)))
+                .WithWebApi("/fault", m => m
+                    .WithController(() => new FaultController()))
                 .WithModule(new RestrictiveFileModule("/", new FileSystemProvider(ApplicationSettings.Default.LibraryPath, false), paths), m => m
                     .ContentCaching = false);
 

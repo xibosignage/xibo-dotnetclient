@@ -121,6 +121,8 @@
     <Compile Include="Control\DurationController.cs" />
     <Compile Include="Control\DurationRequest.cs" />
     <Compile Include="Control\EmbeddedServer.cs" />
+    <Compile Include="Control\FaultController.cs" />
+    <Compile Include="Control\FaultRequest.cs" />
     <Compile Include="Control\HookController.cs" />
     <Compile Include="Control\InfoController.cs" />
     <Compile Include="Control\RestrictiveFileModule.cs" />

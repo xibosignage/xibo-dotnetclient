@@ -67,9 +67,15 @@ namespace XiboClient.Rendering
         private bool _stopped = false;
 
         /// <summary>
-        /// The Id of this Media
+        /// The Id of this Widget
+        /// NB: this is the widgetId
         /// </summary>
         public string Id { get; set; }
+
+        /// <summary>
+        /// The ID of the media file (or widgetId if no file)
+        /// </summary>
+        public string FileId { get; set; }
 
         /// <summary>
         /// Gets or Sets the duration of this media. Will be 0 if ""
@@ -158,6 +164,7 @@ namespace XiboClient.Rendering
             // Store the options.
             this.options = options;
             this.Id = options.mediaid;
+            this.FileId = options.FileId > 0 ? options.FileId + "" : options.mediaid;
             ScheduleId = options.scheduleId;
             LayoutId = options.layoutId;
             StatsEnabled = options.isStatEnabled;
@@ -794,13 +801,28 @@ namespace XiboClient.Rendering
             if (nodeAttributes["fileId"] != null)
             {
                 options.FileId = int.Parse(nodeAttributes["fileId"].Value);
+
+                if (CacheManager.Instance.IsUnsafeMedia(options.FileId + ""))
+                {
+                    Trace.WriteLine(new LogMessage("Media", string.Format("ParseOptions: MediaID [{0}] has been blacklisted.", options.mediaid)), LogType.Info.ToString());
+                    throw new Exception("Unsafe Media");
+                }
+            }
+            else
+            {
+                // No fileId, this could be an old XLF so we ought to check the fallback mediaId.
+                if (CacheManager.Instance.IsUnsafeMedia(options.mediaid))
+                {
+                    Trace.WriteLine(new LogMessage("Media", string.Format("ParseOptions: MediaID [{0}] has been blacklisted.", options.mediaid)), LogType.Info.ToString());
+                    throw new Exception("Unsafe Media");
+                }
             }
 
-            // Check isnt blacklisted
-            if (CacheManager.Instance.IsUnsafeMedia(options.mediaid))
+            // mediaId on options is actually the widgetId
+            if (CacheManager.Instance.IsUnsafeWidget(options.mediaid))
             {
-                Trace.WriteLine(new LogMessage("Media", string.Format("ParseOptions: MediaID [{0}] has been blacklisted.", options.mediaid)), LogType.Info.ToString());
-                throw new Exception("Unsafe Media");
+                Trace.WriteLine(new LogMessage("Media", string.Format("ParseOptions: widgetId [{0}] has been blacklisted.", options.mediaid)), LogType.Info.ToString());
+                throw new Exception("Unsafe Widget");
             }
 
             // Stats enabled?
