@@ -182,7 +182,7 @@ namespace XiboClient.XmdsAgents
 
                                 Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Currently Downloading Files, skipping collect"), LogType.Audit.ToString());
                             }
-                            else if (!ShouldCheckRf())
+                            else if (_requiredFiles.FilesMissing <= 0 && !ShouldCheckRf())
                             {
                                 ClientInfo.Instance.RequiredFilesStatus = "Sleeping: last check was not required.";
                             }

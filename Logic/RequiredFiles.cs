@@ -57,6 +57,29 @@ namespace XiboClient
             }
         }
 
+        /// <summary>
+        /// Count of files missing
+        /// </summary>
+        public int FilesMissing
+        {
+            get
+            {
+                lock ( _locker)
+                {
+                    int count = 0;
+                    foreach (RequiredFile rf in RequiredFileList)
+                    {
+                        if (!rf.Complete)
+                        {
+                            count++;
+                        }
+                    }
+
+                    return count;
+                }
+            }
+        }
+
         public RequiredFiles()
         {
             RequiredFileList = new Collection<RequiredFile>();
@@ -253,7 +276,7 @@ namespace XiboClient
                     // Does this data file already exist? and if so, is it sufficiently up to date.
                     if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs))
                     {
-                        rf.Complete = File.GetLastWriteTimeUtc(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs) > DateTime.Now.AddSeconds(-1 * rf.UpdateInterval);
+                        rf.Complete = File.GetLastWriteTime(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs) > DateTime.Now.AddMinutes(-1 * rf.UpdateInterval);
                     }
 
                     RequiredFileList.Add(rf);
