@@ -324,16 +324,16 @@
       <Version>0.3.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Data.Sqlite">
-      <Version>7.0.9</Version>
+      <Version>7.0.10</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.SqlServer.Types">
       <Version>160.1000.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.1901.177</Version>
+      <Version>1.0.1938.49</Version>
     </PackageReference>
     <PackageReference Include="NetMQ">
-      <Version>4.0.1.12</Version>
+      <Version>4.0.1.13</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>
