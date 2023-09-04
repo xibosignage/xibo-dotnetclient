@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -87,6 +87,12 @@ namespace XiboClient.Rendering
             else
             {
                 environmentOptions = new CoreWebView2EnvironmentOptions();
+            }
+
+            // Single Sign On?
+            if (ApplicationSettings.Default.AllowSingleSignOnUsingOSPrimaryAccount)
+            {
+                environmentOptions.AllowSingleSignOnUsingOSPrimaryAccount = true;
             }
 
             await this.webView.EnsureCoreWebView2Async(

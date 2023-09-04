@@ -219,7 +219,9 @@ namespace XiboClient
                     Environment.OSVersion.ToString(),
                     this.hardwareKey.MacAddress,
                     this.hardwareKey.Channel,
-                    this.hardwareKey.getXmrPublicKey());
+                    this.hardwareKey.getXmrPublicKey(),
+                    string.Empty
+                    );
             }
             catch (Exception ex)
             {
@@ -411,7 +413,9 @@ namespace XiboClient
                         Environment.OSVersion.ToString(),
                         this.hardwareKey.MacAddress,
                         this.hardwareKey.Channel,
-                        this.hardwareKey.getXmrPublicKey());
+                        this.hardwareKey.getXmrPublicKey(),
+                        string.Empty
+                    );
 
                     // Process the XML
                     RegisterAgent.ProcessRegisterXml(response);

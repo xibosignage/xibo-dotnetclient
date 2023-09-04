@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2022 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -110,7 +110,7 @@ namespace XiboClient.Rendering
         /// <summary>
         /// Is this an adspace exchange region?
         /// </summary>
-        private bool isAdspaceExchange = false;
+        private bool isLayoutAdspaceExchange = false;
 
         /// <summary>
         /// Track the current sequence
@@ -151,8 +151,14 @@ namespace XiboClient.Rendering
         /// </summary>
         private int _widgetAvailableTtl;
 
-        public Region()
+        /// <summary>
+        /// The Schedule
+        /// </summary>
+        private Schedule schedule;
+
+        public Region(Schedule schedule)
         {
+            this.schedule = schedule;
             InitializeComponent();
             ZIndex = 0;
         }
@@ -250,7 +256,7 @@ namespace XiboClient.Rendering
             Debug.WriteLine("Region", "Navigating to widget in Region: " + Id);
 
             // Create the options and media node
-            Media media = CreateNextMediaNode(Media.ParseOptions(node));
+            Media media = CreateNextMediaNode(Media.ParseOptions(node, this.schedule, Width, Height));
 
             // Where are we?
             _currentPlaytime = this.currentMedia.CurrentPlaytime();
@@ -371,8 +377,8 @@ namespace XiboClient.Rendering
                 if (!SetNextMediaNodeInOptions())
                 {
                     // For some reason we cannot set a media node... so we need this region to become invalid
-                    // we don't do this for adspace exchange, because they all share the same layout.
-                    if (!isAdspaceExchange)
+                    // we don't do this for adspace exchange, because we expect to fail sometimes
+                    if (!isLayoutAdspaceExchange && !(_media.Count == 1 && _media[0].Attributes["type"].Value == "ssp"))
                     {
                         CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Region, UnsafeFaultCodes.XlfNoContent, options.layoutId, options.regionId, "Unable to set any region media nodes.", _widgetAvailableTtl);
                     }
@@ -548,7 +554,7 @@ namespace XiboClient.Rendering
                 try
                 {
                     // Get media options representing the incoming media node.
-                    _currentMediaOptions = Media.ParseOptions(mediaNode);
+                    _currentMediaOptions = Media.ParseOptions(mediaNode, this.schedule, Width, Height);
 
                     // Decorate it with common properties.
                     _currentMediaOptions.DecorateWithRegionOptions(this.options);
@@ -619,6 +625,13 @@ namespace XiboClient.Rendering
             if (media.Duration == 0)
             {
                 media.Duration = options.duration;
+            }
+
+            // If this entire region is dedicated to Adspace Exchange, then set the relevent URLs on all media.
+            if (isLayoutAdspaceExchange)
+            {
+                media.SetAdspaceExchangeImpressionUrls(adspaceExchangeImpressionUrls);
+                media.SetAdspaceExchangeErrorUrls(adspaceExchangeErrorUrls);
             }
 
             // Add event handler for when this completes
@@ -708,34 +721,32 @@ namespace XiboClient.Rendering
                 {
                     StatManager.Instance.WidgetClearFailed(media.UniqueId, media.ScheduleId, media.LayoutId, media.Id);
 
-                    if (isAdspaceExchange)
+                    // Call any error urls.
+                    foreach (string url in media.AdspaceExchangeErrorUrls)
                     {
-                        foreach (string url in adspaceExchangeErrorUrls)
+                        try
                         {
-                            try
-                            {
-                                // Macros
-                                string uri = url
-                                    .Replace("[TIMESTAMP]", "" + DateTime.Now.ToString("o", System.Globalization.CultureInfo.InvariantCulture))
-                                    .Replace("[ERRORCODE]", "405");
+                            // Macros
+                            string uri = url
+                                .Replace("[TIMESTAMP]", "" + DateTime.Now.ToString("o", System.Globalization.CultureInfo.InvariantCulture))
+                                .Replace("[ERRORCODE]", "405");
 
-                                // Call the URL
-                                new Flurl.Url(uri).WithTimeout(10).GetAsync().ContinueWith(t =>
-                                {
-                                    LogMessage.Error("Region", "StopMedia", "failed to report error to " + uri);
-                                },
-                                TaskContinuationOptions.OnlyOnFaulted);
-                            }
-                            catch
+                            // Call the URL
+                            new Flurl.Url(uri).WithTimeout(10).GetAsync().ContinueWith(t =>
                             {
-                                LogMessage.Error("Region", "StopMedia", "failed to report error");
-                            }
+                                LogMessage.Error("Region", "StopMedia", "failed to report error to " + uri);
+                            },
+                            TaskContinuationOptions.OnlyOnFaulted);
+                        }
+                        catch
+                        {
+                            LogMessage.Error("Region", "StopMedia", "failed to report error");
                         }
                     }
                 }
                 else
                 {
-                    StatManager.Instance.WidgetStop(media.UniqueId, media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled, adspaceExchangeImpressionUrls);
+                    StatManager.Instance.WidgetStop(media.UniqueId, media.ScheduleId, media.LayoutId, media.Id, media.StatsEnabled, media.AdspaceExchangeImpressionUrls);
                 }
 
                 // Media Stopped Event removes the media from the scene
@@ -940,7 +951,7 @@ namespace XiboClient.Rendering
         /// <param name="urls"></param>
         public void SetAdspaceExchangeImpressionUrls(List<string> urls)
         {
-            isAdspaceExchange = true;
+            isLayoutAdspaceExchange = true;
             adspaceExchangeImpressionUrls = urls;
         }
 

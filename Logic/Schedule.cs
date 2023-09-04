@@ -793,10 +793,12 @@ namespace XiboClient
         /// </summary>
         /// <param name="width"></param>
         /// <param name="height"></param>
+        /// <param name="isUseWidget"></param>
+        /// <param name="partner"></param>
         /// <returns></returns>
-        public Ad GetAd(double width, double height)
+        public Ad GetAd(double width, double height, bool isUseWidget, string partner)
         {
-            return _scheduleManager.GetAd(width, height);
+            return _scheduleManager.GetAd(width, height, isUseWidget, partner);
         }
 
         /// <summary>

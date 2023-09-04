@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -197,11 +197,12 @@ namespace XiboClient
                 }
 
                 // We need to generate the MD5 and store it for later
-                Md5Resource md5Resource = new Md5Resource();
-
-                md5Resource.path = path;
-                md5Resource.md5 = md5;
-                md5Resource.cacheDate = DateTime.Now;
+                Md5Resource md5Resource = new Md5Resource
+                {
+                    path = path,
+                    md5 = md5,
+                    cacheDate = DateTime.Now
+                };
 
                 // Add the resource to the collection
                 _files.Add(md5Resource);
@@ -349,6 +350,46 @@ namespace XiboClient
         #region Unsafe List
 
         /// <summary>
+        /// Add an unsafe widget to the list
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="widgetId"></param>
+        /// <param name="reason"></param>
+        /// <param name="ttl"></param>
+        public void AddUnsafeWidget(UnsafeFaultCodes code, string widgetId, string reason, int ttl)
+        {
+            if (ttl == 0)
+            {
+                ttl = 86400;
+            }
+
+            try
+            {
+                UnsafeItem item = _unsafeItems
+                    .Where(i => i.Type == UnsafeItemType.Widget && i.Id == widgetId)
+                    .First();
+
+                item.DateTime = DateTime.Now;
+                item.Code = code;
+                item.Reason = reason;
+            }
+            catch
+            {
+                _unsafeItems.Add(new UnsafeItem
+                {
+                    DateTime = DateTime.Now,
+                    Type = UnsafeItemType.Widget,
+                    Code = code,
+                    Id = widgetId,
+                    Reason = reason,
+                    Ttl = ttl
+                });
+            }
+
+            ClientInfo.Instance.UpdateUnsafeList(UnsafeListAsString());
+        }
+
+        /// <summary>
         /// Add an unsafe item to the list
         /// </summary>
         /// <param name="type"></param>
@@ -494,6 +535,43 @@ namespace XiboClient
         }
 
         /// <summary>
+        /// Is the provided widgetId unsafe?
+        /// </summary>
+        /// <param name="widgetId"></param>
+        /// <returns></returns>
+        public bool IsUnsafeWidget(string widgetId)
+        {
+            bool updateList = false;
+            bool found = false;
+
+            for (int i = _unsafeItems.Count - 1; i >= 0; i--)
+            {
+                UnsafeItem item = _unsafeItems[i];
+                if (item.Type == UnsafeItemType.Widget && item.Id == widgetId)
+                {
+                    // Test the Ttl
+                    if (DateTime.Now > item.DateTime.AddSeconds(item.Ttl))
+                    {
+                        _unsafeItems.RemoveAt(i);
+                        updateList = true;
+                    }
+                    else
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (updateList)
+            {
+                ClientInfo.Instance.UpdateUnsafeList(UnsafeListAsString());
+            }
+
+            return found;
+        }
+
+        /// <summary>
         /// Get the unsafe list represented as a string
         /// </summary>
         /// <returns></returns>
@@ -502,7 +580,7 @@ namespace XiboClient
             string list = "";
             foreach (UnsafeItem item in _unsafeItems)
             {
-                list += item.Type.ToString() + ": " + item.LayoutId + ", [" + (int)item.Code + "] " + item.Reason + ", ttl: " + item.Ttl + Environment.NewLine;
+                list += item.Type.ToString() + ": " + item.Id + ", [" + (int)item.Code + "] " + item.Reason + ", ttl: " + item.Ttl + Environment.NewLine;
             }
             return list;
         }
@@ -751,7 +829,8 @@ namespace XiboClient
         ImageDecode=3001,
         ImageOutOfMemory=3002,
         RemteResourceFailed=4404,
-        XlfNoContent=5000
+        XlfNoContent=5000,
+        XlfNoWidgetData=5001
     }
 
     /// <summary>

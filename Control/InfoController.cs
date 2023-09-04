@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -22,6 +22,7 @@ using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Text;
 using XiboClient.Log;
 
@@ -61,6 +62,17 @@ namespace XiboClient.Control
                     jObject.Add("latitude", null);
                     jObject.Add("longitude", null);
                 }
+
+#if DEBUG
+                jObject.Add("scheduleStatus", ClientInfo.Instance.ScheduleStatus);
+                jObject.Add("requiredFileStatus", ClientInfo.Instance.RequiredFilesStatus);
+                jObject.Add("xmrStatus", ClientInfo.Instance.XmrSubscriberStatus);
+                jObject.Add("currentlyPlaying", ClientInfo.Instance.CurrentlyPlaying);
+                jObject.Add("controlCount", ClientInfo.Instance.ControlCount);
+                jObject.Add("scheduleManagerStatus", ClientInfo.Instance.ScheduleManagerStatus);
+                jObject.Add("unsafeList", ClientInfo.Instance.UnsafeList);
+                jObject.Add("requiredFileList", ClientInfo.Instance.RequiredFilesList);
+#endif
 
                 writer.Write(jObject.ToString());
             }

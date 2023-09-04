@@ -247,7 +247,9 @@ namespace XiboClient.XmdsAgents
                 Environment.OSVersion.ToString(),
                 key.MacAddress,
                 key.Channel,
-                key.getXmrPublicKey());
+                key.getXmrPublicKey(),
+                string.Empty
+            );
         }
 
         public static string ProcessRegisterXml(string xml)
@@ -373,6 +375,14 @@ namespace XiboClient.XmdsAgents
                 {
                     writer.WritePropertyName("timeZone");
                     writer.WriteValue(WindowsToIana(TimeZone.CurrentTimeZone.StandardName));
+                }
+
+                // LAN IP address
+                string ipAddress = HardwareKey.LocalIPAddress();
+                if (!string.IsNullOrEmpty(ipAddress))
+                {
+                    writer.WritePropertyName("lanIpAddress");
+                    writer.WriteValue(ipAddress);
                 }
 
                 // Finish
