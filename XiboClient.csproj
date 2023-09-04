@@ -121,6 +121,8 @@
     <Compile Include="Control\DurationController.cs" />
     <Compile Include="Control\DurationRequest.cs" />
     <Compile Include="Control\EmbeddedServer.cs" />
+    <Compile Include="Control\FaultController.cs" />
+    <Compile Include="Control\FaultRequest.cs" />
     <Compile Include="Control\HookController.cs" />
     <Compile Include="Control\InfoController.cs" />
     <Compile Include="Control\RestrictiveFileModule.cs" />
@@ -260,7 +262,7 @@
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
-    <None Include="Web References\xmds\service_v6.wsdl" />
+    <None Include="Web References\xmds\service_v7.wsdl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -281,10 +283,10 @@
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="https://raw.githubusercontent.com/xibosignage/xibo-cms/develop/lib/Xmds/service_v6.wsdl">
+    <WebReferenceUrl Include="https://raw.githubusercontent.com/xibosignage/xibo-cms/westphal/lib/Xmds/service_v7.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\xmds\</RelPath>
-      <UpdateFromURL>https://raw.githubusercontent.com/xibosignage/xibo-cms/develop/lib/Xmds/service_v6.wsdl</UpdateFromURL>
+      <UpdateFromURL>https://raw.githubusercontent.com/xibosignage/xibo-cms/westphal/lib/Xmds/service_v7.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -298,7 +300,7 @@
       <Version>1.8.9</Version>
     </PackageReference>
     <PackageReference Include="CefSharp.Wpf">
-      <Version>114.2.120</Version>
+      <Version>115.3.110</Version>
     </PackageReference>
     <PackageReference Include="Crc32.NET">
       <Version>1.2.0</Version>
@@ -322,16 +324,16 @@
       <Version>0.3.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Data.Sqlite">
-      <Version>7.0.8</Version>
+      <Version>7.0.10</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.SqlServer.Types">
-      <Version>14.0.1016.290</Version>
+      <Version>160.1000.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.1823.32</Version>
+      <Version>1.0.1938.49</Version>
     </PackageReference>
     <PackageReference Include="NetMQ">
-      <Version>4.0.1.12</Version>
+      <Version>4.0.1.13</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>

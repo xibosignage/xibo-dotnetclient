@@ -492,7 +492,7 @@ namespace XiboClient.Rendering
                     Trace.WriteLine(new LogMessage("Layout", "loadFromFile: unable to load media actions. e = " + e.Message), LogType.Info.ToString());
                 }
 
-                Region temp = new Region();
+                Region temp = new Region(Schedule);
                 temp.DurationElapsedEvent += new Region.DurationElapsedDelegate(Region_DurationElapsedEvent);
                 temp.MediaExpiredEvent += Region_MediaExpiredEvent;
                 temp.OnRegionStopped += Region_OnRegionStopped;
@@ -820,7 +820,7 @@ namespace XiboClient.Rendering
             }
 
             // Create the new node
-            Media media = Media.Create(Media.ParseOptions(widget));
+            Media media = Media.Create(Media.ParseOptions(widget, Schedule, 0, 0));
 
             // UI thread
             Dispatcher.Invoke(new System.Action(() => {

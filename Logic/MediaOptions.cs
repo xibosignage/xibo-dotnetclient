@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -20,6 +20,7 @@
  */
 using System;
 using System.Collections.Generic;
+using XiboClient.Adspace;
 using XiboClient.Logic;
 using XiboClient.Rendering;
 
@@ -74,6 +75,8 @@ namespace XiboClient
 
         public int PlayerWidth { get; set; }
         public int PlayerHeight { get; set; }
+
+        private Ad ad;
 
         /// <summary>
         /// Audio associated with the widget
@@ -133,6 +136,16 @@ namespace XiboClient
         public override string ToString()
         {
             return String.Format("({0},{1},{2},{3},{4},{5})", width, height, top, left, type, uri);
+        }
+
+        public void SetAd(Ad ad)
+        {
+            this.ad = ad;
+        }
+
+        public Ad GetAd()
+        {
+            return this.ad;
         }
     }
 

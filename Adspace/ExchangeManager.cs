@@ -131,7 +131,7 @@ namespace XiboClient.Adspace
             if (lastFillDate < DateTime.Now.AddMinutes(-3))
             {
                 // Fill our ad buffet
-                Fill(true);
+                Fill(true, false, null);
             }
 
             // Should we also prefetch?
@@ -351,10 +351,23 @@ namespace XiboClient.Adspace
         }
 
         /// <summary>
+        /// Fill request for widget
+        /// </summary>
+        public void FillForWidget(string partner)
+        {
+            if (CountAvailableAds <= 1)
+            {
+                Fill(true, true, null);
+            }
+        }
+
+        /// <summary>
         /// Fill the ad buffet
         /// </summary>
         /// <param name="force"></param>
-        private void Fill(bool force)
+        /// <param name="isUseWidget"></param>
+        /// <param name="partner"></param>
+        private void Fill(bool force, bool isUseWidget, string partner)
         {
             lastFillDate = DateTime.Now;
 
@@ -369,6 +382,14 @@ namespace XiboClient.Adspace
             url = url.AppendPathSegment("request")
                 .AppendPathSegment(ApplicationSettings.Default.HardwareKey)
                 .SetQueryParam("ownerKey", ApplicationSettings.Default.ServerUri);
+
+            // Are we requesting for a widget?
+            if (isUseWidget)
+            {
+                url = url
+                    .SetQueryParam("isUseWidget", 1)
+                    .SetQueryParam("partner", partner);
+            }
 
             if (ClientInfo.Instance.CurrentGeoLocation != null && !ClientInfo.Instance.CurrentGeoLocation.IsUnknown)
             {

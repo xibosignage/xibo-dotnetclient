@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -182,13 +182,13 @@ namespace XiboClient.XmdsAgents
 
                                 Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Currently Downloading Files, skipping collect"), LogType.Audit.ToString());
                             }
-                            else if (!ShouldCheckRf())
+                            else if (_requiredFiles.FilesMissing <= 0 && !ShouldCheckRf())
                             {
                                 ClientInfo.Instance.RequiredFilesStatus = "Sleeping: last check was not required.";
                             }
                             else
                             {
-                                ClientInfo.Instance.RequiredFilesStatus = "Running: Requesting connection to Xibo Server";
+                                ClientInfo.Instance.RequiredFilesStatus = "Running: Requesting connection to CMS";
 
                                 using (xmds.xmds xmds = new xmds.xmds())
                                 {
@@ -202,7 +202,7 @@ namespace XiboClient.XmdsAgents
                                     // Set the flag to indicate we have a connection to XMDS
                                     ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
-                                    ClientInfo.Instance.RequiredFilesStatus = "Running: Data received from Xibo Server";
+                                    ClientInfo.Instance.RequiredFilesStatus = "Running: Data received from CMS";
 
                                     // Calculate and store a CRC32
                                     _lastCheckRf = Crc32Algorithm.Compute(Encoding.UTF8.GetBytes(requiredFilesXml)).ToString();
@@ -258,18 +258,20 @@ namespace XiboClient.XmdsAgents
                                         }
 
                                         // Spawn a thread to download this file.
-                                        FileAgent fileAgent = new FileAgent();
-                                        fileAgent.FileDownloadLimit = _fileDownloadLimit;
-                                        fileAgent.HardwareKey = _hardwareKey;
-                                        fileAgent.RequiredFiles = _requiredFiles;
-                                        fileAgent.RequiredFileId = fileToDownload.Id;
-                                        fileAgent.RequiredFileType = fileToDownload.FileType;
+                                        FileAgent fileAgent = new FileAgent(_requiredFiles, fileToDownload)
+                                        {
+                                            FileDownloadLimit = _fileDownloadLimit,
+                                            HardwareKey = _hardwareKey
+                                        };
                                         fileAgent.OnComplete += new FileAgent.OnCompleteDelegate(fileAgent_OnComplete);
                                         fileAgent.OnPartComplete += new FileAgent.OnPartCompleteDelegate(fileAgent_OnPartComplete);
+                                        fileAgent.OnNewHttpRequiredFile += new FileAgent.OnNewHttpRequiredFileDelegate(OnNewRequiredFile);
 
                                         // Create the thread and add it to the list of threads to start
-                                        Thread thread = new Thread(new ThreadStart(fileAgent.Run));
-                                        thread.Name = "FileAgent_" + fileToDownload.FileType + "_Id_" + fileToDownload.Id.ToString();
+                                        Thread thread = new Thread(new ThreadStart(fileAgent.Run))
+                                        {
+                                            Name = "FileAgent_" + fileToDownload.FileType + "_Id_" + fileToDownload.Id.ToString()
+                                        };
                                         threadsToStart.Add(thread);
                                     }
 
@@ -361,8 +363,21 @@ namespace XiboClient.XmdsAgents
 
             foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
             {
-                string percentComplete = (!requiredFile.Complete) ? Math.Round((((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100), 1).ToString() : "100";
-                requiredFilesTextBox = requiredFilesTextBox + requiredFile.FileType + ": " + requiredFile.SaveAs + ". (" + percentComplete + "%)" + Environment.NewLine;
+                string percentComplete;
+                if (requiredFile.Complete)
+                {
+                    percentComplete = "100";
+                } 
+                else if (requiredFile.FileType == "widget")
+                {
+                    percentComplete = "0";
+                }
+                else
+                {
+                    percentComplete = Math.Round((((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100), 1).ToString();
+                }
+
+                requiredFilesTextBox += requiredFile.FileType + ": " + requiredFile.SaveAs + ". (" + percentComplete + "%)" + Environment.NewLine;
             }
 
             return requiredFilesTextBox;
@@ -419,6 +434,79 @@ namespace XiboClient.XmdsAgents
                 // Raise an event to say it is completed
                 OnComplete?.Invoke(rf.SaveAs);
             }
+        }
+
+        /// <summary>
+        /// Silently add and download this need required file
+        /// </summary>
+        /// <param name="mediaId"></param>
+        /// <param name="fileSize"></param>
+        /// <param name="md5"></param>
+        /// <param name="saveAs"></param>
+        /// <param name="path"></param>
+        void OnNewRequiredFile(int mediaId, double fileSize, string md5, string saveAs, string path)
+        {
+            // There is a chance this file already exists and is downloaded.
+            try
+            {
+                _requiredFiles.GetRequiredFile(mediaId, "media");
+                LogMessage.Trace("ScheduleAndFileAgent", "OnNewRequiredFile", "New Required file for mediaId " + mediaId + " already exists");
+                return;
+            }
+            catch
+            {
+
+            }
+            LogMessage.Trace("ScheduleAndFileAgent", "OnNewRequiredFile", "New Required file for mediaId " + mediaId);
+
+            // Add to required files.
+            RequiredFile fileToDownload = new RequiredFile
+            {
+                FileType = "media",
+                Id = mediaId,
+                Size = fileSize,
+                Md5 = md5,
+                SaveAs = saveAs,
+                Path = path,
+                Http = true,
+                Downloading = false,
+                Complete = false,
+                LastChecked = DateTime.Now,
+                ChunkOffset = 0,
+                ChunkSize = 512000
+            };
+
+            _requiredFiles.AssessAndAddRequiredFile(fileToDownload);
+
+            if (fileToDownload.Complete)
+            {
+                LogMessage.Trace("ScheduleAndFileAgent", "OnNewRequiredFile", "File already downloaded");
+                return;
+            }
+
+            // Check we have enough space for this file.
+            long freeSpace = ClientInfo.Instance.GetDriveFreeSpace();
+            if (freeSpace != -1 && fileToDownload.Size > freeSpace)
+            {
+                LogMessage.Error("ScheduleAndFileAgent", "OnNewRequiredFile", "Not enough free space on disk");
+                return;
+            }
+
+            // Spawn a thread to download this file.
+            FileAgent fileAgent = new FileAgent(_requiredFiles, fileToDownload)
+            {
+                FileDownloadLimit = _fileDownloadLimit,
+                HardwareKey = _hardwareKey
+            };
+            fileAgent.OnComplete += new FileAgent.OnCompleteDelegate(fileAgent_OnComplete);
+            fileAgent.OnPartComplete += new FileAgent.OnPartCompleteDelegate(fileAgent_OnPartComplete);
+
+            // Create the thread and add it to the list of threads to start
+            Thread thread = new Thread(new ThreadStart(fileAgent.Run))
+            {
+                Name = "FileAgent_" + fileToDownload.FileType + "_Id_" + fileToDownload.Id.ToString()
+            };
+            thread.Start();
         }
 
         /// <summary>

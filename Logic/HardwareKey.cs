@@ -24,8 +24,11 @@ using Org.BouncyCastle.Security;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Management;
+using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 
 namespace XiboClient
 {
@@ -278,6 +281,25 @@ namespace XiboClient
 
                 return textWriter.ToString();
             }
+        }
+
+        /// <summary>
+        /// Get Local IP Address
+        /// </summary>
+        /// <returns></returns>
+        public static string LocalIPAddress()
+        {
+            if (!NetworkInterface.GetIsNetworkAvailable())
+            {
+                return null;
+            }
+
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+
+            return host
+                .AddressList
+                .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork)
+                .ToString();
         }
     }
 }

@@ -14,16 +14,16 @@
 #pragma warning disable 1591
 
 namespace XiboClient.xmds {
-    using System;
-    using System.Web.Services;
     using System.Diagnostics;
-    using System.Web.Services.Protocols;
+    using System;
     using System.Xml.Serialization;
     using System.ComponentModel;
+    using System.Web.Services.Protocols;
+    using System.Web.Services;
     
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="xmdsBinding", Namespace="urn:xmds")]
@@ -50,6 +50,12 @@ namespace XiboClient.xmds {
         private System.Threading.SendOrPostCallback NotifyStatusOperationCompleted;
         
         private System.Threading.SendOrPostCallback SubmitScreenShotOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback GetDataOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback GetDependencyOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback GetWeatherOperationCompleted;
         
         private bool useDefaultCredentialsSetExplicitly;
         
@@ -123,9 +129,18 @@ namespace XiboClient.xmds {
         public event SubmitScreenShotCompletedEventHandler SubmitScreenShotCompleted;
         
         /// <remarks/>
+        public event GetDataCompletedEventHandler GetDataCompleted;
+        
+        /// <remarks/>
+        public event GetDependencyCompletedEventHandler GetDependencyCompleted;
+        
+        /// <remarks/>
+        public event GetWeatherCompletedEventHandler GetWeatherCompleted;
+        
+        /// <remarks/>
         [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#RegisterDisplay", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
         [return: System.Xml.Serialization.SoapElementAttribute("ActivationMessage")]
-        public string RegisterDisplay(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string xmrChannel, string xmrPubKey) {
+        public string RegisterDisplay(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string xmrChannel, string xmrPubKey, string licenceResult) {
             object[] results = this.Invoke("RegisterDisplay", new object[] {
                         serverKey,
                         hardwareKey,
@@ -136,17 +151,18 @@ namespace XiboClient.xmds {
                         operatingSystem,
                         macAddress,
                         xmrChannel,
-                        xmrPubKey});
+                        xmrPubKey,
+                        licenceResult});
             return ((string)(results[0]));
         }
         
         /// <remarks/>
-        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string xmrChannel, string xmrPubKey) {
-            this.RegisterDisplayAsync(serverKey, hardwareKey, displayName, clientType, clientVersion, clientCode, operatingSystem, macAddress, xmrChannel, xmrPubKey, null);
+        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string xmrChannel, string xmrPubKey, string licenceResult) {
+            this.RegisterDisplayAsync(serverKey, hardwareKey, displayName, clientType, clientVersion, clientCode, operatingSystem, macAddress, xmrChannel, xmrPubKey, licenceResult, null);
         }
         
         /// <remarks/>
-        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string xmrChannel, string xmrPubKey, object userState) {
+        public void RegisterDisplayAsync(string serverKey, string hardwareKey, string displayName, string clientType, string clientVersion, int clientCode, string operatingSystem, string macAddress, string xmrChannel, string xmrPubKey, string licenceResult, object userState) {
             if ((this.RegisterDisplayOperationCompleted == null)) {
                 this.RegisterDisplayOperationCompleted = new System.Threading.SendOrPostCallback(this.OnRegisterDisplayOperationCompleted);
             }
@@ -160,7 +176,8 @@ namespace XiboClient.xmds {
                         operatingSystem,
                         macAddress,
                         xmrChannel,
-                        xmrPubKey}, this.RegisterDisplayOperationCompleted, userState);
+                        xmrPubKey,
+                        licenceResult}, this.RegisterDisplayOperationCompleted, userState);
         }
         
         private void OnRegisterDisplayOperationCompleted(object arg) {
@@ -517,6 +534,112 @@ namespace XiboClient.xmds {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#GetData", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [return: System.Xml.Serialization.SoapElementAttribute("data")]
+        public string GetData(string serverKey, string hardwareKey, int widgetId) {
+            object[] results = this.Invoke("GetData", new object[] {
+                        serverKey,
+                        hardwareKey,
+                        widgetId});
+            return ((string)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void GetDataAsync(string serverKey, string hardwareKey, int widgetId) {
+            this.GetDataAsync(serverKey, hardwareKey, widgetId, null);
+        }
+        
+        /// <remarks/>
+        public void GetDataAsync(string serverKey, string hardwareKey, int widgetId, object userState) {
+            if ((this.GetDataOperationCompleted == null)) {
+                this.GetDataOperationCompleted = new System.Threading.SendOrPostCallback(this.OnGetDataOperationCompleted);
+            }
+            this.InvokeAsync("GetData", new object[] {
+                        serverKey,
+                        hardwareKey,
+                        widgetId}, this.GetDataOperationCompleted, userState);
+        }
+        
+        private void OnGetDataOperationCompleted(object arg) {
+            if ((this.GetDataCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.GetDataCompleted(this, new GetDataCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#GetDependency", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [return: System.Xml.Serialization.SoapElementAttribute("file", DataType="base64Binary")]
+        public byte[] GetDependency(string serverKey, string hardwareKey, string fileType, string id, double chunkOffset, double chunkSize) {
+            object[] results = this.Invoke("GetDependency", new object[] {
+                        serverKey,
+                        hardwareKey,
+                        fileType,
+                        id,
+                        chunkOffset,
+                        chunkSize});
+            return ((byte[])(results[0]));
+        }
+        
+        /// <remarks/>
+        public void GetDependencyAsync(string serverKey, string hardwareKey, string fileType, string id, double chunkOffset, double chunkSize) {
+            this.GetDependencyAsync(serverKey, hardwareKey, fileType, id, chunkOffset, chunkSize, null);
+        }
+        
+        /// <remarks/>
+        public void GetDependencyAsync(string serverKey, string hardwareKey, string fileType, string id, double chunkOffset, double chunkSize, object userState) {
+            if ((this.GetDependencyOperationCompleted == null)) {
+                this.GetDependencyOperationCompleted = new System.Threading.SendOrPostCallback(this.OnGetDependencyOperationCompleted);
+            }
+            this.InvokeAsync("GetDependency", new object[] {
+                        serverKey,
+                        hardwareKey,
+                        fileType,
+                        id,
+                        chunkOffset,
+                        chunkSize}, this.GetDependencyOperationCompleted, userState);
+        }
+        
+        private void OnGetDependencyOperationCompleted(object arg) {
+            if ((this.GetDependencyCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.GetDependencyCompleted(this, new GetDependencyCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapRpcMethodAttribute("urn:xmds#GetWeather", RequestNamespace="urn:xmds", ResponseNamespace="urn:xmds")]
+        [return: System.Xml.Serialization.SoapElementAttribute("data")]
+        public string GetWeather(string serverKey, string hardwareKey) {
+            object[] results = this.Invoke("GetWeather", new object[] {
+                        serverKey,
+                        hardwareKey});
+            return ((string)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void GetWeatherAsync(string serverKey, string hardwareKey) {
+            this.GetWeatherAsync(serverKey, hardwareKey, null);
+        }
+        
+        /// <remarks/>
+        public void GetWeatherAsync(string serverKey, string hardwareKey, object userState) {
+            if ((this.GetWeatherOperationCompleted == null)) {
+                this.GetWeatherOperationCompleted = new System.Threading.SendOrPostCallback(this.OnGetWeatherOperationCompleted);
+            }
+            this.InvokeAsync("GetWeather", new object[] {
+                        serverKey,
+                        hardwareKey}, this.GetWeatherOperationCompleted, userState);
+        }
+        
+        private void OnGetWeatherOperationCompleted(object arg) {
+            if ((this.GetWeatherCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.GetWeatherCompleted(this, new GetWeatherCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -536,11 +659,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void RegisterDisplayCompletedEventHandler(object sender, RegisterDisplayCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class RegisterDisplayCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -562,11 +685,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void RequiredFilesCompletedEventHandler(object sender, RequiredFilesCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class RequiredFilesCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -588,11 +711,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void GetFileCompletedEventHandler(object sender, GetFileCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class GetFileCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -614,11 +737,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void ScheduleCompletedEventHandler(object sender, ScheduleCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class ScheduleCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -640,11 +763,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void ReportFaultsCompletedEventHandler(object sender, ReportFaultsCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class ReportFaultsCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -666,11 +789,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void SubmitLogCompletedEventHandler(object sender, SubmitLogCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class SubmitLogCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -692,11 +815,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void SubmitStatsCompletedEventHandler(object sender, SubmitStatsCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class SubmitStatsCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -718,11 +841,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void MediaInventoryCompletedEventHandler(object sender, MediaInventoryCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class MediaInventoryCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -744,11 +867,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void GetResourceCompletedEventHandler(object sender, GetResourceCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class GetResourceCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -770,11 +893,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void NotifyStatusCompletedEventHandler(object sender, NotifyStatusCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class NotifyStatusCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -796,11 +919,11 @@ namespace XiboClient.xmds {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     public delegate void SubmitScreenShotCompletedEventHandler(object sender, SubmitScreenShotCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class SubmitScreenShotCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -817,6 +940,84 @@ namespace XiboClient.xmds {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((bool)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
+    public delegate void GetDataCompletedEventHandler(object sender, GetDataCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class GetDataCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal GetDataCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public string Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((string)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
+    public delegate void GetDependencyCompletedEventHandler(object sender, GetDependencyCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class GetDependencyCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal GetDependencyCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public byte[] Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((byte[])(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
+    public delegate void GetWeatherCompletedEventHandler(object sender, GetWeatherCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9032.0")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class GetWeatherCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal GetWeatherCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public string Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((string)(this.results[0]));
             }
         }
     }
