@@ -69,7 +69,7 @@ namespace XiboClient
                     int count = 0;
                     foreach (RequiredFile rf in RequiredFileList)
                     {
-                        if (!rf.Complete)
+                        if (!rf.Complete && !rf.IsWidgetData)
                         {
                             count++;
                         }
