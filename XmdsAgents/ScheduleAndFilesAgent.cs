@@ -102,12 +102,18 @@ namespace XiboClient.XmdsAgents
         private string _lastCheckSchedule;
 
         /// <summary>
+        /// The data agent
+        /// </summary>
+        private DataAgent _dataAgent;
+
+        /// <summary>
         /// Required Files Agent
         /// </summary>
-        public ScheduleAndFilesAgent()
+        public ScheduleAndFilesAgent(DataAgent dataAgent)
         {
             int limit = (ApplicationSettings.Default.MaxConcurrentDownloads <= 0) ? 1 : ApplicationSettings.Default.MaxConcurrentDownloads;
-
+            
+            _dataAgent = dataAgent;
             _fileDownloadLimit = new Semaphore(limit, limit);
             _requiredFiles = new RequiredFiles();
         }
@@ -153,6 +159,9 @@ namespace XiboClient.XmdsAgents
         public void Run()
         {
             Trace.WriteLine(new LogMessage("RequiredFilesAgent - Run", "Thread Started"), LogType.Info.ToString());
+
+            // Bind to the data agent incase it has any new files for us.
+            _dataAgent.OnNewHttpRequiredFile += OnNewRequiredFile;
 
             int retryAfterSeconds = 0;
 
@@ -214,6 +223,9 @@ namespace XiboClient.XmdsAgents
                                     // Clear any layout codes
                                     CacheManager.Instance.ClearLayoutCodes();
 
+                                    // Clear the data agent once we're sure we have a successful response
+                                    _dataAgent.Clear();
+
                                     // Create a required files object and set it to contain the RF returned this tick
                                     _requiredFiles = new RequiredFiles();
                                     _requiredFiles.RequiredFilesXml = xml;
@@ -244,6 +256,14 @@ namespace XiboClient.XmdsAgents
                                             continue;
                                         }
 
+                                        // Is this widget data?
+                                        if (fileToDownload.IsWidgetData)
+                                        {
+                                            // Register this with the widget data processor.
+                                            _dataAgent.AddWidget(fileToDownload.Id, fileToDownload.UpdateInterval);
+                                            continue;
+                                        }
+
                                         // Can we fit the file on the drive?
                                         if (freeSpace != -1)
                                         {
@@ -265,7 +285,6 @@ namespace XiboClient.XmdsAgents
                                         };
                                         fileAgent.OnComplete += new FileAgent.OnCompleteDelegate(fileAgent_OnComplete);
                                         fileAgent.OnPartComplete += new FileAgent.OnPartCompleteDelegate(fileAgent_OnPartComplete);
-                                        fileAgent.OnNewHttpRequiredFile += new FileAgent.OnNewHttpRequiredFileDelegate(OnNewRequiredFile);
 
                                         // Create the thread and add it to the list of threads to start
                                         Thread thread = new Thread(new ThreadStart(fileAgent.Run))
@@ -364,13 +383,14 @@ namespace XiboClient.XmdsAgents
             foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
             {
                 string percentComplete;
-                if (requiredFile.Complete)
+                if (requiredFile.FileType == "widget")
+                {
+                    // Skip data widgets
+                    continue;
+                }
+                else if (requiredFile.Complete)
                 {
                     percentComplete = "100";
-                } 
-                else if (requiredFile.FileType == "widget")
-                {
-                    percentComplete = "0";
                 }
                 else
                 {

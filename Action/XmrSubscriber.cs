@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2022 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -230,6 +230,11 @@ namespace XiboClient.Action
                     command.Code = code;
 
                     new Thread(new ThreadStart(command.Run)).Start();
+                    break;
+
+                case "dataUpdate":
+                    DataUpdatePlayerAction dataUpdate = JsonConvert.DeserializeObject<DataUpdatePlayerAction>(opened);
+                    OnAction?.Invoke(dataUpdate);
                     break;
 
                 case "collectNow":

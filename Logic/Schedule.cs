@@ -96,6 +96,11 @@ namespace XiboClient
         private FaultsAgent _faultsAgent;
         Thread _faultsAgentThread;
 
+        // Data Agent
+        private DataAgent _dataAgent;
+
+        Thread _dataAgentThread;
+
         // XMR Subscriber
         private XmrSubscriber _xmrSubscriber;
         Thread _xmrSubscriberThread;
@@ -136,8 +141,15 @@ namespace XiboClient
             _scheduleManagerThread = new Thread(new ThreadStart(_scheduleManager.Run));
             _scheduleManagerThread.Name = "ScheduleManagerThread";
 
+            // Data Agent
+            _dataAgent = new DataAgent();
+            _dataAgentThread = new Thread(new ThreadStart(_dataAgent.Run))
+            {
+                Name = "DataAgent"
+            };
+
             // Create a RequiredFilesAgent
-            _scheduleAndRfAgent = new ScheduleAndFilesAgent();
+            _scheduleAndRfAgent = new ScheduleAndFilesAgent(_dataAgent);
             _scheduleAndRfAgent.CurrentScheduleManager = _scheduleManager;
             _scheduleAndRfAgent.ScheduleLocation = scheduleLocation;
             _scheduleAndRfAgent.HardwareKey = _hardwareKey.Key;
@@ -201,6 +213,9 @@ namespace XiboClient
 
             // Start the RequiredFilesAgent thread
             _scheduleAndRfAgentThread.Start();
+
+            // Start the data agent thread
+            _dataAgentThread.Start();
 
             // Start the ScheduleManager thread
             _scheduleManagerThread.Start();
@@ -348,6 +363,12 @@ namespace XiboClient
                 case "collectNow":
                     // Run all of the various agents
                     wakeUpXmds();
+                    break;
+
+                case "dataUpdate":
+                    // Wakeup the data agent and mark the widget to be force updated.
+                    _dataAgent.ForceUpdateWidget(((DataUpdatePlayerAction)action).widgetId);
+                    _dataAgent.WakeUp();
                     break;
 
                 case LayoutChangePlayerAction.Name:

@@ -85,8 +85,10 @@ namespace XiboClient
 
             textBoxSchedule.Text = ClientInfo.Instance.ScheduleManagerStatus;
             textBoxRequiredFiles.Text = ClientInfo.Instance.UnsafeList
-                + Environment.NewLine 
-                + ClientInfo.Instance.RequiredFilesList;
+                + Environment.NewLine
+                + ClientInfo.Instance.RequiredFilesList
+                + Environment.NewLine
+                + ClientInfo.Instance.DataFilesList;
 
             // Log grid
             logDataGridView.Items.Clear();

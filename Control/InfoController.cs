@@ -72,6 +72,7 @@ namespace XiboClient.Control
                 jObject.Add("scheduleManagerStatus", ClientInfo.Instance.ScheduleManagerStatus);
                 jObject.Add("unsafeList", ClientInfo.Instance.UnsafeList);
                 jObject.Add("requiredFileList", ClientInfo.Instance.RequiredFilesList);
+                jObject.Add("dataList", ClientInfo.Instance.DataFilesList);
 #endif
 
                 writer.Write(jObject.ToString());
