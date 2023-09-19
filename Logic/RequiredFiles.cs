@@ -69,7 +69,7 @@ namespace XiboClient
                     int count = 0;
                     foreach (RequiredFile rf in RequiredFileList)
                     {
-                        if (!rf.Complete)
+                        if (!rf.Complete && !rf.IsWidgetData)
                         {
                             count++;
                         }
@@ -270,15 +270,7 @@ namespace XiboClient
                 {
                     // Add and skip onward
                     rf.Id = int.Parse(attributes["id"].Value);
-                    rf.SaveAs = rf.Id + ".json";
                     rf.UpdateInterval = attributes["updateInterval"] != null ? int.Parse(attributes["updateInterval"].Value) : 120;
-
-                    // Does this data file already exist? and if so, is it sufficiently up to date.
-                    if (File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs))
-                    {
-                        rf.Complete = File.GetLastWriteTime(ApplicationSettings.Default.LibraryPath + @"\" + rf.SaveAs) > DateTime.Now.AddMinutes(-1 * rf.UpdateInterval);
-                    }
-
                     RequiredFileList.Add(rf);
                     continue;
                 }
@@ -444,7 +436,12 @@ namespace XiboClient
 
                 foreach (RequiredFile rf in RequiredFileList)
                 {
-                    if (rf.FileType == "dependency")
+                    if (rf.FileType == "widget")
+                    {
+                        // We don't report media inventory for data
+                        continue;
+                    }
+                    else if (rf.FileType == "dependency")
                     {
                         xml += string.Format("<file type=\"{0}\" id=\"{1}\" fileType=\"{2}\" complete=\"{3}\" lastChecked=\"{4}\" />",
                             rf.FileType,
@@ -518,5 +515,13 @@ namespace XiboClient
 
         // Data
         public int UpdateInterval;
+
+        public bool IsWidgetData
+        {
+            get
+            {
+                return FileType.Equals("widget", StringComparison.OrdinalIgnoreCase);
+            }
+        }
     }
 }

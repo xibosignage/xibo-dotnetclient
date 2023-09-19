@@ -56,6 +56,11 @@ namespace XiboClient.Log
         public string RequiredFilesList;
 
         /// <summary>
+        /// Set the data files list
+        /// </summary>
+        public string DataFilesList;
+
+        /// <summary>
         /// Set the schedule manager status
         /// </summary>
         public string ScheduleManagerStatus;
@@ -158,6 +163,15 @@ namespace XiboClient.Log
         public void UpdateRequiredFiles(string requiredFilesString)
         {
             RequiredFilesList = requiredFilesString;
+        }
+
+        /// <summary>
+        /// Update the data files text box
+        /// </summary>
+        /// <param name="dataFilesString"></param>
+        public void UpdateDataFiles(string dataFilesString)
+        {
+            DataFilesList = dataFilesString;
         }
 
         /// <summary>

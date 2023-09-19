@@ -52,11 +52,14 @@ namespace XiboClient.Control
                 }
 
                 string[] splitKey = data.key.Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries);
-                string widgetId = splitKey[1];
+
+                // widgetId must be parseable as an integer
+                // only old widgets have string IDs and they would not support calling this method.
+                int widgetId = int.Parse(splitKey[1]);
 
                 CacheManager.Instance.AddUnsafeWidget(
                     (UnsafeFaultCodes)data.code,
-                    widgetId,
+                    widgetId + "",
                     data.reason,
                     data.ttl
                 );
