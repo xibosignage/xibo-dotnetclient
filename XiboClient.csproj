@@ -104,6 +104,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Action\Command.cs" />
+    <Compile Include="Action\DataUpdatePlayerAction.cs" />
     <Compile Include="Action\HttpCommand.cs" />
     <Compile Include="Action\HttpCommandConfig.cs" />
     <Compile Include="Action\LayoutChangePlayerAction.cs" />
@@ -191,6 +192,7 @@
     <Compile Include="OptionsForm.xaml.cs">
       <DependentUpon>OptionsForm.xaml</DependentUpon>
     </Compile>
+    <Compile Include="XmdsAgents\DataAgent.cs" />
     <Compile Include="XmdsAgents\FaultsAgent.cs" />
     <Compile Include="XmdsAgents\FileAgent.cs" />
     <Compile Include="XmdsAgents\LibraryAgent.cs" />
@@ -198,6 +200,7 @@
     <Compile Include="XmdsAgents\RegisterAgent.cs" />
     <Compile Include="XmdsAgents\ScheduleAndFilesAgent.cs" />
     <Compile Include="XmdsAgents\StatAgent.cs" />
+    <Compile Include="XmdsAgents\WidgetData.cs" />
     <Page Include="InfoScreen.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
