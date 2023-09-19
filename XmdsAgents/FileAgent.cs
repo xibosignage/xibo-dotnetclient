@@ -77,11 +77,6 @@ namespace XiboClient.XmdsAgents
         }
         private Semaphore _fileDownloadLimit;
 
-        public FileAgent(RequiredFile file)
-        {
-            _requiredFile = file;
-        }
-
         /// <summary>
         /// File Agent Responsible for downloading a single file
         /// </summary>
@@ -150,10 +145,7 @@ namespace XiboClient.XmdsAgents
                     if (_requiredFile.Md5 == md5)
                     {
                         // Mark it as complete
-                        if (_requiredFiles != null)
-                        {
-                            _requiredFiles.MarkComplete(_requiredFile.Id, _requiredFile.Md5);
-                        }
+                        _requiredFiles.MarkComplete(_requiredFile.Id, _requiredFile.Md5);
 
                         // Add it to the cache manager
                         CacheManager.Instance.Add(_requiredFile.SaveAs, _requiredFile.Md5);
@@ -258,10 +250,7 @@ namespace XiboClient.XmdsAgents
                     if (_requiredFile.Md5 == md5)
                     {
                         // Mark it as complete
-                        if (_requiredFiles != null)
-                        {
-                            _requiredFiles.MarkComplete(_requiredFile.Id, _requiredFile.Md5);
-                        }
+                        _requiredFiles.MarkComplete(_requiredFile.Id, _requiredFile.Md5);
 
                         // Add it to the cache manager
                         CacheManager.Instance.Add(_requiredFile.SaveAs, _requiredFile.Md5);
