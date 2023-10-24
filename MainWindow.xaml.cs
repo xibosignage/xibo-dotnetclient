@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2022 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -403,8 +403,10 @@ namespace XiboClient
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message, LogType.Error.ToString());
-                System.Windows.MessageBox.Show("Fatal Error initialising the application. " + ex.Message, "Fatal Error");
+                LogMessage.Error("MainForm", "MainForm_Shown", "Cannot initialise the application, unexpected exception." + ex.Message);
+                LogMessage.Error("MainForm", "MainForm_Shown", ex.StackTrace.ToString());
+                
+                System.Windows.MessageBox.Show("Fatal Error initialising the application. " + ex.Message + ", " + ex.StackTrace.ToString(), "Fatal Error");
                 Close();
             }
         }
