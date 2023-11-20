@@ -357,7 +357,7 @@ namespace XiboClient.Adspace
         {
             if (CountAvailableAds <= 1)
             {
-                Fill(true, true, null);
+                Fill(true, true, partner);
             }
         }
 
