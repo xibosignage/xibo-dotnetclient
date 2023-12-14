@@ -578,7 +578,7 @@ namespace XiboClient
         private string UnsafeListAsString()
         {
             string list = "";
-            foreach (UnsafeItem item in _unsafeItems)
+            foreach (UnsafeItem item in _unsafeItems.ToList())
             {
                 list += item.Type.ToString() + ": " + item.Id + ", [" + (int)item.Code + "] " + item.Reason + ", ttl: " + item.Ttl + Environment.NewLine;
             }
@@ -605,7 +605,7 @@ namespace XiboClient
                     writer.Formatting = Newtonsoft.Json.Formatting.None;
                     writer.WriteStartArray();
 
-                    foreach (UnsafeItem item in _unsafeItems)
+                    foreach (UnsafeItem item in _unsafeItems.ToList())
                     {
                         writer.WriteStartObject();
                         writer.WritePropertyName("date");
