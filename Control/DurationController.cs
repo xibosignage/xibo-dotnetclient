@@ -1,7 +1,7 @@
 ﻿/**
- * Copyright (C) 2021 Xibo Signage Ltd
+ * Copyright (C) 2023 Xibo Signage Ltd
  *
- * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Xibo - Digital Signage - https://xibosignage.com
  *
  * This file is part of Xibo.
  *
@@ -41,6 +41,12 @@ namespace XiboClient.Control
         [Route(HttpVerbs.Post, "/expire")]
         public async void Expire()
         {
+            if (_parent == null)
+            {
+                LogMessage.Info("DurationController", "Expire", "Web server closing");
+                return;
+            }
+
             try
             {
                 var data = await HttpContext.GetRequestDataAsync<DurationRequest>();
@@ -48,7 +54,8 @@ namespace XiboClient.Control
             }
             catch (Exception e)
             {
-                Trace.WriteLine(new LogMessage("HookController", "Expire: unable to parse request: " + e.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("DurationController", "Expire: unable to parse request: " + e.Message), LogType.Error.ToString());
+                LogMessage.Trace("DurationController", "Expire", e.StackTrace.ToString());
             }
         }
 
@@ -58,6 +65,12 @@ namespace XiboClient.Control
         [Route(HttpVerbs.Post, "/extend")]
         public async void Extend()
         {
+            if (_parent == null)
+            {
+                LogMessage.Info("DurationController", "Expire", "Web server closing");
+                return;
+            }
+
             try
             {
                 var data = await HttpContext.GetRequestDataAsync<DurationRequest>();
@@ -65,7 +78,8 @@ namespace XiboClient.Control
             }
             catch (Exception e)
             {
-                Trace.WriteLine(new LogMessage("HookController", "Extend: unable to parse request: " + e.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("DurationController", "Extend: unable to parse request: " + e.Message), LogType.Error.ToString());
+                LogMessage.Trace("DurationController", "Extend", e.StackTrace.ToString());
             }
         }
 
@@ -75,6 +89,12 @@ namespace XiboClient.Control
         [Route(HttpVerbs.Post, "/set")]
         public async void Set()
         {
+            if (_parent == null)
+            {
+                LogMessage.Info("DurationController", "Expire", "Web server closing");
+                return;
+            }
+
             try
             {
                 var data = await HttpContext.GetRequestDataAsync<DurationRequest>();
@@ -82,7 +102,8 @@ namespace XiboClient.Control
             }
             catch (Exception e)
             {
-                Trace.WriteLine(new LogMessage("HookController", "Set: unable to parse request: " + e.Message), LogType.Error.ToString());
+                Trace.WriteLine(new LogMessage("DurationController", "Set: unable to parse request: " + e.Message), LogType.Error.ToString());
+                LogMessage.Trace("DurationController", "Set", e.StackTrace.ToString());
             }
         }
     }

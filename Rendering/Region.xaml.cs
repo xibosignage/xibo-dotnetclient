@@ -1,7 +1,7 @@
 ﻿/**
  * Copyright (C) 2023 Xibo Signage Ltd
  *
- * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Xibo - Digital Signage - https://xibosignage.com
  *
  * This file is part of Xibo.
  *
@@ -152,6 +152,11 @@ namespace XiboClient.Rendering
         private int _widgetAvailableTtl;
 
         /// <summary>
+        /// Count of widgets which are inside their from/to dates
+        /// </summary>
+        private int _countWidgetsInDate;
+
+        /// <summary>
         /// The Schedule
         /// </summary>
         private Schedule schedule;
@@ -161,6 +166,7 @@ namespace XiboClient.Rendering
             this.schedule = schedule;
             InitializeComponent();
             ZIndex = 0;
+            _countWidgetsInDate = 0;
         }
 
         public void LoadFromOptions(string id, RegionOptions options, List<XmlNode> media, int actionTop, int actionLeft)
@@ -380,7 +386,19 @@ namespace XiboClient.Rendering
                     // we don't do this for adspace exchange, because we expect to fail sometimes
                     if (!isLayoutAdspaceExchange && !(_media.Count == 1 && _media[0].Attributes["type"].Value == "ssp"))
                     {
-                        CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Region, UnsafeFaultCodes.XlfNoContent, options.layoutId, options.regionId, "Unable to set any region media nodes.", _widgetAvailableTtl);
+                        // Is this because we have widgets with a from/to date, or is this because none of the widgets are valid?
+                        // if there are no widgets in date, then use the calculated first date that the widget will be available from,
+                        // otherwise use 60 seconds as a short timeout.
+                        int faultTtl = _countWidgetsInDate <= 0 ? _widgetAvailableTtl : 60;
+
+                        CacheManager.Instance.AddUnsafeItem(
+                            UnsafeItemType.Region,
+                            UnsafeFaultCodes.XlfNoContent,
+                            options.layoutId,
+                            options.regionId,
+                            "There are no valid widgets inside one of the regions in this layout",
+                            faultTtl
+                        );
                     }
 
                     // Throw this out so we remove the Layout
@@ -522,6 +540,9 @@ namespace XiboClient.Rendering
             bool validNode = false;
             int numAttempts = 0;
 
+            // Start with all widgets in-date
+            _countWidgetsInDate = _media.Count;
+
             // Loop through all the nodes in order
             while (numAttempts < this._media.Count)
             {
@@ -575,6 +596,7 @@ namespace XiboClient.Rendering
 
                     // Increment the number of attempts and try again
                     numAttempts++;
+                    _countWidgetsInDate--;
 
                     // Watermark the next earliest time we can expect this Widget to be available.
                     if (_currentMediaOptions.FromDt > DateTime.Now)
