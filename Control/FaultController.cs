@@ -1,7 +1,7 @@
 ﻿/**
  * Copyright (C) 2023 Xibo Signage Ltd
  *
- * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Xibo - Digital Signage - https://xibosignage.com
  *
  * This file is part of Xibo.
  *
@@ -22,12 +22,7 @@ using EmbedIO.Routing;
 using EmbedIO;
 using EmbedIO.WebApi;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Runtime.Remoting.Contexts;
 
 namespace XiboClient.Control
 {
@@ -67,6 +62,7 @@ namespace XiboClient.Control
             catch (Exception e)
             {
                 LogMessage.Error("FaultController", "Fault", "Trigger: unable to parse request: " + e.Message);
+                LogMessage.Trace("FaultController", "Fault", e.StackTrace.ToString());
                 throw HttpException.NotAcceptable();
             }
 

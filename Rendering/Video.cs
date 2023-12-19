@@ -1,7 +1,7 @@
 ﻿/**
  * Copyright (C) 2023 Xibo Signage Ltd
  *
- * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Xibo - Digital Signage - https://xibosignage.com
  *
  * This file is part of Xibo.
  *
@@ -64,6 +64,16 @@ namespace XiboClient.Rendering
         private MediaElement mediaElement;
 
         /// <summary>
+        /// Start Watchman
+        /// </summary>
+        private DispatcherTimer _StartWatchman;
+
+        /// <summary>
+        /// Stop Watchman
+        /// </summary>
+        private DispatcherTimer _StopWatchman;
+
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="options"></param>
@@ -93,6 +103,65 @@ namespace XiboClient.Rendering
 
             // Scale type
             Stretch = options.Dictionary.Get("scaleType", "aspect").ToLowerInvariant() == "stretch";
+        }
+
+        #region "Media Events"
+
+        /// <summary>
+        /// Fired when the video is loaded and ready to seek
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MediaElement_MediaOpened(object sender, RoutedEventArgs e)
+        {
+            Trace.WriteLine(new LogMessage("Video", "MediaElement_MediaOpened: " + this.Id + " Opened, seek to: " + this._position), LogType.Audit.ToString());
+
+            // Open has been called.
+            this._openCalled = true;
+
+            // If we have been given a duration, restart the timer
+            // we are trying to cater for any time lost opening the media
+            if (!_detectEnd)
+            {
+                RestartTimer();
+            }
+
+            // Try to seek
+            if (this._position > 0)
+            {
+                this.mediaElement.Position = TimeSpan.FromSeconds(this._position);
+
+                // Set the position to 0, so that if we loop around again we start from the beginning
+                this._position = 0;
+            }
+
+            var watchmanTtl = TimeSpan.FromSeconds(60);
+            if (_duration == 0)
+            {
+                // Add the duration of the video
+                watchmanTtl = watchmanTtl.Add(this.mediaElement.NaturalDuration.TimeSpan);
+            }
+            else
+            {
+                // Add the duration of the widget
+                watchmanTtl = watchmanTtl.Add(TimeSpan.FromSeconds(this._duration));
+            }
+
+            // Set a watchman to make sure we actually end (normally this would be cancelled when we end naturally)
+            _StopWatchman = new DispatcherTimer { Interval = watchmanTtl };
+            _StopWatchman.Tick += (timerSender, args) =>
+            {
+                // You only tick once
+                _StopWatchman.Stop();
+
+                LogMessage.Error("Video", "MediaElement_MediaOpened", this.Id + " video running past watchman end check.");
+
+                // Expire
+                SignalElapsedEvent();
+            };
+
+            _StopWatchman.Start();
+
         }
 
         /// <summary>
@@ -159,11 +228,11 @@ namespace XiboClient.Rendering
             }
 
             // We make a watchman to check that the video actually gets loaded.
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(ApplicationSettings.Default.VideoStartTimeout) };
-            timer.Tick += (timerSender, args) =>
+            _StartWatchman = new DispatcherTimer { Interval = TimeSpan.FromSeconds(ApplicationSettings.Default.VideoStartTimeout) };
+            _StartWatchman.Tick += (timerSender, args) =>
             {
                 // You only tick once
-                timer.Stop();
+                _StartWatchman.Stop();
 
                 // Check to see if open has been called.
                 if (!_openCalled && !IsFailedToPlay && !_stopped)
@@ -178,8 +247,10 @@ namespace XiboClient.Rendering
                 }
             };
 
-            timer.Start();
+            _StartWatchman.Start();
         }
+
+        #endregion
 
         /// <summary>
         /// Render
@@ -273,35 +344,6 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
-        /// Fired when the video is loaded and ready to seek
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MediaElement_MediaOpened(object sender, RoutedEventArgs e)
-        {
-            Trace.WriteLine(new LogMessage("Video", "MediaElement_MediaOpened: " + this.Id + " Opened, seek to: " + this._position), LogType.Audit.ToString());
-
-            // Open has been called.
-            this._openCalled = true;
-
-            // If we have been given a duration, restart the timer
-            // we are trying to cater for any time lost opening the media
-            if (!_detectEnd)
-            {
-                RestartTimer();
-            }
-
-            // Try to seek
-            if (this._position > 0)
-            {
-                this.mediaElement.Position = TimeSpan.FromSeconds(this._position);
-
-                // Set the position to 0, so that if we loop around again we start from the beginning
-                this._position = 0;
-            }
-        }
-
-        /// <summary>
         /// Stop
         /// </summary>
         public override void Stopped()
@@ -310,6 +352,19 @@ namespace XiboClient.Rendering
 
             // We've stopped
             _stopped = true;
+
+            // Clear the watchman
+            if (_StartWatchman != null)
+            {
+                _StartWatchman.Stop();
+                _StartWatchman = null;
+            }
+
+            if (_StopWatchman != null)
+            {
+                _StopWatchman.Stop();
+                _StopWatchman = null;
+            }
 
             // Remove the event handlers
             this.mediaElement.MediaOpened -= MediaElement_MediaOpened;
