@@ -230,7 +230,7 @@ namespace XiboClient.Rendering
             _StartWatchman.Tick += (timerSender, args) =>
             {
                 // You only tick once
-                _StartWatchman.Stop();
+                _StartWatchman?.Stop();
 
                 // Check to see if open has been called.
                 if (!_openCalled && !IsFailedToPlay && !_stopped)

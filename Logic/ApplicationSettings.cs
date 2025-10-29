@@ -460,7 +460,10 @@ namespace XiboClient
         public string LogToDiskLocation { get; set; }
         public string CursorStartPosition { get; set; }
         public string ClientInformationKeyCode { get; set; }
+        public string XmrType { get; set; }
         public string XmrNetworkAddress { get; set; }
+        public string XmrWebSocketAddress { get; set; }
+        public string XmrCmsKey { get; set;  }
         public string AggregationLevel { get; set; }
         public string AuthServerWhitelist { get; set; }
         public string EdgeBrowserWhitelist { get; set; }

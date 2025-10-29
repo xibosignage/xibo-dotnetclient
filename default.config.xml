@@ -49,7 +49,10 @@
   <DownloadStartWindow></DownloadStartWindow>
   <DownloadEndWindow></DownloadEndWindow>
   <PreventSleep>1</PreventSleep>
+  <XmrType></XmrType>
   <XmrNetworkAddress></XmrNetworkAddress>
+  <XmrWebSocketAddress></XmrWebSocketAddress>
+  <XmrCmsKey></XmrCmsKey>
   <EmbeddedServerPort>9696</EmbeddedServerPort>
   <EmbeddedServerAllowWan>false</EmbeddedServerAllowWan>
   <ScreenShotSize>0</ScreenShotSize>
