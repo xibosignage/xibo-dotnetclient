@@ -95,7 +95,7 @@ namespace XiboClient.Action
                         if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && ApplicationSettings.Default.XmrNetworkAddress != "DISABLED")
                         {
                             // Decide whether we are connecting to a web socket based implementation, or a legacy ZMQ one.
-                            if (true || ApplicationSettings.Default.XmrType == "ws")
+                            if (ApplicationSettings.Default.XmrType == "ws")
                             {
                                 LoopForWs();
                             }
@@ -196,6 +196,10 @@ namespace XiboClient.Action
             }
         }
 
+        /// <summary>
+        /// Get WebSocket address
+        /// </summary>
+        /// <returns></returns>
         private string GetWsAddress()
         {
             if (string.IsNullOrEmpty(ApplicationSettings.Default.XmrWebSocketAddress))
