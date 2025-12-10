@@ -1,5 +1,5 @@
 Xibo - Digital Signage - https://xibosignage.com
-Copyright (C) 2023 Xibo Signage Ltd
+Copyright (C) 2025 Xibo Signage Ltd
 
 Xibo is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by

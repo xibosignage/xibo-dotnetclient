@@ -1,7 +1,7 @@
 ﻿/**
- * Copyright (C) 2023 Xibo Signage Ltd
+ * Copyright (C) 2024 Xibo Signage Ltd
  *
- * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Xibo - Digital Signage - https://xibosignage.com
  *
  * This file is part of Xibo.
  *
@@ -116,6 +116,14 @@ namespace XiboClient
             if (screenSaver)
             {
                 InitializeScreenSaver();
+            }
+            else
+            {
+                // Act like a Kiosk and aggressively ensure we are topmost
+                DispatcherTimer kioskTimer = new DispatcherTimer();
+                kioskTimer.Interval = TimeSpan.FromSeconds(5);
+                kioskTimer.Tick += KioskTimer_Tick;
+                kioskTimer.Start();
             }
 
             InitializeXibo();
@@ -368,6 +376,17 @@ namespace XiboClient
             settings.CefCommandLineArgs["autoplay-policy"] = "no-user-gesture-required";
             settings.CefCommandLineArgs["disable-pinch"] = "1";
             settings.CefCommandLineArgs["disable-usb-keyboard-detect"] = "1";
+            settings.CefCommandLineArgs["enable-media-stream"] = "1";
+
+            if (!string.IsNullOrEmpty(ApplicationSettings.Default.CefLocale))
+            {
+                settings.Locale = ApplicationSettings.Default.CefLocale;
+            }
+
+            if (!string.IsNullOrEmpty(ApplicationSettings.Default.CefAcceptLanguageList))
+            {
+                settings.AcceptLanguageList = ApplicationSettings.Default.CefAcceptLanguageList;
+            }
 
             CefSharp.Cef.Initialize(settings);
         }
@@ -1431,6 +1450,30 @@ namespace XiboClient
         }
 
         #endregion
+
+        private void Window_Activated(object sender, EventArgs e)
+        {
+            LogMessage.Audit("MainWindow", "Window_Activated", "Activated");
+
+#if !DEBUG
+            if (!_screenSaver)
+            {
+                this.Topmost = false;
+                this.Topmost = true;
+            }
+#endif
+        }
+
+        private void KioskTimer_Tick(object sender, EventArgs e)
+        {
+#if !DEBUG
+            if (!_screenSaver)
+            {
+                this.Topmost = false;
+                this.Topmost = true;
+            }
+#endif
+        }
     }
 
 

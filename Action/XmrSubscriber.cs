@@ -27,10 +27,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Windows.Markup;
 using XiboClient.Control;
 using XiboClient.Log;
 using XiboClient.Logic;
+using WebSocketSharp;
+using System.Security.Authentication;
 
 namespace XiboClient.Action
 {
@@ -65,6 +66,11 @@ namespace XiboClient.Action
         private HardwareKey _hardwareKey;
 
         /// <summary>
+        /// A WebSocket Client
+        /// </summary>
+        private WebSocket _webSocket;
+
+        /// <summary>
         /// The MQ Poller
         /// </summary>
         private NetMQPoller _poller;
@@ -88,46 +94,17 @@ namespace XiboClient.Action
                         // Check we have an address to connect to.
                         if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && ApplicationSettings.Default.XmrNetworkAddress != "DISABLED")
                         {
-                            // Get the Private Key
-                            AsymmetricCipherKeyPair rsaKey = _hardwareKey.getXmrKey();
-
-                            // Connect to XMR
-                            try
+                            // Decide whether we are connecting to a web socket based implementation, or a legacy ZMQ one.
+                            if (ApplicationSettings.Default.XmrType == "ws")
                             {
-                                // Create a Poller
-                                _poller = new NetMQPoller();
-
-                                // Create a Socket
-                                using (SubscriberSocket socket = new SubscriberSocket())
-                                {
-                                    // Options
-                                    socket.Options.ReconnectInterval = TimeSpan.FromSeconds(5);
-                                    socket.Options.Linger = TimeSpan.FromSeconds(0);
-
-                                    // Bind
-                                    socket.Connect(ApplicationSettings.Default.XmrNetworkAddress);
-                                    socket.Subscribe("H");
-                                    socket.Subscribe(_hardwareKey.Channel);
-
-                                    // Add Socket to Poller
-                                    _poller.Add(socket);
-
-                                    // Bind to the receive ready event
-                                    socket.ReceiveReady += _socket_ReceiveReady;
-
-                                    // Notify
-                                    ClientInfo.Instance.XmrSubscriberStatus = "Connected to " + ApplicationSettings.Default.XmrNetworkAddress + ". Waiting for messages.";
-
-                                    // Sit and wait, processing messages, indefinitely or until we are interrupted.
-                                    _poller.Run();
-                                }
+                                LoopForWs();
                             }
-                            finally
+                            else
                             {
-                                _poller.Dispose();
+                                LoopForZmq();
                             }
 
-                            Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Socket Disconnected, waiting to reconnect."), LogType.Info.ToString());
+                            Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Disconnected, waiting to reconnect."), LogType.Info.ToString());
 
                             // Update status
                             ClientInfo.Instance.XmrSubscriberStatus = "Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString();
@@ -155,16 +132,168 @@ namespace XiboClient.Action
             Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Subscriber Stopped"), LogType.Info.ToString());
         }
 
+        private void LoopForWs()
+        {
+            if (_webSocket != null && _webSocket.IsAlive)
+            {
+                return;
+            }
+
+            _webSocket = new WebSocket(GetWsAddress());
+            _webSocket.SslConfiguration.EnabledSslProtocols |= SslProtocols.Tls12;
+            _webSocket.OnOpen += _webSocket_OnOpen;
+            _webSocket.OnClose += _webSocket_OnClose;
+            _webSocket.OnMessage += _webSocket_OnMessage;
+            _webSocket.OnError += _webSocket_OnError;
+            _webSocket.Connect();
+        }
+
+        private void _webSocket_OnOpen(object sender, EventArgs e)
+        {
+            LogMessage.Audit("XmrSubscriber", "_webSocket_OnOpen", "Open");
+
+            // Send the init message.
+            JObject message = new JObject
+            {
+                { "type", "init" },
+                { "key", ApplicationSettings.Default.XmrCmsKey },
+                { "channel", _hardwareKey.Channel }
+            };
+
+            _webSocket.Send(message.ToString());
+        }
+
+        private void _webSocket_OnClose(object sender, CloseEventArgs e)
+        {
+            LogMessage.Audit("XmrSubscriber", "_webSocket_OnClose", e.Reason);
+        }
+
+        private void _webSocket_OnError(object sender, ErrorEventArgs e)
+        {
+            LogMessage.Error("XmrSubscriber", "_webSocket_OnError", e.Message);
+        }
+
+        private void _webSocket_OnMessage(object sender, MessageEventArgs e)
+        {
+            LogMessage.Audit("XmrSubscriber", "_webSocket_OnMessage", "Received");
+
+            if (e.IsText)
+            {
+                UpdateStatus();
+
+                if (e.Data.Equals("H"))
+                {
+                    LastHeartBeat = DateTime.Now;
+                }
+                else
+                {
+                    ProcessMessage(e.Data);
+                }
+            }
+            else
+            {
+                LogMessage.Audit("XmrSubscriber", "_webSocket_OnMessage", "Not text");
+            }
+        }
+
+        /// <summary>
+        /// Get WebSocket address
+        /// </summary>
+        /// <returns></returns>
+        private string GetWsAddress()
+        {
+            if (string.IsNullOrEmpty(ApplicationSettings.Default.XmrWebSocketAddress))
+            {
+                // Append /xmr to the CMS address
+                return ApplicationSettings.Default.ServerUri
+                    .Replace("https://", "wss://")
+                    .Replace("http://", "ws://")
+                        + "/xmr";
+            }
+            else
+            {
+                return ApplicationSettings.Default.XmrWebSocketAddress;
+            }
+        }
+
+        /// <summary>
+        /// Legacy loop for ZMQ
+        /// </summary>
+        private void LoopForZmq()
+        {
+            // Get the Private Key
+            AsymmetricCipherKeyPair rsaKey = _hardwareKey.getXmrKey();
+
+            // Connect to XMR
+            try
+            {
+                // Create a Poller
+                _poller = new NetMQPoller();
+
+                // Create a Socket
+                using (SubscriberSocket socket = new SubscriberSocket())
+                {
+                    // Options
+                    socket.Options.ReconnectInterval = TimeSpan.FromSeconds(5);
+                    socket.Options.Linger = TimeSpan.FromSeconds(0);
+
+                    // Bind
+                    socket.Connect(ApplicationSettings.Default.XmrNetworkAddress);
+                    socket.Subscribe("H");
+                    socket.Subscribe(_hardwareKey.Channel);
+
+                    // Add Socket to Poller
+                    _poller.Add(socket);
+
+                    // Bind to the receive ready event
+                    socket.ReceiveReady += ZmqSocketReceiveReady;
+
+                    // Notify
+                    ClientInfo.Instance.XmrSubscriberStatus = "Connected to " + ApplicationSettings.Default.XmrNetworkAddress + ". Waiting for messages.";
+
+                    // Sit and wait, processing messages, indefinitely or until we are interrupted.
+                    _poller.Run();
+                }
+            }
+            finally
+            {
+                _poller.Dispose();
+            }
+        }
+
         /// <summary>
         /// Receive event
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void _socket_ReceiveReady(object sender, NetMQSocketEventArgs e)
+        private void ZmqSocketReceiveReady(object sender, NetMQSocketEventArgs e)
         {
             try
             {
-                processMessage(e.Socket.ReceiveMultipartMessage(), _hardwareKey.getXmrKey());
+                // Receive the message
+                NetMQMessage message = e.Socket.ReceiveMultipartMessage();
+
+                // Update status
+                UpdateStatus();
+
+                // Deal with heart beat
+                if (message[0].ConvertToString() == "H")
+                {
+                    LastHeartBeat = DateTime.Now;
+                    return;
+                }
+
+                // Decrypt the message
+                try
+                {
+                    ProcessMessage(OpenSslInterop.decrypt(message[2].ConvertToString(), message[1].ConvertToString(), _hardwareKey.getXmrKey().Private));
+                }
+                catch (Exception decryptException)
+                {
+                    Trace.WriteLine(new LogMessage("XmrSubscriber - processMessage", "Unopenable Message: " + decryptException.Message), LogType.Error.ToString());
+                    Trace.WriteLine(new LogMessage("XmrSubscriber - processMessage", e.ToString()), LogType.Audit.ToString());
+                    return;
+                }
             }
             catch (NetMQException netMQException)
             {
@@ -180,9 +309,9 @@ namespace XiboClient.Action
         }
 
         /// <summary>
-        /// Wait for a Message
+        /// Updates the status
         /// </summary>
-        private void processMessage(NetMQMessage message, AsymmetricCipherKeyPair rsaKey)
+        private void UpdateStatus()
         {
             // Update status
             string statusMessage = "Connected (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + DateTime.Now.ToString();
@@ -190,27 +319,13 @@ namespace XiboClient.Action
             // Write this out to a log
             ClientInfo.Instance.XmrSubscriberStatus = statusMessage;
             Trace.WriteLine(new LogMessage("XmrSubscriber - Run", statusMessage), LogType.Audit.ToString());
+        }
 
-            // Deal with heart beat
-            if (message[0].ConvertToString() == "H")
-            {
-                LastHeartBeat = DateTime.Now;
-                return;
-            }
-
-            // Decrypt the message
-            string opened;
-            try
-            {
-                opened = OpenSslInterop.decrypt(message[2].ConvertToString(), message[1].ConvertToString(), rsaKey.Private);
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(new LogMessage("XmrSubscriber - processMessage", "Unopenable Message: " + e.Message), LogType.Error.ToString());
-                Trace.WriteLine(new LogMessage("XmrSubscriber - processMessage", e.ToString()), LogType.Audit.ToString());
-                return;
-            }
-
+        /// <summary>
+        /// Wait for a Message
+        /// </summary>
+        private void ProcessMessage(string opened)
+        {
             // Decode into a JSON string
             PlayerAction action = JsonConvert.DeserializeObject<PlayerAction>(opened);
 
@@ -295,9 +410,15 @@ namespace XiboClient.Action
         /// </summary>
         public void Restart()
         {
-            // Stop the poller
             try
             {
+                // Stop the socket
+                if (_webSocket != null)
+                {
+                    _webSocket.Close();
+                }
+
+                // Stop the poller
                 if (_poller != null)
                 {
                     _poller.Stop();
@@ -320,6 +441,12 @@ namespace XiboClient.Action
         {
             try
             {
+                // Stop the socket
+                if (_webSocket != null)
+                {
+                    _webSocket.Close();
+                }
+
                 // Stop the poller
                 if (_poller != null)
                 {

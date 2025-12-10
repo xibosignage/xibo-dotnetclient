@@ -15,6 +15,7 @@
         Background="Black"
         WindowStartupLocation="Manual"
         RenderOptions.EdgeMode="Aliased"
+        Activated="Window_Activated"
         >
     <Grid>
         <!--layout grid-->

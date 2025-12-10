@@ -65,6 +65,8 @@ namespace XiboClient.XmdsAgents
         /// <param name="enable"></param>
         public void Enable(bool enable)
         {
+            LogMessage.Audit("WeatherAgent", "Enable", enable ? "enabled" : "disabled");
+
             bool oldSet = _isWeatherRequired;
             _isWeatherRequired = enable;
 
@@ -116,7 +118,7 @@ namespace XiboClient.XmdsAgents
                                     {
                                         metric = item.Key,
                                         value = item.Value.ToString(),
-                                        ttl = ApplicationSettings.Default.CollectInterval
+                                        ttl = (ApplicationSettings.Default.CollectInterval + 60) // Add 60s to the collection interval so that we account for any delays getting the next update
                                     });
                                 }
 

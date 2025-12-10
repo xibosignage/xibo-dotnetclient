@@ -26,6 +26,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Web;
 
 namespace XiboClient.Log
 {
@@ -79,6 +80,11 @@ namespace XiboClient.Log
         /// Unsafe list
         /// </summary>
         public string UnsafeList;
+
+        /// <summary>
+        /// Criteria List
+        /// </summary>
+        public string CriteriaList;
 
         /// <summary>
         /// Control Count
@@ -181,6 +187,15 @@ namespace XiboClient.Log
         public void UpdateUnsafeList(string unsafeList)
         {
             UnsafeList = unsafeList;
+        }
+
+        /// <summary>
+        /// Criteria list
+        /// </summary>
+        /// <param name="criteriaList"></param>
+        public void UpdateCriteriaList(string criteriaList)
+        {
+            CriteriaList = criteriaList;
         }
 
         /// <summary>

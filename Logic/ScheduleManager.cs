@@ -212,9 +212,6 @@ namespace XiboClient
                         // Schedule Criteria, clear expired criteria
                         ClearExipiredCriteria();
 
-                        // Clear the weather flag to reset during parsing
-                        _isWeatherCriteriaActive = false;
-
                         // Work out if there is a new schedule available, if so - raise the event
                         // Events
                         // ------
@@ -444,6 +441,9 @@ namespace XiboClient
                 RefreshSchedule = false;
             }
 
+            // Clear the weather flag to reset during parsing
+            _isWeatherCriteriaActive = false;
+
             // Load the new Schedule
             List<ScheduleItem> parsedSchedule = ParseScheduleAndValidate();
 
@@ -650,6 +650,13 @@ namespace XiboClient
                     bool isAllCriteriaActive = true;
                     foreach (ScheduleCriteria criteria in layout.ScheduleCriteria)
                     {
+                        // Mark that we have weather criteria in the schedule.
+                        if (criteria.Type == "weather")
+                        {
+                            _isWeatherCriteriaActive = true;
+                        }
+
+                        // Do not include if the criteria is not currently active
                         if (!IsCriteriaActive(criteria))
                         {
                             LogMessage.Info("ScheduleManager", "ParseScheduleAndValidate", "Action not active due to Schedule Criteria: " + criteria.Metric);
@@ -1435,12 +1442,6 @@ namespace XiboClient
                 Value = childNode.InnerText
             };
 
-            // Mark that we have weather criteria in the schedule.
-            if (criteria.Type == "weather")
-            {
-                _isWeatherCriteriaActive = true;
-            }
-
             return criteria;
         }
 
@@ -1917,6 +1918,18 @@ namespace XiboClient
                     _criteria.Remove(criteria.Key);
                 }
             }
+
+            ClientInfo.Instance.CriteriaList = CriteriaAsString();
+        }
+
+        private string CriteriaAsString()
+        {
+            string list = "";
+            foreach (KeyValuePair<string, Criteria> criteria in _criteria.ToList())
+            {
+                list += criteria.Key + ": " + criteria.Value.Value + Environment.NewLine;
+            }
+            return list;
         }
 
         /// <summary>

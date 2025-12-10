@@ -73,6 +73,7 @@ namespace XiboClient.Control
                 jObject.Add("unsafeList", ClientInfo.Instance.UnsafeList);
                 jObject.Add("requiredFileList", ClientInfo.Instance.RequiredFilesList);
                 jObject.Add("dataList", ClientInfo.Instance.DataFilesList);
+                jObject.Add("criteria", ClientInfo.Instance.CriteriaList);
 #endif
 
                 writer.Write(jObject.ToString());
