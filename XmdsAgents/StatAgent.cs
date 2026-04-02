@@ -10,6 +10,8 @@ namespace XiboClient.XmdsAgents
     {
         public static object _locker = new object();
 
+        private static readonly Random _random = new Random();
+
         // Members to stop the thread
         private bool _forceStop = false;
         private ManualResetEvent _manualReset = new ManualResetEvent(false);
@@ -43,13 +45,14 @@ namespace XiboClient.XmdsAgents
             int retryAfterSeconds = 0;
             int countBacklogBatches = 0;
             int processing = 0;
+            HardwareKey key = new HardwareKey();
 
             while (!_forceStop)
             {
                 lock (_locker)
                 {
                     // What is out processing flag?
-                    processing = (new Random()).Next(1, 1000);
+                    processing = _random.Next(1, 1000);
 
                     try
                     {
@@ -68,8 +71,6 @@ namespace XiboClient.XmdsAgents
                         // Check to see if we have anything to send
                         if (StatManager.Instance.MarkRecordsForSend(processing, isBacklog))
                         {
-
-                            HardwareKey key = new HardwareKey();
 
                             Trace.WriteLine(new LogMessage("StatAgent", "Run: Thread Woken and Lock Obtained, Key: " + processing), LogType.Audit.ToString());
 

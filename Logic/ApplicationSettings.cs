@@ -42,6 +42,10 @@ namespace XiboClient
         private bool Loaded = false;
         private static readonly object Locker = new object();
 
+        private static readonly PropertyInfo[] _allProperties = typeof(ApplicationSettings).GetProperties();
+        private static readonly Dictionary<string, PropertyInfo> _propertyCache =
+            typeof(ApplicationSettings).GetProperties().ToDictionary(p => p.Name);
+
         /// <summary>
         /// Properties that should live in the Global Settings file
         /// </summary>
@@ -194,7 +198,7 @@ namespace XiboClient
                     writer.WriteStartDocument();
                     writer.WriteStartElement("ApplicationSettings");
 
-                    foreach (PropertyInfo property in lazy.Value.GetType().GetProperties())
+                    foreach (PropertyInfo property in _allProperties)
                     {
                         if (property.CanRead && _globalProperties.Contains(property.Name))
                         {
@@ -215,7 +219,7 @@ namespace XiboClient
                     writer.WriteStartDocument();
                     writer.WriteStartElement("PlayerSettings");
 
-                    foreach (PropertyInfo property in lazy.Value.GetType().GetProperties())
+                    foreach (PropertyInfo property in _allProperties)
                     {
                         try
                         {
@@ -265,14 +269,13 @@ namespace XiboClient
         {
             get
             {
-                PropertyInfo property = GetType().GetProperty(propertyName);
-                return property?.GetValue(this, null);
+                if (_propertyCache.TryGetValue(propertyName, out PropertyInfo property))
+                    return property.GetValue(this, null);
+                return null;
             }
             set
             {
-                PropertyInfo property = GetType().GetProperty(propertyName);
-
-                if (property != null && property.SetMethod != null)
+                if (_propertyCache.TryGetValue(propertyName, out PropertyInfo property) && property.SetMethod != null)
                 {
                     Debug.WriteLine("Set Property: " + propertyName, "ApplicationSettings");
                     property.SetValue(this, value, null);

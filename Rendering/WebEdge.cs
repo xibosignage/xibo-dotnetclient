@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2024 Xibo Signage Ltd
+ * Copyright (C) 2026 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -40,6 +40,7 @@ namespace XiboClient.Rendering
         private readonly WebView2 webView;
         private bool _webViewInitialised = false;
         private bool _webViewError = false;
+        private CoreWebView2DevToolsProtocolEventReceiver _devToolsReceiver;
 
         /// <summary>
         /// A flag to indicate whether we have loaded web content or not.
@@ -140,7 +141,8 @@ namespace XiboClient.Rendering
                 }*/
 
                 // Console logs
-                this.webView.CoreWebView2.GetDevToolsProtocolEventReceiver("Log.entryAdded").DevToolsProtocolEventReceived += OnConsoleMessage;
+                _devToolsReceiver = this.webView.CoreWebView2.GetDevToolsProtocolEventReceiver("Log.entryAdded");
+                _devToolsReceiver.DevToolsProtocolEventReceived += OnConsoleMessage;
                 await this.webView.CoreWebView2.CallDevToolsProtocolMethodAsync("Log.enable", "{}");
             }
             catch (Exception ex)
@@ -327,6 +329,11 @@ namespace XiboClient.Rendering
             if (this.webView.CoreWebView2 != null)
             {
                 this.webView.CoreWebView2.ProcessFailed -= WebView_ProcessFailed;
+            }
+            if (_devToolsReceiver != null)
+            {
+                _devToolsReceiver.DevToolsProtocolEventReceived -= OnConsoleMessage;
+                _devToolsReceiver = null;
             }
             this.webView.Dispose();
 

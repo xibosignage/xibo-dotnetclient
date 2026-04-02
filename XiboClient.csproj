@@ -340,7 +340,7 @@
       <Version>160.1000.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.3537.50</Version>
+      <Version>1.0.3856.49</Version>
     </PackageReference>
     <PackageReference Include="NetMQ">
       <Version>4.0.2.2</Version>

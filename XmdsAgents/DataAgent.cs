@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2023 Xibo Signage Ltd
+ * Copyright (C) 2026 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - https://xibosignage.com
  *
@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using Swan;
 using System.IO;
@@ -136,7 +137,7 @@ namespace XiboClient.XmdsAgents
 
                 lock (_locker)
                 {
-                    string dataFilesList = "";
+                    StringBuilder dataFilesBuilder = new StringBuilder();
                     try
                     {
                         foreach (WidgetData widget in _widgets.Values)
@@ -201,7 +202,7 @@ namespace XiboClient.XmdsAgents
                                 }
                             }
 
-                            dataFilesList += widget.WidgetId + ", " + widget.UpdatedDt + Environment.NewLine;
+                            dataFilesBuilder.Append(widget.WidgetId).Append(", ").Append(widget.UpdatedDt).AppendLine();
                         }
                     }
                     catch (WebException webEx) when (webEx.Response is HttpWebResponse httpWebResponse && (int)httpWebResponse.StatusCode == 429)
@@ -226,7 +227,7 @@ namespace XiboClient.XmdsAgents
                         LogMessage.Error("DataAgent", "Run", "Exception: " + ex.Message);
                     }
 
-                    ClientInfo.Instance.UpdateDataFiles(dataFilesList);
+                    ClientInfo.Instance.UpdateDataFiles(dataFilesBuilder.ToString());
                 }
 
                 if (retryAfterSeconds > 0)
