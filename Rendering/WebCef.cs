@@ -27,6 +27,9 @@ namespace XiboClient.Rendering
 {
     class WebCef : WebMedia
     {
+        private static CefSharp.RequestContext _sharedRequestContext;
+        private static readonly object _requestContextLock = new object();
+
         private ChromiumWebBrowser webView;
         private readonly string regionId;
         private readonly bool hasBackgroundColor = false;
@@ -50,16 +53,12 @@ namespace XiboClient.Rendering
         {
             Debug.WriteLine("Created CEF Renderer for " + this.regionId, "WebCef");
 
-            // Set a cache path
-            string cachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
-            var requestContextSettings = new CefSharp.RequestContextSettings { CachePath = cachePath };
-
             // Create the web view we will use
             webView = new ChromiumWebBrowser()
             {
                 Name = "region_" + this.regionId
             };
-            webView.RequestContext = new CefSharp.RequestContext(requestContextSettings);
+            webView.RequestContext = GetSharedRequestContext();
             webView.LifeSpanHandler = new CefsharpLifespanHandler();
 
             // Configure run time CEF settings?
@@ -216,6 +215,23 @@ namespace XiboClient.Rendering
             {
                 webView.Address = url;
             }
+        }
+
+        private static CefSharp.RequestContext GetSharedRequestContext()
+        {
+            if (_sharedRequestContext == null)
+            {
+                lock (_requestContextLock)
+                {
+                    if (_sharedRequestContext == null)
+                    {
+                        string cachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
+                        var settings = new CefSharp.RequestContextSettings { CachePath = cachePath };
+                        _sharedRequestContext = new CefSharp.RequestContext(settings);
+                    }
+                }
+            }
+            return _sharedRequestContext;
         }
 
         public override void Stopped()

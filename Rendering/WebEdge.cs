@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright (C) 2024 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
@@ -22,6 +22,7 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace XiboClient.Rendering
 {
@@ -33,10 +34,13 @@ namespace XiboClient.Rendering
     /// </summary>
     class WebEdge : WebMedia
     {
+        private static Task<CoreWebView2Environment> _sharedEnvironmentTask;
+        private static readonly object _environmentLock = new object();
+
         private readonly WebView2 webView;
         private bool _webViewInitialised = false;
         private bool _webViewError = false;
-        
+
         /// <summary>
         /// A flag to indicate whether we have loaded web content or not.
         /// </summary>
@@ -55,6 +59,7 @@ namespace XiboClient.Rendering
         {
             this.hasBackgroundColor = !string.IsNullOrEmpty(options.Dictionary.Get("backgroundColor", ""));
 
+            // Start with System.Windows.Visibility.Visible due to an issue loading content if started Hidden
             this.webView = new WebView2
             {
                 Width = Width,
@@ -71,57 +76,85 @@ namespace XiboClient.Rendering
             InitialiseWebView();
         }
 
+        private static Task<CoreWebView2Environment> GetOrCreateSharedEnvironmentAsync(
+            string userDataFolder, CoreWebView2EnvironmentOptions options)
+        {
+            if (_sharedEnvironmentTask == null)
+            {
+                lock (_environmentLock)
+                {
+                    if (_sharedEnvironmentTask == null)
+                    {
+                        _sharedEnvironmentTask = CoreWebView2Environment.CreateAsync(
+                            null, userDataFolder, options);
+                    }
+                }
+            }
+            return _sharedEnvironmentTask;
+        }
+
         private async void InitialiseWebView()
         {
-            // Environment
-            CoreWebView2EnvironmentOptions environmentOptions;
-
-            // Where should we store user data?
-            string userDataFolder = ApplicationSettings.Default.LibraryPath;
-
-            // Workaround for paths which do not have a trailing slash and are therefore not detected as absolute
-            // e.g. E:
-            if (!userDataFolder.EndsWith("\\") && !userDataFolder.EndsWith("/"))
+            try
             {
-                userDataFolder += "\\";
+                // Environment options
+                CoreWebView2EnvironmentOptions environmentOptions;
+
+                // Where should we store user data?
+                string userDataFolder = ApplicationSettings.Default.LibraryPath;
+
+                // Workaround for paths which do not have a trailing slash and are therefore not detected as absolute
+                // e.g. E:
+                if (!userDataFolder.EndsWith("\\") && !userDataFolder.EndsWith("/"))
+                {
+                    userDataFolder += "\\";
+                }
+
+                // NTLM/Auth Server White Lists.
+                if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
+                {
+                    string command = "--auth-server-whitelist " + ApplicationSettings.Default.AuthServerWhitelist;
+                    command += " --auth-negotiate-delegate-whitelist " + ApplicationSettings.Default.AuthServerWhitelist;
+
+                    environmentOptions = new CoreWebView2EnvironmentOptions(command);
+                }
+                else
+                {
+                    environmentOptions = new CoreWebView2EnvironmentOptions();
+                }
+
+                // Single Sign On?
+                if (ApplicationSettings.Default.AllowSingleSignOnUsingOSPrimaryAccount)
+                {
+                    environmentOptions.AllowSingleSignOnUsingOSPrimaryAccount = true;
+                }
+
+                await this.webView.EnsureCoreWebView2Async(
+                    await GetOrCreateSharedEnvironmentAsync(userDataFolder, environmentOptions));
+
+                // Proxy
+                // Not yet supported https://github.com/MicrosoftEdge/WebView2Feedback/issues/132
+                /*if (!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
+                {
+
+                }*/
+
+                // Console logs
+                this.webView.CoreWebView2.GetDevToolsProtocolEventReceiver("Log.entryAdded").DevToolsProtocolEventReceived += OnConsoleMessage;
+                await this.webView.CoreWebView2.CallDevToolsProtocolMethodAsync("Log.enable", "{}");
             }
-
-            // NTLM/Auth Server White Lists.
-            if (!string.IsNullOrEmpty(ApplicationSettings.Default.AuthServerWhitelist))
+            catch (Exception ex)
             {
-                string command = "--auth-server-whitelist " + ApplicationSettings.Default.AuthServerWhitelist;
-                command += " --auth-negotiate-delegate-whitelist " + ApplicationSettings.Default.AuthServerWhitelist;
+                Trace.WriteLine(new LogMessage("WebEdge", "InitialiseWebView: Exception. e = "
+                    + ex.Message), LogType.Error.ToString());
 
-                environmentOptions = new CoreWebView2EnvironmentOptions(command);
+                _webViewError = true;
+
+                if (_renderCalled)
+                {
+                    Navigate();
+                }
             }
-            else
-            {
-                environmentOptions = new CoreWebView2EnvironmentOptions();
-            }
-
-            // Single Sign On?
-            if (ApplicationSettings.Default.AllowSingleSignOnUsingOSPrimaryAccount)
-            {
-                environmentOptions.AllowSingleSignOnUsingOSPrimaryAccount = true;
-            }
-
-            await this.webView.EnsureCoreWebView2Async(
-                await CoreWebView2Environment.CreateAsync(
-                        null,
-                        userDataFolder,
-                        environmentOptions
-                    ));
-
-            // Proxy
-            // Not yet supported https://github.com/MicrosoftEdge/WebView2Feedback/issues/132
-            /*if (!string.IsNullOrEmpty(ApplicationSettings.Default.ProxyUser))
-            {
-                
-            }*/
-
-            // Console logs
-            this.webView.CoreWebView2.GetDevToolsProtocolEventReceiver("Log.entryAdded").DevToolsProtocolEventReceived += OnConsoleMessage;
-            await this.webView.CoreWebView2.CallDevToolsProtocolMethodAsync("Log.enable", "{}");
         }
 
         /// <summary>
@@ -133,6 +166,8 @@ namespace XiboClient.Rendering
             _position = position;
 
             this.MediaScene.Children.Add(this.webView);
+
+            HtmlUpdatedEvent += WebEdge_HtmlUpdatedEvent;
 
             if (_webViewInitialised || _webViewError)
             {
@@ -151,6 +186,7 @@ namespace XiboClient.Rendering
             {
                 webView.CoreWebView2.Settings.IsPinchZoomEnabled = isPinchToZoomEnabled;
                 webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+                webView.CoreWebView2.ProcessFailed += WebView_ProcessFailed;
                 _webViewInitialised = true;
             }
             else
@@ -168,15 +204,41 @@ namespace XiboClient.Rendering
         }
 
         /// <summary>
+        /// WebView2 renderer or GPU process crashed (shows sad-face page).
+        /// Expire the widget so the layout manager can reload it.
+        /// </summary>
+        private void WebView_ProcessFailed(object sender, CoreWebView2ProcessFailedEventArgs e)
+        {
+            Trace.WriteLine(new LogMessage("WebEdge",
+                "WebView_ProcessFailed: kind=" + e.ProcessFailedKind
+                + ", reason=" + e.Reason), LogType.Error.ToString());
+
+            // For a browser-process exit the shared environment is now defunct; reset it
+            // so the next WebEdge instance recreates it.
+            if (e.ProcessFailedKind == CoreWebView2ProcessFailedKind.BrowserProcessExited)
+            {
+                lock (_environmentLock)
+                {
+                    _sharedEnvironmentTask = null;
+                }
+            }
+
+            // Expire this widget so the layout manager reloads it.
+            Duration = 5;
+            base.RestartTimer();
+        }
+
+        /// <summary>
         /// Do navigation
         /// </summary>
         private void Navigate()
         {
             if (_webViewError)
             {
-                // This should exipre the media
+                // This should expire the media
                 Duration = 5;
                 base.RestartTimer();
+                return;
             }
 
             if (IsNativeOpen())
@@ -237,7 +299,7 @@ namespace XiboClient.Rendering
             }
             else
             {
-                // This should exipre the media
+                // This should expire the media
                 Duration = 5;
                 base.RestartTimer();
 
@@ -262,6 +324,10 @@ namespace XiboClient.Rendering
             HtmlUpdatedEvent -= WebEdge_HtmlUpdatedEvent;
             this.webView.NavigationCompleted -= WebView_NavigationCompleted;
             this.webView.CoreWebView2InitializationCompleted -= WebView_CoreWebView2InitializationCompleted;
+            if (this.webView.CoreWebView2 != null)
+            {
+                this.webView.CoreWebView2.ProcessFailed -= WebView_ProcessFailed;
+            }
             this.webView.Dispose();
 
             base.Stopped();
