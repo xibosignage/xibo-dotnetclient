@@ -13,6 +13,11 @@ namespace XiboClient.Logic
             // Immediately clear the request for a screenshot
             ApplicationSettings.Default.ScreenShotRequested = false;
 
+#if DEBUG
+            LogMessage.Error("ScreenShot", "TakeAndSend", "Not allowed in DEBUG for privacy and security");
+            return;
+#endif
+
             Rectangle bounds;
 
             // Override the default size if necessary
