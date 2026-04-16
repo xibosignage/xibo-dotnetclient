@@ -215,6 +215,20 @@ namespace XiboClient.Rendering
                 "WebView_ProcessFailed: kind=" + e.ProcessFailedKind
                 + ", reason=" + e.Reason), LogType.Error.ToString());
 
+            // Detach now so a subsequent failure on the defunct CoreWebView2 cannot
+            // re-enter this handler on a WebView2 that is about to be disposed.
+            try
+            {
+                if (this.webView != null && this.webView.CoreWebView2 != null)
+                {
+                    this.webView.CoreWebView2.ProcessFailed -= WebView_ProcessFailed;
+                }
+            }
+            catch
+            {
+                // CoreWebView2 may already be torn down; ignore.
+            }
+
             // For a browser-process exit the shared environment is now defunct; reset it
             // so the next WebEdge instance recreates it.
             if (e.ProcessFailedKind == CoreWebView2ProcessFailedKind.BrowserProcessExited)

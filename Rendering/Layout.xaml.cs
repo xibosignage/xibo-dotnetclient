@@ -258,7 +258,22 @@ namespace XiboClient.Rendering
                             GenerateBackgroundImage(layoutAttributes["background"].Value, backgroundWidth, backgroundHeight, bgFilePath);
                         }
 
-                        Background = new ImageBrush(new BitmapImage(new Uri(bgFilePath)));
+                        // Build the BitmapImage with OnLoad caching so the underlying file stream is
+                        // closed immediately, and freeze it so it is cross-thread safe and eligible for
+                        // faster GC. The default OnDemand cache option would otherwise keep the file
+                        // handle open for the lifetime of the image.
+                        BitmapImage backgroundBitmap = new BitmapImage();
+                        backgroundBitmap.BeginInit();
+                        backgroundBitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        backgroundBitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+                        backgroundBitmap.UriSource = new Uri(bgFilePath);
+                        backgroundBitmap.EndInit();
+                        backgroundBitmap.Freeze();
+
+                        ImageBrush backgroundBrush = new ImageBrush(backgroundBitmap);
+                        backgroundBrush.Freeze();
+
+                        Background = backgroundBrush;
                         options.backgroundImage = @"/backgrounds/" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value;
                     }
                     else

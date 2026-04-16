@@ -63,6 +63,11 @@ namespace XiboClient.Rendering
         /// </summary>
         private static object _packageHtmlLock = new object();
 
+        /// <summary>
+        /// The in-flight xmds SOAP client, if any. Held so we can dispose on Stopped and on completion.
+        /// </summary>
+        private xmds.xmds _refreshXmds;
+
         // Class Methods
 
         /// <summary>
@@ -276,11 +281,17 @@ namespace XiboClient.Rendering
         /// </summary>
         private void RefreshFromXmds()
         {
-            xmds.xmds xmds = new XiboClient.xmds.xmds();
-            xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=getResource";
-            xmds.GetResourceCompleted += new XiboClient.xmds.GetResourceCompletedEventHandler(xmds_GetResourceCompleted);
+            // If a prior refresh is still in flight, leave it alone - it will clean up on completion.
+            if (_refreshXmds != null)
+            {
+                return;
+            }
 
-            xmds.GetResourceAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, Options.layoutId, Options.regionId, Options.mediaid, ApplicationSettings.Default.Version);
+            _refreshXmds = new XiboClient.xmds.xmds();
+            _refreshXmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=getResource";
+            _refreshXmds.GetResourceCompleted += new XiboClient.xmds.GetResourceCompletedEventHandler(xmds_GetResourceCompleted);
+
+            _refreshXmds.GetResourceAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, Options.layoutId, Options.regionId, Options.mediaid, ApplicationSettings.Default.Version);
         }
 
         /// <summary>
@@ -290,6 +301,23 @@ namespace XiboClient.Rendering
         /// <param name="e"></param>
         private void xmds_GetResourceCompleted(object sender, XiboClient.xmds.GetResourceCompletedEventArgs e)
         {
+            // Detach and dispose the SOAP client as soon as we have the result.
+            // The SoapHttpClientProtocol holds a WebRequest + response, underlying streams and the event
+            // delegate keeps this WebMedia (and transitively its Region/Layout) alive until released.
+            try
+            {
+                if (_refreshXmds != null)
+                {
+                    _refreshXmds.GetResourceCompleted -= xmds_GetResourceCompleted;
+                    _refreshXmds.Dispose();
+                    _refreshXmds = null;
+                }
+            }
+            catch (Exception disposeEx)
+            {
+                Trace.WriteLine(new LogMessage("WebMedia", "xmds_GetResourceCompleted: failed to dispose xmds client. e = " + disposeEx.Message), LogType.Error.ToString());
+            }
+
             try
             {
                 // Success / Failure
@@ -463,6 +491,33 @@ namespace XiboClient.Rendering
             {
                 return string.Empty;
             }
+        }
+
+        /// <summary>
+        /// Final cleanup - release any in-flight xmds refresh client.
+        /// </summary>
+        public override void Stopped()
+        {
+            try
+            {
+                if (_refreshXmds != null)
+                {
+                    _refreshXmds.GetResourceCompleted -= xmds_GetResourceCompleted;
+                    try
+                    {
+                        _refreshXmds.Abort();
+                    }
+                    catch { /* ignore - abort on already-completed is safe to swallow */ }
+                    _refreshXmds.Dispose();
+                    _refreshXmds = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("WebMedia", "Stopped: failed to release xmds client. e = " + ex.Message), LogType.Error.ToString());
+            }
+
+            base.Stopped();
         }
 
         /// <summary>
