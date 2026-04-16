@@ -400,6 +400,9 @@ namespace XiboClient
                 // The task has already set our config, all we need to do is call Register
                 try
                 {
+                    // Save settings now so CMS URL and key are persisted before restart
+                    ApplicationSettings.Default.Save();
+
                     // Assert the XMDS url
                     this.xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
 
