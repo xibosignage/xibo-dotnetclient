@@ -1,13 +1,27 @@
 # Introduction
 This is the repository for the Xibo for Windows Digital Signage Player, compatible with the Xibo Content Management System, and intended to be used for Digital Signage.
 
-If you are looking for more information about Xibo please refer to [our website](https://xibo.org.uk).
+If you are looking for more information about Xibo please refer to [our website](https://xibosignage.com).
 
+## Features
 
+- Plays images, video, audio, web content, and PowerPoint presentations
+- Syncs schedules and media files from a Xibo CMS via XMDS (SOAP API v7)
+- Supports 24/7 kiosk operation and Windows screensaver mode
+- Three web rendering engines: CefSharp (Chromium), WebView2 (Edge), Internet Explorer
+- Proof-of-play statistics and engagement tracking
+- Real-time commands from the CMS via XMR (WebSocket / ZeroMQ)
+- Geofencing and criteria-based content scheduling
+- Embedded local HTTP control server (port 9696)
+
+## Requirements
+
+- Windows 10 or later
+- .NET Framework 4.7.2
 
 ## Licence
 
-Xibo - Digital Signage - http://xibo.org.uk - Copyright (C) 2006-2021 Xibo Signage Ltd
+Xibo - Digital Signage - https://xibosignage.com - Copyright (C) 2006-2026 Xibo Signage Ltd
 
 Xibo is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
