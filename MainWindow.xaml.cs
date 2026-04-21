@@ -426,10 +426,49 @@ namespace XiboClient
             {
                 LogMessage.Error("MainForm", "MainForm_Shown", "Cannot initialise the application, unexpected exception." + ex.Message);
                 LogMessage.Error("MainForm", "MainForm_Shown", ex.StackTrace.ToString());
-                
-                System.Windows.MessageBox.Show("Fatal Error initialising the application. " + ex.Message + ", " + ex.StackTrace.ToString(), "Fatal Error");
+
+                string cause = IsCodeIntegrityBlock(ex)
+                    ? "Windows is blocking the .NET XML serializer from generating a temporary assembly "
+                      + "(HRESULT 0xD0000003). This usually means Smart App Control, WDAC, or AppLocker "
+                      + "is restricting this device. Update the player, or ask an administrator to review "
+                      + "the code integrity policy."
+                    : ex.GetType().Name + ": " + ex.Message;
+
+                string logPointer = string.IsNullOrEmpty(ApplicationSettings.Default.LogToDiskLocation)
+                    ? "See the Windows Event Log for details."
+                    : "See the log for details: " + ApplicationSettings.Default.LogToDiskLocation;
+
+                System.Windows.MessageBox.Show(
+                    "The player app could not start.\n\n" + cause + "\n\n" + logPointer,
+                    "Fatal Error");
                 Close();
             }
+        }
+
+        /// <summary>
+        /// True when the exception chain indicates that Windows' code integrity
+        /// subsystem blocked the CLR from loading a dynamically generated
+        /// XmlSerializer temporary assembly (HRESULT 0xD0000003).
+        /// </summary>
+        private static bool IsCodeIntegrityBlock(Exception ex)
+        {
+            const int FileIntegrityHResult = unchecked((int)0xD0000003);
+
+            for (Exception e = ex; e != null; e = e.InnerException)
+            {
+                if (e is COMException com && com.HResult == FileIntegrityHResult)
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrEmpty(e.StackTrace)
+                    && e.StackTrace.IndexOf("System.CodeDom.Compiler.FileIntegrity", StringComparison.Ordinal) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
