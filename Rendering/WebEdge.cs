@@ -349,6 +349,24 @@ namespace XiboClient.Rendering
                 _devToolsReceiver.DevToolsProtocolEventReceived -= OnConsoleMessage;
                 _devToolsReceiver = null;
             }
+
+            // Mirror of the CEF fix for xibosignage/xibo-dotnetclient#348: pause any active
+            // media and navigate to about:blank so the WebView2 host tears down the media
+            // element through the document's own unload path before Dispose().
+            try
+            {
+                if (this.webView.CoreWebView2 != null)
+                {
+                    this.webView.CoreWebView2.ExecuteScriptAsync(
+                        "try{document.querySelectorAll('audio,video').forEach(function(m){m.pause();m.removeAttribute('src');m.load();});}catch(e){}");
+                    this.webView.CoreWebView2.Navigate("about:blank");
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("WebEdge", "Stopped: pre-dispose media cleanup failed. e = " + ex.Message), LogType.Audit.ToString());
+            }
+
             this.webView.Dispose();
 
             base.Stopped();
