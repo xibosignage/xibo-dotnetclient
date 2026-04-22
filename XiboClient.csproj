@@ -75,6 +75,7 @@
          crashes before it can register. See issue #377. -->
     <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
     <SGenUseProxyTypes>false</SGenUseProxyTypes>
+    <SGenPlatformTarget>$(PlatformTarget)</SGenPlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -385,6 +386,19 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- SGEN cannot load NuGet ref/netstandard2.0 metadata-only assemblies (they
+       have no IL and fail with "incorrect format"). Strip them from ReferencePath
+       after CoreCompile (so the compiler is unaffected) but before SGEN runs.
+       Must appear after Microsoft.CSharp.targets so BeforeTargets/AfterTargets
+       can resolve GenerateSerializationAssemblies and CoreCompile. -->
+  <Target Name="_FilterSGenRefAssemblies"
+          AfterTargets="CoreCompile"
+          BeforeTargets="GenerateSerializationAssemblies">
+    <ItemGroup>
+      <ReferencePath Remove="@(ReferencePath)"
+        Condition="$([System.String]::Copy('%(Identity)').Contains('\ref\'))" />
+    </ItemGroup>
+  </Target>
   <PropertyGroup>
     <PostBuildEvent>echo FD|xcopy /Y "$(TargetPath)" "$(TargetDir)Xibo.scr"
 echo FD|xcopy /Y "$(TargetDir)XiboClient.exe.config" "$(TargetDir)Xibo.scr.config"</PostBuildEvent>

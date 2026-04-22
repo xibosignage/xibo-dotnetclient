@@ -969,7 +969,7 @@ namespace XiboClient
         /// <param name="overlays"></param>
         void ScheduleOverlayChangeEvent(List<ScheduleItem> overlays)
         {
-            Dispatcher.BeginInvoke(new Action(() =>
+            Dispatcher.BeginInvoke(new System.Action(() =>
             {
                 _lastOverlays = overlays ?? new List<ScheduleItem>();
 
