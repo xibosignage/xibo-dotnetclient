@@ -28,6 +28,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Forms;
+using System.Xml;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -756,6 +757,17 @@ namespace XiboClient
                     }
 
                     throw new LayoutInvalidException("IO Exception");
+                }
+                catch (XmlException xmlEx)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "XmlException: " + xmlEx.ToString()), LogType.Error.ToString());
+
+                    if (!scheduleItem.IsAdspaceExchange)
+                    {
+                        CacheManager.Instance.Remove(scheduleItem.layoutFile);
+                    }
+
+                    throw new LayoutInvalidException("XLF Parse Error");
                 }
             }
         }
