@@ -215,6 +215,20 @@ namespace XiboClient.Rendering
                 "WebView_ProcessFailed: kind=" + e.ProcessFailedKind
                 + ", reason=" + e.Reason), LogType.Error.ToString());
 
+            // Detach now so a subsequent failure on the defunct CoreWebView2 cannot
+            // re-enter this handler on a WebView2 that is about to be disposed.
+            try
+            {
+                if (this.webView != null && this.webView.CoreWebView2 != null)
+                {
+                    this.webView.CoreWebView2.ProcessFailed -= WebView_ProcessFailed;
+                }
+            }
+            catch
+            {
+                // CoreWebView2 may already be torn down; ignore.
+            }
+
             // For a browser-process exit the shared environment is now defunct; reset it
             // so the next WebEdge instance recreates it.
             if (e.ProcessFailedKind == CoreWebView2ProcessFailedKind.BrowserProcessExited)
@@ -335,6 +349,24 @@ namespace XiboClient.Rendering
                 _devToolsReceiver.DevToolsProtocolEventReceived -= OnConsoleMessage;
                 _devToolsReceiver = null;
             }
+
+            // Mirror of the CEF fix for xibosignage/xibo-dotnetclient#348: pause any active
+            // media and navigate to about:blank so the WebView2 host tears down the media
+            // element through the document's own unload path before Dispose().
+            try
+            {
+                if (this.webView.CoreWebView2 != null)
+                {
+                    this.webView.CoreWebView2.ExecuteScriptAsync(
+                        "try{document.querySelectorAll('audio,video').forEach(function(m){m.pause();m.removeAttribute('src');m.load();});}catch(e){}");
+                    this.webView.CoreWebView2.Navigate("about:blank");
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("WebEdge", "Stopped: pre-dispose media cleanup failed. e = " + ex.Message), LogType.Audit.ToString());
+            }
+
             this.webView.Dispose();
 
             base.Stopped();

@@ -307,6 +307,50 @@ namespace XiboClient.Stats
         }
 
         /// <summary>
+        /// Sweep orphaned proofOfPlay entries whose start time is older than the provided threshold.
+        /// Ordinarily every entry added by LayoutStart/WidgetStart is removed by LayoutStop/WidgetStop
+        /// or WidgetClearFailed. An unclean teardown (interrupted transition, exception in Stopped())
+        /// can otherwise strand an entry here for the life of the process.
+        /// </summary>
+        /// <param name="maxAge">Entries with a From older than (now - maxAge) are removed.</param>
+        /// <returns>The number of entries removed.</returns>
+        public int SweepStaleProofOfPlay(TimeSpan maxAge)
+        {
+            int removed = 0;
+            DateTime cutoff = DateTime.Now - maxAge;
+
+            lock (_locker)
+            {
+                if (this.proofOfPlay.Count == 0)
+                {
+                    return 0;
+                }
+
+                List<string> stale = new List<string>();
+                foreach (KeyValuePair<string, Stat> entry in this.proofOfPlay)
+                {
+                    if (entry.Value.From < cutoff)
+                    {
+                        stale.Add(entry.Key);
+                    }
+                }
+
+                foreach (string key in stale)
+                {
+                    this.proofOfPlay.Remove(key);
+                    removed++;
+                }
+            }
+
+            if (removed > 0)
+            {
+                Trace.WriteLine(new LogMessage("StatManager", "SweepStaleProofOfPlay: dropped " + removed + " orphan entries older than " + maxAge), LogType.Info.ToString());
+            }
+
+            return removed;
+        }
+
+        /// <summary>
         /// If a widget fails to play we should not record a stat for it.
         /// </summary>
         /// <param name="uniqueId"></param>

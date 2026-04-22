@@ -240,6 +240,22 @@ namespace XiboClient.Rendering
             this.webView.Loaded -= WebView_Loaded;
             this.webView.LoadError -= WebView_LoadError;
             this.webView.FrameLoadEnd -= WebView_FrameLoadEnd;
+
+            // xibosignage/xibo-dotnetclient#348: a page with active <audio>/<video> can leave
+            // the CEF renderer subprocess alive (with audio still playing) after Dispose().
+            // Pause media via JS and navigate to about:blank so Chromium's own document
+            // unload path releases the media session before we close the browser.
+            try
+            {
+                this.webView.GetBrowser()?.MainFrame?.ExecuteJavaScriptAsync(
+                    "try{document.querySelectorAll('audio,video').forEach(function(m){m.pause();m.removeAttribute('src');m.load();});}catch(e){}");
+                this.webView.Address = "about:blank";
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("WebCef", "Stopped: pre-dispose media cleanup failed. e = " + ex.Message), LogType.Audit.ToString());
+            }
+
             this.webView.Dispose();
 
             base.Stopped();

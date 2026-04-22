@@ -161,6 +161,15 @@ namespace XiboClient.Rendering
         /// </summary>
         private Schedule schedule;
 
+        /// <summary>
+        /// Media that have been asked to Stop(true) (transition) but whose MediaStoppedEvent
+        /// has not yet fired. If the transition is interrupted (e.g. Layout.Remove is called
+        /// before the out-transition animation completes) the event never fires and the media
+        /// would otherwise leak along with its event subscriptions and (for Video) watchman timers.
+        /// Tracked here so Clear() can force-complete them.
+        /// </summary>
+        private readonly HashSet<Media> _stoppingMedia = new HashSet<Media>();
+
         public Region(Schedule schedule)
         {
             this.schedule = schedule;
@@ -779,6 +788,9 @@ namespace XiboClient.Rendering
                 // Media Stopped Event removes the media from the scene
                 media.MediaStoppedEvent += Media_MediaStoppedEvent;
 
+                // Track until the event fires so we can force-complete on Clear().
+                _stoppingMedia.Add(media);
+
                 // Tidy Up
                 media.DurationElapsedEvent -= Media_DurationElapsedEvent;
                 media.TriggerWebhookEvent -= Media_TriggerWebhookEvent;
@@ -798,6 +810,7 @@ namespace XiboClient.Rendering
                 Trace.WriteLine(new LogMessage("Region", "StopMedia: Unable to stop. Ex = " + ex.Message), LogType.Audit.ToString());
 
                 // Remove the controls
+                _stoppingMedia.Remove(media);
                 RegionScene.Children.Remove(media);
 
                 // We are stopped
@@ -814,6 +827,13 @@ namespace XiboClient.Rendering
             Trace.WriteLine(new LogMessage("Region", "Media_MediaStoppedEvent: " + media.Id), LogType.Audit.ToString());
 
             media.MediaStoppedEvent -= Media_MediaStoppedEvent;
+
+            // If Clear() already force-stopped this media, skip to avoid double Stopped().
+            if (!_stoppingMedia.Remove(media))
+            {
+                return;
+            }
+
             media.Stopped();
 
             // Remove the controls
@@ -961,11 +981,35 @@ namespace XiboClient.Rendering
         /// </summary>
         public void Clear()
         {
+            // Force-complete any media whose out-transition never fired MediaStoppedEvent.
+            // Without this, an interrupted animation leaves the media live in RegionScene.Children
+            // with its Video.MediaElement, watchman DispatcherTimers and event subscriptions intact.
+            if (_stoppingMedia.Count > 0)
+            {
+                Media[] pending = new Media[_stoppingMedia.Count];
+                _stoppingMedia.CopyTo(pending);
+                _stoppingMedia.Clear();
+
+                foreach (Media media in pending)
+                {
+                    try
+                    {
+                        media.MediaStoppedEvent -= Media_MediaStoppedEvent;
+                        media.Stopped();
+                        RegionScene.Children.Remove(media);
+                    }
+                    catch (Exception e)
+                    {
+                        Trace.WriteLine(new LogMessage("Region", "Clear: force-stop failed for media " + media.Id + ". e = " + e.Message), LogType.Error.ToString());
+                    }
+                }
+            }
+
             if (this.navigatedMedia != null)
             {
                 this.navigatedMedia = null;
             }
-            
+
             if (this.currentMedia != null)
             {
                 this.currentMedia = null;
