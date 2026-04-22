@@ -63,6 +63,16 @@ namespace XiboClient
         private Collection<Layout> _overlays;
 
         /// <summary>
+        /// Most recent overlay schedule received. Used to restore overlays after an interrupt ends.
+        /// </summary>
+        private List<ScheduleItem> _lastOverlays = new List<ScheduleItem>();
+
+        /// <summary>
+        /// True while an interrupt layout is playing and overlays have been suspended.
+        /// </summary>
+        private bool _overlaysSuspended = false;
+
+        /// <summary>
         /// The Currently Running Layout
         /// </summary>
         private Layout currentLayout;
@@ -676,6 +686,21 @@ namespace XiboClient
         {
             Debug.WriteLine("StartLayout: Starting...", "MainWindow");
 
+            // Suspend overlays while an interrupt is playing, and restore them
+            // as soon as a non-interrupt layout takes over again.
+            bool isInterrupt = layout.ScheduleItem != null && layout.ScheduleItem.IsInterrupt();
+
+            if (isInterrupt && !_overlaysSuspended)
+            {
+                SuspendOverlays();
+                _overlaysSuspended = true;
+            }
+            else if (!isInterrupt && _overlaysSuspended)
+            {
+                _overlaysSuspended = false;
+                ManageOverlays(_lastOverlays);
+            }
+
             // Bind to Layout finished
             layout.OnLayoutStopped += Layout_OnLayoutStopped;
 
@@ -944,7 +969,43 @@ namespace XiboClient
         /// <param name="overlays"></param>
         void ScheduleOverlayChangeEvent(List<ScheduleItem> overlays)
         {
-            Dispatcher.BeginInvoke(new Action<List<ScheduleItem>>(ManageOverlays), overlays);
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _lastOverlays = overlays ?? new List<ScheduleItem>();
+
+                // While an interrupt layout is playing overlays are suspended;
+                // the latest list will be applied once the interrupt ends.
+                if (!_overlaysSuspended)
+                {
+                    ManageOverlays(_lastOverlays);
+                }
+            }));
+        }
+
+        /// <summary>
+        /// Stop and remove all active overlay layouts. The buffered schedule in
+        /// _lastOverlays is preserved so overlays can be restored afterwards.
+        /// </summary>
+        private void SuspendOverlays()
+        {
+            for (int i = _overlays.Count - 1; i >= 0; i--)
+            {
+                Layout layout = _overlays[i];
+                _overlays.Remove(layout);
+
+                try
+                {
+                    layout.Stop();
+                    layout.Remove();
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm - SuspendOverlays",
+                        "Error stopping overlay: " + e.Message), LogType.Info.ToString());
+                }
+
+                this.OverlayScene.Children.Remove(layout);
+            }
         }
 
         /// <summary>
