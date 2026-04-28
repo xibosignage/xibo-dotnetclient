@@ -491,6 +491,40 @@ namespace XiboClient
             // We want to tidy up some stuff as this form closes.
             Trace.Listeners.Remove("ClientInfo TraceListener");
 
+            // Stop active layouts first so any CEF/WebView2 browsers run their
+            // own Stopped() teardown before we tear the schedule down. Otherwise
+            // child Chromium subprocesses outlive the process and KERNELBASE
+            // raises 0xc0020001 (RPC_S_CALL_FAILED) at Environment.Exit.
+            try
+            {
+                if (this.currentLayout != null)
+                {
+                    this.currentLayout.OnLayoutStopped -= Layout_OnLayoutStopped;
+                    this.currentLayout.Stop();
+                    this.currentLayout.Remove();
+                    this.Scene.Children.Remove(this.currentLayout);
+                    this.currentLayout = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("MainForm - FormClosing",
+                    "Error stopping current layout: " + ex.Message), LogType.Info.ToString());
+            }
+
+            try
+            {
+                if (_overlays != null && _overlays.Count > 0)
+                {
+                    SuspendOverlays();
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("MainForm - FormClosing",
+                    "Error stopping overlays: " + ex.Message), LogType.Info.ToString());
+            }
+
             try
             {
                 // Close the client info screen
