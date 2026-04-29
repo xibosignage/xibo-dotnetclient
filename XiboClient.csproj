@@ -402,7 +402,8 @@
     </ItemGroup>
   </Target>
   <PropertyGroup>
-    <PostBuildEvent>echo FD|xcopy /Y "$(TargetPath)" "$(TargetDir)Xibo.scr"
+    <PostBuildEvent>editbin /NOLOGO /LARGEADDRESSAWARE "$(TargetPath)"
+echo FD|xcopy /Y "$(TargetPath)" "$(TargetDir)Xibo.scr"
 echo FD|xcopy /Y "$(TargetDir)XiboClient.exe.config" "$(TargetDir)Xibo.scr.config"</PostBuildEvent>
   </PropertyGroup>
 </Project>
