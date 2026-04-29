@@ -402,7 +402,7 @@
     </ItemGroup>
   </Target>
   <PropertyGroup>
-    <PostBuildEvent>editbin /NOLOGO /LARGEADDRESSAWARE "$(TargetPath)"
+    <PostBuildEvent>powershell -NoProfile -ExecutionPolicy Bypass -Command "$p='$(TargetPath)'; $b=[IO.File]::ReadAllBytes($p); $o=[BitConverter]::ToInt32($b,0x3C)+22; $b[$o]=[byte]($b[$o] -bor 0x20); [IO.File]::WriteAllBytes($p,$b)"
 echo FD|xcopy /Y "$(TargetPath)" "$(TargetDir)Xibo.scr"
 echo FD|xcopy /Y "$(TargetDir)XiboClient.exe.config" "$(TargetDir)Xibo.scr.config"</PostBuildEvent>
   </PropertyGroup>
