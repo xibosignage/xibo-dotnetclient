@@ -393,12 +393,9 @@
        after CoreCompile (so the compiler is unaffected) but before SGEN runs.
        Must appear after Microsoft.CSharp.targets so BeforeTargets/AfterTargets
        can resolve GenerateSerializationAssemblies and CoreCompile. -->
-  <Target Name="_FilterSGenRefAssemblies"
-          AfterTargets="CoreCompile"
-          BeforeTargets="GenerateSerializationAssemblies">
+  <Target Name="_FilterSGenRefAssemblies" AfterTargets="CoreCompile" BeforeTargets="GenerateSerializationAssemblies">
     <ItemGroup>
-      <ReferencePath Remove="@(ReferencePath)"
-        Condition="$([System.String]::Copy('%(Identity)').Contains('\ref\'))" />
+      <ReferencePath Remove="@(ReferencePath)" Condition="$([System.String]::Copy('%(Identity)').Contains('\ref\'))" />
     </ItemGroup>
   </Target>
   <PropertyGroup>
