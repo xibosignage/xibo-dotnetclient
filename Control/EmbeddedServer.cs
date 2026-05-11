@@ -110,7 +110,7 @@ namespace XiboClient.Control
 
             var server = new WebServer(o => o
                     .WithUrlPrefix(url)
-                    .WithMode(HttpListenerMode.EmbedIO))
+                    .WithMode(HttpListenerMode.Microsoft))
                 .WithWebApi("/info", m => m
                     .WithController<InfoController>())
                 .WithWebApi("/trigger", m => m
