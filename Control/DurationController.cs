@@ -21,11 +21,254 @@
 using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
+using System.Reflection;
 using System;
 using System.Diagnostics;
 
 namespace XiboClient.Control
 {
+    internal static class RequestDataFallbackHelper
+    {
+        public static async System.Threading.Tasks.Task<T> GetRequestDataWithQueryFallbackAsync<T>(this IHttpContext context)
+            where T : class, new()
+        {
+            var data = await GetRequestDataFromBodyAsync<T>(context);
+
+            if (data != null)
+            {
+                return data;
+            }
+
+            data = TryGetRequestDataFromQuery<T>(context);
+
+            if (data != null)
+            {
+                TryPopulateIdFromReferrer(context, data);
+            }
+
+            return data;
+        }
+
+        public static async System.Threading.Tasks.Task<T> GetRequestDataWithQueryOrReferrerFallbackAsync<T>(this IHttpContext context)
+            where T : class, new()
+        {
+            var data = await GetRequestDataFromBodyAsync<T>(context);
+
+            if (data != null)
+            {
+                TryPopulateIdFromReferrer(context, data);
+                return data;
+            }
+
+            data = TryGetRequestDataFromQuery<T>(context);
+
+            if (data != null)
+            {
+                TryPopulateIdFromReferrer(context, data);
+                return data;
+            }
+
+            return TryGetRequestDataFromReferrer<T>(context);
+        }
+
+        private static async System.Threading.Tasks.Task<T> GetRequestDataFromBodyAsync<T>(IHttpContext context)
+            where T : class
+        {
+            try
+            {
+                return await context.GetRequestDataAsync<T>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static T TryGetRequestDataFromQuery<T>(IHttpContext context)
+            where T : class, new()
+        {
+            try
+            {
+                var fallback = new T();
+                var hasValue = false;
+
+                foreach (var property in typeof(T).GetProperties())
+                {
+                    if (!property.CanWrite)
+                    {
+                        continue;
+                    }
+
+                    var value = context.Request.QueryString[property.Name];
+
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        continue;
+                    }
+
+                    if (TrySetProperty(fallback, property, value))
+                    {
+                        hasValue = true;
+                    }
+                }
+
+                return hasValue ? fallback : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static void TryPopulateIdFromReferrer<T>(IHttpContext context, T target)
+            where T : class
+        {
+            try
+            {
+                var idProperty = typeof(T).GetProperty("id");
+
+                if (idProperty == null || !idProperty.CanWrite)
+                {
+                    return;
+                }
+
+                var currentValue = idProperty.GetValue(target, null);
+
+                if (HasMeaningfulValue(idProperty, currentValue))
+                {
+                    return;
+                }
+
+                var referrerId = TryGetWidgetIdFromReferrer(context);
+
+                if (string.IsNullOrEmpty(referrerId))
+                {
+                    return;
+                }
+
+                TrySetProperty(target, idProperty, referrerId);
+            }
+            catch
+            {
+                // Fallback must not prevent the original request from being handled.
+            }
+        }
+
+        private static T TryGetRequestDataFromReferrer<T>(IHttpContext context)
+            where T : class, new()
+        {
+            try
+            {
+                var idProperty = typeof(T).GetProperty("id");
+
+                if (idProperty == null || !idProperty.CanWrite)
+                {
+                    return null;
+                }
+
+                var idPart = TryGetWidgetIdFromReferrer(context);
+
+                if (string.IsNullOrEmpty(idPart))
+                {
+                    return null;
+                }
+
+                var fallback = new T();
+
+                return TrySetProperty(fallback, idProperty, idPart) ? fallback : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static bool HasMeaningfulValue(PropertyInfo property, object value)
+        {
+            if (value == null)
+            {
+                return false;
+            }
+
+            var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+
+            if (propertyType == typeof(string))
+            {
+                return !string.IsNullOrEmpty(value as string);
+            }
+
+            try
+            {
+                return !value.Equals(Activator.CreateInstance(propertyType));
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private static string TryGetWidgetIdFromReferrer(IHttpContext context)
+        {
+            try
+            {
+                var referrer = context.Request.UrlReferrer;
+
+                if (referrer == null)
+                {
+                    return null;
+                }
+
+                var fileName = System.IO.Path.GetFileName(referrer.AbsolutePath);
+
+                if (string.IsNullOrEmpty(fileName))
+                {
+                    return null;
+                }
+
+                if (!fileName.EndsWith(".htm", StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+
+                return fileName.Substring(0, fileName.Length - 4);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static bool TrySetProperty<T>(T target, PropertyInfo property, string value)
+        {
+            try
+            {
+                var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+
+                object convertedValue;
+
+                if (propertyType == typeof(string))
+                {
+                    convertedValue = value;
+                }
+                else if (propertyType.IsEnum)
+                {
+                    convertedValue = Enum.Parse(propertyType, value, true);
+                }
+                else
+                {
+                    convertedValue = Convert.ChangeType(value, propertyType);
+                }
+
+                property.SetValue(target, convertedValue, null);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+
     class DurationController : WebApiController
     {
         private EmbeddedServer _parent;
@@ -49,7 +292,14 @@ namespace XiboClient.Control
 
             try
             {
-                var data = await HttpContext.GetRequestDataAsync<DurationRequest>();
+                var data = await HttpContext.GetRequestDataWithQueryOrReferrerFallbackAsync<DurationRequest>();
+
+                if (data == null)
+                {
+                    Trace.WriteLine(new LogMessage("DurationController", "Expire: unable to parse request data"), LogType.Error.ToString());
+                    return;
+                }
+
                 _parent.Duration("expire", data.id, 0);
             }
             catch (Exception e)
@@ -73,7 +323,14 @@ namespace XiboClient.Control
 
             try
             {
-                var data = await HttpContext.GetRequestDataAsync<DurationRequest>();
+                var data = await HttpContext.GetRequestDataWithQueryFallbackAsync<DurationRequest>();
+
+                if (data == null)
+                {
+                    Trace.WriteLine(new LogMessage("DurationController", "Extend: unable to parse request data"), LogType.Error.ToString());
+                    return;
+                }
+
                 _parent.Duration("extend", data.id, data.duration);
             }
             catch (Exception e)
@@ -97,7 +354,14 @@ namespace XiboClient.Control
 
             try
             {
-                var data = await HttpContext.GetRequestDataAsync<DurationRequest>();
+                var data = await HttpContext.GetRequestDataWithQueryFallbackAsync<DurationRequest>();
+
+                if (data == null)
+                {
+                    Trace.WriteLine(new LogMessage("DurationController", "Set: unable to parse request data"), LogType.Error.ToString());
+                    return;
+                }
+
                 _parent.Duration("set", data.id, data.duration);
             }
             catch (Exception e)

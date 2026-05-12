@@ -43,9 +43,16 @@ namespace XiboClient.Control
         {
             try
             {
-                var data = await HttpContext.GetRequestDataAsync<TriggerRequest>();
+                var data = await HttpContext.GetRequestDataWithQueryFallbackAsync<TriggerRequest>();
+
+                if (data == null)
+                {
+                    Trace.WriteLine(new LogMessage("HookController", "Trigger: unable to parse request data"), LogType.Error.ToString());
+                    return;
+                }
+
                 parent.Trigger(data.trigger, data.id);
-            } 
+            }
             catch (Exception e)
             {
                 Trace.WriteLine(new LogMessage("HookController", "Trigger: unable to parse request: " + e.Message), LogType.Error.ToString());
