@@ -10,6 +10,8 @@ namespace XiboClient.XmdsAgents
     {
         public static object _locker = new object();
 
+        private static readonly Random _random = new Random();
+
         // Members to stop the thread
         private bool _forceStop = false;
         private ManualResetEvent _manualReset = new ManualResetEvent(false);
@@ -43,13 +45,15 @@ namespace XiboClient.XmdsAgents
             int retryAfterSeconds = 0;
             int countBacklogBatches = 0;
             int processing = 0;
+            HardwareKey key = new HardwareKey();
+            DateTime lastStaleSweep = DateTime.Now;
 
             while (!_forceStop)
             {
                 lock (_locker)
                 {
                     // What is out processing flag?
-                    processing = (new Random()).Next(1, 1000);
+                    processing = _random.Next(1, 1000);
 
                     try
                     {
@@ -68,8 +72,6 @@ namespace XiboClient.XmdsAgents
                         // Check to see if we have anything to send
                         if (StatManager.Instance.MarkRecordsForSend(processing, isBacklog))
                         {
-
-                            HardwareKey key = new HardwareKey();
 
                             Trace.WriteLine(new LogMessage("StatAgent", "Run: Thread Woken and Lock Obtained, Key: " + processing), LogType.Audit.ToString());
 
@@ -124,6 +126,20 @@ namespace XiboClient.XmdsAgents
 
                 // Process any impression urls
                 StatManager.Instance.DispatchQueuedImpressUrls(processing);
+
+                // Periodically sweep orphaned proof-of-play entries (once per hour).
+                if ((DateTime.Now - lastStaleSweep).TotalHours >= 1)
+                {
+                    try
+                    {
+                        StatManager.Instance.SweepStaleProofOfPlay(TimeSpan.FromHours(24));
+                    }
+                    catch (Exception sweepEx)
+                    {
+                        Trace.WriteLine(new LogMessage("StatAgent", "Run: Exception sweeping stale proof-of-play: " + sweepEx.Message), LogType.Error.ToString());
+                    }
+                    lastStaleSweep = DateTime.Now;
+                }
 
                 if (retryAfterSeconds > 0)
                 {

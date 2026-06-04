@@ -28,6 +28,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Forms;
+using System.Xml;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -60,6 +61,16 @@ namespace XiboClient
         /// Overlay Regions
         /// </summary>
         private Collection<Layout> _overlays;
+
+        /// <summary>
+        /// Most recent overlay schedule received. Used to restore overlays after an interrupt ends.
+        /// </summary>
+        private List<ScheduleItem> _lastOverlays = new List<ScheduleItem>();
+
+        /// <summary>
+        /// True while an interrupt layout is playing and overlays have been suspended.
+        /// </summary>
+        private bool _overlaysSuspended = false;
 
         /// <summary>
         /// The Currently Running Layout
@@ -425,10 +436,49 @@ namespace XiboClient
             {
                 LogMessage.Error("MainForm", "MainForm_Shown", "Cannot initialise the application, unexpected exception." + ex.Message);
                 LogMessage.Error("MainForm", "MainForm_Shown", ex.StackTrace.ToString());
-                
-                System.Windows.MessageBox.Show("Fatal Error initialising the application. " + ex.Message + ", " + ex.StackTrace.ToString(), "Fatal Error");
+
+                string cause = IsCodeIntegrityBlock(ex)
+                    ? "Windows is blocking the .NET XML serializer from generating a temporary assembly "
+                      + "(HRESULT 0xD0000003). This usually means Smart App Control, WDAC, or AppLocker "
+                      + "is restricting this device. Update the player, or ask an administrator to review "
+                      + "the code integrity policy."
+                    : ex.GetType().Name + ": " + ex.Message;
+
+                string logPointer = string.IsNullOrEmpty(ApplicationSettings.Default.LogToDiskLocation)
+                    ? "See the Windows Event Log for details."
+                    : "See the log for details: " + ApplicationSettings.Default.LogToDiskLocation;
+
+                System.Windows.MessageBox.Show(
+                    "The player app could not start.\n\n" + cause + "\n\n" + logPointer,
+                    "Fatal Error");
                 Close();
             }
+        }
+
+        /// <summary>
+        /// True when the exception chain indicates that Windows' code integrity
+        /// subsystem blocked the CLR from loading a dynamically generated
+        /// XmlSerializer temporary assembly (HRESULT 0xD0000003).
+        /// </summary>
+        private static bool IsCodeIntegrityBlock(Exception ex)
+        {
+            const int FileIntegrityHResult = unchecked((int)0xD0000003);
+
+            for (Exception e = ex; e != null; e = e.InnerException)
+            {
+                if (e is COMException com && com.HResult == FileIntegrityHResult)
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrEmpty(e.StackTrace)
+                    && e.StackTrace.IndexOf("System.CodeDom.Compiler.FileIntegrity", StringComparison.Ordinal) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -440,6 +490,40 @@ namespace XiboClient
         {
             // We want to tidy up some stuff as this form closes.
             Trace.Listeners.Remove("ClientInfo TraceListener");
+
+            // Stop active layouts first so any CEF/WebView2 browsers run their
+            // own Stopped() teardown before we tear the schedule down. Otherwise
+            // child Chromium subprocesses outlive the process and KERNELBASE
+            // raises 0xc0020001 (RPC_S_CALL_FAILED) at Environment.Exit.
+            try
+            {
+                if (this.currentLayout != null)
+                {
+                    this.currentLayout.OnLayoutStopped -= Layout_OnLayoutStopped;
+                    this.currentLayout.Stop();
+                    this.currentLayout.Remove();
+                    this.Scene.Children.Remove(this.currentLayout);
+                    this.currentLayout = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("MainForm - FormClosing",
+                    "Error stopping current layout: " + ex.Message), LogType.Info.ToString());
+            }
+
+            try
+            {
+                if (_overlays != null && _overlays.Count > 0)
+                {
+                    SuspendOverlays();
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("MainForm - FormClosing",
+                    "Error stopping overlays: " + ex.Message), LogType.Info.ToString());
+            }
 
             try
             {
@@ -636,6 +720,21 @@ namespace XiboClient
         {
             Debug.WriteLine("StartLayout: Starting...", "MainWindow");
 
+            // Suspend overlays while an interrupt is playing, and restore them
+            // as soon as a non-interrupt layout takes over again.
+            bool isInterrupt = layout.ScheduleItem != null && layout.ScheduleItem.IsInterrupt();
+
+            if (isInterrupt && !_overlaysSuspended)
+            {
+                SuspendOverlays();
+                _overlaysSuspended = true;
+            }
+            else if (!isInterrupt && _overlaysSuspended)
+            {
+                _overlaysSuspended = false;
+                ManageOverlays(_lastOverlays);
+            }
+
             // Bind to Layout finished
             layout.OnLayoutStopped += Layout_OnLayoutStopped;
 
@@ -756,6 +855,17 @@ namespace XiboClient
                     }
 
                     throw new LayoutInvalidException("IO Exception");
+                }
+                catch (XmlException xmlEx)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm - PrepareLayout", "XmlException: " + xmlEx.ToString()), LogType.Error.ToString());
+
+                    if (!scheduleItem.IsAdspaceExchange)
+                    {
+                        CacheManager.Instance.Remove(scheduleItem.layoutFile);
+                    }
+
+                    throw new LayoutInvalidException("XLF Parse Error");
                 }
             }
         }
@@ -893,7 +1003,43 @@ namespace XiboClient
         /// <param name="overlays"></param>
         void ScheduleOverlayChangeEvent(List<ScheduleItem> overlays)
         {
-            Dispatcher.BeginInvoke(new Action<List<ScheduleItem>>(ManageOverlays), overlays);
+            Dispatcher.BeginInvoke(new System.Action(() =>
+            {
+                _lastOverlays = overlays ?? new List<ScheduleItem>();
+
+                // While an interrupt layout is playing overlays are suspended;
+                // the latest list will be applied once the interrupt ends.
+                if (!_overlaysSuspended)
+                {
+                    ManageOverlays(_lastOverlays);
+                }
+            }));
+        }
+
+        /// <summary>
+        /// Stop and remove all active overlay layouts. The buffered schedule in
+        /// _lastOverlays is preserved so overlays can be restored afterwards.
+        /// </summary>
+        private void SuspendOverlays()
+        {
+            for (int i = _overlays.Count - 1; i >= 0; i--)
+            {
+                Layout layout = _overlays[i];
+                _overlays.Remove(layout);
+
+                try
+                {
+                    layout.Stop();
+                    layout.Remove();
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(new LogMessage("MainForm - SuspendOverlays",
+                        "Error stopping overlay: " + e.Message), LogType.Info.ToString());
+                }
+
+                this.OverlayScene.Children.Remove(layout);
+            }
         }
 
         /// <summary>

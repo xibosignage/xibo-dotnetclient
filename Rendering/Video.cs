@@ -156,18 +156,10 @@ namespace XiboClient.Rendering
             }
 
             // Set a watchman to make sure we actually end (normally this would be cancelled when we end naturally)
+            // Use a named handler so Stopped() can detach it - anonymous lambdas capture `this` and would
+            // otherwise keep this Video (and its MediaElement/WASAPI session) alive past teardown.
             _StopWatchman = new DispatcherTimer { Interval = watchmanTtl };
-            _StopWatchman.Tick += (timerSender, args) =>
-            {
-                // You only tick once
-                _StopWatchman.Stop();
-
-                LogMessage.Error("Video", "MediaElement_MediaOpened", this.Id + " video running past watchman end check.");
-
-                // Expire
-                SignalElapsedEvent();
-            };
-
+            _StopWatchman.Tick += StopWatchman_Tick;
             _StopWatchman.Start();
 
         }
@@ -226,25 +218,9 @@ namespace XiboClient.Rendering
             Trace.WriteLine(new LogMessage("Video", "MediaElement_Loaded: " + this.Id + " Control loaded, calling Play."), LogType.Audit.ToString());
 
             // We make a watchman to check that the video actually gets loaded.
+            // Named handler (rather than anonymous lambda) so Stopped() can detach it.
             _StartWatchman = new DispatcherTimer { Interval = TimeSpan.FromSeconds(ApplicationSettings.Default.VideoStartTimeout) };
-            _StartWatchman.Tick += (timerSender, args) =>
-            {
-                // You only tick once
-                _StartWatchman?.Stop();
-
-                // Check to see if open has been called.
-                if (!_openCalled && !IsFailedToPlay && !_stopped)
-                {
-                    LogMessage.Error("Video", "MediaElement_Loaded", this.Id + " Open not called after " + ApplicationSettings.Default.VideoStartTimeout + " seconds, marking unsafe and Expiring.");
-                    
-                    // Add this to a temporary blacklist so that we don't repeat it too quickly
-                    CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.VideoUnexpected, LayoutId, FileId, "Video Failed: Open not called after " + ApplicationSettings.Default.VideoStartTimeout + " seconds", 120);
-
-                    // Expire
-                    SignalElapsedEvent();
-                }
-            };
-
+            _StartWatchman.Tick += StartWatchman_Tick;
             _StartWatchman.Start();
 
             // Actually play the video
@@ -365,16 +341,20 @@ namespace XiboClient.Rendering
             // We've stopped
             _stopped = true;
 
-            // Clear the watchman
+            // Clear the watchman. We must detach Tick before nulling the field, otherwise
+            // the delegate keeps this Video (and transitively its MediaElement + audio
+            // session) alive for as long as the timer or dispatcher queue retains it.
             if (_StartWatchman != null)
             {
                 _StartWatchman.Stop();
+                _StartWatchman.Tick -= StartWatchman_Tick;
                 _StartWatchman = null;
             }
 
             if (_StopWatchman != null)
             {
                 _StopWatchman.Stop();
+                _StopWatchman.Tick -= StopWatchman_Tick;
                 _StopWatchman = null;
             }
 
@@ -405,6 +385,35 @@ namespace XiboClient.Rendering
                 // We're not end detect, so we pass the timer through
                 base.timer_Tick(sender, e);
             }
+        }
+
+        /// <summary>
+        /// Watchman for MediaOpened - fires if the media never opens within VideoStartTimeout seconds.
+        /// </summary>
+        private void StartWatchman_Tick(object sender, EventArgs e)
+        {
+            _StartWatchman?.Stop();
+
+            if (!_openCalled && !IsFailedToPlay && !_stopped)
+            {
+                LogMessage.Error("Video", "MediaElement_Loaded", this.Id + " Open not called after " + ApplicationSettings.Default.VideoStartTimeout + " seconds, marking unsafe and Expiring.");
+
+                CacheManager.Instance.AddUnsafeItem(UnsafeItemType.Media, UnsafeFaultCodes.VideoUnexpected, LayoutId, FileId, "Video Failed: Open not called after " + ApplicationSettings.Default.VideoStartTimeout + " seconds", 120);
+
+                SignalElapsedEvent();
+            }
+        }
+
+        /// <summary>
+        /// Watchman for end of playback - fires if the media runs past its expected finish.
+        /// </summary>
+        private void StopWatchman_Tick(object sender, EventArgs e)
+        {
+            _StopWatchman?.Stop();
+
+            LogMessage.Error("Video", "MediaElement_MediaOpened", this.Id + " video running past watchman end check.");
+
+            SignalElapsedEvent();
         }
 
         /// <summary>

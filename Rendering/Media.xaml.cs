@@ -311,15 +311,23 @@ namespace XiboClient.Rendering
             }
 
             // Initiate any tidy up that is needed in here.
-            // Dispose of the Timer
+            // Dispose of the Timer.
+            // The Tick delegate is a strong reference back to this Media instance via timer_Tick.
+            // If we null _timer without detaching the handler, the delegate (and transitively
+            // the Media, its Region and its Layout) stays pinned until the timer itself is collected,
+            // which under dispatcher pressure can take much longer than expected.
             if (_timer != null)
             {
                 if (_timer.IsEnabled)
                 {
                     _timer.Stop();
                 }
+                _timer.Tick -= timer_Tick;
                 _timer = null;
             }
+
+            // Drop any FlyAnimation transform so its animation clocks do not keep this control alive.
+            RenderTransform = null;
         }
 
         /// <summary>
@@ -372,6 +380,7 @@ namespace XiboClient.Rendering
                             To = 1,
                             Duration = TimeSpan.FromMilliseconds(duration)
                         };
+                        animation.Completed += Start_Animation_Completed;
                         BeginAnimation(OpacityProperty, animation);
                         break;
                 }

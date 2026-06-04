@@ -86,9 +86,11 @@ namespace XiboClient.Rendering
             BitmapImage bitmap = new BitmapImage();
             bitmap.BeginInit();
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
             bitmap.UriSource = new Uri(this.filePath);
             bitmap.DecodePixelWidth = (int)Width;
             bitmap.EndInit();
+            bitmap.Freeze();
 
             // Set the bitmap as the source of our image
             this.image = new System.Windows.Controls.Image()
@@ -119,6 +121,20 @@ namespace XiboClient.Rendering
 
             // Call base render to set off timers, etc.
             base.RenderMedia(position);
+        }
+
+        /// <summary>
+        /// Release the underlying bitmap so the decoded pixels and file handle can be collected.
+        /// </summary>
+        public override void Stopped()
+        {
+            if (this.image != null)
+            {
+                this.image.Source = null;
+                this.image = null;
+            }
+
+            base.Stopped();
         }
     }
 }

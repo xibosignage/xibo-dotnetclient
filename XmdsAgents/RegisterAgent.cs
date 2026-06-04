@@ -388,13 +388,24 @@ namespace XiboClient.XmdsAgents
                 // Finish
                 writer.WriteEndObject();
 
-                // Report
+                // Report.
+                // Previously we wrapped this in `using` while calling NotifyStatusAsync, which
+                // disposes the SOAP client synchronously as the block ends - while the async
+                // request is still in flight. Switch to the synchronous NotifyStatus so the
+                // client's lifetime fully contains the call, then dispose cleanly.
                 using (xmds.xmds xmds = new xmds.xmds())
                 {
                     xmds.Credentials = null;
                     xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=notifyStatus";
                     xmds.UseDefaultCredentials = false;
-                    xmds.NotifyStatusAsync(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
+                    try
+                    {
+                        xmds.NotifyStatus(ApplicationSettings.Default.ServerKey, ApplicationSettings.Default.HardwareKey, sb.ToString());
+                    }
+                    catch (Exception notifyEx)
+                    {
+                        Trace.WriteLine(new LogMessage("RegisterAgent", "NotifyStatus failed: " + notifyEx.Message), LogType.Info.ToString());
+                    }
                 }
             }
 

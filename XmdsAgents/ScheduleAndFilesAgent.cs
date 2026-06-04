@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2023 Xibo Signage Ltd
+ * Copyright (C) 2026 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -100,6 +100,11 @@ namespace XiboClient.XmdsAgents
         /// a CRC32 of our last schedule XML received
         /// </summary>
         private string _lastCheckSchedule;
+
+        /// <summary>
+        /// Throttle timestamp for required files UI updates during chunk downloads
+        /// </summary>
+        private DateTime _lastRequiredFilesUpdate = DateTime.MinValue;
 
         /// <summary>
         /// The data agent
@@ -378,7 +383,7 @@ namespace XiboClient.XmdsAgents
         /// <returns></returns>
         private string RequiredFilesString()
         {
-            string requiredFilesTextBox = "";
+            StringBuilder sb = new StringBuilder();
 
             foreach (RequiredFile requiredFile in _requiredFiles.RequiredFileList)
             {
@@ -397,10 +402,16 @@ namespace XiboClient.XmdsAgents
                     percentComplete = Math.Round((((double)requiredFile.ChunkOffset / (double)requiredFile.Size) * 100), 1).ToString();
                 }
 
-                requiredFilesTextBox += requiredFile.FileType + ": " + requiredFile.SaveAs + ". (" + percentComplete + "%)" + Environment.NewLine;
+                sb.Append(requiredFile.FileType)
+                    .Append(": ")
+                    .Append(requiredFile.SaveAs)
+                    .Append(". (")
+                    .Append(percentComplete)
+                    .Append("%)")
+                    .AppendLine();
             }
 
-            return requiredFilesTextBox;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -409,7 +420,11 @@ namespace XiboClient.XmdsAgents
         /// <param name="fileId"></param>
         void fileAgent_OnPartComplete(int fileId)
         {
-            ClientInfo.Instance.UpdateRequiredFiles(RequiredFilesString());
+            if ((DateTime.Now - _lastRequiredFilesUpdate).TotalMilliseconds >= 500)
+            {
+                _lastRequiredFilesUpdate = DateTime.Now;
+                ClientInfo.Instance.UpdateRequiredFiles(RequiredFilesString());
+            }
         }
 
         /// <summary>
@@ -562,25 +577,15 @@ namespace XiboClient.XmdsAgents
                     // Calculate and store a CRC32
                     _lastCheckSchedule = Crc32Algorithm.Compute(Encoding.UTF8.GetBytes(scheduleXml)).ToString();
 
-                    // Hash of the result
-                    // TODO: we can probably remove this at some point in the future, given later CMS instances output CRC32's to indicate whether
-                    // the schedule has changed.
-                    string md5NewSchedule = Hashes.MD5(scheduleXml);
-                    string md5CurrentSchedule = Hashes.MD5(ScheduleManager.GetScheduleXmlString(_scheduleLocation));
+                    Trace.WriteLine(new LogMessage("Schedule Agent - Run", "Received new schedule"));
 
-                    // Compare the results of the HASH
-                    if (md5CurrentSchedule != md5NewSchedule)
-                    {
-                        Trace.WriteLine(new LogMessage("Schedule Agent - Run", "Received new schedule"));
+                    ClientInfo.Instance.ScheduleStatus = "Running: New Schedule Received";
 
-                        ClientInfo.Instance.ScheduleStatus = "Running: New Schedule Received";
+                    // Write the result to the schedule xml location
+                    ScheduleManager.WriteScheduleXmlToDisk(_scheduleLocation, scheduleXml);
 
-                        // Write the result to the schedule xml location
-                        ScheduleManager.WriteScheduleXmlToDisk(_scheduleLocation, scheduleXml);
-
-                        // Indicate to the schedule manager that it should read the XML file
-                        _scheduleManager.RefreshSchedule = true;
-                    }
+                    // Indicate to the schedule manager that it should read the XML file
+                    _scheduleManager.RefreshSchedule = true;
 
                     ClientInfo.Instance.ScheduleStatus = "Sleeping";
                 }

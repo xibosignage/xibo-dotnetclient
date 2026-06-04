@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2024 Xibo Signage Ltd
+ * Copyright (C) 2026 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -42,6 +42,9 @@ namespace XiboClient.Rendering
     /// </summary>
     public partial class Layout : UserControl
     {
+        private static readonly Random _random = new Random();
+        private static readonly ImageCodecInfo[] _imageCodecs = ImageCodecInfo.GetImageEncoders();
+
         /// <summary>
         /// The Schedule Object
         /// </summary>
@@ -255,7 +258,22 @@ namespace XiboClient.Rendering
                             GenerateBackgroundImage(layoutAttributes["background"].Value, backgroundWidth, backgroundHeight, bgFilePath);
                         }
 
-                        Background = new ImageBrush(new BitmapImage(new Uri(bgFilePath)));
+                        // Build the BitmapImage with OnLoad caching so the underlying file stream is
+                        // closed immediately, and freeze it so it is cross-thread safe and eligible for
+                        // faster GC. The default OnDemand cache option would otherwise keep the file
+                        // handle open for the lifetime of the image.
+                        BitmapImage backgroundBitmap = new BitmapImage();
+                        backgroundBitmap.BeginInit();
+                        backgroundBitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        backgroundBitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+                        backgroundBitmap.UriSource = new Uri(bgFilePath);
+                        backgroundBitmap.EndInit();
+                        backgroundBitmap.Freeze();
+
+                        ImageBrush backgroundBrush = new ImageBrush(backgroundBitmap);
+                        backgroundBrush.Freeze();
+
+                        Background = backgroundBrush;
                         options.backgroundImage = @"/backgrounds/" + backgroundWidth + "x" + backgroundHeight + "_" + layoutAttributes["background"].Value;
                     }
                     else
@@ -436,7 +454,7 @@ namespace XiboClient.Rendering
                             if (isRandom)
                             {
                                 // If we are random, then just pick a random number between 0 and the number of widgets
-                                sequence = new Random().Next(0, (parsedMedia[groupKey].Count - 1));
+                                sequence = _random.Next(0, (parsedMedia[groupKey].Count - 1));
                             }
                             else
                             {
@@ -1023,13 +1041,10 @@ namespace XiboClient.Rendering
         /// </summary> 
         private static ImageCodecInfo GetEncoderInfo(string mimeType)
         {
-            // Get image codecs for all image formats 
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-
-            // Find the correct image codec 
-            for (int i = 0; i < codecs.Length; i++)
-                if (codecs[i].MimeType == mimeType)
-                    return codecs[i];
+            // Find the correct image codec
+            for (int i = 0; i < _imageCodecs.Length; i++)
+                if (_imageCodecs[i].MimeType == mimeType)
+                    return _imageCodecs[i];
             return null;
         }
 

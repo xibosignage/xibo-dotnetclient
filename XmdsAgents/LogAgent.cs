@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (C) 2020 Xibo Signage Ltd
+ * Copyright (C) 2026 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -60,6 +60,7 @@ namespace XiboClient.XmdsAgents
             Trace.WriteLine(new LogMessage("LogAgent - Run", "Thread Started"), LogType.Info.ToString());
             
             int retryAfterSeconds = 0;
+            HardwareKey key = new HardwareKey();
 
             while (!_forceStop)
             {
@@ -72,8 +73,6 @@ namespace XiboClient.XmdsAgents
 
                         // Reset backOff
                         retryAfterSeconds = 0;
-
-                        HardwareKey key = new HardwareKey();
 
                         Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Thread Woken and Lock Obtained"), LogType.Audit.ToString());
 
@@ -167,7 +166,7 @@ namespace XiboClient.XmdsAgents
                 StringBuilder builder = new StringBuilder();
                 builder.Append("<log>");
 
-                foreach (string entry in File.ReadAllLines(fileInfo.FullName))
+                foreach (string entry in File.ReadLines(fileInfo.FullName))
                     builder.Append(entry);
 
                 builder.Append("</log>");

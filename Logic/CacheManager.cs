@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2023 Xibo Signage Ltd
+ * Copyright (C) 2026 Xibo Signage Ltd
  *
  * Xibo - Digital Signage - http://www.xibo.org.uk
  *
@@ -48,7 +48,7 @@ namespace XiboClient
         /// <summary>
         /// Files under cache management
         /// </summary>
-        private Collection<Md5Resource> _files = new Collection<Md5Resource>();
+        private Dictionary<string, Md5Resource> _files = new Dictionary<string, Md5Resource>();
 
         /// <summary>
         /// Unsafe items
@@ -125,10 +125,10 @@ namespace XiboClient
         /// <returns></returns>
         public string GetMD5(string path)
         {
-            // Either we already have the MD5 stored
-            foreach (Md5Resource file in _files)
+            lock (_locker)
             {
-                if (file.path == path)
+                // Either we already have the MD5 stored
+                if (_files.TryGetValue(path, out Md5Resource file))
                 {
                     // Check to see if this file has been modified since the MD5 cache
                     DateTime lastWrite = File.GetLastWriteTime(ApplicationSettings.Default.LibraryPath + @"\" + path);
@@ -141,9 +141,14 @@ namespace XiboClient
                         string md5 = CalcMD5(path);
 
                         // Store the new cacheDate AND the new MD5
-                        Remove(path);
+                        _files.Remove(path);
 
-                        Add(path, md5);
+                        _files[path] = new Md5Resource
+                        {
+                            path = path,
+                            md5 = md5,
+                            cacheDate = DateTime.Now
+                        };
 
                         // Return the new MD5
                         return md5;
@@ -189,23 +194,17 @@ namespace XiboClient
         {
             lock (_locker)
             {
-                // First check to see if this path is in the collection
-                foreach (Md5Resource file in _files)
-                {
-                    if (file.path == path)
-                        return;
-                }
+                // Only add if not already present
+                if (_files.ContainsKey(path))
+                    return;
 
                 // We need to generate the MD5 and store it for later
-                Md5Resource md5Resource = new Md5Resource
+                _files[path] = new Md5Resource
                 {
                     path = path,
                     md5 = md5,
                     cacheDate = DateTime.Now
                 };
-
-                // Add the resource to the collection
-                _files.Add(md5Resource);
 
                 Debug.WriteLine(new LogMessage("Add", "Adding new MD5 to CacheManager"), LogType.Info.ToString());
             }
@@ -219,17 +218,9 @@ namespace XiboClient
         {
             lock (_locker)
             {
-                // Loop through all MD5s and remove any that match the path
-                for (int i = 0; i < _files.Count; i++)
+                if (_files.Remove(path))
                 {
-                    Md5Resource file = _files[i];
-
-                    if (file.path == path)
-                    {
-                        _files.Remove(file);
-
-                        System.Diagnostics.Debug.WriteLine(new LogMessage("Remove", "Removing stale MD5 from the CacheManager"), LogType.Info.ToString());
-                    }
+                    System.Diagnostics.Debug.WriteLine(new LogMessage("Remove", "Removing stale MD5 from the CacheManager"), LogType.Info.ToString());
                 }
             }
         }
@@ -269,40 +260,37 @@ namespace XiboClient
             lock (_locker)
             {
                 // Currently a path is valid if it is in the cache
-                if (String.IsNullOrEmpty(path))
+                if (string.IsNullOrEmpty(path))
                     return false;
 
                 // Search for this path
-                foreach (Md5Resource file in _files)
+                if (_files.TryGetValue(path, out Md5Resource file))
                 {
-                    if (file.path == path)
+                    // If we cached it over 2 minutes ago, then check the GetLastWriteTime
+                    if (file.cacheDate > DateTime.Now.AddMinutes(-2))
+                        return File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + path);
+
+                    try
                     {
-                        // If we cached it over 2 minutes ago, then check the GetLastWriteTime
-                        if (file.cacheDate > DateTime.Now.AddMinutes(-2))
-                            return File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + path);
-
-                        try
-                        {
-                            // Check to see if this file has been deleted since the Cache Manager registered it
-                            if (!File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + path))
-                                return false;
-
-                            // Check to see if this file has been modified since the MD5 cache
-                            // If it has then we assume invalid, otherwise its valid
-                            DateTime lastWrite = File.GetLastWriteTime(ApplicationSettings.Default.LibraryPath + @"\" + path);
-
-                            if (lastWrite <= file.cacheDate)
-                                return true;
-                            else
-                                return false;
-                        }
-                        catch (Exception ex)
-                        {
-                            Trace.WriteLine(new LogMessage("IsValid", "Unable to determine if the file is valid. Assuming not valid: " + ex.Message), LogType.Error.ToString());
-
-                            // Assume invalid
+                        // Check to see if this file has been deleted since the Cache Manager registered it
+                        if (!File.Exists(ApplicationSettings.Default.LibraryPath + @"\" + path))
                             return false;
-                        }
+
+                        // Check to see if this file has been modified since the MD5 cache
+                        // If it has then we assume invalid, otherwise its valid
+                        DateTime lastWrite = File.GetLastWriteTime(ApplicationSettings.Default.LibraryPath + @"\" + path);
+
+                        if (lastWrite <= file.cacheDate)
+                            return true;
+                        else
+                            return false;
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine(new LogMessage("IsValid", "Unable to determine if the file is valid. Assuming not valid: " + ex.Message), LogType.Error.ToString());
+
+                        // Assume invalid
+                        return false;
                     }
                 }
 
@@ -577,12 +565,15 @@ namespace XiboClient
         /// <returns></returns>
         private string UnsafeListAsString()
         {
-            string list = "";
+            var sb = new StringBuilder();
             foreach (UnsafeItem item in _unsafeItems.ToList())
             {
-                list += item.Type.ToString() + ": " + item.Id + ", [" + (int)item.Code + "] " + item.Reason + ", ttl: " + item.Ttl + Environment.NewLine;
+                sb.Append(item.Type.ToString()).Append(": ").Append(item.Id)
+                  .Append(", [").Append((int)item.Code).Append("] ")
+                  .Append(item.Reason).Append(", ttl: ").Append(item.Ttl)
+                  .AppendLine();
             }
-            return list;
+            return sb.ToString();
         }
 
         /// <summary>

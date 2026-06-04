@@ -111,6 +111,9 @@ namespace XiboClient
         // Local Web Server
         private EmbeddedServer _server;
         Thread _serverThread;
+
+        // Reusable XMDS wake-up timer (replaces per-call DispatcherTimer allocation).
+        private DispatcherTimer _wakeUpXmdsTimer;
         #endregion
 
         /// <summary>
@@ -473,18 +476,27 @@ namespace XiboClient
             _triggerScheduleOnRegisterComplete = true;
             _registerAgent.WakeUp();
 
-            // Wake up other calls in a little while (give the rest time to complete so we send the latest info)
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
-            timer.Tick += (timerSender, args) =>
+            // Wake up other calls in a little while (give the rest time to complete so we send the latest info).
+            // Reuse a single timer rather than allocating a fresh DispatcherTimer (with a closure capturing `this`)
+            // on every call.
+            if (_wakeUpXmdsTimer == null)
             {
-                // You only tick once
-                timer.Stop();
+                _wakeUpXmdsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+                _wakeUpXmdsTimer.Tick += _wakeUpXmdsTimer_Tick;
+            }
+            else
+            {
+                _wakeUpXmdsTimer.Stop();
+            }
 
-                // Wake
-                _logAgent.WakeUp();
-                _faultsAgent.WakeUp();
-            };
-            timer.Start();
+            _wakeUpXmdsTimer.Start();
+        }
+
+        private void _wakeUpXmdsTimer_Tick(object sender, EventArgs e)
+        {
+            _wakeUpXmdsTimer.Stop();
+            _logAgent.WakeUp();
+            _faultsAgent.WakeUp();
         }
 
         /// <summary>
@@ -718,13 +730,21 @@ namespace XiboClient
             _stopCalled = true;
 
             // Stop the register agent
+            // Mirror every subscription we made in the constructor so no delegates remain
+            // pinning the Schedule (and its child agents) after shutdown.
             _registerAgent.OnRegisterComplete -= _registerAgent_OnRegisterComplete;
+            _registerAgent.OnXmrReconfigure -= _registerAgent_OnXmrReconfigure;
             _registerAgent.Stop();
 
             // Stop the requiredfiles agent
+            _scheduleAndRfAgent.OnFullyProvisioned -= _requiredFilesAgent_OnFullyProvisioned;
+            _scheduleAndRfAgent.OnComplete -= LayoutFileModified;
             _scheduleAndRfAgent.Stop();
 
             // Stop the Schedule Manager Thread
+            _scheduleManager.OnNewScheduleAvailable -= _scheduleManager_OnNewScheduleAvailable;
+            _scheduleManager.OnRefreshSchedule -= _scheduleManager_OnRefreshSchedule;
+            _scheduleManager.OnScheduleManagerCheckComplete -= _scheduleManager_OnScheduleManagerCheckComplete;
             _scheduleManager.Stop();
 
             // Stop the LibraryAgent Thread
@@ -737,6 +757,7 @@ namespace XiboClient
             _faultsAgent.Stop();
 
             // Stop the weather agent
+            _weatherAgent.OnWeather -= _weatherAgent_OnWeather;
             _weatherAgent.Stop();
 
             // Stop the data agent
@@ -746,6 +767,7 @@ namespace XiboClient
             StatManager.Instance.Stop();
 
             // Stop the subsriber thread
+            _xmrSubscriber.OnAction -= _xmrSubscriber_OnAction;
             _xmrSubscriber.Stop();
 
             // Clean up any NetMQ sockets, etc (false means don't block).
@@ -755,7 +777,16 @@ namespace XiboClient
             _server.Stop();
             _server.OnTriggerReceived -= EmbeddedServerOnTriggerReceived;
             _server.OnDurationReceived -= EmbeddedServerOnDurationReceived;
+            _server.OnCriteriaReceived -= _server_OnCriteriaReceived;
             _server.OnServerClosed -= _server_OnServerClosed;
+
+            // Tear down the XMDS wake-up timer if it is still pending.
+            if (_wakeUpXmdsTimer != null)
+            {
+                _wakeUpXmdsTimer.Stop();
+                _wakeUpXmdsTimer.Tick -= _wakeUpXmdsTimer_Tick;
+                _wakeUpXmdsTimer = null;
+            }
         }
 
         /// <summary>

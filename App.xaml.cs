@@ -83,12 +83,37 @@ namespace XiboClient
             {
                 HandleUnhandledException(ex, "Startup", shouldQuit);
             }
+            finally
+            {
+                ShutdownCef();
+            }
 
             // Always flush at the end
             Trace.WriteLine(new LogMessage("Main", "Application Finished"), LogType.Info.ToString());
             Trace.Flush();
 
             Environment.Exit(0); // end application here as all windows are shown as dialog (sync).
+        }
+
+        /// <summary>
+        /// Drain CefSharp/Chromium subprocesses before forcing the process to exit.
+        /// Without this, Environment.Exit(0) tears the process down while the child
+        /// subprocesses still own their IPC/RPC channels and KERNELBASE raises
+        /// 0xc0020001 (RPC_S_CALL_FAILED) on the way out.
+        /// </summary>
+        private static void ShutdownCef()
+        {
+            try
+            {
+                if (CefSharp.Cef.IsInitialized == true)
+                {
+                    CefSharp.Cef.Shutdown();
+                }
+            }
+            catch (Exception cefEx)
+            {
+                Trace.WriteLine(new LogMessage("Main", "Cef.Shutdown failed: " + cefEx.Message), LogType.Error.ToString());
+            }
         }
 
         /// <summary>
@@ -186,6 +211,10 @@ namespace XiboClient
                         MessageBox.Show("Unhandled Exception: " + ex.Message + ". Stack Trace: " + e.StackTrace, "Fatal Error");
                     }
                 }
+
+                // Drain CEF before we hard-exit so Chromium subprocesses don't
+                // outlive us and trigger KERNELBASE 0xc0020001 in cleanup.
+                ShutdownCef();
 
                 // Exit the application and allow it to be restarted by the Watchdog.
                 Environment.Exit(0);

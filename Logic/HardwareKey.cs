@@ -1,6 +1,6 @@
 /*
  * Xibo - Digital Signage - http://www.xibo.org.uk
- * Copyright (C) 2019 Xibo Signage Ltd
+ * Copyright (C) 2026 Xibo Signage Ltd
  *
  * This file is part of Xibo.
  *
@@ -32,6 +32,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Windows;
 
 namespace XiboClient
 {
@@ -232,7 +233,7 @@ namespace XiboClient
                         File.Delete(ApplicationSettings.Default.LibraryPath + "\\id_rsa");
 
                         // Generate a new key
-                        Trace.WriteLine(new LogMessage("HardwareKey - getXmrKey", "Unable to read existing key."), LogType.Info.ToString());
+                        Trace.WriteLine(new LogMessage("HardwareKey - getXmrKey", "Unable to read existing key. It has been deleted and regenerated."), LogType.Error.ToString());
                         Trace.WriteLine(new LogMessage("HardwareKey - getXmrKey", "Unable to read existing key. e=" + e.Message), LogType.Audit.ToString());
                     }
                 }

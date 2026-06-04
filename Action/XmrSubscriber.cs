@@ -102,12 +102,12 @@ namespace XiboClient.Action
                             else
                             {
                                 LoopForZmq();
+
+                                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Disconnected, waiting to reconnect."), LogType.Info.ToString());
+
+                                // Update status
+                                ClientInfo.Instance.XmrSubscriberStatus = "Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString();
                             }
-
-                            Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Disconnected, waiting to reconnect."), LogType.Info.ToString());
-
-                            // Update status
-                            ClientInfo.Instance.XmrSubscriberStatus = "Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString();
                         }
                         else
                         {
@@ -139,6 +139,12 @@ namespace XiboClient.Action
                 return;
             }
 
+            // If there is an old, dead socket we must fully release it before replacing.
+            // Previously we overwrote _webSocket without detaching handlers or disposing,
+            // which leaked a WebSocket (and 4 delegate references back to this subscriber)
+            // every 60 seconds whenever XMR was unavailable.
+            ReleaseWebSocket();
+
             _webSocket = new WebSocket(GetWsAddress());
             _webSocket.SslConfiguration.EnabledSslProtocols |= SslProtocols.Tls12;
             _webSocket.OnOpen += _webSocket_OnOpen;
@@ -148,9 +154,54 @@ namespace XiboClient.Action
             _webSocket.Connect();
         }
 
+        /// <summary>
+        /// Detach handlers and dispose the current WebSocket.
+        /// </summary>
+        private void ReleaseWebSocket()
+        {
+            if (_webSocket == null)
+            {
+                return;
+            }
+
+            try
+            {
+                _webSocket.OnOpen -= _webSocket_OnOpen;
+                _webSocket.OnClose -= _webSocket_OnClose;
+                _webSocket.OnMessage -= _webSocket_OnMessage;
+                _webSocket.OnError -= _webSocket_OnError;
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("XmrSubscriber - ReleaseWebSocket", "Detach handlers failed: " + e.Message), LogType.Audit.ToString());
+            }
+
+            try
+            {
+                _webSocket.Close();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("XmrSubscriber - ReleaseWebSocket", "Close failed: " + e.Message), LogType.Audit.ToString());
+            }
+
+            try
+            {
+                ((IDisposable)_webSocket).Dispose();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(new LogMessage("XmrSubscriber - ReleaseWebSocket", "Dispose failed: " + e.Message), LogType.Audit.ToString());
+            }
+
+            _webSocket = null;
+        }
+
         private void _webSocket_OnOpen(object sender, EventArgs e)
         {
             LogMessage.Audit("XmrSubscriber", "_webSocket_OnOpen", "Open");
+
+            ClientInfo.Instance.XmrSubscriberStatus = "XMR web socket open, sending handshake";
 
             // Send the init message.
             JObject message = new JObject
@@ -165,7 +216,15 @@ namespace XiboClient.Action
 
         private void _webSocket_OnClose(object sender, CloseEventArgs e)
         {
-            LogMessage.Audit("XmrSubscriber", "_webSocket_OnClose", e.Reason);
+            string reason = e.Reason;
+            if (reason.IsNullOrEmpty())
+            {
+                reason = e.Code.ToString();
+            }
+
+            LogMessage.Audit("XmrSubscriber", "_webSocket_OnClose", reason);
+
+            ClientInfo.Instance.XmrSubscriberStatus = "Disconnected, waiting to reconnect, reason: " + reason + " last activity: " + LastHeartBeat.ToString();
         }
 
         private void _webSocket_OnError(object sender, ErrorEventArgs e)
@@ -314,7 +373,9 @@ namespace XiboClient.Action
         private void UpdateStatus()
         {
             // Update status
-            string statusMessage = "Connected (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + DateTime.Now.ToString();
+            string statusMessage = "Connected (" 
+                + (ApplicationSettings.Default.XmrType == "ws" ? GetWsAddress() : ApplicationSettings.Default.XmrNetworkAddress) 
+                + "), last activity: " + DateTime.Now.ToString();
 
             // Write this out to a log
             ClientInfo.Instance.XmrSubscriberStatus = statusMessage;
@@ -412,11 +473,8 @@ namespace XiboClient.Action
         {
             try
             {
-                // Stop the socket
-                if (_webSocket != null)
-                {
-                    _webSocket.Close();
-                }
+                // Fully release the socket so a fresh one will be created on the next loop iteration.
+                ReleaseWebSocket();
 
                 // Stop the poller
                 if (_poller != null)
@@ -441,11 +499,10 @@ namespace XiboClient.Action
         {
             try
             {
-                // Stop the socket
-                if (_webSocket != null)
-                {
-                    _webSocket.Close();
-                }
+                // Fully release the socket (detach handlers + close + dispose) so shutdown
+                // does not strand a live WebSocket with handlers still pointing at this
+                // subscriber instance.
+                ReleaseWebSocket();
 
                 // Stop the poller
                 if (_poller != null)

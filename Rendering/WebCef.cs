@@ -27,6 +27,9 @@ namespace XiboClient.Rendering
 {
     class WebCef : WebMedia
     {
+        private static CefSharp.RequestContext _sharedRequestContext;
+        private static readonly object _requestContextLock = new object();
+
         private ChromiumWebBrowser webView;
         private readonly string regionId;
         private readonly bool hasBackgroundColor = false;
@@ -50,16 +53,12 @@ namespace XiboClient.Rendering
         {
             Debug.WriteLine("Created CEF Renderer for " + this.regionId, "WebCef");
 
-            // Set a cache path
-            string cachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
-            var requestContextSettings = new CefSharp.RequestContextSettings { CachePath = cachePath };
-
             // Create the web view we will use
             webView = new ChromiumWebBrowser()
             {
                 Name = "region_" + this.regionId
             };
-            webView.RequestContext = new CefSharp.RequestContext(requestContextSettings);
+            webView.RequestContext = GetSharedRequestContext();
             webView.LifeSpanHandler = new CefsharpLifespanHandler();
 
             // Configure run time CEF settings?
@@ -218,12 +217,45 @@ namespace XiboClient.Rendering
             }
         }
 
+        private static CefSharp.RequestContext GetSharedRequestContext()
+        {
+            if (_sharedRequestContext == null)
+            {
+                lock (_requestContextLock)
+                {
+                    if (_sharedRequestContext == null)
+                    {
+                        string cachePath = ApplicationSettings.Default.LibraryPath + @"\CEF";
+                        var settings = new CefSharp.RequestContextSettings { CachePath = cachePath };
+                        _sharedRequestContext = new CefSharp.RequestContext(settings);
+                    }
+                }
+            }
+            return _sharedRequestContext;
+        }
+
         public override void Stopped()
         {
             HtmlUpdatedEvent -= WebMediaHtmlUdatedEvent;
             this.webView.Loaded -= WebView_Loaded;
             this.webView.LoadError -= WebView_LoadError;
             this.webView.FrameLoadEnd -= WebView_FrameLoadEnd;
+
+            // xibosignage/xibo-dotnetclient#348: a page with active <audio>/<video> can leave
+            // the CEF renderer subprocess alive (with audio still playing) after Dispose().
+            // Pause media via JS and navigate to about:blank so Chromium's own document
+            // unload path releases the media session before we close the browser.
+            try
+            {
+                this.webView.GetBrowser()?.MainFrame?.ExecuteJavaScriptAsync(
+                    "try{document.querySelectorAll('audio,video').forEach(function(m){m.pause();m.removeAttribute('src');m.load();});}catch(e){}");
+                this.webView.Address = "about:blank";
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(new LogMessage("WebCef", "Stopped: pre-dispose media cleanup failed. e = " + ex.Message), LogType.Audit.ToString());
+            }
+
             this.webView.Dispose();
 
             base.Stopped();
