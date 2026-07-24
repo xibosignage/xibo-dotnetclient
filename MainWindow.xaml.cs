@@ -24,6 +24,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -1157,23 +1158,29 @@ namespace XiboClient
         {
             List<Action.Action> actions = new List<Action.Action>();
 
+            // Snapshot the layout references before use. This method can run while the
+            // UI thread is reassigning currentLayout / mutating _overlays during a layout
+            // transition, so we must not check-then-dereference the live fields.
+            Layout layout = currentLayout;
+            Collection<Layout> overlays = _overlays;
+
             // Pull actions from the main layout and any overlays
-            if (currentLayout != null)
+            if (layout != null)
             {
-                actions.AddRange(currentLayout.GetActions());
+                actions.AddRange(layout.GetActions() ?? Enumerable.Empty<Action.Action>());
             }
 
-            // Add overlays
-            if (_overlays != null)
+            // Add overlays (iterate a copy so a concurrent Add/Remove cannot break enumeration)
+            if (overlays != null)
             {
-                foreach (Layout overlay in _overlays)
+                foreach (Layout overlay in overlays.ToList())
                 {
-                    actions.AddRange(overlay.GetActions());
+                    actions.AddRange(overlay.GetActions() ?? Enumerable.Empty<Action.Action>());
                 }
             }
 
             // Add the current schedule actions
-            actions.AddRange(_schedule.GetActions());
+            actions.AddRange(_schedule.GetActions() ?? Enumerable.Empty<Action.Action>());
 
             return actions;
         }
@@ -1268,6 +1275,19 @@ namespace XiboClient
         /// <param name="duration"></param>
         public void HandleActionTrigger(string triggerType, string triggerCode, int sourceId, Point point)
         {
+            // This is called from the EmbeddedServer / XMR handler threads, but it reads
+            // and matches against UI-owned layout state (currentLayout, _overlays and the
+            // regions/widgets beneath them). Marshal the whole match phase onto the UI
+            // thread so it cannot race against a layout transition nulling currentLayout
+            // or SuspendOverlays/ManageOverlays mutating _overlays. Dispatcher.Invoke keeps
+            // this synchronous, so the calling HTTP handler still blocks until we are done.
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.Invoke(new System.Action(() =>
+                    HandleActionTrigger(triggerType, triggerCode, sourceId, point)));
+                return;
+            }
+
             // Do we have any actions which match this trigger type?
             // These are in order, with Widgets first.
             foreach (Action.Action action in GetActions())
