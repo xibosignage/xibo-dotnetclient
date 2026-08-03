@@ -298,8 +298,10 @@ namespace XiboClient
         /// </summary>
         void _scheduleManager_OnScheduleManagerCheckComplete()
         {
-            // XMR address is present and has received at least 1 heart beat
-            bool xmrShouldBeRunning = (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && _xmrSubscriber.LastHeartBeat != DateTime.MinValue);
+            // XMR is configured (in whichever transport) and has received at least 1 heart beat.
+            // This used to test XmrNetworkAddress directly, which meant the XMR watchdog below
+            // never ran at all for a web socket only configuration.
+            bool xmrShouldBeRunning = (XmrSubscriber.IsXmrConfigured() && _xmrSubscriber.LastHeartBeat != DateTime.MinValue);
 
             // If the agent threads are all alive, and either XMR shouldn't be running OR the subscriber thread is alive.
             if (agentThreadsAlive())
@@ -315,8 +317,12 @@ namespace XiboClient
             // Log for overdue XMR
             if (xmrShouldBeRunning && _xmrSubscriber.LastHeartBeat < DateTime.Now.AddHours(-1))
             {
-                ClientInfo.Instance.XmrSubscriberStatus = "Long term Inactive (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
-                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over an hour ago."));
+                ClientInfo.Instance.XmrSubscriberStatus = "Long term Inactive (" + XmrSubscriber.GetAddressForStatus() + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
+
+                // Note the explicit category. Without it GetLogTypeFromString falls through to
+                // Audit, which is discarded at the default LogLevel of error, so this warning
+                // has never actually been visible.
+                Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over an hour ago, restarting XMR."), LogType.Error.ToString());
 
                 // Issue an XMR restart if we've gone this long without connecting
                 // we do this because we suspect that the TCP socket has died without notifying the poller
@@ -324,7 +330,7 @@ namespace XiboClient
             }
             else if (xmrShouldBeRunning && _xmrSubscriber.LastHeartBeat < DateTime.Now.AddMinutes(-5))
             {
-                ClientInfo.Instance.XmrSubscriberStatus = "Inactive (" + ApplicationSettings.Default.XmrNetworkAddress + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
+                ClientInfo.Instance.XmrSubscriberStatus = "Inactive (" + XmrSubscriber.GetAddressForStatus() + "), last activity: " + _xmrSubscriber.LastHeartBeat.ToString();
                 Trace.WriteLine(new LogMessage("Schedule - OnScheduleManagerCheckComplete", "XMR heart beat last received over 5 minutes ago."), LogType.Audit.ToString());
             }
 

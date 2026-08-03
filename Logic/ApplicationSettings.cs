@@ -56,7 +56,7 @@ namespace XiboClient
         /// </summary>
         private List<string> ExcludedProperties;
 
-        public string ClientVersion { get; } = "4 R407.2";
+        public string ClientVersion { get; } = "4 R407.3";
         public string Version { get; } = "7";
         public int ClientCodeVersion { get; } = 407;
 

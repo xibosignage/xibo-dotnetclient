@@ -93,8 +93,8 @@ namespace XiboClient.XmdsAgents
                             xmds.Url = ApplicationSettings.Default.XiboClient_xmds_xmds + "&method=registerDisplay";
                             xmds.UseDefaultCredentials = false;
 
-                            // Store the XMR address
-                            string xmrAddress = ApplicationSettings.Default.XmrNetworkAddress;
+                            // Snapshot every XMR setting, not just the legacy ZMQ address.
+                            string xmrSettingsBefore = XmrSettingsSnapshot();
 
                             RegisterAgent.ProcessRegisterXml(callRegister(xmds, key));
 
@@ -111,10 +111,18 @@ namespace XiboClient.XmdsAgents
                             // Set the flag to indicate we have a connection to XMDS
                             ApplicationSettings.Default.XmdsLastConnection = DateTime.Now;
 
-                            // Has the XMR address changed?
-                            if (xmrAddress != ApplicationSettings.Default.XmrNetworkAddress)
+                            // Have any of the XMR settings changed?
+                            // This used to compare XmrNetworkAddress alone, so a change to the
+                            // web socket address, type or CMS key never restarted the subscriber
+                            // and was ignored until the player process was restarted.
+                            string xmrSettingsAfter = XmrSettingsSnapshot();
+                            if (xmrSettingsBefore != xmrSettingsAfter)
                             {
-                                OnXmrReconfigure();
+                                Trace.WriteLine(new LogMessage("RegisterAgent - Run",
+                                    "XMR settings changed, reconfiguring. Was [" + xmrSettingsBefore
+                                    + "] now [" + xmrSettingsAfter + "]"), LogType.Info.ToString());
+
+                                OnXmrReconfigure?.Invoke();
                             }
 
                             // Notify Status
@@ -233,6 +241,20 @@ namespace XiboClient.XmdsAgents
             }
 
             Trace.WriteLine(new LogMessage("RegisterAgent - Run", "Thread Stopped"), LogType.Info.ToString());
+        }
+
+        /// <summary>
+        /// A snapshot of every setting which affects the XMR connection, so that we can tell
+        /// whether registration changed any of them. The CMS key is hashed - it is a shared
+        /// secret and this string ends up in the log.
+        /// </summary>
+        private static string XmrSettingsSnapshot()
+        {
+            return string.Join("|",
+                ApplicationSettings.Default.XmrType,
+                ApplicationSettings.Default.XmrNetworkAddress,
+                ApplicationSettings.Default.XmrWebSocketAddress,
+                Hashes.MD5(ApplicationSettings.Default.XmrCmsKey ?? string.Empty));
         }
 
         private string callRegister(xmds.xmds xmds, HardwareKey key)

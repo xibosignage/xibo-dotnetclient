@@ -208,6 +208,9 @@ namespace XiboClient
             _overlays = new Collection<Layout>();
 
             // Switch to TLS 2.1
+            // Note: this covers HttpWebRequest/XMDS only. The XMR web socket does not go through
+            // ServicePointManager - websocket-sharp builds its own SslStream, so its protocols are
+            // set separately in XmrSubscriber.GetEnabledSslProtocols().
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
 
             // Initialise the database
