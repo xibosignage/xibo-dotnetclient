@@ -188,6 +188,8 @@ namespace XiboClient.Rendering
             {
                 webView.CoreWebView2.Settings.IsPinchZoomEnabled = isPinchToZoomEnabled;
                 webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+                webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
                 webView.CoreWebView2.ProcessFailed += WebView_ProcessFailed;
                 _webViewInitialised = true;
             }

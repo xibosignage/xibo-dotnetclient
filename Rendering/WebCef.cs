@@ -94,6 +94,7 @@ namespace XiboClient.Rendering
             webView.LoadError += WebView_LoadError;
             webView.FrameLoadEnd += WebView_FrameLoadEnd;
             webView.JsDialogHandler = new CefJsDialogHandler();
+            webView.MenuHandler = new CefContextMenuHandler();
 
             this.MediaScene.Children.Add(webView);
 

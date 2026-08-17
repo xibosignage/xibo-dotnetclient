@@ -146,6 +146,7 @@
     <Compile Include="Error\LayoutInvalidException.cs" />
     <Compile Include="Error\ShowSplashScreenException.cs" />
     <Compile Include="Error\XmrConfigurationException.cs" />
+    <Compile Include="Helpers\CefContextMenuHandler.cs" />
     <Compile Include="Helpers\CefJsDialogHandler.cs" />
     <Compile Include="Helpers\CefsharpLifespanHandler.cs" />
     <Compile Include="Helpers\GeoHelper.cs" />
