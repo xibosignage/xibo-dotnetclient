@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using XiboClient.Control;
+using XiboClient.Error;
 using XiboClient.Log;
 using XiboClient.Logic;
 using WebSocketSharp;
@@ -76,6 +77,17 @@ namespace XiboClient.Action
         private NetMQPoller _poller;
 
         /// <summary>
+        /// Guards access to _webSocket. Restart()/Stop() run on other threads and can release
+        /// the socket from underneath LoopForWs() while it is still being set up.
+        /// </summary>
+        private readonly object _socketLock = new object();
+
+        /// <summary>
+        /// The last status we logged, so that we don't write the same line every 60 seconds.
+        /// </summary>
+        private string _lastLoggedStatus;
+
+        /// <summary>
         /// Runs the agent
         /// </summary>
         public void Run()
@@ -91,11 +103,12 @@ namespace XiboClient.Action
                         // If we are restarting, reset
                         _manualReset.Reset();
 
-                        // Check we have an address to connect to.
-                        if (!string.IsNullOrEmpty(ApplicationSettings.Default.XmrNetworkAddress) && ApplicationSettings.Default.XmrNetworkAddress != "DISABLED")
+                        // Check XMR is configured. Note that in web socket mode this deliberately
+                        // does not depend on XmrNetworkAddress, which is a legacy ZMQ only setting.
+                        if (IsXmrConfigured())
                         {
                             // Decide whether we are connecting to a web socket based implementation, or a legacy ZMQ one.
-                            if (ApplicationSettings.Default.XmrType == "ws")
+                            if (IsWebSocket())
                             {
                                 LoopForWs();
                             }
@@ -103,16 +116,19 @@ namespace XiboClient.Action
                             {
                                 LoopForZmq();
 
-                                Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Disconnected, waiting to reconnect."), LogType.Info.ToString());
-
-                                // Update status
-                                ClientInfo.Instance.XmrSubscriberStatus = "Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString();
+                                SetStatus("Disconnected, waiting to reconnect, last activity: " + LastHeartBeat.ToString(), LogType.Info);
                             }
                         }
                         else
                         {
-                            ClientInfo.Instance.XmrSubscriberStatus = "Not configured or Disabled";
+                            ReportNotConfigured();
                         }
+                    }
+                    catch (XmrConfigurationException configEx)
+                    {
+                        // Not transient - the CMS has given us something we cannot use, so retrying
+                        // will not help. Log at error so it survives the default LogLevel of error.
+                        SetStatus("Configuration error: " + configEx.Message, LogType.Error);
                     }
                     catch (TerminatingException terminatingEx)
                     {
@@ -120,8 +136,10 @@ namespace XiboClient.Action
                     }
                     catch (Exception e)
                     {
-                        Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Unable to Subscribe: " + e.Message), LogType.Info.ToString());
-                        ClientInfo.Instance.XmrSubscriberStatus = e.Message;
+                        // This used to log at Info, which is discarded at the default LogLevel of
+                        // error, so a failure to connect to XMR left no trace at all.
+                        SetStatus("Unable to connect to XMR at [" + GetAddressForStatus() + "]: " + e.Message, LogType.Error);
+                        Trace.WriteLine(new LogMessage("XmrSubscriber - Run", e.ToString()), LogType.Audit.ToString());
                     }
 
                     // Sleep for 60 seconds.
@@ -132,26 +150,165 @@ namespace XiboClient.Action
             Trace.WriteLine(new LogMessage("XmrSubscriber - Run", "Subscriber Stopped"), LogType.Info.ToString());
         }
 
-        private void LoopForWs()
+        /// <summary>
+        /// Are we using the web socket transport?
+        /// Tolerant of whitespace and case - this value arrives from the CMS as free text.
+        /// </summary>
+        public static bool IsWebSocket()
         {
-            if (_webSocket != null && _webSocket.IsAlive)
+            return string.Equals(
+                (ApplicationSettings.Default.XmrType ?? string.Empty).Trim(),
+                "ws",
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Has XMR been explicitly disabled?
+        /// The CMS uses the magic value DISABLED, which may appear in either address field
+        /// depending on which transport that CMS is configured for. We honour both, so that a
+        /// display which was disabled under ZMQ doesn't silently start connecting after upgrade.
+        /// </summary>
+        public static bool IsXmrDisabled()
+        {
+            return string.Equals((ApplicationSettings.Default.XmrNetworkAddress ?? string.Empty).Trim(), "DISABLED", StringComparison.OrdinalIgnoreCase)
+                || string.Equals((ApplicationSettings.Default.XmrWebSocketAddress ?? string.Empty).Trim(), "DISABLED", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Is XMR configured?
+        ///
+        /// ws  - we never need XmrNetworkAddress. The web socket address is either supplied by
+        ///       the CMS or derived from the CMS address, so ws is configured unless it has been
+        ///       explicitly disabled. Requiring XmrNetworkAddress here is what stopped web socket
+        ///       XMR running at all against a CMS which leaves the legacy XMR Public Address empty.
+        /// zmq - we must have an XmrNetworkAddress.
+        /// </summary>
+        public static bool IsXmrConfigured()
+        {
+            if (IsXmrDisabled())
             {
-                return;
+                return false;
             }
 
-            // If there is an old, dead socket we must fully release it before replacing.
-            // Previously we overwrote _webSocket without detaching handlers or disposing,
-            // which leaked a WebSocket (and 4 delegate references back to this subscriber)
-            // every 60 seconds whenever XMR was unavailable.
-            ReleaseWebSocket();
+            if (IsWebSocket())
+            {
+                return true;
+            }
 
-            _webSocket = new WebSocket(GetWsAddress());
-            _webSocket.SslConfiguration.EnabledSslProtocols |= SslProtocols.Tls12;
-            _webSocket.OnOpen += _webSocket_OnOpen;
-            _webSocket.OnClose += _webSocket_OnClose;
-            _webSocket.OnMessage += _webSocket_OnMessage;
-            _webSocket.OnError += _webSocket_OnError;
-            _webSocket.Connect();
+            return !string.IsNullOrEmpty((ApplicationSettings.Default.XmrNetworkAddress ?? string.Empty).Trim());
+        }
+
+        /// <summary>
+        /// Set the status shown on the info screen and in status.json, logging it if it changed.
+        /// </summary>
+        /// <param name="status">the status text</param>
+        /// <param name="logType">the level to log a change at</param>
+        private void SetStatus(string status, LogType logType)
+        {
+            ClientInfo.Instance.XmrSubscriberStatus = status;
+
+            // Only log when the status actually changes. Run() loops every 60 seconds and we
+            // don't want to fill the CMS log with the same line over and over.
+            if (_lastLoggedStatus != status)
+            {
+                _lastLoggedStatus = status;
+                Trace.WriteLine(new LogMessage("XmrSubscriber - Status", status), logType.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Explain why XMR isn't running, at a level appropriate to whether that is deliberate.
+        /// </summary>
+        private void ReportNotConfigured()
+        {
+            if (IsXmrDisabled())
+            {
+                SetStatus("Disabled by the CMS", LogType.Audit);
+            }
+            else if (!string.IsNullOrEmpty((ApplicationSettings.Default.XmrWebSocketAddress ?? string.Empty).Trim()))
+            {
+                // The CMS gave us a web socket address but hasn't put us in ws mode, which the
+                // user needs to see. Log at error so it survives the default LogLevel and gets
+                // uploaded to the CMS by the LogAgent.
+                SetStatus("Not configured: the CMS supplied a web socket address ["
+                    + ApplicationSettings.Default.XmrWebSocketAddress
+                    + "] but xmrType is [" + ApplicationSettings.Default.XmrType
+                    + "], expected [ws]", LogType.Error);
+            }
+            else
+            {
+                SetStatus("Not configured (xmrType: [" + ApplicationSettings.Default.XmrType
+                    + "], xmrNetworkAddress is empty)", LogType.Audit);
+            }
+        }
+
+        private void LoopForWs()
+        {
+            // Resolve and validate the address before we take the lock or touch the library, so
+            // that a configuration problem throws XmrConfigurationException up to Run() with a
+            // clear message instead of dying inside the WebSocket constructor.
+            string address = GetWsAddress();
+
+            WebSocket socket;
+
+            lock (_socketLock)
+            {
+                if (_webSocket != null && _webSocket.IsAlive)
+                {
+                    return;
+                }
+
+                // If there is an old, dead socket we must fully release it before replacing.
+                // Previously we overwrote _webSocket without detaching handlers or disposing,
+                // which leaked a WebSocket (and 4 delegate references back to this subscriber)
+                // every 60 seconds whenever XMR was unavailable.
+                ReleaseWebSocket();
+
+                // Set the status directly rather than through SetStatus. This alternates with the
+                // failure status on every retry, and going through SetStatus would reset the
+                // de-duplication and log the same connection error once a minute forever.
+                ClientInfo.Instance.XmrSubscriberStatus = "Connecting to " + address;
+                LogMessage.Audit("XmrSubscriber", "LoopForWs", "Connecting to " + address);
+
+                socket = new WebSocket(address);
+                socket.SslConfiguration.EnabledSslProtocols = GetEnabledSslProtocols();
+                socket.OnOpen += _webSocket_OnOpen;
+                socket.OnClose += _webSocket_OnClose;
+                socket.OnMessage += _webSocket_OnMessage;
+                socket.OnError += _webSocket_OnError;
+
+                // Publish before connecting - OnOpen can fire synchronously from Connect().
+                _webSocket = socket;
+            }
+
+            // Connect outside the lock. Connect() blocks until the handshake completes or the
+            // TCP connect times out, and holding _socketLock across that would stall Restart()
+            // and Stop() for the duration. We hold a local reference, so a concurrent Restart()
+            // releasing _webSocket just makes this Connect() fail, which is what we want.
+            socket.Connect();
+        }
+
+        /// <summary>
+        /// The SSL/TLS protocol versions we offer for wss:// connections.
+        /// </summary>
+        private static SslProtocols GetEnabledSslProtocols()
+        {
+            // We assign rather than OR. websocket-sharp defaults EnabledSslProtocols to
+            // SslProtocols.Default, which is Ssl3 | Tls, so OR-ing Tls12 in gave us
+            // Ssl3 | Tls1.0 | Tls1.2 - advertising SSL 3.0, and missing TLS 1.1 entirely.
+            // Advertising SSLv3 is the part modern reverse proxies and CDNs object to, and
+            // Schannel may refuse outright where SSL 3.0 is disabled by policy.
+            //
+            // So we drop SSL 3.0 and fill in the missing 1.1, but deliberately keep TLS 1.0 and
+            // 1.1: removing them would break any wss:// endpoint that can't do 1.2, which would
+            // be a breaking change for something that used to work. They should be dropped in a
+            // future release with a release note, not here.
+            //
+            // SslProtocols.Tls13 is not available on .NET Framework 4.7.2 (it was added in 4.8)
+            // and we are not moving the framework version of this player, so 1.2 is our ceiling.
+            // If TLS 1.3 becomes a requirement the answer is to move off websocket-sharp to
+            // ClientWebSocket, which uses Schannel's own policy.
+            return SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
         }
 
         /// <summary>
@@ -211,7 +368,9 @@ namespace XiboClient.Action
                 { "channel", _hardwareKey.Channel }
             };
 
-            _webSocket.Send(message.ToString());
+            // Send via sender rather than the field, so that a concurrent Restart() replacing
+            // _webSocket cannot make us send the handshake on the wrong socket.
+            ((WebSocket)sender).Send(message.ToString());
         }
 
         private void _webSocket_OnClose(object sender, CloseEventArgs e)
@@ -229,7 +388,23 @@ namespace XiboClient.Action
 
         private void _webSocket_OnError(object sender, ErrorEventArgs e)
         {
-            LogMessage.Error("XmrSubscriber", "_webSocket_OnError", e.Message);
+            // e.Exception carries the real reason (TLS handshake failure, connection refused,
+            // name resolution). We used to throw it away and log only the library's generic
+            // message, which left no way to tell those apart.
+            string detail = e.Message;
+            Exception ex = e.Exception;
+            while (ex != null)
+            {
+                detail += " -> " + ex.GetType().Name + ": " + ex.Message;
+                ex = ex.InnerException;
+            }
+
+            SetStatus("Error connecting to XMR at [" + GetAddressForStatus() + "]: " + detail, LogType.Error);
+
+            if (e.Exception != null)
+            {
+                LogMessage.Audit("XmrSubscriber", "_webSocket_OnError", e.Exception.ToString());
+            }
         }
 
         private void _webSocket_OnMessage(object sender, MessageEventArgs e)
@@ -256,22 +431,90 @@ namespace XiboClient.Action
         }
 
         /// <summary>
-        /// Get WebSocket address
+        /// Get the web socket address we should connect to, normalised and validated.
+        ///
+        /// Deliberately side effect free (no logging) - this is called from the status paths on
+        /// every heartbeat as well as at connect time. The resolved address is logged once by
+        /// LoopForWs when it actually connects.
         /// </summary>
-        /// <returns></returns>
-        private string GetWsAddress()
+        /// <returns>a ws:// or wss:// address</returns>
+        /// <exception cref="XmrConfigurationException">if the configured address can't be used</exception>
+        public static string GetWsAddress()
         {
-            if (string.IsNullOrEmpty(ApplicationSettings.Default.XmrWebSocketAddress))
+            string address = (ApplicationSettings.Default.XmrWebSocketAddress ?? string.Empty).Trim();
+
+            if (string.IsNullOrEmpty(address))
             {
+                // Derive from the CMS address. TrimEnd('/') so that a CMS address of
+                // https://cms.example.com/ doesn't produce wss://cms.example.com//xmr, and
+                // StartsWith(OrdinalIgnoreCase) so that HTTPS:// is handled - the string.Replace
+                // this used to do was case sensitive and did neither.
+                string cms = (ApplicationSettings.Default.ServerUri ?? string.Empty).Trim().TrimEnd('/');
+
+                if (cms.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    address = "wss://" + cms.Substring("https://".Length);
+                }
+                else if (cms.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                {
+                    address = "ws://" + cms.Substring("http://".Length);
+                }
+                else
+                {
+                    throw new XmrConfigurationException("No XMR web socket address is set and the CMS address ["
+                        + cms + "] isn't a http(s) URL, so one can't be derived.");
+                }
+
                 // Append /xmr to the CMS address
-                return ApplicationSettings.Default.ServerUri
-                    .Replace("https://", "wss://")
-                    .Replace("http://", "ws://")
-                        + "/xmr";
+                address += "/xmr";
             }
-            else
+            else if (address.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
-                return ApplicationSettings.Default.XmrWebSocketAddress;
+                // Be forgiving of a http(s):// URL pasted into the CMS web socket address field.
+                address = "wss://" + address.Substring("https://".Length);
+            }
+            else if (address.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            {
+                address = "ws://" + address.Substring("http://".Length);
+            }
+
+            // Validate before we hand it to the library, so that a bad address gives a clear
+            // message instead of an opaque ArgumentException out of the WebSocket constructor.
+            Uri uri;
+            if (!Uri.TryCreate(address, UriKind.Absolute, out uri))
+            {
+                throw new XmrConfigurationException("XMR web socket address isn't a valid absolute URL: [" + address + "]");
+            }
+
+            if (!uri.Scheme.Equals("ws", StringComparison.OrdinalIgnoreCase)
+                && !uri.Scheme.Equals("wss", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new XmrConfigurationException("XMR web socket address must use ws:// or wss://, got [" + address + "]");
+            }
+
+            if (string.IsNullOrEmpty(uri.Host))
+            {
+                throw new XmrConfigurationException("XMR web socket address has no host: [" + address + "]");
+            }
+
+            // Return the trimmed string rather than uri.AbsoluteUri, so that we don't silently
+            // re-encode a path the CMS deliberately chose.
+            return address;
+        }
+
+        /// <summary>
+        /// The address we are, or would be, connected to. For status and logging only, so this
+        /// reports a resolution failure rather than throwing.
+        /// </summary>
+        public static string GetAddressForStatus()
+        {
+            try
+            {
+                return IsWebSocket() ? GetWsAddress() : ApplicationSettings.Default.XmrNetworkAddress;
+            }
+            catch (Exception e)
+            {
+                return "unresolved (" + e.Message + ")";
             }
         }
 
@@ -373,8 +616,7 @@ namespace XiboClient.Action
         private void UpdateStatus()
         {
             // Update status
-            string statusMessage = "Connected (" 
-                + (ApplicationSettings.Default.XmrType == "ws" ? GetWsAddress() : ApplicationSettings.Default.XmrNetworkAddress) 
+            string statusMessage = "Connected (" + GetAddressForStatus()
                 + "), last activity: " + DateTime.Now.ToString();
 
             // Write this out to a log
@@ -474,7 +716,10 @@ namespace XiboClient.Action
             try
             {
                 // Fully release the socket so a fresh one will be created on the next loop iteration.
-                ReleaseWebSocket();
+                lock (_socketLock)
+                {
+                    ReleaseWebSocket();
+                }
 
                 // Stop the poller
                 if (_poller != null)
@@ -502,7 +747,10 @@ namespace XiboClient.Action
                 // Fully release the socket (detach handlers + close + dispose) so shutdown
                 // does not strand a live WebSocket with handlers still pointing at this
                 // subscriber instance.
-                ReleaseWebSocket();
+                lock (_socketLock)
+                {
+                    ReleaseWebSocket();
+                }
 
                 // Stop the poller
                 if (_poller != null)
