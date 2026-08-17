@@ -317,6 +317,12 @@ namespace XiboClient
                 {
                     writer.Formatting = Formatting.None;
                     writer.WriteStartObject();
+                    writer.WritePropertyName("manufacturer");
+                    writer.WriteValue(GetManufacturer());
+                    writer.WritePropertyName("brand");
+                    writer.WriteValue(GetBrand());
+                    writer.WritePropertyName("model");
+                    writer.WriteValue(GetModel());
                     writer.WritePropertyName("version");
                     writer.WriteValue(Environment.OSVersion.Platform.ToString());
                     writer.WritePropertyName("sdk");
@@ -327,7 +333,131 @@ namespace XiboClient
                 operatingSystemJson = sb.ToString();
             }
 
-            return operatingSystemJson;            
+            return operatingSystemJson;
+        }
+
+        /// <summary>
+        /// Get the computer manufacturer
+        /// </summary>
+        /// <returns>[string] Manufacturer, or empty string if unavailable</returns>
+        private static string GetManufacturer()
+        {
+            try
+            {
+                ManagementClass mc = new ManagementClass("Win32_ComputerSystem");
+                foreach (ManagementObject mo in mc.GetInstances())
+                {
+                    return mo["Manufacturer"]?.ToString() ?? string.Empty;
+                }
+            }
+            catch
+            {
+                // Ignored - WMI may be unavailable in some environments
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Placeholder strings some BIOS vendors (AMI, Award/Phoenix, etc.) leave in SMBIOS
+        /// fields when the OEM never set a real value - most common on DIY/white-box builds.
+        /// </summary>
+        private static readonly string[] GenericHardwareStrings = new[]
+        {
+            "System Product Name",
+            "To Be Filled By O.E.M.",
+            "Default string",
+            "Not Applicable",
+            "System Version",
+        };
+
+        private static bool IsGenericHardwareString(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return true;
+            }
+
+            foreach (string placeholder in GenericHardwareStrings)
+            {
+                if (value.IndexOf(placeholder, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Get the computer model. Falls back to the motherboard product name when the
+        /// system model is a generic BIOS placeholder, which is common on DIY/white-box builds.
+        /// </summary>
+        /// <returns>[string] Model, or empty string if unavailable</returns>
+        private static string GetModel()
+        {
+            try
+            {
+                ManagementClass mc = new ManagementClass("Win32_ComputerSystem");
+                foreach (ManagementObject mo in mc.GetInstances())
+                {
+                    string model = mo["Model"]?.ToString();
+                    if (!IsGenericHardwareString(model))
+                    {
+                        return model;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignored - WMI may be unavailable in some environments
+            }
+
+            try
+            {
+                ManagementClass mc = new ManagementClass("Win32_BaseBoard");
+                foreach (ManagementObject mo in mc.GetInstances())
+                {
+                    string product = mo["Product"]?.ToString();
+                    if (!IsGenericHardwareString(product))
+                    {
+                        return product;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignored - WMI may be unavailable in some environments
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Get the computer brand (vendor). Windows has no direct equivalent of Android's
+        /// Build.BRAND, so we use the system product vendor, falling back to the manufacturer.
+        /// </summary>
+        /// <returns>[string] Brand</returns>
+        private static string GetBrand()
+        {
+            try
+            {
+                ManagementClass mc = new ManagementClass("Win32_ComputerSystemProduct");
+                foreach (ManagementObject mo in mc.GetInstances())
+                {
+                    string vendor = mo["Vendor"]?.ToString();
+                    if (!string.IsNullOrWhiteSpace(vendor))
+                    {
+                        return vendor;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignored - WMI may be unavailable in some environments
+            }
+
+            return GetManufacturer();
         }
     }
 }
