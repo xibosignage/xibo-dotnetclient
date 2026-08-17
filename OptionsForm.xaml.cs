@@ -293,7 +293,12 @@ namespace XiboClient
             // open URL in separate instance of default browser
             try
             {
-                Process.Start(ApplicationSettings.Default.ServerUri + @"/display/view");
+                // Don't hardcode a specific admin route - it has changed between CMS versions
+                // (e.g. /display/view -> /display/displays in CMS 4.5) and the Player has no
+                // way of knowing which CMS version it is talking to. TrimEnd('/') so a CMS
+                // address with a trailing slash doesn't cause issues either.
+                string cms = (ApplicationSettings.Default.ServerUri ?? string.Empty).Trim().TrimEnd('/');
+                Process.Start(cms);
             }
             catch
             {
