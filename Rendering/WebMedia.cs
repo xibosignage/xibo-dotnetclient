@@ -120,6 +120,10 @@ namespace XiboClient.Rendering
             // Configure the file path to indicate which file should be opened by the browser
             _filePath = ApplicationSettings.Default.EmbeddedServerAddress + "package_" + Options.FileId + "/" + nominatedFile;
 
+            // A package is served from its own folder and so has no other way to discover which
+            // widget is playing it. Provide the active media id for Interactive Control.
+            _filePath = AppendTargetId(_filePath, Options.mediaid);
+
             // Check to see if our package has been extracted already
             // if not, then extract it
             lock (_packageHtmlLock)
@@ -137,6 +141,65 @@ namespace XiboClient.Rendering
                     WriteUpdatedFlag(pathToStatusFile);
                 }
             }
+        }
+
+        /// <summary>
+        /// The query string parameter Interactive Control uses to target a widget
+        /// </summary>
+        private const string TargetIdQueryKey = "xiboICTargetId";
+
+        /// <summary>
+        /// Append the active widget id to a URL, keeping any query string and fragment
+        /// which the nominated file already provides.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="targetId"></param>
+        /// <returns></returns>
+        internal static string AppendTargetId(string url, string targetId)
+        {
+            if (string.IsNullOrEmpty(targetId))
+            {
+                return url;
+            }
+
+            // A fragment has to stay at the very end of the URL.
+            string fragment = "";
+            int fragmentAt = url.IndexOf('#');
+            if (fragmentAt >= 0)
+            {
+                fragment = url.Substring(fragmentAt);
+                url = url.Substring(0, fragmentAt);
+            }
+
+            // Take off any query string so that we can add to it.
+            string query = "";
+            int queryAt = url.IndexOf('?');
+            if (queryAt >= 0)
+            {
+                query = url.Substring(queryAt + 1);
+                url = url.Substring(0, queryAt);
+            }
+
+            // Drop any target id already present, the id we hold is the authoritative one.
+            string parameters = "";
+            foreach (string parameter in query.Split('&'))
+            {
+                if (parameter.Length == 0
+                    || parameter == TargetIdQueryKey
+                    || parameter.StartsWith(TargetIdQueryKey + "="))
+                {
+                    continue;
+                }
+
+                parameters += (parameters.Length == 0 ? "" : "&") + parameter;
+            }
+
+            if (parameters.Length > 0)
+            {
+                parameters += "&";
+            }
+
+            return url + "?" + parameters + TargetIdQueryKey + "=" + Uri.EscapeDataString(targetId) + fragment;
         }
 
         /// <summary>
